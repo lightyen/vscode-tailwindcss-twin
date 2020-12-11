@@ -1,0 +1,15 @@
+{
+  "editor.formatOnSave": true,
+  "formatFiles.excludePattern": "node_modules,out,.gitignore,.editorconfig,yarn.lock",
+  "search.exclude": {
+    "**/out": true,
+    "**/node_modules": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "npm.autoDetect": "off",
+  "typescript.tsc.autoDetect": "off",
+  "eslint.validate": ["javascript", "typescript"],
+  "files.watcherExclude": {
+    "**/out": true
+  }
+}

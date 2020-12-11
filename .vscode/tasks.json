@@ -1,0 +1,64 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "compile",
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": "(ERROR|WARNING)\\s+in\\s+(.*)?\\s*(\\d+):(\\d+)\\s+(.*)",
+              "severity": 1,
+              "file": 2,
+              "line": 3,
+              "column": 4,
+              "message": 5
+            }
+          ],
+          "background": {
+            "beginsPattern": "Compilation\\s+starting...",
+            "endsPattern": "Compilation\\s+finished",
+            "activeOnStart": true
+          }
+        },
+        {
+          "pattern": [
+            {
+              "regexp": "(ERROR|WARNING)\\s*in\\s*(.*)?:(\\d+):(\\d+)\\s+(.*)",
+              "severity": 1,
+              "file": 2,
+              "line": 3,
+              "column": 4,
+              "message": 5
+            }
+          ],
+          "background": {
+            "beginsPattern": "Compilation\\s+starting...",
+            "endsPattern": "Compilation\\s+finished",
+            "activeOnStart": true
+          }
+        }
+      ]
+    }
+  ]
+}
