@@ -79,7 +79,7 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 					if (
 						!getClassNameRules(
 							c.variants.map(v => v[2]),
-							value,
+							c.token[2],
 							twin,
 						)
 					) {
