@@ -44,7 +44,7 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 				const a = document.positionAt(start)
 				const b = document.positionAt(end)
 				const classes = document.getText({ start: a, end: b })
-				const { classList } = findClasses({
+				const { classList, empty } = findClasses({
 					classes,
 					separator: getSeparator(),
 					handleBrackets,
@@ -95,6 +95,25 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 								end: document.positionAt(start + c.token[1]),
 							},
 						})
+					}
+				}
+				for (const [, , variants] of empty) {
+					for (const [a, b, value] of variants) {
+						const bg = getBreakingPoint(value)
+						const iv = isVariant(value, twin)
+						if (!bg && !iv) continue
+						const target = docs[bg ? value : prefix + value]
+						if (target && !s.has(start + a)) {
+							links.push({
+								target,
+								tooltip: lastUrlToken(target),
+								range: {
+									start: document.positionAt(start + a),
+									end: document.positionAt(start + b),
+								},
+							})
+							s.add(start + a)
+						}
 					}
 				}
 			})

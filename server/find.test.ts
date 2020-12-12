@@ -66,3 +66,17 @@ test("findClasses Selected", async () => {
 		variants: [],
 	})
 })
+
+test("findClasses Empty", async () => {
+	const text = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) focus:() lg:(light:bg-black)`
+	for (let index = 0; index < text.length; index += 1) {
+		const result = findClasses({
+			classes: text,
+			separator: ":",
+			index,
+			handleBrackets: true,
+			handleImportant: true,
+		})
+		expect(result.empty).toEqual([[62, 64, [[56, 61, "focus"]]]])
+	}
+})

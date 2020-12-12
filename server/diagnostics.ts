@@ -44,6 +44,8 @@ export function validateTextDocument(document: TextDocument) {
 	})
 }
 
+const source = "tailwindcss"
+
 function validateClasses({
 	document,
 	range,
@@ -59,7 +61,7 @@ function validateClasses({
 	pattern: Pattern
 	kind: PatternKind
 }): Diagnostic[] {
-	const { classList } = findClasses({ classes, separator, handleBrackets, handleImportant })
+	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
 	const values = classList.map(c => [...c.variants.map(v => v[2]), c.token[2]].join(separator))
 	const base = document.offsetAt(range.start)
@@ -69,6 +71,7 @@ function validateClasses({
 			if (values[i] === values[j]) {
 				// duplicate
 				result.push({
+					source,
 					message: `Classname '${values[j]}' is duplicated.`,
 					range: {
 						start: document.positionAt(base + classList[j].token[0]),
@@ -91,6 +94,18 @@ function validateClasses({
 			}
 		}
 	}
+	console.log(empty.length)
+	for (let i = 0; i < empty.length; i++) {
+		result.push({
+			source,
+			message: `Miss something?`,
+			range: {
+				start: document.positionAt(base + empty[i][0]),
+				end: document.positionAt(base + empty[i][1]),
+			},
+			severity: DiagnosticSeverity.Warning,
+		})
+	}
 
 	return result
 }
@@ -112,6 +127,7 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 			}
 		}
 		result.push({
+			source,
 			message: `'${value}' is undefined, do you mean '${answer}'?`,
 			range: {
 				start: document.positionAt(base + a),
@@ -122,7 +138,17 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 	}
 	if (info.token) {
 		const variants = info.variants.map(v => v[2])
-		if (!isValidClassName(variants, info.token[2], twin)) {
+		if (info.token[2] === "") {
+			result.push({
+				source,
+				message: `Miss something?`,
+				range: {
+					start: document.positionAt(base + info.token[0]),
+					end: document.positionAt(base + info.token[1]),
+				},
+				severity: DiagnosticSeverity.Warning,
+			})
+		} else if (!isValidClassName(variants, info.token[2], twin)) {
 			let answer = info.token[2]
 			let distance = +Infinity
 			for (const v of getValidClassNames(variants, twin)) {
@@ -134,6 +160,7 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 			}
 
 			result.push({
+				source,
 				message: `'${info.token[2]}' is undefined, do you mean '${answer}'?`,
 				range: {
 					start: document.positionAt(base + info.token[0]),

@@ -1,4 +1,4 @@
-import { Token } from "./typings"
+import { Token, EmptyGroup } from "./typings"
 
 export interface SelectionInfo {
 	selected?: Token
@@ -38,7 +38,7 @@ export function findClasses({
 	handleImportant?: boolean
 	lbrace?: string
 	rbrace?: string
-}): { classList: ClassInfo[]; selection: SelectionInfo } {
+}): { classList: ClassInfo[]; selection: SelectionInfo; empty: EmptyGroup[] } {
 	classes = classes.substring(0, end)
 	const reg = handleBrackets
 		? new RegExp(`(([^${lbrace}${rbrace}\\s]+)${separator})+[${lbrace}]|\\S+`, "g")
@@ -50,6 +50,7 @@ export function findClasses({
 	const rbraceReg = new RegExp(`[${rbrace}]`)
 	reg.lastIndex = start
 	const classList: ClassInfo[] = []
+	const empty: EmptyGroup[] = []
 	let selected: Token = null
 	let variantsSelected: Token[] = []
 	let important = false
@@ -63,6 +64,7 @@ export function findClasses({
 				inGroup = true
 			}
 			variantReg.lastIndex = 0
+			let lastv = variantReg.lastIndex
 			let m: RegExpExecArray
 			const vs: Token[] = []
 			while ((m = variantReg.exec(variants))) {
@@ -71,6 +73,11 @@ export function findClasses({
 				if (index >= t[0] && index < t[1]) {
 					selected = t
 				}
+				lastv = variantReg.lastIndex
+			}
+			// empty string?
+			if (reg.lastIndex === endBracket) {
+				empty.push([e.index + lastv, endBracket + 1, vs])
 			}
 
 			const ret = findClasses({
@@ -89,7 +96,7 @@ export function findClasses({
 			classList.push(
 				...ret.classList.map(item => ({ ...item, variants: [...vs, ...item.variants], inGroup: true })),
 			)
-
+			empty.push(...ret.empty)
 			if (index > endBracket) {
 				variantsSelected = []
 			} else if (index >= e.index) {
@@ -153,7 +160,7 @@ export function findClasses({
 			if (selected) break
 		}
 	}
-	return { classList, selection: { selected, inGroup, important, variants: variantsSelected } }
+	return { classList, empty, selection: { selected, inGroup, important, variants: variantsSelected } }
 }
 
 function findBrackets({
