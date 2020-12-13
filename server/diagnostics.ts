@@ -94,7 +94,6 @@ function validateClasses({
 			}
 		}
 	}
-	console.log(empty.length)
 	for (let i = 0; i < empty.length; i++) {
 		result.push({
 			source,
