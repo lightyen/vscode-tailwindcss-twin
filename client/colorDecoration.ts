@@ -16,7 +16,8 @@ class ColorMap {
 		const x = 0.3
 		const decorationType = vscode.window.createTextEditorDecorationType({
 			backgroundColor: c.css(),
-			borderColor: c.luminance() < x ? c.brighten(x).css() : c.darken(x).css(),
+			borderColor: c.css(),
+			// borderColor: c.luminance() < x ? c.brighten(x).css() : c.darken(x).css(),
 			borderWidth: "2px",
 			borderStyle: "solid",
 			color: c.luminance() < x ? "rgb(227, 227, 227)" : "rgb(28, 28, 28)",
