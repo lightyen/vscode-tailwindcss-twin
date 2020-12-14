@@ -1,14 +1,5 @@
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient"
-import {
-	workspace,
-	window,
-	ExtensionContext,
-	WorkspaceFolder,
-	Uri,
-	TextDocument,
-	OutputChannel,
-	RelativePattern,
-} from "vscode"
+import vscode from "vscode"
 import path from "path"
 
 import colorDecoration from "./colorDecoration"
@@ -32,8 +23,8 @@ const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG) as NLSConfig
 let _sortedWorkspaceFolders: string[]
 function sortedWorkspaceFolders(): string[] {
 	if (_sortedWorkspaceFolders == undefined) {
-		_sortedWorkspaceFolders = workspace.workspaceFolders
-			? workspace.workspaceFolders
+		_sortedWorkspaceFolders = vscode.workspace.workspaceFolders
+			? vscode.workspace.workspaceFolders
 					.map(folder => {
 						let result = folder.uri.toString()
 						if (result.charAt(result.length - 1) !== "/") {
@@ -46,9 +37,9 @@ function sortedWorkspaceFolders(): string[] {
 	}
 	return _sortedWorkspaceFolders
 }
-workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined))
+vscode.workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined))
 
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
+function getOuterMostWorkspaceFolder(folder: vscode.WorkspaceFolder): vscode.WorkspaceFolder {
 	const sorted = sortedWorkspaceFolders()
 	for (const element of sorted) {
 		let uri = folder.uri.toString()
@@ -56,7 +47,7 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
 			uri = uri + "/"
 		}
 		if (uri.startsWith(element)) {
-			return workspace.getWorkspaceFolder(Uri.parse(element))
+			return vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(element))
 		}
 	}
 	return folder
@@ -71,7 +62,7 @@ interface InitializationOptions {
 	validate: boolean
 }
 
-async function addClient(serverModule: string, outputChannel: OutputChannel, ws: WorkspaceFolder) {
+async function addClient(serverModule: string, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
 	if (clients.has(ws.uri.toString())) {
 		return
 	}
@@ -91,9 +82,9 @@ async function addClient(serverModule: string, outputChannel: OutputChannel, ws:
 		validate: false,
 	}
 	let base = ws.uri.fsPath
-	const results = await workspace.findFiles(
-		new RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
-		new RelativePattern(ws, "node_modules/**"),
+	const results = await vscode.workspace.findFiles(
+		new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
+		new vscode.RelativePattern(ws, "node_modules/**"),
 		1,
 	)
 	if (results.length === 1) {
@@ -101,14 +92,14 @@ async function addClient(serverModule: string, outputChannel: OutputChannel, ws:
 		initializationOptions.filename = path.basename(results[0].fsPath)
 	}
 	initializationOptions.base = base
-	const tailwindcss = workspace.getConfiguration("tailwindcss", ws)
+	const tailwindcss = vscode.workspace.getConfiguration("tailwindcss", ws)
 	initializationOptions.colorDecorators = tailwindcss.get("colorDecorators")
 	if (typeof initializationOptions.colorDecorators !== "boolean") {
-		initializationOptions.colorDecorators = workspace.getConfiguration("editor", ws).get("colorDecorators")
+		initializationOptions.colorDecorators = vscode.workspace.getConfiguration("editor", ws).get("colorDecorators")
 	}
 	initializationOptions.links = tailwindcss.get("links")
 	if (typeof initializationOptions.links !== "boolean") {
-		initializationOptions.links = workspace.getConfiguration("editor", ws).get("links")
+		initializationOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
 	}
 	initializationOptions.twin = tailwindcss.get("twin")
 	initializationOptions.validate = tailwindcss.get("validate")
@@ -120,8 +111,8 @@ async function addClient(serverModule: string, outputChannel: OutputChannel, ws:
 			pattern: `${base}/**/*`,
 		})),
 		synchronize: {
-			fileEvents: workspace.createFileSystemWatcher(
-				new RelativePattern(ws, "{tailwind.js,tailwind.config.js,package.json}"),
+			fileEvents: vscode.workspace.createFileSystemWatcher(
+				new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js,package.json}"),
 			),
 		},
 		diagnosticCollectionName: CLIENT_ID,
@@ -140,15 +131,15 @@ async function addClient(serverModule: string, outputChannel: OutputChannel, ws:
 	client.start()
 }
 
-let outputChannel: OutputChannel
+let outputChannel: vscode.OutputChannel
 let serverModule: string
 
-export async function activate(context: ExtensionContext) {
-	outputChannel = window.createOutputChannel(CLIENT_ID)
+export async function activate(context: vscode.ExtensionContext) {
+	outputChannel = vscode.window.createOutputChannel(CLIENT_ID)
 	serverModule = context.asAbsolutePath(path.join("out", "server", "server.js"))
-	workspace.onDidChangeConfiguration(e => {
+	vscode.workspace.onDidChangeConfiguration(e => {
 		for (const [w] of clients) {
-			const s = workspace.getWorkspaceFolder(Uri.parse(w))
+			const s = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(w))
 			if (e.affectsConfiguration("tailwindcss", s)) {
 				// const cfg = workspace.getConfiguration("tailwindcss")
 				// const v = cfg.get("logLevel")
@@ -169,7 +160,7 @@ export async function activate(context: ExtensionContext) {
 		}
 	})
 
-	workspace.onDidChangeWorkspaceFolders(async e => {
+	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []
 		for (const ws of e.removed) {
 			const c = clients.get(ws.uri.toString())
@@ -184,7 +175,7 @@ export async function activate(context: ExtensionContext) {
 		return Promise.all(promises)
 	})
 
-	async function didOpenTextDocument(document: TextDocument) {
+	async function didOpenTextDocument(document: vscode.TextDocument) {
 		if (document.uri.scheme !== "file") {
 			return
 		}
@@ -192,7 +183,7 @@ export async function activate(context: ExtensionContext) {
 			return
 		}
 
-		let ws = workspace.getWorkspaceFolder(document.uri)
+		let ws = vscode.workspace.getWorkspaceFolder(document.uri)
 		if (!ws) {
 			return
 		}
@@ -205,8 +196,8 @@ export async function activate(context: ExtensionContext) {
 		await addClient(serverModule, outputChannel, ws)
 	}
 
-	workspace.onDidOpenTextDocument(didOpenTextDocument)
-	workspace.textDocuments.forEach(didOpenTextDocument)
+	vscode.workspace.onDidOpenTextDocument(didOpenTextDocument)
+	vscode.workspace.textDocuments.forEach(didOpenTextDocument)
 }
 
 export async function deactivate() {
