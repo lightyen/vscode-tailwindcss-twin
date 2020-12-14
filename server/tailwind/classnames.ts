@@ -9,18 +9,20 @@ const selectorProcessor = parser()
 const __baseVariants: Record<string, string[]> = {
 	hover: ["&:hover"],
 	focus: ["&:focus"],
-	active: ["&:active"],
-	visited: ["&:visited"],
-	"focus-visible": ["&:focus-visible"],
+	"group-hover": [".group:hover"],
 	"focus-within": ["&:focus-within"],
+	active: ["&:active"],
+	"group-focus": [".group:focus"],
+	"focus-visible": ["&:focus-visible"],
+	"motion-safe": ["@media (prefers-reduced-motion: no-preference)"],
+	"motion-reduce": ["@media (prefers-reduced-motion: reduce)"],
 	disabled: ["&:disabled"],
+	visited: ["&:visited"],
 	checked: ["&:checked"],
 	first: ["&:first-child"],
 	last: ["&:last-child"],
-	even: ["&:nth-child(even)"],
 	odd: ["&:nth-child(odd)"],
-	"group-hover": [".group:hover"],
-	"group-focus": [".group:focus"],
+	even: ["&:nth-child(even)"],
 }
 
 // source: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js

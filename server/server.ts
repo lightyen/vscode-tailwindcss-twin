@@ -29,31 +29,39 @@ export let settings = {
 }
 
 export const connection = createConnection(ProposedFeatures.all)
-export const documents = new TextDocuments(TextDocument)
+export let documents: TextDocuments<TextDocument>
 
 let hasConfigurationCapability = false
-let hasWorkspaceFolderCapability = false
 let hasDiagnosticRelatedInformationCapability = false
 
-connection.onInitialize(async params => {
+connection.onInitialize(async (params, _cancel, progress) => {
 	// interface InitializationOptions extends ConfigPath {}
+	progress.begin("Initializing Tailwind Server")
 	const { capabilities } = params
 	// Does the client support the `workspace/configuration` request?
 	// If not, we fall back using global settings.
 	hasConfigurationCapability = capabilities.workspace?.configuration ?? false
-	hasWorkspaceFolderCapability = capabilities.workspace?.workspaceFolders ?? false
 	hasDiagnosticRelatedInformationCapability =
 		capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
 	settings = params.initializationOptions
 	init(connection, params.initializationOptions)
+	setupDocumentsListeners()
+	progress.done()
 	return {
 		capabilities: {
 			workspace: {
 				workspaceFolders: {
-					supported: hasWorkspaceFolderCapability,
+					supported: true,
 				},
 			},
-			textDocumentSync: TextDocumentSyncKind.Full,
+			textDocumentSync: {
+				openClose: true,
+				change: TextDocumentSyncKind.Full,
+				willSaveWaitUntil: false,
+				save: {
+					includeText: false,
+				},
+			},
 			colorProvider: true,
 			completionProvider: {
 				resolveProvider: true,
@@ -71,11 +79,9 @@ connection.onInitialized(async e => {
 	if (hasConfigurationCapability) {
 		connection.client.register(DidChangeConfigurationNotification.type)
 	}
-	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			console.log("Workspace folder change event received.")
-		})
-	}
+	connection.workspace.onDidChangeWorkspaceFolders(_event => {
+		console.log("Workspace folder change event received.")
+	})
 	if (state) {
 		connection.sendNotification("tailwindcss/info", `userConfig = ${state.userConfig}`)
 		connection.sendNotification("tailwindcss/info", `configPath = ${state.configPath}`)
@@ -149,20 +155,22 @@ connection.onDidChangeConfiguration(async params => {
 	}
 })
 
-documents.onDidChangeContent((...params) => {
-	if (!hasDiagnosticRelatedInformationCapability) {
-		return
-	}
-	return didChangeChangeTextDocument(...params)
-})
-
-documents.onDidOpen((...params) => {
-	if (!hasDiagnosticRelatedInformationCapability) {
-		return
-	}
-	return didOpenTextDocument(...params)
-})
-documents.listen(connection)
+function setupDocumentsListeners() {
+	documents = new TextDocuments(TextDocument)
+	documents.listen(connection)
+	documents.onDidOpen((...params) => {
+		if (!hasDiagnosticRelatedInformationCapability) {
+			return
+		}
+		return didOpenTextDocument(...params)
+	})
+	documents.onDidChangeContent((...params) => {
+		if (!hasDiagnosticRelatedInformationCapability) {
+			return
+		}
+		return didChangeChangeTextDocument(...params)
+	})
+}
 
 connection.onCompletion(completion)
 connection.onCompletionResolve(completionResolve)
