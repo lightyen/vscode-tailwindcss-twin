@@ -189,7 +189,7 @@ function getCompletionItem({
 		label,
 		data: { type: "class", data, value, variants, kind },
 		kind: CompletionItemKind.Constant,
-		sortText: (label[0] === "-" ? "~~~" : "~~") + label,
+		sortText: (label[0] === "-" ? "~~~" : "~~") + toNumberPostfix(label),
 	}
 
 	const color = getColors()[label]
@@ -212,9 +212,21 @@ function getCompletionItem({
 		return item
 	}
 
-	const parts = item.label.split("-")
-	item.sortText = [...parts.slice(0, parts.length - 1), parts[parts.length - 1].padStart(4, " ")].join("-")
 	item.documentation = color
 	item.data.type = "color"
 	return item
+}
+
+function toNumberPostfix(label: string) {
+	const reg = /((?:[\w-]+-)+)+([\d/.]+)/
+	const m = label.match(reg)
+	if (!m) {
+		return label
+	}
+	const val = eval(m[2])
+	if (typeof val !== "number") {
+		return label
+	}
+	const prefix = m[1]
+	return prefix + val.toFixed(3).padStart(7, "0")
 }
