@@ -1,7 +1,7 @@
 {
-  "name": "tailwindcss-intellisense",
+  "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind CSS IntelliSense",
-  "description": "Tailwind CSS Extension for VS Code",
+  "description": "Tailwind CSS Extension with twin features for VS Code",
   "version": "0.0.1",
   "author": "lightyen",
   "license": "MIT",
@@ -21,6 +21,7 @@
     "tailwindcss",
     "intellisense",
     "autocomplete",
+    "twin",
     "vscode"
   ],
   "engines": {
@@ -31,7 +32,7 @@
   },
   "icon": "media/icon.png",
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "main": "./out/client/extension.js",
   "scripts": {
