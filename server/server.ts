@@ -36,7 +36,6 @@ let hasDiagnosticRelatedInformationCapability = false
 
 connection.onInitialize(async (params, _cancel, progress) => {
 	// interface InitializationOptions extends ConfigPath {}
-	progress.begin("Initializing Tailwind Server")
 	const { capabilities } = params
 	// Does the client support the `workspace/configuration` request?
 	// If not, we fall back using global settings.
@@ -44,9 +43,10 @@ connection.onInitialize(async (params, _cancel, progress) => {
 	hasDiagnosticRelatedInformationCapability =
 		capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
 	settings = params.initializationOptions
-	init(connection, params.initializationOptions)
-	setupDocumentsListeners()
+	progress.begin("Initializing Tailwind CSS features")
+	await init(connection, params.initializationOptions)
 	progress.done()
+	setupDocumentsListeners()
 	return {
 		capabilities: {
 			workspace: {

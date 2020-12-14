@@ -119,6 +119,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		workspaceFolder: ws,
 		outputChannel: outputChannel,
 		middleware: {},
+		progressOnInitialization: true,
 		initializationOptions,
 	}
 
