@@ -2,106 +2,129 @@ import fs from "fs"
 import path from "path"
 import Module from "module"
 
-export const __dynamic_require__ =
-	process.env.NODE_ENV === "production" ? __non_webpack_require__ : __non_webpack_require__
+interface PnpEntry {
+	resolveRequest?(moduleId: string, base: string): string
+	setup?(): void
+}
 
-export function resolveModule({
-	base,
-	moduleId,
-	silent,
-}: {
-	base: string
-	moduleId: string
-	silent?: boolean
-}): string {
-	if (!base) {
-		return __dynamic_require__.resolve(moduleId)
-	}
-	try {
-		base = fs.realpathSync(base)
-	} catch (error) {
-		if (error.code === "ENOENT") {
-			base = path.resolve(base)
-		} else {
+export class TModule {
+	static resolve({ base, moduleId, silent }: { base: string; moduleId: string; silent?: boolean }): string {
+		if (!base) {
+			return __non_webpack_require__.resolve(moduleId)
+		}
+		try {
+			base = fs.realpathSync(base)
+		} catch (error) {
+			if (error.code === "ENOENT") {
+				base = path.resolve(base)
+			} else {
+				if (silent) {
+					return undefined
+				}
+				throw error
+			}
+		}
+
+		const resolve = () =>
+			Module["_resolveFilename"](moduleId, {
+				id: null,
+				filename: null,
+				paths: Module["_nodeModulePaths"](base),
+			})
+
+		try {
+			return resolve()
+		} catch (err) {
 			if (silent) {
 				return undefined
 			}
-			throw error
+			throw err
 		}
 	}
 
-	const resolve = () =>
-		Module["_resolveFilename"](moduleId, {
-			id: null,
-			filename: null,
-			paths: Module["_nodeModulePaths"](base),
-		})
-
-	try {
-		return resolve()
-	} catch (err) {
-		if (silent) {
-			return undefined
-		}
-		throw err
-	}
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function requireModule<T = any>({
-	base,
-	moduleId,
-	removeCache,
-	silent,
-}: {
-	base?: string
-	moduleId: string
-	removeCache?: boolean
-	silent?: boolean
-}): T {
-	const m = resolveModule({ base, moduleId, silent })
-	if (!m) {
-		return undefined
-	}
-	if (removeCache === true) {
-		delete __dynamic_require__.cache[m]
-	}
-	return __dynamic_require__(m)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function requirePnpModule<T = any>({
-	base,
-	moduleId,
-	removeCache,
-	silent,
-	pnp,
-}: {
-	base: string
-	moduleId: string
-	removeCache?: boolean
-	silent?: boolean
-	pnp: {
-		resolveRequest(id: string, from: string): string
-		setup(): void
-	}
-}): T {
-	if (!base || !moduleId) {
-		return undefined
-	}
-	try {
-		const m = __dynamic_require__(pnp.resolveRequest(moduleId, base))
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	static require<T = any>({
+		base,
+		moduleId,
+		removeCache,
+		silent,
+	}: {
+		base?: string
+		moduleId: string
+		removeCache?: boolean
+		silent?: boolean
+	}): T {
+		const m = TModule.resolve({ base, moduleId, silent })
 		if (!m) {
 			return undefined
 		}
 		if (removeCache === true) {
-			delete __dynamic_require__.cache[m]
+			delete __non_webpack_require__.cache[m]
 		}
-		return __dynamic_require__(m)
-	} catch (err) {
-		if (silent) {
+		return __non_webpack_require__(m)
+	}
+
+	private userSpace: string
+	private isPnp = false // user is using pnp.
+	private pnp: PnpEntry
+
+	constructor(userSpace: string) {
+		this.userSpace = userSpace || ""
+		if (this.userSpace !== "") {
+			try {
+				this.pnp = TModule.require({
+					base: this.userSpace,
+					moduleId: "./.pnp.js",
+					silent: true,
+					removeCache: true,
+				})
+				if (this.pnp) {
+					this.pnp.setup?.()
+					this.isPnp = true
+				}
+			} catch (err) {}
+		}
+	}
+
+	private pnpResolve({ moduleId, base, silent }: { moduleId: string; base: string; silent?: boolean }): string {
+		try {
+			return this.pnp.resolveRequest?.(moduleId, base)
+		} catch (err) {
+			if (silent) {
+				return undefined
+			}
+			throw err
+		}
+	}
+
+	resolve({ base = "", moduleId, silent }: { base: string; moduleId: string; silent?: boolean }) {
+		const { isPnp } = this
+		if (isPnp) {
+			return this.pnpResolve({ moduleId, base, silent })
+		} else {
+			return TModule.resolve({ moduleId, base, silent })
+		}
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	require<T = any>({
+		base = "",
+		moduleId,
+		removeCache,
+		silent,
+	}: {
+		base: string
+		moduleId: string
+		removeCache?: boolean
+		silent?: boolean
+	}): T {
+		const m = this.resolve({ base, moduleId, silent })
+		if (!m) {
 			return undefined
 		}
-		throw err
+		if (removeCache === true) {
+			delete __non_webpack_require__.cache[m]
+		}
+		return __non_webpack_require__(m)
 	}
 }

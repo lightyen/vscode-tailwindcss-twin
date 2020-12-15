@@ -18,7 +18,6 @@ import hover from "./hover"
 import colorDecoration from "./colorDecoration"
 import { didOpenTextDocument, didChangeChangeTextDocument } from "./document"
 import { validateTextDocument } from "./diagnostics"
-import { requireModule, resolveModule } from "./tailwind/module"
 
 export let settings = {
 	base: "",
@@ -105,13 +104,12 @@ connection.onDidChangeWatchedFiles(async ({ changes }) => {
 	if (result.length === 1) {
 		settings.base = path.dirname(result[0])
 		settings.filename = path.basename(result[0])
-
 		await init(connection, settings)
 	} else {
 		for (const f of changes) {
 			const p = URI.parse(f.uri).fsPath
-			settings.base = path.basename(p)
-			settings.filename = ""
+			settings.base = path.dirname(p)
+			settings.filename = path.basename(p)
 			await init(connection, settings)
 			break
 		}

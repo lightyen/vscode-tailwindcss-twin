@@ -1,7 +1,7 @@
 import path from "path"
 import type { Postcss, Plugin, Result } from "postcss"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
-import { requireModule, requirePnpModule, resolveModule } from "./module"
+import { TModule } from "./module"
 
 export interface TailwindConfig {
 	purge: string[]
@@ -40,19 +40,19 @@ interface _Payload {
 	darkMode: false | "media" | "class" // user darkMode
 }
 
-function getConfig(payload: _Payload, { base, filename }: { base: string; filename: string }) {
+function getConfig(payload: _Payload, { base, filename, m }: { base: string; filename: string; m: TModule }) {
 	try {
 		const moduleId = "./" + filename
-		payload.config = requireModule({ base, moduleId, removeCache: true })
-		payload.configPath = resolveModule({ base, moduleId })
+		payload.config = TModule.require({ base, moduleId, removeCache: true })
+		payload.configPath = TModule.resolve({ base, moduleId })
 		payload.userConfig = true
 	} catch (err) {
 		if (!payload.tailwindInstalled) {
 			base = ""
 		}
 		const moduleId = "tailwindcss/defaultConfig"
-		payload.config = requireModule({ base, moduleId, removeCache: true })
-		payload.configPath = resolveModule({ base, moduleId })
+		payload.config = m.require({ base, moduleId, removeCache: true })
+		payload.configPath = m.resolve({ base, moduleId })
 	}
 	const userSeparator = payload.config.separator
 	payload.separator = userSeparator && typeof userSeparator === "string" ? userSeparator : ":"
@@ -60,42 +60,26 @@ function getConfig(payload: _Payload, { base, filename }: { base: string; filena
 	payload.darkMode = payload.config.darkMode
 }
 
-function findTailwind(payload: _Payload) {
-	const tailwindRoot = path.dirname(resolveModule({ base: "./", moduleId: "tailwindcss/package.json", silent: true }))
-	if (!tailwindRoot) {
-		const pnp = requireModule({ base: "./", moduleId: "./.pnp.js", silent: true })
-		if (pnp) {
-			pnp.setup()
-		}
-		const info = requirePnpModule({ pnp, base: "./", moduleId: "tailwindcss/package.json" })
-		if (info) {
-			console.log(info)
-		}
-	}
-}
-
-function prepareTailwind(payload: _Payload, base: string, exceptInstalled: boolean) {
-	if (!exceptInstalled) {
-		base = ""
-	}
-	const tailwindRoot = path.dirname(resolveModule({ base, moduleId: "tailwindcss/package.json" }))
-	payload.tailwindcss = requireModule({ base, moduleId: "tailwindcss", removeCache: true })
-	payload.versions.tailwindcss = requireModule({
+function prepareTailwind(payload: _Payload, base: string) {
+	const m = new TModule(base)
+	const tailwindRoot = path.dirname(m.resolve({ base, moduleId: "tailwindcss/package.json" }))
+	payload.tailwindcss = m.require({ base, moduleId: "tailwindcss", removeCache: true })
+	payload.versions.tailwindcss = m.require({
 		base,
 		moduleId: "tailwindcss/package.json",
 		removeCache: true,
 	}).version
 	try {
-		payload.postcss = requireModule<Postcss>({ base, moduleId: "postcss", removeCache: true })
-		payload.versions.postcss = requireModule({
+		payload.postcss = m.require<Postcss>({ base, moduleId: "postcss", removeCache: true })
+		payload.versions.postcss = m.require({
 			base,
 			moduleId: "postcss/package.json",
 			removeCache: true,
 		}).version
 	} catch {
 		try {
-			payload.postcss = requireModule<Postcss>({ base: tailwindRoot, moduleId: "postcss", removeCache: true })
-			payload.versions.postcss = requireModule({
+			payload.postcss = m.require<Postcss>({ base: tailwindRoot, moduleId: "postcss", removeCache: true })
+			payload.versions.postcss = m.require({
 				base: tailwindRoot,
 				moduleId: "postcss/package.json",
 				removeCache: true,
@@ -105,6 +89,7 @@ function prepareTailwind(payload: _Payload, base: string, exceptInstalled: boole
 		}
 	}
 	payload.tailwindRoot = tailwindRoot
+	return m
 }
 
 interface Params extends ConfigPath {
@@ -120,23 +105,23 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 		config: undefined,
 		darkMode: undefined,
 	}
-
+	let m: TModule
 	try {
-		const packageJSON = requireModule({ base, moduleId: "./package.json", removeCache: true })
+		const packageJSON = TModule.require({ base, moduleId: "./package.json", removeCache: true })
 		if (!packageJSON?.dependencies?.tailwindcss && !packageJSON?.devDependencies?.tailwindcss) {
 			throw Error("tailwindcss is not installed")
 		}
 		if (!packageJSON?.dependencies?.postcss && !packageJSON?.devDependencies?.postcss) {
 			throw Error("postcss is not installed")
 		}
-		prepareTailwind(payload, base, true)
+		m = prepareTailwind(payload, base)
 		payload.tailwindInstalled = true
 	} catch (err) {
-		prepareTailwind(payload, base, false)
+		m = prepareTailwind(payload, "")
 	}
 
 	let postcssResults: [Result, Result, Result]
-	getConfig(payload, { base, filename })
+	getConfig(payload, { base, filename, m })
 
 	// TODO: apply plugin
 
