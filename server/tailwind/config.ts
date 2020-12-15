@@ -1,7 +1,7 @@
 import path from "path"
 import type { Postcss, Plugin, Result } from "postcss"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
-import { requireModule, resolveModule } from "./module"
+import { requireModule, requirePnpModule, resolveModule } from "./module"
 
 export interface TailwindConfig {
 	purge: string[]
@@ -60,7 +60,21 @@ function getConfig(payload: _Payload, { base, filename }: { base: string; filena
 	payload.darkMode = payload.config.darkMode
 }
 
-function findTailwind(payload: _Payload, base: string, exceptInstalled: boolean) {
+function findTailwind(payload: _Payload) {
+	const tailwindRoot = path.dirname(resolveModule({ base: "./", moduleId: "tailwindcss/package.json", silent: true }))
+	if (!tailwindRoot) {
+		const pnp = requireModule({ base: "./", moduleId: "./.pnp.js", silent: true })
+		if (pnp) {
+			pnp.setup()
+		}
+		const info = requirePnpModule({ pnp, base: "./", moduleId: "tailwindcss/package.json" })
+		if (info) {
+			console.log(info)
+		}
+	}
+}
+
+function prepareTailwind(payload: _Payload, base: string, exceptInstalled: boolean) {
 	if (!exceptInstalled) {
 		base = ""
 	}
@@ -115,10 +129,10 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 		if (!packageJSON?.dependencies?.postcss && !packageJSON?.devDependencies?.postcss) {
 			throw Error("postcss is not installed")
 		}
-		findTailwind(payload, base, true)
+		prepareTailwind(payload, base, true)
 		payload.tailwindInstalled = true
 	} catch (err) {
-		findTailwind(payload, base, false)
+		prepareTailwind(payload, base, false)
 	}
 
 	let postcssResults: [Result, Result, Result]

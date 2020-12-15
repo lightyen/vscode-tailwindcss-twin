@@ -18,6 +18,7 @@ import hover from "./hover"
 import colorDecoration from "./colorDecoration"
 import { didOpenTextDocument, didChangeChangeTextDocument } from "./document"
 import { validateTextDocument } from "./diagnostics"
+import { requireModule, resolveModule } from "./tailwind/module"
 
 export let settings = {
 	base: "",
@@ -79,6 +80,7 @@ connection.onInitialized(async e => {
 	if (hasConfigurationCapability) {
 		connection.client.register(DidChangeConfigurationNotification.type)
 	}
+
 	connection.workspace.onDidChangeWorkspaceFolders(_event => {
 		console.log("Workspace folder change event received.")
 	})
