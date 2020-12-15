@@ -137,7 +137,7 @@ let serverModule: string
 
 export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel(CLIENT_ID)
-	serverModule = context.asAbsolutePath(path.join("out", "server", "server.js"))
+	serverModule = context.asAbsolutePath(path.join("dist", "server", "server.js"))
 	vscode.workspace.onDidChangeConfiguration(e => {
 		for (const [w] of clients) {
 			const s = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(w))

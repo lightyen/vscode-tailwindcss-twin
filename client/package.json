@@ -9,8 +9,8 @@
   },
   "devDependencies": {
     "@types/chroma-js": "^2.1.2",
-    "@types/node": "^14.14.9",
-    "@types/vscode": "^1.43.0",
+    "@types/node": "^14.14.13",
+    "@types/vscode": "^1.52.0",
     "chroma-js": "^2.1.0",
     "vscode-languageclient": "^6.1.3"
   }

@@ -50,7 +50,7 @@ async function getHoverContents({
 			if (data.length === 0) {
 				text.push(value)
 			} else {
-				text.push(`${data.join(", ")} {}`)
+				text.push(`${data.join(", ")}`)
 			}
 			return {
 				kind: MarkupKind.Markdown,

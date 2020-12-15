@@ -4,7 +4,8 @@
     "module": "commonjs",
     "target": "ES2019",
     "lib": ["ESNext"],
-    "types": ["webpack-env", "@types/jest"],
+    "types": ["@types/node", "webpack-env", "@types/jest"],
+    "moduleResolution": "node",
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -26,6 +27,5 @@
       "~/*": ["./*"]
     }
   },
-  "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts"],
-  "include": ["."]
+  "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

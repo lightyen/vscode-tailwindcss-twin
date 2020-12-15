@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2019",
+    "target": "es2019",
     "lib": ["ESNext"],
+    "moduleResolution": "node",
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -18,8 +19,7 @@
     "strictNullChecks": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "sourceMap": true,
-    "noEmit": true
+    "sourceMap": true
   },
   "references": [{ "path": "./client" }, { "path": "./server" }],
   "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts"]

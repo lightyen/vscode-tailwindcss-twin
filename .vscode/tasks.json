@@ -3,16 +3,6 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "compile",
-      "group": "build",
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "type": "npm",
       "script": "watch",
       "isBackground": true,
       "group": {

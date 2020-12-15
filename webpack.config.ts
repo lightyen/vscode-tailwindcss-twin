@@ -5,7 +5,6 @@ import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import { CleanWebpackPlugin } from "clean-webpack-plugin"
-import { merge } from "webpack-merge"
 
 class ExternalsVendorPlugin {
 	externals: Record<string, string>
@@ -20,43 +19,32 @@ class ExternalsVendorPlugin {
 	}
 }
 
-const base: Configuration = {
+const clientWorkspaceFolder = path.resolve(__dirname, "client")
+const serverWorkspaceFolder = path.resolve(__dirname, "server")
+
+const configClient: Configuration = {
 	target: "node",
 	mode: process.env.NODE_ENV === "production" ? "production" : "development",
+	devtool: process.env.NODE_ENV === "production" ? "inline-source-map" : "source-map",
+	entry: path.join(clientWorkspaceFolder, "extension.ts"),
 	output: {
+		path: path.resolve(__dirname, "dist"),
+		filename: "extension.js",
 		libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
 	module: {
 		rules: [
 			{
-				test: /\.ya?ml$/,
-				use: "js-yaml-loader",
-			},
-		],
-	},
-	devtool: process.env.NODE_ENV === "production" ? "inline-source-map" : "source-map",
-	plugins: [new ESLintPlugin({ extensions: ["ts"] })],
-}
-
-const clientWorkspaceFolder = path.resolve(process.cwd(), "client")
-const serverWorkspaceFolder = path.resolve(process.cwd(), "server")
-
-const configClient = merge(base, {
-	entry: path.join(clientWorkspaceFolder, "extension.ts"),
-	output: {
-		path: path.resolve(process.cwd(), "out/client"),
-		filename: "extension.js",
-	},
-	module: {
-		rules: [
-			{
 				test: /\.ts$/,
-				exclude: /node_modules|\.test\.ts/,
+				exclude: /node_modules|\.test\.ts$/,
 				use: [
 					{
 						loader: "ts-loader",
-						options: { happyPackMode: true, context: path.resolve(clientWorkspaceFolder, "tsconfig.json") },
+						options: {
+							transpileOnly: true,
+							context: clientWorkspaceFolder,
+						},
 					},
 				],
 			},
@@ -73,27 +61,37 @@ const configClient = merge(base, {
 			},
 		}),
 		new ExternalsVendorPlugin("vscode"),
-		new CleanWebpackPlugin({ cleanAfterEveryBuildPatterns: ["**/*", "!server*"] }),
+		new ESLintPlugin({ extensions: ["ts"] }),
+		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
 	],
-})
+}
 
-const configServer = merge(base, {
+const configServer: Configuration = {
+	target: "node",
+	mode: process.env.NODE_ENV === "production" ? "production" : "development",
+	devtool: process.env.NODE_ENV === "production" ? "inline-source-map" : "source-map",
 	entry: path.join(serverWorkspaceFolder, "server.ts"),
 	output: {
-		path: path.resolve(process.cwd(), "out/server"),
-		filename: "server.js",
+		path: path.resolve(__dirname, "dist"),
+		filename: "server/server.js",
+		libraryTarget: "commonjs2",
+		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
 	module: {
 		rules: [
 			{
 				test: /\.ts$/,
-				exclude: /node_modules|\.test\.ts/,
+				exclude: /node_modules|\.test\.ts$/,
 				use: [
 					{
 						loader: "ts-loader",
-						options: { happyPackMode: true, context: path.resolve(serverWorkspaceFolder, "tsconfig.json") },
+						options: { transpileOnly: true, context: serverWorkspaceFolder },
 					},
 				],
+			},
+			{
+				test: /\.ya?ml$/,
+				use: "js-yaml-loader",
 			},
 		],
 	},
@@ -107,8 +105,9 @@ const configServer = merge(base, {
 				configFile: path.resolve(serverWorkspaceFolder, "tsconfig.json"),
 			},
 		}),
-		new CleanWebpackPlugin({ cleanAfterEveryBuildPatterns: ["**/*", "!client*"] }),
+		new ESLintPlugin({ extensions: ["ts"] }),
+		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["server*"] }),
 	],
-})
+}
 
 export default [configClient, configServer]

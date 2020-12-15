@@ -206,7 +206,7 @@ function getCompletionItem({
 	}
 
 	if (color === "transparent") {
-		item.documentation = { kind: MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.01)" }
+		item.documentation = { kind: MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.0)" }
 		item.data.type = "color"
 		item.data.data = "transparent"
 		return item
@@ -223,10 +223,14 @@ function toNumberPostfix(label: string) {
 	if (!m) {
 		return label
 	}
-	const val = eval(m[2])
-	if (typeof val !== "number") {
+	try {
+		const val = eval(m[2])
+		if (typeof val !== "number") {
+			return label
+		}
+		const prefix = m[1]
+		return prefix + val.toFixed(3).padStart(7, "0")
+	} catch {
 		return label
 	}
-	const prefix = m[1]
-	return prefix + val.toFixed(3).padStart(7, "0")
 }

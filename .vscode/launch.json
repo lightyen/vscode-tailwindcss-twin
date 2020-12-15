@@ -3,28 +3,25 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Client",
       "type": "extensionHost",
       "request": "launch",
-      "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
-      "outFiles": ["${workspaceRoot}/out/**/*.js"],
-      "sourceMaps": true,
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "preLaunchTask": {
         "type": "npm",
         "script": "watch"
-      },
-      "postDebugTask": ""
+      }
     },
     {
+      "name": "Attach to Server",
       "type": "node",
       "request": "attach",
-      "name": "Attach to Server",
       "port": 6011,
       "address": "localhost",
       "protocol": "inspector",
-      "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/out/**/*.js"]
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }
   ],
   "compounds": [

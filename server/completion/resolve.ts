@@ -102,7 +102,7 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 			if (data.length === 0) {
 				text.push(item.label)
 			} else {
-				text.push(`${data.join(", ")} {}`)
+				text.push(`${data.join(", ")}`)
 			}
 			item.documentation = {
 				kind: MarkupKind.Markdown,

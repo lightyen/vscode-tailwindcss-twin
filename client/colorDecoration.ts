@@ -12,16 +12,28 @@ class ColorMap {
 		if (this.colorMap.has(color)) {
 			return this.colorMap.get(color)
 		}
-		const c = chroma(color)
+		const c = chroma(color !== "transparent" ? color : "rgba(0, 0, 0, 0.0)")
 		const x = 0.3
-		const decorationType = vscode.window.createTextEditorDecorationType({
+		const options: vscode.DecorationRenderOptions = {
+			borderWidth: "3px",
+			borderStyle: "solid",
 			backgroundColor: c.css(),
 			borderColor: c.css(),
-			// borderColor: c.luminance() < x ? c.brighten(x).css() : c.darken(x).css(),
-			borderWidth: "2px",
-			borderStyle: "solid",
-			color: c.luminance() < x ? "rgb(227, 227, 227)" : "rgb(28, 28, 28)",
-		})
+			color: c.luminance() < x ? "rgb(227, 227, 227, 0.9)" : "rgb(28, 28, 28, 0.9)",
+		}
+		if (color === "transparent") {
+			options.light = {
+				color: "rgb(28, 28, 28, 0.7)",
+				borderColor: "rgba(28, 28, 28, 0.1)",
+				borderStyle: "dashed",
+			}
+			options.dark = {
+				color: "rgb(227, 227, 227, 0.7)",
+				borderColor: "rgba(227, 227, 227, 0.1)",
+				borderStyle: "dashed",
+			}
+		}
+		const decorationType = vscode.window.createTextEditorDecorationType(options)
 		this.colorMap.set(color, decorationType)
 		return decorationType
 	}
@@ -58,7 +70,7 @@ export default async function ({ client }: { client: LanguageClient }) {
 			return
 		}
 		const list = new Map<string, { color: string; ranges: vscode.Range[] }>()
-		const rs = colors.filter(({ color }) => color !== "currentColor" && color !== "transparent")
+		const rs = colors.filter(({ color }) => color !== "currentColor")
 		rs.forEach(c => {
 			if (!list.has(c.color)) {
 				list.set(c.color, { color: c.color, ranges: [] })
