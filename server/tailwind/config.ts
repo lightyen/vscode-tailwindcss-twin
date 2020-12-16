@@ -6,7 +6,7 @@ import { TModule } from "./module"
 export interface TailwindConfig {
 	purge: string[]
 	darkMode: false | "media" | "class"
-	theme: Record<string, any>
+	theme: Record<string, unknown>
 	plugins: unknown[]
 	separator: string
 	corePlugins: unknown
