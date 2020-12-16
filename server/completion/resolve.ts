@@ -16,6 +16,10 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		kind: PatternKind
 	}
 
+	if (kind === "twinTheme") {
+		return item
+	}
+
 	if (kind === "twin") {
 		switch (item.label) {
 			case "content":

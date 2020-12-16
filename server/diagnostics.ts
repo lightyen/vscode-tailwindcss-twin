@@ -23,6 +23,9 @@ export function validateTextDocument(document: TextDocument) {
 
 	for (const pattern of patterns) {
 		const { lpat, rpat, kind } = pattern
+		if (kind === "twinTheme") {
+			continue
+		}
 		findMatch({
 			text,
 			lpat,

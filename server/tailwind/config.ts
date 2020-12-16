@@ -6,7 +6,7 @@ import { TModule } from "./module"
 export interface TailwindConfig {
 	purge: string[]
 	darkMode: false | "media" | "class"
-	theme: unknown
+	theme: Record<string, any>
 	plugins: unknown[]
 	separator: string
 	corePlugins: unknown
@@ -26,8 +26,9 @@ export interface ConfigPath {
 
 interface _Payload {
 	tailwindcss?: (config: string | TailwindConfig) => Plugin
+	tailwindcssResolveConfig?: (config: TailwindConfig) => TailwindConfig
 	tailwindRoot?: string
-	tailwindInstalled: boolean
+	postcssRoot?: string
 	postcss?: Postcss
 	versions: {
 		tailwindcss?: string
@@ -47,7 +48,8 @@ function getConfig(payload: _Payload, { base, filename, m }: { base: string; fil
 		payload.configPath = TModule.resolve({ base, moduleId })
 		payload.userConfig = true
 	} catch (err) {
-		if (!payload.tailwindInstalled) {
+		if (!payload.tailwindRoot) {
+			// use extension embedded lib
 			base = ""
 		}
 		const moduleId = "tailwindcss/defaultConfig"
@@ -64,31 +66,36 @@ function prepareTailwind(payload: _Payload, base: string) {
 	const m = new TModule(base)
 	const tailwindRoot = path.dirname(m.resolve({ base, moduleId: "tailwindcss/package.json" }))
 	payload.tailwindcss = m.require({ base, moduleId: "tailwindcss", removeCache: true })
+	payload.tailwindcssResolveConfig = m.require({ base, moduleId: "tailwindcss/resolveConfig", removeCache: true })
 	payload.versions.tailwindcss = m.require({
 		base,
 		moduleId: "tailwindcss/package.json",
 		removeCache: true,
 	}).version
+	payload.tailwindRoot = tailwindRoot
 	try {
+		const postcssRoot = path.dirname(m.resolve({ base, moduleId: "postcss" }))
 		payload.postcss = m.require<Postcss>({ base, moduleId: "postcss", removeCache: true })
 		payload.versions.postcss = m.require({
 			base,
 			moduleId: "postcss/package.json",
 			removeCache: true,
 		}).version
+		payload.postcssRoot = postcssRoot
 	} catch {
 		try {
+			const postcssRoot = path.dirname(m.resolve({ base: tailwindRoot, moduleId: "postcss" }))
 			payload.postcss = m.require<Postcss>({ base: tailwindRoot, moduleId: "postcss", removeCache: true })
 			payload.versions.postcss = m.require({
 				base: tailwindRoot,
 				moduleId: "postcss/package.json",
 				removeCache: true,
 			}).version
+			payload.postcssRoot = postcssRoot
 		} finally {
 			// postcss is not found
 		}
 	}
-	payload.tailwindRoot = tailwindRoot
 	return m
 }
 
@@ -100,7 +107,6 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 	const payload: _Payload = {
 		versions: {},
 		separator: ":",
-		tailwindInstalled: false,
 		userConfig: false,
 		config: undefined,
 		darkMode: undefined,
@@ -115,7 +121,6 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 			throw Error("postcss is not installed")
 		}
 		m = prepareTailwind(payload, base)
-		payload.tailwindInstalled = true
 	} catch (err) {
 		m = prepareTailwind(payload, "")
 	}
@@ -142,6 +147,7 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 				processer.process(`@tailwind components;`, { from: undefined }),
 				processer.process(`@tailwind utilities;`, { from: undefined }),
 			])
+			payload.config = payload.tailwindcssResolveConfig(payload.config)
 		} else {
 			throw Error("tailwindcss is not found.")
 		}

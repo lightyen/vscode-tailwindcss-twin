@@ -86,8 +86,9 @@ connection.onInitialized(async e => {
 	if (state) {
 		connection.sendNotification("tailwindcss/info", `userConfig = ${state.userConfig}`)
 		connection.sendNotification("tailwindcss/info", `configPath = ${state.configPath}`)
-		connection.sendNotification("tailwindcss/info", `tailwindInstalled = ${state.tailwindInstalled}`)
+		connection.sendNotification("tailwindcss/info", `tailwindRoot = ${state.tailwindRoot}`)
 		connection.sendNotification("tailwindcss/info", `tailwindcss version = ${state.versions.tailwindcss}`)
+		connection.sendNotification("tailwindcss/info", `postcssRoot = ${state.postcssRoot}`)
 		connection.sendNotification("tailwindcss/info", `postcss version = ${state.versions.postcss}`)
 		connection.sendNotification("tailwindcss/info", `user separator = ${state.separator}`)
 		connection.sendNotification("tailwindcss/info", `inner separator = ${state.config.separator}`)
@@ -95,6 +96,7 @@ connection.onInitialized(async e => {
 		connection.sendNotification("tailwindcss/info", `documentLinks = ${settings.links}`)
 		connection.sendNotification("tailwindcss/info", `twin = ${settings.twin}`)
 		connection.sendNotification("tailwindcss/info", `validate = ${settings.validate}`)
+		// connection.sendNotification("tailwindcss/info", `theme = ${state.config.theme.colors.red["100"]}`)
 	}
 })
 
@@ -118,9 +120,10 @@ connection.onDidChangeWatchedFiles(async ({ changes }) => {
 	if (state) {
 		connection.sendNotification("tailwindcss/info", `userConfig = ${state.userConfig}`)
 		connection.sendNotification("tailwindcss/info", `configPath = ${state.configPath}`)
-		connection.sendNotification("tailwindcss/info", `tailwindInstalled = ${state.tailwindInstalled}`)
+		connection.sendNotification("tailwindcss/info", `tailwindRoot = ${state.tailwindRoot}`)
 		connection.sendNotification("tailwindcss/info", `tailwindcss version = ${state.versions.tailwindcss}`)
 		connection.sendNotification("tailwindcss/info", `postcss version = ${state.versions.postcss}`)
+		connection.sendNotification("tailwindcss/info", `postcssRoot = ${state.postcssRoot}`)
 		connection.sendNotification("tailwindcss/info", `user separator = ${state.separator}`)
 		connection.sendNotification("tailwindcss/info", `inner separator = ${state.config.separator}`)
 	}

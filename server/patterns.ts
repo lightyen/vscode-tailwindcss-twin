@@ -6,7 +6,7 @@ import { Token } from "./typings"
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "html" | "javascript" | "javascriptreact" | "plaintext" | "typescript" | "typescriptreact"
 
-export type PatternKind = "twin" | "html" | "jsx"
+export type PatternKind = "twin" | "html" | "jsx" | "twinTheme"
 
 export type PatternInitParams = {
 	lpat: string | RegExp
@@ -69,6 +69,15 @@ const twinPatterns: Pattern[] = [
 		handleBrackets: true,
 		handleImportant: true,
 		id: "twin.03",
+	}),
+	new Pattern({
+		lpat: "theme`",
+		rpat: "`",
+		type: "single",
+		languages: ["javascriptreact", "typescriptreact", "javascript", "typescript"],
+		handleBrackets: false,
+		handleImportant: false,
+		id: "twinTheme.01",
 	}),
 ]
 

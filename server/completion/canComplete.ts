@@ -2,13 +2,12 @@ import { Range, TextDocumentPositionParams } from "vscode-languageserver"
 
 import { documents } from "~/server"
 import { getPatterns, canMatch } from "~/patterns"
-import { findClasses } from "~/find"
-import { getSeparator } from "~/common"
 
 export default function canComplete({ textDocument, position }: TextDocumentPositionParams) {
 	const document = documents.get(textDocument.uri)
 	const patterns = getPatterns({ document })
-	for (const { type, lpat, rpat, handleBrackets, handleImportant, ...rest } of patterns) {
+	for (const pattern of patterns) {
+		const { type, lpat, rpat } = pattern
 		let range: Range
 		if (type === "single") {
 			range = {
@@ -22,7 +21,6 @@ export default function canComplete({ textDocument, position }: TextDocumentPosi
 			}
 		}
 		const text = document.getText(range)
-
 		const offset = document.offsetAt(position)
 		const index = offset - document.offsetAt(range.start)
 		const match = canMatch({
@@ -35,16 +33,10 @@ export default function canComplete({ textDocument, position }: TextDocumentPosi
 		if (!match) {
 			continue
 		}
-		const [start, , classes] = match
 		return {
-			...rest,
-			...findClasses({
-				classes,
-				index: index - start,
-				separator: getSeparator(),
-				handleBrackets,
-				handleImportant,
-			}),
+			pattern,
+			index,
+			match,
 		}
 	}
 	return null

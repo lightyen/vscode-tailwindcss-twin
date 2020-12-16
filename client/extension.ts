@@ -72,7 +72,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		debug: {
 			module: serverModule,
 			transport: TransportKind.ipc,
-			options: { execArgv: ["--nolazy", `--inspect=${6011 + clients.size}`] },
+			options: { execArgv: ["--nolazy", "--inspect=6009"] },
 		},
 	}
 	const initializationOptions: InitializationOptions = {

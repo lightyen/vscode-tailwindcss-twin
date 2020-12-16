@@ -1,6 +1,6 @@
 // dash word issue: https://github.com/microsoft/language-server-protocol/issues/937
 
-import { Connection, CompletionItem, CompletionItemKind, MarkupKind } from "vscode-languageserver"
+import * as lsp from "vscode-languageserver"
 
 import { CSSRuleItem, state } from "~/tailwind"
 import {
@@ -16,11 +16,14 @@ import {
 	getSeparator,
 	getColors,
 } from "~/common"
-import { PatternKind } from "~/patterns"
+import { Pattern, PatternKind } from "~/patterns"
 
 import canComplete from "./canComplete"
 export { completionResolve } from "./resolve"
 import { serializeError } from "serialize-error"
+import { findClasses } from "~/find"
+import { Token } from "~/typings"
+import { dlv } from "~/tailwind/classnames"
 
 interface _Payload {
 	hasBreakingPoint: boolean
@@ -28,7 +31,7 @@ interface _Payload {
 	hasCommonVariant: boolean
 }
 
-export const completion: Parameters<Connection["onCompletion"]>[0] = async params => {
+export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async params => {
 	try {
 		if (!state) {
 			return null
@@ -39,94 +42,152 @@ export const completion: Parameters<Connection["onCompletion"]>[0] = async param
 			return null
 		}
 
-		const { selection, kind } = result
-
-		if (selection.selected?.[2] === getSeparator()) {
-			return null
-		}
-
-		const twin = kind === "twin"
-		const variants = selection.variants.map(([, , v]) => v)
-		if (!variants.every(v => isVariant(v, twin))) {
-			return null
-		}
-
-		const value = selection.selected?.[2]
-		const payload: _Payload = {
-			hasBreakingPoint: hasBreakingPoint(variants),
-			hasDarkMode: hasDarkMode(variants, twin),
-			hasCommonVariant: variants.some(v => isCommonVariant(v, twin)),
-		}
-
-		const variantItems = Object.entries(getVariants(twin))
-			.filter(([label]) => variantFilter({ twin, value, payload, variants, label }))
-			.map<CompletionItem>(([label, data]) => {
-				const bp = getBreakingPoint(label)
-				if (bp) {
-					return {
-						label,
-						sortText: bp.toString().padStart(5, " "),
-						kind: CompletionItemKind.Module,
-						data: { type: "screen", data, value, variants, kind },
-						command: {
-							title: "",
-							command: "editor.action.triggerSuggest",
-						},
-					}
-				} else {
-					return {
-						label,
-						sortText: isDarkMode(label, twin) ? "*" + label : "~~~:" + label,
-						kind: isDarkMode(label, twin) ? CompletionItemKind.Color : CompletionItemKind.Field,
-						data: { type: "variant", data, value, variants, kind },
-						command: {
-							title: "",
-							command: "editor.action.triggerSuggest",
-						},
-					}
-				}
-			})
-			.map(item => ({ ...item, label: item.label + getSeparator() }))
-
-		// --------------------------------- //
-
-		const classesItems = Object.entries(getClassNames(variants, twin))
-			.filter(([label, info]) => {
-				if (label === "group") {
-					if (twin || payload.hasBreakingPoint) {
-						return false
-					}
-					return true
-				}
-				if (label === "container") {
-					if (twin && payload.hasBreakingPoint) {
-						return false
-					}
-					return true
-				}
-				if (!(info instanceof Array)) {
-					return false
-				}
-				return true
-			})
-			.map(([label, data]) => getCompletionItem({ label, data, value, variants, kind }))
-
-		if (twin) {
-			classesItems.push({
-				label: "content",
-				kind: CompletionItemKind.Constant,
-				sortText: "~~content",
-				data: { type: "class", data: null, value, variants, kind },
-			})
-		}
-
-		return {
-			isIncomplete: false,
-			items: [...variantItems, ...classesItems],
+		const { kind } = result.pattern
+		if (kind === "twinTheme") {
+			return twinThemeCompletion(result.index, result.match, result.pattern)
+		} else {
+			return classesCompletion(result.index, result.match, result.pattern)
 		}
 	} catch (err) {
 		console.log(serializeError(err))
 		return null
+	}
+}
+
+function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.CompletionList {
+	const [start, , classes] = match
+	const { kind, handleBrackets, handleImportant } = pattern
+	const { selection } = findClasses({
+		classes,
+		index: index - start,
+		separator: getSeparator(),
+		handleBrackets,
+		handleImportant,
+	})
+
+	if (selection.selected?.[2] === getSeparator()) {
+		return null
+	}
+
+	const twin = kind === "twin"
+	const variants = selection.variants.map(([, , v]) => v)
+	if (!variants.every(v => isVariant(v, twin))) {
+		return null
+	}
+
+	const value = selection.selected?.[2]
+	const payload: _Payload = {
+		hasBreakingPoint: hasBreakingPoint(variants),
+		hasDarkMode: hasDarkMode(variants, twin),
+		hasCommonVariant: variants.some(v => isCommonVariant(v, twin)),
+	}
+
+	const variantItems = Object.entries(getVariants(twin))
+		.filter(([label]) => variantFilter({ twin, value, payload, variants, label }))
+		.map<lsp.CompletionItem>(([label, data]) => {
+			const bp = getBreakingPoint(label)
+			if (bp) {
+				return {
+					label,
+					sortText: bp.toString().padStart(5, " "),
+					kind: lsp.CompletionItemKind.Module,
+					data: { type: "screen", data, value, variants, kind },
+					command: {
+						title: "",
+						command: "editor.action.triggerSuggest",
+					},
+				}
+			} else {
+				return {
+					label,
+					sortText: isDarkMode(label, twin) ? "*" + label : "~~~:" + label,
+					kind: isDarkMode(label, twin) ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
+					data: { type: "variant", data, value, variants, kind },
+					command: {
+						title: "",
+						command: "editor.action.triggerSuggest",
+					},
+				}
+			}
+		})
+		.map(item => ({ ...item, label: item.label + getSeparator() }))
+
+	// --------------------------------- //
+
+	const classesItems = Object.entries(getClassNames(variants, twin))
+		.filter(([label, info]) => {
+			if (label === "group") {
+				if (twin || payload.hasBreakingPoint) {
+					return false
+				}
+				return true
+			}
+			if (label === "container") {
+				if (twin && payload.hasBreakingPoint) {
+					return false
+				}
+				return true
+			}
+			if (!(info instanceof Array)) {
+				return false
+			}
+			return true
+		})
+		.map(([label, data]) => getCompletionItem({ label, data, value, variants, kind }))
+
+	if (twin) {
+		classesItems.push({
+			label: "content",
+			kind: lsp.CompletionItemKind.Constant,
+			sortText: "~~content",
+			data: { type: "class", data: null, value, variants, kind },
+		})
+	}
+
+	return {
+		isIncomplete: false,
+		items: [...variantItems, ...classesItems],
+	}
+}
+
+function twinThemeCompletion(index: number, match: Token, pattern: Pattern): lsp.CompletionList {
+	const [offset, , text] = match
+	const inputChar = text[index - offset - 1]
+	if (inputChar !== "." && text.indexOf(".") !== -1) {
+		return null
+	}
+	if (text.indexOf("..") !== -1) {
+		return null
+	}
+
+	const reg = /(\w+)\.(\s*)/g
+	const keys: string[] = []
+	let m: RegExpExecArray
+	while ((m = reg.exec(text))) {
+		const [, key, space] = m
+		if (space) {
+			return null
+		}
+		if (index >= offset + m.index && index < offset + reg.lastIndex) {
+			break
+		}
+		keys.push(key)
+	}
+
+	const target = dlv(state.config.theme, keys)
+	if (typeof target !== "object") {
+		return null
+	}
+
+	return {
+		isIncomplete: false,
+		items: Object.keys(target).map(s => ({
+			label: s,
+			kind: lsp.CompletionItemKind.Field,
+			data: {
+				kind: "twinTheme",
+			},
+		})),
 	}
 }
 
@@ -184,11 +245,11 @@ function getCompletionItem({
 	value: string
 	variants: string[]
 	kind: PatternKind
-}): CompletionItem {
-	const item: CompletionItem = {
+}): lsp.CompletionItem {
+	const item: lsp.CompletionItem = {
 		label,
 		data: { type: "class", data, value, variants, kind },
-		kind: CompletionItemKind.Constant,
+		kind: lsp.CompletionItemKind.Constant,
 		sortText: (label[0] === "-" ? "~~~" : "~~") + toNumberPostfix(label),
 	}
 
@@ -197,7 +258,7 @@ function getCompletionItem({
 		return item
 	}
 
-	item.kind = CompletionItemKind.Color
+	item.kind = lsp.CompletionItemKind.Color
 	if (color == "currentColor") {
 		item.documentation = "currentColor"
 		item.data.type = "color"
@@ -206,7 +267,7 @@ function getCompletionItem({
 	}
 
 	if (color === "transparent") {
-		item.documentation = { kind: MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.0)" }
+		item.documentation = { kind: lsp.MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.0)" }
 		item.data.type = "color"
 		item.data.data = "transparent"
 		return item
