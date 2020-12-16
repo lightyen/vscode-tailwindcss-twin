@@ -30,6 +30,12 @@ export async function init(connection: Connection, params: Parameters<typeof pro
 	} catch (err) {
 		state = null
 		connection.sendProgress<number>({}, "tailwindcss/progress", undefined)
+		if (err instanceof Error) {
+			if (err.message === "tailwind config is not found.") {
+				connection.sendNotification("tailwindcss/info", err.message)
+				return
+			}
+		}
 		const e = serializeError(err)
 		e.showNotification = true
 		connection.sendNotification("tailwindcss/error", e)

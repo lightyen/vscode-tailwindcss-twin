@@ -19,13 +19,24 @@ import colorDecoration from "./colorDecoration"
 import { didOpenTextDocument, didChangeChangeTextDocument } from "./document"
 import { validateTextDocument } from "./diagnostics"
 
-export let settings = {
+interface InitializationOptions {
+	base: string
+	filename: string
+	colorDecorators: boolean
+	links: boolean
+	twin: boolean
+	validate: boolean
+	fallbackDefaultConfig: boolean
+}
+
+export let settings: InitializationOptions = {
 	base: "",
 	filename: "",
 	colorDecorators: false,
 	links: false,
 	twin: false,
 	validate: false,
+	fallbackDefaultConfig: false,
 }
 
 export const connection = createConnection(ProposedFeatures.all)
@@ -135,8 +146,12 @@ connection.onDidChangeConfiguration(async params => {
 			{ section: "tailwindcss" },
 			{ section: "editor" },
 		])
-		if (settings.twin !== tailwindcss.twin) {
+		if (
+			settings.twin !== tailwindcss.twin ||
+			settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig
+		) {
 			settings.twin = tailwindcss.twin
+			settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
 			await init(connection, settings)
 		}
 		connection.sendNotification("tailwindcss/info", `twin = ${settings.twin}`)

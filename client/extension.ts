@@ -54,12 +54,13 @@ function getOuterMostWorkspaceFolder(folder: vscode.WorkspaceFolder): vscode.Wor
 }
 
 interface InitializationOptions {
-	base?: string
-	filename?: string
+	base: string
+	filename: string
 	colorDecorators: boolean
 	links: boolean
 	twin: boolean
 	validate: boolean
+	fallbackDefaultConfig: boolean
 }
 
 async function addClient(serverModule: string, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
@@ -75,12 +76,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 			options: { execArgv: ["--nolazy", "--inspect=6009"] },
 		},
 	}
-	const initializationOptions: InitializationOptions = {
-		colorDecorators: false,
-		links: false,
-		twin: false,
-		validate: false,
-	}
+	const initializationOptions: Partial<InitializationOptions> = {}
 	let base = ws.uri.fsPath
 	const results = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
@@ -103,6 +99,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	}
 	initializationOptions.twin = tailwindcss.get("twin")
 	initializationOptions.validate = tailwindcss.get("validate")
+	initializationOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: languages.get(ws.uri.toString()).map(language => ({

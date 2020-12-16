@@ -41,13 +41,24 @@ interface _Payload {
 	darkMode: false | "media" | "class" // user darkMode
 }
 
-function getConfig(payload: _Payload, { base, filename, m }: { base: string; filename: string; m: TModule }) {
+function getConfig(
+	payload: _Payload,
+	{
+		base,
+		filename,
+		m,
+		fallbackDefaultConfig,
+	}: { base: string; filename: string; m: TModule; fallbackDefaultConfig: boolean },
+) {
 	try {
 		const moduleId = "./" + filename
 		payload.config = TModule.require({ base, moduleId, removeCache: true })
 		payload.configPath = TModule.resolve({ base, moduleId })
 		payload.userConfig = true
 	} catch (err) {
+		if (!fallbackDefaultConfig) {
+			throw Error("tailwind config is not found.")
+		}
 		if (!payload.tailwindRoot) {
 			// use extension embedded lib
 			base = ""
@@ -101,9 +112,10 @@ function prepareTailwind(payload: _Payload, base: string) {
 
 interface Params extends ConfigPath {
 	twin: boolean
+	fallbackDefaultConfig: boolean
 }
 
-export async function processTailwindConfig({ base, filename, twin }: Params) {
+export async function processTailwindConfig({ base, filename, twin, fallbackDefaultConfig }: Params) {
 	const payload: _Payload = {
 		versions: {},
 		separator: ":",
@@ -126,7 +138,7 @@ export async function processTailwindConfig({ base, filename, twin }: Params) {
 	}
 
 	let postcssResults: [Result, Result, Result]
-	getConfig(payload, { base, filename, m })
+	getConfig(payload, { base, filename, m, fallbackDefaultConfig })
 
 	// TODO: apply plugin
 
