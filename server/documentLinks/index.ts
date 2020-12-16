@@ -76,15 +76,6 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 							value = prefix + value
 							break
 					}
-					if (
-						!getClassNameRules(
-							c.variants.map(v => v[2]),
-							c.token[2],
-							twin,
-						)
-					) {
-						continue
-					}
 					const target = docs[value]
 					if (target) {
 						links.push({
