@@ -83,20 +83,23 @@ export function getClassNameRules(variants: string[], label: string, twin: boole
 }
 
 export function isValidClassName(variants: string[], label: string, twin: boolean) {
-	const data = getClassNameRules(variants, label, twin)
-	if (!data) {
-		return false
-	}
-	if (isDarkMode(label, twin)) {
-		return false
-	}
 	if (twin) {
+		if (label === "content") {
+			return true
+		}
 		if (label === "group") {
 			return false
 		}
 		if (variants.length > 0 && label === "container") {
 			return false
 		}
+	}
+	const data = getClassNameRules(variants, label, twin)
+	if (!data) {
+		return false
+	}
+	if (isDarkMode(label, twin)) {
+		return false
 	}
 	return true
 }

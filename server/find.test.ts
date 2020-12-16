@@ -80,3 +80,51 @@ test("findClasses Empty", async () => {
 		expect(result.empty).toEqual([[62, 64, [[56, 61, "focus"]]]])
 	}
 })
+
+test("findClasses Important", async () => {
+	const text = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
+	for (let index = 0; index < text.length; index += 1) {
+		const result = findClasses({
+			classes: text,
+			separator: ":",
+			index: 37,
+			handleBrackets: true,
+			handleImportant: true,
+		})
+		expect(result.selection).toEqual({
+			selected: [37, 50, "bg-purple-500"],
+			important: true,
+			inGroup: true,
+			variants: [[33, 35, "lg"]],
+		})
+		expect(result.classList).toEqual([
+			{
+				token: [0, 13, "text-gray-100"],
+				important: true,
+				inGroup: false,
+				variants: [],
+			},
+			{
+				token: [23, 31, "bg-black"],
+				important: true,
+				inGroup: false,
+				variants: [
+					[15, 17, "md"],
+					[18, 22, "dark"],
+				],
+			},
+			{
+				token: [37, 50, "bg-purple-500"],
+				important: true,
+				inGroup: true,
+				variants: [[33, 35, "lg"]],
+			},
+			{
+				token: [61, 68, "content"],
+				important: false,
+				inGroup: true,
+				variants: [[53, 59, "before"]],
+			},
+		])
+	}
+})

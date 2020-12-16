@@ -109,6 +109,9 @@ export function findClasses({
 				if (ret.selection.inGroup) {
 					inGroup = ret.selection.inGroup
 				}
+				if (ret.selection.important) {
+					important = ret.selection.important
+				}
 				variantsSelected.push(...ret.selection.variants)
 			}
 			if (endBracket) {
