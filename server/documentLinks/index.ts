@@ -4,7 +4,7 @@ import { findClasses } from "~/find"
 import { findMatch, getPatterns } from "~/patterns"
 
 import docs from "./docs.yaml"
-import { getBreakingPoint, getClassNameRules, getSeparator, isVariant } from "~/common"
+import { getBreakingPoint, getSeparator, isVariant } from "~/common"
 import { state } from "~/tailwind"
 
 function lastUrlToken(url: string) {
