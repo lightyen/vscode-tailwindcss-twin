@@ -181,8 +181,9 @@ function twinThemeCompletion(index: number, match: Token, pattern: Pattern): lsp
 
 	return {
 		isIncomplete: false,
-		items: Object.keys(target).map(s => ({
-			label: s,
+		items: Object.keys(target).map(label => ({
+			label,
+			sortText: formatDigital(label),
 			kind: lsp.CompletionItemKind.Field,
 			data: {
 				kind: "twinTheme",
@@ -250,7 +251,7 @@ function getCompletionItem({
 		label,
 		data: { type: "class", data, value, variants, kind },
 		kind: lsp.CompletionItemKind.Constant,
-		sortText: (label[0] === "-" ? "~~~" : "~~") + toNumberPostfix(label),
+		sortText: (label[0] === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
 	const color = getColors()[label]
@@ -278,7 +279,7 @@ function getCompletionItem({
 	return item
 }
 
-function toNumberPostfix(label: string) {
+function formatLabel(label: string) {
 	const reg = /((?:[\w-]+-)+)+([\d/.]+)/
 	const m = label.match(reg)
 	if (!m) {
@@ -293,5 +294,18 @@ function toNumberPostfix(label: string) {
 		return prefix + val.toFixed(3).padStart(7, "0")
 	} catch {
 		return label
+	}
+}
+
+function formatDigital(value: string) {
+	const prefix = `${value.startsWith("-") ? "~" : ""}`
+	try {
+		const val = eval(value)
+		if (typeof val !== "number") {
+			return prefix + value
+		}
+		return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
+	} catch {
+		return prefix + value
 	}
 }
