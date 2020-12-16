@@ -290,7 +290,7 @@ function formatLabel(label: string) {
 		if (typeof val !== "number") {
 			return label
 		}
-		const prefix = m[1]
+		const prefix = m[1] + (/^[\d.]+$/.test(m[2]) ? "@" : "_")
 		return prefix + val.toFixed(3).padStart(7, "0")
 	} catch {
 		return label
