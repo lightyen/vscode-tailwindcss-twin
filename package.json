@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Tailwind CSS Extension with twin features for VS Code",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "lightyen",
   "license": "MIT",
   "private": true,

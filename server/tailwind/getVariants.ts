@@ -7,6 +7,7 @@ interface Options {
 	postcss: Postcss
 }
 
+// FIXME: unused
 export default function getVariants({ config, version, postcss }: Options) {
 	const variants = ["responsive", "hover"]
 	semver.gte(version, "0.3.0") && variants.push("focus", "group-hover")
