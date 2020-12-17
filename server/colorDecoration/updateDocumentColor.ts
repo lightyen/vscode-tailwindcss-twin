@@ -3,7 +3,6 @@ import { findMatch, getPatterns } from "~/patterns"
 import { Range, TextDocument } from "vscode-languageserver-textdocument"
 import { findClasses } from "~/find"
 import { settings } from "~/server"
-import { getSeparator, getColors } from "~/common"
 import { state } from "~/tailwind"
 
 interface ColorInformation {
@@ -21,7 +20,7 @@ export default function updateDocumentColor(document: TextDocument) {
 	const text = document.getText()
 	const patterns = getPatterns({ document })
 	const colors: ColorInformation[] = []
-	const colorTable = getColors()
+	const colorTable = state.classnames.colors
 	for (const { lpat, rpat, handleBrackets, handleImportant } of patterns) {
 		findMatch({
 			text,
@@ -35,7 +34,7 @@ export default function updateDocumentColor(document: TextDocument) {
 				const classes = document.getText({ start: a, end: b })
 				const { classList } = findClasses({
 					classes,
-					separator: getSeparator(),
+					separator: state.separator,
 					handleBrackets,
 					handleImportant,
 				})

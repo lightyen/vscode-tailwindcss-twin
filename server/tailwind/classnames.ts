@@ -1,6 +1,7 @@
 import parser from "postcss-selector-parser"
 import type { Result, Node, Rule } from "postcss"
 import chroma from "chroma-js"
+import Fuse from "fuse.js"
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
@@ -198,7 +199,27 @@ export function intersection<T = unknown>(arr1: T[], arr2: T[]) {
 	return arr1.filter(value => arr2.indexOf(value) !== -1)
 }
 
-export function parseResults(groups: Array<{ source: string; result: Result }>, twin = false) {
+export function extractClassNames(
+	[_base, components, utilities]: [Result, Result, Result],
+	darkMode: false | "media" | "class",
+	twin = false,
+) {
+	return parseResults(
+		[
+			// { source: "base", result: base },
+			{ source: "components", result: components },
+			{ source: "utilities", result: utilities },
+		],
+		darkMode,
+		twin,
+	)
+}
+
+export function parseResults(
+	groups: Array<{ source: string; result: Result }>,
+	darkMode: false | "media" | "class",
+	twin = false,
+) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const tree: Record<string, any> = {}
 	const variants: Record<string, string[]> = {}
@@ -289,97 +310,314 @@ export function parseResults(groups: Array<{ source: string; result: Result }>, 
 			variants[k] = twinVariants[k]
 		}
 	}
-	return {
-		dictionary: tree,
-		baseVariants,
-		twinVariants,
-		variants,
-		colors: collectColors(tree),
-		breakingPoints: collectBreakingPoints(variants),
-	}
-}
 
-function collectBreakingPoints(variants: Record<string, string[]>) {
-	const reg = /@media\s\(.*width:\s*(\d+)px/
-	const result: Record<string, number> = {}
-	for (const label in variants) {
-		for (const value of variants[label]) {
-			const match = value.match(reg)
-			if (match) {
-				const [, v] = match
-				result[label] = Number(v)
-				break
+	// take a coffee...
+
+	function collectBreakingPoints(variants: Record<string, string[]>) {
+		const reg = /@media\s\(.*width:\s*(\d+)px/
+		const result: Record<string, number> = {}
+		for (const label in variants) {
+			for (const value of variants[label]) {
+				const match = value.match(reg)
+				if (match) {
+					const [, v] = match
+					result[label] = Number(v)
+					break
+				}
 			}
 		}
+		return result
 	}
-	return result
-}
 
-function collectColors(tree: Record<string, CSSRuleItem | CSSRuleItem[]>) {
-	const colors: Record<string, string> = {}
-	Object.entries(tree).forEach(([label, info]) => {
-		if (!(info instanceof Array)) {
-			return
-		}
-		const decls = (info as CSSRuleItem[])
-			.filter(i => i.__rule)
-			.flatMap(v => {
-				const ret: Array<[string, string]> = []
-				for (const key in v.decls) {
-					for (const value of v.decls[key]) {
-						ret.unshift([key, value])
+	function collectColors(tree: Record<string, CSSRuleItem | CSSRuleItem[]>) {
+		const colors: Record<string, string> = {}
+		Object.entries(tree).forEach(([label, info]) => {
+			if (!(info instanceof Array)) {
+				return
+			}
+			const decls = (info as CSSRuleItem[])
+				.filter(i => i.__rule)
+				.flatMap(v => {
+					const ret: Array<[string, string]> = []
+					for (const key in v.decls) {
+						for (const value of v.decls[key]) {
+							ret.unshift([key, value])
+						}
+					}
+					return ret
+				})
+			if (decls.length === 0) {
+				return
+			}
+
+			const index = decls.findIndex(
+				v => v[0].includes("color") || v[0].includes("gradient") || v[0] === "fill" || v[0] === "stroke",
+			)
+			if (index === -1) {
+				return
+			}
+
+			if (label.includes("current")) {
+				colors[label] = "currentColor"
+				return
+			}
+
+			if (label.includes("transparent")) {
+				colors[label] = "transparent"
+				return
+			}
+			let lastVal = decls[index][1]
+
+			lastVal = lastVal.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1")
+			const reg = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
+			const m = lastVal.match(reg)
+			if (m == null) {
+				return
+			}
+			let color: chroma.Color
+			if (m.groups?.r) {
+				const { r, g, b } = m.groups
+				color = chroma(+r, +g, +b)
+			} else {
+				color = chroma(m[0])
+			}
+
+			colors[label] = color.hex()
+		})
+		return colors
+	}
+
+	return {
+		/**
+		 * class rules
+		 */
+		dictionary: tree,
+		/**
+		 * official variants table
+		 */
+		baseVariants,
+		/**
+		 * twin variants table
+		 */
+		twinVariants,
+		/**
+		 * current variants table
+		 */
+		variants,
+		/**
+		 * short color table
+		 */
+		colors: collectColors(tree),
+		/**
+		 * short breaking points table
+		 */
+		breakingPoints: collectBreakingPoints(variants),
+		// common
+		/**
+		 * Test the label whether it is a dark mode keyword
+		 * @param label input
+		 * @param twinPattern is current pattern twin?
+		 */
+		isDarkMode(label: string, twinPattern: boolean) {
+			if (twinPattern) {
+				return label === "dark" || label === "light"
+			} else {
+				return label === "dark"
+			}
+		},
+		hasDarkMode(variants: string[], twinPattern: boolean) {
+			return variants.some(v => this.isDarkMode(v, twinPattern))
+		},
+		getBreakingPoint(label: string) {
+			return this.breakingPoints[label]
+		},
+		hasBreakingPoint(variants: string[]) {
+			return variants.some(v => this.getBreakingPoint(v))
+		},
+		getVariants(twinPattern: boolean) {
+			if (twinPattern) {
+				return this.variants
+			} else {
+				return this.baseVariants
+			}
+		},
+		/**
+		 * Test the variant whether it is a valid variant
+		 * @param variant input
+		 * @param twinPattern is current pattern twin?
+		 */
+		isVariant(variant: string, twinPattern: boolean) {
+			return !!this.getVariants(twinPattern)[variant]
+		},
+		/**
+		 * Test the variant whether it is a valid common variant.(not breaking point, not dark mode)
+		 * @param label input
+		 * @param twinPattern is current pattern twin?
+		 */
+		isCommonVariant(label: string, twinPattern: boolean) {
+			if (this.getBreakingPoint(label)) {
+				return false
+			}
+			if (this.isDarkMode(label, twinPattern)) {
+				return false
+			}
+			return !!this.getVariants(twinPattern)[label]
+		},
+		/**
+		 * Test the label whether it is valid className.
+		 * @param label input
+		 * @param variants input variant space
+		 * @param twinPattern is current pattern twin?
+		 */
+		isClassName(label: string, variants: string[], twinPattern: boolean) {
+			if (twinPattern) {
+				if (label === "content") {
+					return true
+				}
+				if (label === "group") {
+					return false
+				}
+				if (variants.length > 0 && label === "container") {
+					return false
+				}
+			}
+			if (!this.getClassNames(variants, twinPattern)?.[label]) {
+				return false
+			}
+			if (this.isDarkMode(label, twinPattern)) {
+				return false
+			}
+			return true
+		},
+		/**
+		 * Get all classNames information.
+		 * @param variants input variant space
+		 * @param twinPattern is current pattern twin?
+		 */
+		getClassNames(variants: string[], twinPattern: boolean): Record<string, CSSRuleItem | CSSRuleItem[]> {
+			if (variants.length > 0) {
+				const keys: string[] = []
+				const bp = variants.find(b => this.getBreakingPoint(b))
+				if (bp) keys.push(bp)
+				const i = variants.findIndex(x => this.isDarkMode(x, twinPattern))
+				if (i !== -1) {
+					variants[i] = "dark"
+					keys.push("dark")
+				}
+				return dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
+			} else {
+				return this.dictionary
+			}
+		},
+		/**
+		 * for providing proper variant list
+		 * @param variants input variant space
+		 * @param twinPattern is current pattern twin?
+		 */
+		getVariantFilter(variants: string[], twinPattern: boolean): (label: string) => boolean {
+			const payload = {
+				hasBreakingPoint: this.hasBreakingPoint(variants),
+				hasDarkMode: this.hasDarkMode(variants, twinPattern),
+				hasCommonVariant: variants.some(v => this.isCommonVariant(v, twinPattern)),
+			}
+			return label => {
+				if (twinPattern) {
+					if (variants.some(v => v === label)) {
+						return false
+					}
+					if (
+						(payload.hasDarkMode || payload.hasCommonVariant) &&
+						(this.getBreakingPoint(label) || this.isDarkMode(label, twinPattern))
+					) {
+						return false
+					}
+					if (payload.hasBreakingPoint) {
+						if (this.getBreakingPoint(label)) {
+							return false
+						}
+					}
+				} else {
+					if (!darkMode && this.isDarkMode(label, twinPattern)) {
+						return false
+					}
+					if (
+						payload.hasCommonVariant &&
+						(this.getBreakingPoint(label) || this.isVariant(label, twinPattern))
+					) {
+						return false
+					}
+					if (payload.hasDarkMode && (this.getBreakingPoint(label) || this.isDarkMode(label, twinPattern))) {
+						return false
+					}
+					if (payload.hasBreakingPoint) {
+						if (this.getBreakingPoint(label)) return false
 					}
 				}
-				return ret
-			})
-		if (decls.length === 0) {
-			return
-		}
-
-		const index = decls.findIndex(
-			v => v[0].includes("color") || v[0].includes("gradient") || v[0] === "fill" || v[0] === "stroke",
-		)
-		if (index === -1) {
-			return
-		}
-
-		if (label.includes("current")) {
-			colors[label] = "currentColor"
-			return
-		}
-
-		if (label.includes("transparent")) {
-			colors[label] = "transparent"
-			return
-		}
-		let lastVal = decls[index][1]
-
-		lastVal = lastVal.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1")
-		const reg = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
-		const m = lastVal.match(reg)
-		if (m == null) {
-			return
-		}
-		let color: chroma.Color
-		if (m.groups?.r) {
-			const { r, g, b } = m.groups
-			color = chroma(+r, +g, +b)
-		} else {
-			color = chroma(m[0])
-		}
-
-		colors[label] = color.hex()
-	})
-	return colors
-}
-
-export function extractClassNames([base, components, utilities]: [Result, Result, Result], twin = false) {
-	return parseResults(
-		[
-			// { source: "base", result: base },
-			{ source: "components", result: components },
-			{ source: "utilities", result: utilities },
-		],
-		twin,
-	)
+				return true
+			}
+		},
+		getVariantList(variants: string[], twinPattern: boolean) {
+			return Object.keys(this.getVariants(twinPattern)).filter(this.getVariantFilter(variants, twinPattern))
+		},
+		/**
+		 * for providing proper className list
+		 * @param variants input variant space
+		 * @param twinPattern is current pattern twin?
+		 */
+		getClassNameFilter(
+			variants: string[],
+			twinPattern: boolean,
+		): (v: [string, CSSRuleItem | CSSRuleItem[]]) => boolean {
+			const payload = {
+				hasBreakingPoint: this.hasBreakingPoint(variants),
+				hasDarkMode: this.hasDarkMode(variants, twinPattern),
+				hasCommonVariant: variants.some(v => this.isCommonVariant(v, twinPattern)),
+			}
+			return ([label, info]) => {
+				if (label === "group") {
+					if (twinPattern || payload.hasBreakingPoint) {
+						return false
+					}
+					return true
+				}
+				if (label === "container") {
+					if (twinPattern && payload.hasBreakingPoint) {
+						return false
+					}
+					return true
+				}
+				if (!(info instanceof Array)) {
+					return false
+				}
+				return true
+			}
+		},
+		getClassNameList(variants: string[], twinPattern: boolean) {
+			const classes = Object.entries(this.getClassNames(variants, twinPattern))
+				.filter(this.getClassNameFilter(variants, twinPattern))
+				.map(([label]) => label)
+			if (twin) {
+				classes.push("content")
+			}
+			return classes
+		},
+		// fuzzy searching
+		/**
+		 * searchers cache
+		 */
+		searchers: {},
+		/**
+		 * get approximate string matching searcher
+		 */
+		getSearcher(variants: string[], twinPattern: boolean): { variants: Fuse<string>; classes: Fuse<string> } {
+			const target = dlv(this.searchers, [...variants, twinPattern.toString()])
+			if (target) {
+				return target as { variants: Fuse<string>; classes: Fuse<string> }
+			}
+			return {
+				variants: new Fuse(this.getVariantList(variants, twinPattern)),
+				classes: new Fuse(this.getClassNameList(variants, twinPattern)),
+			}
+		},
+	}
 }

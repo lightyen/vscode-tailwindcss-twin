@@ -140,7 +140,7 @@ export async function processTailwindConfig({ base, filename, twin, fallbackDefa
 	let postcssResults: [Result, Result, Result]
 	getConfig(payload, { base, filename, m, fallbackDefaultConfig })
 
-	// TODO: apply plugin
+	// TODO: apply plugin?
 
 	// change config for twin
 	if (twin) {
@@ -169,7 +169,7 @@ export async function processTailwindConfig({ base, filename, twin, fallbackDefa
 
 	return {
 		...payload,
-		classnames: extractClassNames(postcssResults, twin),
+		classnames: extractClassNames(postcssResults, payload.darkMode, twin),
 		__INNER_TAILWIND_SEPARATOR__,
 	}
 }

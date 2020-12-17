@@ -4,7 +4,6 @@ import { findClasses } from "~/find"
 import { findMatch, getPatterns } from "~/patterns"
 
 import docs from "./docs.yaml"
-import { getBreakingPoint, getSeparator, isVariant } from "~/common"
 import { state } from "~/tailwind"
 
 function lastUrlToken(url: string) {
@@ -46,14 +45,14 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 				const classes = document.getText({ start: a, end: b })
 				const { classList, empty } = findClasses({
 					classes,
-					separator: getSeparator(),
+					separator: state.separator,
 					handleBrackets,
 					handleImportant,
 				})
 				for (const c of classList) {
 					for (const [a, b, value] of c.variants) {
-						const bg = getBreakingPoint(value)
-						const iv = isVariant(value, twin)
+						const bg = state.classnames.getBreakingPoint(value)
+						const iv = state.classnames.isVariant(value, twin)
 						if (!bg && !iv) continue
 						const target = docs[bg ? value : prefix + value]
 						if (target && !s.has(start + a)) {
@@ -90,8 +89,8 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 				}
 				for (const [, , variants] of empty) {
 					for (const [a, b, value] of variants) {
-						const bg = getBreakingPoint(value)
-						const iv = isVariant(value, twin)
+						const bg = state.classnames.getBreakingPoint(value)
+						const iv = state.classnames.isVariant(value, twin)
 						if (!bg && !iv) continue
 						const target = docs[bg ? value : prefix + value]
 						if (target && !s.has(start + a)) {

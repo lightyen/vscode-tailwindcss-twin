@@ -4,8 +4,6 @@ import { Range, TextDocument } from "vscode-languageserver-textdocument"
 import { findMatch, getPatterns, Pattern, PatternKind } from "~/patterns"
 import { connection, settings } from "~/server"
 import { ClassInfo, findClasses } from "~/find"
-import { isVariant, getValidVariantNames, isValidClassName, getValidClassNames, getSeparator } from "./common"
-import leven from "leven"
 import { state } from "./tailwind"
 
 export function validateTextDocument(document: TextDocument) {
@@ -36,7 +34,7 @@ export function validateTextDocument(document: TextDocument) {
 				const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
 				const classes = document.getText(range)
 				diagnostics.push(
-					...validateClasses({ document, range, classes, pattern, separator: getSeparator(), kind }),
+					...validateClasses({ document, range, classes, pattern, separator: state.separator, kind }),
 				)
 			})
 	}
@@ -72,7 +70,7 @@ function validateClasses({
 		result.push(...checkClassName(classList[i], kind, document, base))
 		for (let j = i + 1; j < classList.length; j++) {
 			if (values[i] === values[j]) {
-				// duplicate
+				// TODO: make it more user friendly
 				result.push({
 					source,
 					message: `Classname '${values[j]}' is duplicated.`,
@@ -115,28 +113,34 @@ function validateClasses({
 function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocument, base: number) {
 	const twin = kind === "twin"
 	const result: Diagnostic[] = []
+	const variants = info.variants.map(v => v[2])
 	for (const [a, b, value] of info.variants) {
-		if (isVariant(value, twin)) {
+		if (state.classnames.isVariant(value, twin)) {
 			continue
 		}
-		let answer = value
-		let distance = +Infinity
-		for (const v of getValidVariantNames(twin)) {
-			const d = leven(value, v)
-			if (distance > d) {
-				answer = v
-				distance = d
-			}
+		// TODO: use another approximate string matching method?
+		const ans = state.classnames.getSearcher(variants, twin).variants.search(value)
+		if (ans?.length > 0) {
+			result.push({
+				source,
+				message: `'${value}' is undefined, do you mean '${ans[0].item}'?`,
+				range: {
+					start: document.positionAt(base + a),
+					end: document.positionAt(base + b),
+				},
+				severity: DiagnosticSeverity.Information,
+			})
+		} else {
+			result.push({
+				source,
+				message: `'${value}' is undefined.`,
+				range: {
+					start: document.positionAt(base + a),
+					end: document.positionAt(base + b),
+				},
+				severity: DiagnosticSeverity.Information,
+			})
 		}
-		result.push({
-			source,
-			message: `'${value}' is undefined, do you mean '${answer}'?`,
-			range: {
-				start: document.positionAt(base + a),
-				end: document.positionAt(base + b),
-			},
-			severity: DiagnosticSeverity.Information,
-		})
 	}
 	if (info.token) {
 		const variants = info.variants.map(v => v[2])
@@ -150,26 +154,29 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
-		} else if (!isValidClassName(variants, info.token[2], twin)) {
-			let answer = info.token[2]
-			let distance = +Infinity
-			for (const v of getValidClassNames(variants, twin)) {
-				const d = leven(info.token[2], v)
-				if (distance > d) {
-					answer = v
-					distance = d
-				}
+		} else if (!state.classnames.isClassName(info.token[2], variants, twin)) {
+			const ans = state.classnames.getSearcher(variants, twin).classes.search(info.token[2])
+			if (ans?.length > 0) {
+				result.push({
+					source,
+					message: `'${info.token[2]}' is undefined, do you mean '${ans[0].item}'?`,
+					range: {
+						start: document.positionAt(base + info.token[0]),
+						end: document.positionAt(base + info.token[1]),
+					},
+					severity: DiagnosticSeverity.Information,
+				})
+			} else {
+				result.push({
+					source,
+					message: `'${info.token[2]}' is undefined.`,
+					range: {
+						start: document.positionAt(base + info.token[0]),
+						end: document.positionAt(base + info.token[1]),
+					},
+					severity: DiagnosticSeverity.Information,
+				})
 			}
-
-			result.push({
-				source,
-				message: `'${info.token[2]}' is undefined, do you mean '${answer}'?`,
-				range: {
-					start: document.positionAt(base + info.token[0]),
-					end: document.positionAt(base + info.token[1]),
-				},
-				severity: DiagnosticSeverity.Information,
-			})
 		}
 	}
 	return result

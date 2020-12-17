@@ -1,5 +1,4 @@
 import { Connection, MarkupKind } from "vscode-languageserver"
-import { getVariants } from "~/common"
 import { PatternKind } from "~/patterns"
 
 import { state, CSSRuleItem } from "~/tailwind"
@@ -44,7 +43,8 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		if (!data) {
 			return item
 		}
-		const __variants = getVariants(kind === "twin")
+
+		const __variants = state.classnames.getVariants(kind === "twin")
 		if (data instanceof Array) {
 			data = data.filter(d => {
 				for (const context of d.__context) {

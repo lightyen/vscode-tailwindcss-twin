@@ -3,7 +3,7 @@ import { Range, TextDocumentPositionParams } from "vscode-languageserver"
 import { documents } from "~/server"
 import { getPatterns, canMatch } from "~/patterns"
 import { findClasses } from "~/find"
-import { getSeparator } from "~/common"
+import { state } from "~/tailwind"
 
 export function canHover({ textDocument, position }: TextDocumentPositionParams) {
 	const document = documents.get(textDocument.uri)
@@ -41,7 +41,7 @@ export function canHover({ textDocument, position }: TextDocumentPositionParams)
 		const result = findClasses({
 			classes: match[2],
 			index: document.offsetAt(position) - document.offsetAt(range.start),
-			separator: getSeparator(),
+			separator: state.separator,
 			handleBrackets,
 			handleImportant,
 			greedy: false,

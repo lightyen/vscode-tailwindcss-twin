@@ -3,19 +3,6 @@
 import * as lsp from "vscode-languageserver"
 
 import { CSSRuleItem, state } from "~/tailwind"
-import {
-	isDarkMode,
-	hasDarkMode,
-	getDarkMode,
-	hasBreakingPoint,
-	isCommonVariant,
-	getVariants,
-	getBreakingPoint,
-	isVariant,
-	getClassNames,
-	getSeparator,
-	getColors,
-} from "~/common"
 import { Pattern, PatternKind } from "~/patterns"
 
 import canComplete from "./canComplete"
@@ -24,12 +11,6 @@ import { serializeError } from "serialize-error"
 import { findClasses } from "~/find"
 import { Token } from "~/typings"
 import { dlv } from "~/tailwind/classnames"
-
-interface _Payload {
-	hasBreakingPoint: boolean
-	hasDarkMode: boolean
-	hasCommonVariant: boolean
-}
 
 export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async params => {
 	try {
@@ -60,32 +41,27 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 	const { selection } = findClasses({
 		classes,
 		index: index - start,
-		separator: getSeparator(),
+		separator: state.separator,
 		handleBrackets,
 		handleImportant,
 	})
 
-	if (selection.selected?.[2] === getSeparator()) {
+	if (selection.selected?.[2] === state.separator) {
 		return null
 	}
 
 	const twin = kind === "twin"
 	const variants = selection.variants.map(([, , v]) => v)
-	if (!variants.every(v => isVariant(v, twin))) {
+	if (!variants.every(v => state.classnames.isVariant(v, twin))) {
 		return null
 	}
 
 	const value = selection.selected?.[2]
-	const payload: _Payload = {
-		hasBreakingPoint: hasBreakingPoint(variants),
-		hasDarkMode: hasDarkMode(variants, twin),
-		hasCommonVariant: variants.some(v => isCommonVariant(v, twin)),
-	}
-
-	const variantItems = Object.entries(getVariants(twin))
-		.filter(([label]) => variantFilter({ twin, value, payload, variants, label }))
+	const variantFilter = state.classnames.getVariantFilter(variants, twin)
+	const variantItems = Object.entries(state.classnames.getVariants(twin))
+		.filter(([label]) => variantFilter(label))
 		.map<lsp.CompletionItem>(([label, data]) => {
-			const bp = getBreakingPoint(label)
+			const bp = state.classnames.getBreakingPoint(label)
 			if (bp) {
 				return {
 					label,
@@ -100,8 +76,10 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 			} else {
 				return {
 					label,
-					sortText: isDarkMode(label, twin) ? "*" + label : "~~~:" + label,
-					kind: isDarkMode(label, twin) ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
+					sortText: state.classnames.isDarkMode(label, twin) ? "*" + label : "~~~:" + label,
+					kind: state.classnames.isDarkMode(label, twin)
+						? lsp.CompletionItemKind.Color
+						: lsp.CompletionItemKind.Field,
 					data: { type: "variant", data, value, variants, kind },
 					command: {
 						title: "",
@@ -110,29 +88,13 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 				}
 			}
 		})
-		.map(item => ({ ...item, label: item.label + getSeparator() }))
+		.map(item => ({ ...item, label: item.label + state.separator }))
 
 	// --------------------------------- //
 
-	const classesItems = Object.entries(getClassNames(variants, twin))
-		.filter(([label, info]) => {
-			if (label === "group") {
-				if (twin || payload.hasBreakingPoint) {
-					return false
-				}
-				return true
-			}
-			if (label === "container") {
-				if (twin && payload.hasBreakingPoint) {
-					return false
-				}
-				return true
-			}
-			if (!(info instanceof Array)) {
-				return false
-			}
-			return true
-		})
+	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
+	const classesItems = Object.entries(state.classnames.getClassNames(variants, twin))
+		.filter(classesFilter)
 		.map(([label, data]) => getCompletionItem({ label, data, value, variants, kind }))
 
 	if (twin) {
@@ -192,48 +154,6 @@ function twinThemeCompletion(index: number, match: Token, pattern: Pattern): lsp
 	}
 }
 
-function variantFilter({
-	twin,
-	value,
-	payload,
-	variants,
-	label,
-}: {
-	twin: boolean
-	value: string
-	payload: _Payload
-	variants: string[]
-	label: string
-}) {
-	if (twin) {
-		if (variants.some(v => v === label)) {
-			return false
-		}
-		if ((payload.hasDarkMode || payload.hasCommonVariant) && (getBreakingPoint(label) || isDarkMode(label, twin))) {
-			return false
-		}
-		if (payload.hasBreakingPoint) {
-			if (getBreakingPoint(label)) {
-				return false
-			}
-		}
-	} else {
-		if (!getDarkMode() && isDarkMode(label, twin)) {
-			return false
-		}
-		if (payload.hasCommonVariant && (getBreakingPoint(label) || isVariant(label, twin))) {
-			return false
-		}
-		if (payload.hasDarkMode && (getBreakingPoint(label) || isDarkMode(label, twin))) {
-			return false
-		}
-		if (payload.hasBreakingPoint) {
-			if (getBreakingPoint(label)) return false
-		}
-	}
-	return true
-}
-
 function getCompletionItem({
 	label,
 	data,
@@ -254,7 +174,7 @@ function getCompletionItem({
 		sortText: (label[0] === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
-	const color = getColors()[label]
+	const color = state.classnames.colors[label]
 	if (!color) {
 		return item
 	}

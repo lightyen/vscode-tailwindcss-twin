@@ -1,7 +1,6 @@
 import { Connection, MarkupContent, MarkupKind } from "vscode-languageserver"
 
 import { state } from "~/tailwind"
-import { getClassNameRules, getVariants, isVariant } from "~/common"
 import { canHover } from "./canHover"
 import { serializeError } from "serialize-error"
 
@@ -43,8 +42,8 @@ async function getHoverContents({
 		}
 	}
 
-	if (isVariant(value, twin)) {
-		const data = getVariants(twin)[value]
+	if (state.classnames.isVariant(value, twin)) {
+		const data = state.classnames.getVariants(twin)[value]
 		if (data) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -60,13 +59,13 @@ async function getHoverContents({
 		return null
 	}
 
-	const vs = variants.map(([, , v]) => v)
-	const data = getClassNameRules(vs, value, twin)
-	const __variants = getVariants(twin)
+	const inputVariants = variants.map(([, , v]) => v)
+	const data = state.classnames.getClassNames(inputVariants, twin)?.[value]
+	if (!data) {
+		return null
+	}
+
 	if (!(data instanceof Array)) {
-		if (!data) {
-			return null
-		}
 		if (data.__pseudo) {
 			return {
 				kind: MarkupKind.Markdown,
@@ -76,6 +75,7 @@ async function getHoverContents({
 		return null
 	}
 
+	const __variants = state.classnames.getVariants(twin)
 	const meta = data
 		.filter(d => {
 			for (const context of d.__context) {
@@ -83,7 +83,7 @@ async function getHoverContents({
 					if (!__variants[k].includes(context)) {
 						continue
 					}
-					if (!vs.includes(k)) {
+					if (!inputVariants.includes(k)) {
 						return false
 					}
 				}
