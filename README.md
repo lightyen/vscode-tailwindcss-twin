@@ -1,12 +1,12 @@
 # vscode-tailwindcss-twin
 
-This is a custom Tailwind CSS IntelliSense VSCode Extension with `twin` features.
+This is a custom Tailwind CSS IntelliSense VSCode Extension supports [twin](https://github.com/ben-rogerson/twin.macro) features.
 
 ---
 
 ## Supported
 
-Support ONLY for React and twin.
+ONLY for React and twin.
 
 ## Recommended VS Code Settings
 
