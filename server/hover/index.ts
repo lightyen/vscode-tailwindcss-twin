@@ -30,15 +30,19 @@ async function getHoverContents({
 	kind,
 }: Omit<ReturnType<typeof canHover>, "range">): Promise<MarkupContent> {
 	const twin = kind === "twin"
+	const inputVariants = variants.map(([, , v]) => v)
 	if (twin) {
 		if (value === "group" || value === "container") {
 			return null
 		}
 		if (value === "content") {
-			return {
-				kind: MarkupKind.Markdown,
-				value: ["```scss", ".content {", '\tcontent:"";', "}", "```"].join("\n"),
+			if (inputVariants.some(v => v === "before" || v === "after")) {
+				return {
+					kind: MarkupKind.Markdown,
+					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
+				}
 			}
+			return null
 		}
 	}
 
@@ -59,8 +63,7 @@ async function getHoverContents({
 		return null
 	}
 
-	const inputVariants = variants.map(([, , v]) => v)
-	const data = state.classnames.getClassNames(inputVariants, twin)?.[value]
+	const data = state.classnames.getClassNameRule(inputVariants, twin, value)
 	if (!data) {
 		return null
 	}

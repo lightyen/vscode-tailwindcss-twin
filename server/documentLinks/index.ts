@@ -71,7 +71,12 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 					switch (value) {
 						case "group":
 						case "container":
+							value = prefix + value
+							break
 						case "content":
+							if (c.variants.every(v => v[2] !== "before" && v[2] !== "after")) {
+								continue
+							}
 							value = prefix + value
 							break
 					}

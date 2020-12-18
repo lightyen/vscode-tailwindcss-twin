@@ -103,6 +103,8 @@ const twinVariants: Record<string, string[]> = {
 	light: ["@media (prefers-color-scheme: light)"],
 }
 
+const TWIN_CONTAINER: CSSRuleItem = { __source: "utilities", __pseudo: [], __context: [] }
+
 interface ClassName {
 	scope?: string
 	name: string
@@ -471,14 +473,14 @@ export function parseResults(
 		 */
 		isClassName(label: string, variants: string[], twinPattern: boolean) {
 			if (twinPattern) {
-				if (label === "content") {
-					return true
-				}
 				if (label === "group") {
 					return false
 				}
 				if (variants.length > 0 && label === "container") {
 					return false
+				}
+				if (label === "content" && variants.some(v => v === "before" || v === "after")) {
+					return true
 				}
 			}
 			if (!this.getClassNames(variants, twinPattern)?.[label]) {
@@ -495,6 +497,7 @@ export function parseResults(
 		 * @param twinPattern is current pattern twin?
 		 */
 		getClassNames(variants: string[], twinPattern: boolean): Record<string, CSSRuleItem | CSSRuleItem[]> {
+			let dictionary = undefined
 			if (variants.length > 0) {
 				const keys: string[] = []
 				const bp = variants.find(b => this.getBreakingPoint(b))
@@ -504,10 +507,17 @@ export function parseResults(
 					variants[i] = "dark"
 					keys.push("dark")
 				}
-				return dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
+				dictionary = dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
 			} else {
-				return this.dictionary
+				dictionary = this.dictionary
 			}
+			if (twinPattern) {
+				dictionary = { ...dictionary, container: TWIN_CONTAINER }
+			}
+			return dictionary
+		},
+		getClassNameRule(variants: string[], twinPattern: boolean, value: string): CSSRuleItem | CSSRuleItem[] {
+			return this.getClassNames(variants, twinPattern)?.[value]
 		},
 		/**
 		 * for providing proper variant list
@@ -596,7 +606,7 @@ export function parseResults(
 			const classes = Object.entries(this.getClassNames(variants, twinPattern))
 				.filter(this.getClassNameFilter(variants, twinPattern))
 				.map(([label]) => label)
-			if (twin) {
+			if (twin && variants.some(v => v === "before" || v === "after")) {
 				classes.push("content")
 			}
 			return classes

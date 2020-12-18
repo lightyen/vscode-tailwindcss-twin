@@ -97,7 +97,7 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 		.filter(classesFilter)
 		.map(([label, data]) => getCompletionItem({ label, data, value, variants, kind }))
 
-	if (twin) {
+	if (twin && variants.some(v => v === "before" || v === "after")) {
 		classesItems.push({
 			label: "content",
 			kind: lsp.CompletionItemKind.Constant,

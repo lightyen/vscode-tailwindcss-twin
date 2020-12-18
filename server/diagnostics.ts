@@ -5,6 +5,7 @@ import { findMatch, getPatterns, Pattern, PatternKind } from "~/patterns"
 import { connection, settings } from "~/server"
 import { ClassInfo, findClasses } from "~/find"
 import { state } from "./tailwind"
+import { dlv, dset } from "./tailwind/classnames"
 
 export function validateTextDocument(document: TextDocument) {
 	if (!settings.validate) {
@@ -64,41 +65,72 @@ function validateClasses({
 }): Diagnostic[] {
 	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
-	const values = classList.map(c => [...c.variants.map(v => v[2]), c.token[2]].join(separator))
 	const base = document.offsetAt(range.start)
+	const map = {}
 	for (let i = 0; i < classList.length; i++) {
-		result.push(...checkClassName(classList[i], kind, document, base))
-		for (let j = i + 1; j < classList.length; j++) {
-			if (values[i] === values[j]) {
-				// TODO: make it more user friendly
-				result.push({
-					source,
-					message: `Classname '${values[j]}' is duplicated.`,
-					range: {
-						start: document.positionAt(base + classList[j].token[0]),
-						end: document.positionAt(base + classList[j].token[1]),
-					},
-					severity: DiagnosticSeverity.Warning,
-					relatedInformation: [
-						{
-							location: {
-								uri: document.uri,
-								range: {
-									start: document.positionAt(base + classList[i].token[0]),
-									end: document.positionAt(base + classList[i].token[1]),
-								},
-							},
-							message: values[i],
-						},
-					],
-				})
+		if (kind === "twin") {
+			result.push(...checkTwinClassName(classList[i], document, base))
+		}
+		const variants = classList[i].variants.map(v => v[2])
+		if (classList[i].important) {
+			continue
+		}
+		const data = state.classnames.getClassNameRule(variants, kind === "twin", classList[i].token[2])
+		if (!(data instanceof Array)) {
+			if (kind !== "twin" && classList[i].token[2] === "group") {
+				const target = dlv(map, [...variants, "group"])
+				if (target instanceof Array) {
+					target.push(classList[i].token)
+				} else {
+					dset(map, [...variants, "group"], [classList[i].token])
+				}
+			}
+			continue
+		}
+		for (const d of data) {
+			for (const property of Object.keys(d.decls)) {
+				const target = dlv(map, [...variants, property])
+				if (target instanceof Array) {
+					target.push(classList[i].token)
+				} else {
+					dset(map, [...variants, property], [classList[i].token])
+				}
+			}
+			if (d.__source === "components") {
+				break
 			}
 		}
 	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function travel(obj: any) {
+		for (const k in obj) {
+			const t = obj[k]
+			if (t instanceof Array) {
+				if (t.length > 1) {
+					for (const token of t) {
+						result.push({
+							source,
+							message: `${token[2]} is conflicted on property: ${k}`,
+							range: {
+								start: document.positionAt(base + token[0]),
+								end: document.positionAt(base + token[1]),
+							},
+							severity: DiagnosticSeverity.Warning,
+						})
+					}
+				}
+			} else {
+				travel(t)
+			}
+		}
+	}
+	travel(map)
+
+	// check empty
 	for (let i = 0; i < empty.length; i++) {
 		result.push({
 			source,
-			message: `Miss something?`,
+			message: `miss something?`,
 			range: {
 				start: document.positionAt(base + empty[i][0]),
 				end: document.positionAt(base + empty[i][1]),
@@ -110,16 +142,15 @@ function validateClasses({
 	return result
 }
 
-function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocument, base: number) {
-	const twin = kind === "twin"
+function checkTwinClassName(info: ClassInfo, document: TextDocument, base: number) {
 	const result: Diagnostic[] = []
 	const variants = info.variants.map(v => v[2])
 	for (const [a, b, value] of info.variants) {
-		if (state.classnames.isVariant(value, twin)) {
+		if (state.classnames.isVariant(value, true)) {
 			continue
 		}
 		// TODO: use another approximate string matching method?
-		const ans = state.classnames.getSearcher(variants, twin).variants.search(value)
+		const ans = state.classnames.getSearcher(variants, true).variants.search(value)
 		if (ans?.length > 0) {
 			result.push({
 				source,
@@ -128,17 +159,17 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 					start: document.positionAt(base + a),
 					end: document.positionAt(base + b),
 				},
-				severity: DiagnosticSeverity.Information,
+				severity: DiagnosticSeverity.Warning,
 			})
 		} else {
 			result.push({
 				source,
-				message: `'${value}' is undefined.`,
+				message: `'${value}' is undefined`,
 				range: {
 					start: document.positionAt(base + a),
 					end: document.positionAt(base + b),
 				},
-				severity: DiagnosticSeverity.Information,
+				severity: DiagnosticSeverity.Warning,
 			})
 		}
 	}
@@ -147,15 +178,15 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 		if (info.token[2] === "") {
 			result.push({
 				source,
-				message: `Miss something?`,
+				message: `miss something?`,
 				range: {
 					start: document.positionAt(base + info.token[0]),
 					end: document.positionAt(base + info.token[1]),
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
-		} else if (!state.classnames.isClassName(info.token[2], variants, twin)) {
-			const ans = state.classnames.getSearcher(variants, twin).classes.search(info.token[2])
+		} else if (!state.classnames.isClassName(info.token[2], variants, true)) {
+			const ans = state.classnames.getSearcher(variants, true).classes.search(info.token[2])
 			if (ans?.length > 0) {
 				result.push({
 					source,
@@ -164,17 +195,17 @@ function checkClassName(info: ClassInfo, kind: PatternKind, document: TextDocume
 						start: document.positionAt(base + info.token[0]),
 						end: document.positionAt(base + info.token[1]),
 					},
-					severity: DiagnosticSeverity.Information,
+					severity: DiagnosticSeverity.Warning,
 				})
 			} else {
 				result.push({
 					source,
-					message: `'${info.token[2]}' is undefined.`,
+					message: `'${info.token[2]}' is undefined`,
 					range: {
 						start: document.positionAt(base + info.token[0]),
 						end: document.positionAt(base + info.token[1]),
 					},
-					severity: DiagnosticSeverity.Information,
+					severity: DiagnosticSeverity.Warning,
 				})
 			}
 		}
