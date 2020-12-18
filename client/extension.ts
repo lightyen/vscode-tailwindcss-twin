@@ -61,6 +61,9 @@ interface InitializationOptions {
 	twin: boolean
 	validate: boolean
 	fallbackDefaultConfig: boolean
+	diagnostics: {
+		conflict?: boolean
+	}
 }
 
 async function addClient(serverModule: string, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
@@ -100,7 +103,8 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	initializationOptions.twin = tailwindcss.get("twin")
 	initializationOptions.validate = tailwindcss.get("validate")
 	initializationOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
-
+	initializationOptions.diagnostics = {}
+	initializationOptions.diagnostics.conflict = tailwindcss.get("diagnostics.conflict")
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: languages.get(ws.uri.toString()).map(language => ({
 			scheme: "file",

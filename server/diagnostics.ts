@@ -66,41 +66,13 @@ function validateClasses({
 	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
 	const base = document.offsetAt(range.start)
-	const map = {}
-	for (let i = 0; i < classList.length; i++) {
-		if (kind === "twin") {
-			result.push(...checkTwinClassName(classList[i], document, base))
-		}
-		const variants = classList[i].variants.map(v => v[2])
-		if (classList[i].important) {
-			continue
-		}
-		const data = state.classnames.getClassNameRule(variants, kind === "twin", classList[i].token[2])
-		if (!(data instanceof Array)) {
-			if (kind !== "twin" && classList[i].token[2] === "group") {
-				const target = dlv(map, [...variants, "group"])
-				if (target instanceof Array) {
-					target.push(classList[i].token)
-				} else {
-					dset(map, [...variants, "group"], [classList[i].token])
-				}
-			}
-			continue
-		}
-		for (const d of data) {
-			for (const property of Object.keys(d.decls)) {
-				const target = dlv(map, [...variants, property])
-				if (target instanceof Array) {
-					target.push(classList[i].token)
-				} else {
-					dset(map, [...variants, property], [classList[i].token])
-				}
-			}
-			if (d.__source === "components") {
-				break
-			}
-		}
+
+	if (kind === "twin") {
+		classList.forEach(c => {
+			result.push(...checkTwinClassName(c, document, base))
+		})
 	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function travel(obj: any) {
 		for (const k in obj) {
@@ -124,7 +96,42 @@ function validateClasses({
 			}
 		}
 	}
-	travel(map)
+
+	if (settings.diagnostics.conflict) {
+		const map = {}
+		for (let i = 0; i < classList.length; i++) {
+			const variants = classList[i].variants.map(v => v[2])
+			if (classList[i].important) {
+				continue
+			}
+			const data = state.classnames.getClassNameRule(variants, kind === "twin", classList[i].token[2])
+			if (!(data instanceof Array)) {
+				if (kind !== "twin" && classList[i].token[2] === "group") {
+					const target = dlv(map, [...variants, "group"])
+					if (target instanceof Array) {
+						target.push(classList[i].token)
+					} else {
+						dset(map, [...variants, "group"], [classList[i].token])
+					}
+				}
+				continue
+			}
+			for (const d of data) {
+				for (const property of Object.keys(d.decls)) {
+					const target = dlv(map, [...variants, property])
+					if (target instanceof Array) {
+						target.push(classList[i].token)
+					} else {
+						dset(map, [...variants, property], [classList[i].token])
+					}
+				}
+				if (d.__source === "components") {
+					break
+				}
+			}
+		}
+		travel(map)
+	}
 
 	// check empty
 	for (let i = 0; i < empty.length; i++) {

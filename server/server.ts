@@ -27,6 +27,9 @@ interface InitializationOptions {
 	twin: boolean
 	validate: boolean
 	fallbackDefaultConfig: boolean
+	diagnostics: {
+		conflict: boolean
+	}
 }
 
 export let settings: InitializationOptions = {
@@ -37,6 +40,9 @@ export let settings: InitializationOptions = {
 	twin: false,
 	validate: false,
 	fallbackDefaultConfig: false,
+	diagnostics: {
+		conflict: false,
+	},
 }
 
 export const connection = createConnection(ProposedFeatures.all)
@@ -165,8 +171,12 @@ connection.onDidChangeConfiguration(async params => {
 		settings.links = typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
 		connection.sendNotification("tailwindcss/info", `documentLinks = ${settings.links}`)
 
-		if (settings.validate !== tailwindcss.validate) {
+		if (
+			settings.validate !== tailwindcss.validate ||
+			settings.diagnostics.conflict !== tailwindcss.diagnostics.conflict
+		) {
 			settings.validate = tailwindcss.validate
+			settings.diagnostics.conflict = tailwindcss.diagnostics.conflict
 			documents.all().forEach(validateTextDocument)
 		}
 		connection.sendNotification("tailwindcss/info", `diagnostics = ${settings.validate}`)

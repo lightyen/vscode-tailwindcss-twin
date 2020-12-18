@@ -98,11 +98,15 @@
           "type": "boolean",
           "default": true
         },
+        "tailwindcss.fallbackDefaultConfig": {
+          "type": "boolean",
+          "default": true
+        },
         "tailwindcss.validate": {
           "type": "boolean",
           "default": true
         },
-        "tailwindcss.fallbackDefaultConfig": {
+        "tailwindcss.diagnostics.conflict": {
           "type": "boolean",
           "default": true
         }
