@@ -59,6 +59,9 @@ function getConfig(
 		if (!fallbackDefaultConfig) {
 			throw Error("tailwind config is not found.")
 		}
+		if (err.code !== "MODULE_NOT_FOUND") {
+			throw err
+		}
 		if (!payload.tailwindRoot) {
 			// use extension embedded lib
 			base = ""
