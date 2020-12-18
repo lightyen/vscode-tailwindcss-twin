@@ -1,4 +1,4 @@
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient"
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
 import vscode from "vscode"
 import path from "path"
 

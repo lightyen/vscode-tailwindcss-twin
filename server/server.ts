@@ -1,10 +1,10 @@
 import {
-	createConnection,
 	ProposedFeatures,
 	DidChangeConfigurationNotification,
 	TextDocuments,
 	TextDocumentSyncKind,
 } from "vscode-languageserver"
+import { createConnection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
 import path from "path"

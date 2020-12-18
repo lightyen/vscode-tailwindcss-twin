@@ -1,5 +1,5 @@
 import vscode from "vscode"
-import { LanguageClient } from "vscode-languageclient"
+import { LanguageClient } from "vscode-languageclient/node"
 
 export default async function ({ client }: { client: LanguageClient }) {
 	const name = client.clientOptions.diagnosticCollectionName

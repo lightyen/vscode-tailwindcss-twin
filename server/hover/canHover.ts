@@ -1,4 +1,4 @@
-import { Range, TextDocumentPositionParams } from "vscode-languageserver"
+import type { Range, TextDocumentPositionParams } from "vscode-languageserver"
 
 import { documents } from "~/server"
 import { getPatterns, canMatch } from "~/patterns"

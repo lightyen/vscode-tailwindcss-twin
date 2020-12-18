@@ -1,4 +1,4 @@
-import { Connection } from "vscode-languageserver"
+import type { Connection } from "vscode-languageserver"
 import { documents } from "~/server"
 import updateDocumentColor from "./updateDocumentColor"
 
