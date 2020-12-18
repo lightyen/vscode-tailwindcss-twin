@@ -68,7 +68,7 @@ test("findClasses Selected", async () => {
 })
 
 test("findClasses Empty", async () => {
-	const text = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) focus:() lg:(light:bg-black)`
+	const text = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( ) lg:(light:bg-black)`
 	for (let index = 0; index < text.length; index += 1) {
 		const result = findClasses({
 			classes: text,
@@ -77,7 +77,23 @@ test("findClasses Empty", async () => {
 			handleBrackets: true,
 			handleImportant: true,
 		})
-		expect(result.empty).toEqual([[62, 64, [[56, 61, "focus"]]]])
+		expect(result.empty).toEqual([
+			[18, 20, [[15, 17, "lg"]]],
+			[24, 25, [[21, 23, "md"]]],
+			[72, 75, [[66, 71, "focus"]]],
+		])
+	}
+
+	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:  `
+	for (let index = 0; index < text2.length; index += 1) {
+		const result = findClasses({
+			classes: text2,
+			separator: ":",
+			index,
+			handleBrackets: true,
+			handleImportant: true,
+		})
+		expect(result.empty).toEqual([[55, 56, [[52, 54, "md"]]]])
 	}
 })
 

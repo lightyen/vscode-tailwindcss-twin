@@ -75,11 +75,6 @@ export function findClasses({
 				}
 				lastv = variantReg.lastIndex
 			}
-			// empty string?
-			if (reg.lastIndex === endBracket) {
-				empty.push([e.index + lastv, endBracket + 1, vs])
-			}
-
 			const ret = findClasses({
 				classes,
 				start: reg.lastIndex,
@@ -93,6 +88,9 @@ export function findClasses({
 				lbrace,
 				rbrace,
 			})
+			if (ret.classList.length === 0) {
+				empty.push([e.index + lastv, endBracket + 1, vs])
+			}
 			classList.push(
 				...ret.classList.map(item => ({ ...item, variants: [...vs, ...item.variants], inGroup: true })),
 			)
@@ -146,6 +144,9 @@ export function findClasses({
 				}
 			}
 			item.token = [last, reg.lastIndex, classes.substring(last, reg.lastIndex)]
+			if (item.token[2] === "") {
+				empty.push([last, last + 1, item.variants])
+			}
 			if (handleImportant && item.token[2].endsWith("!")) {
 				item.important = true
 				item.token[2] = item.token[2].substring(0, item.token[2].length - 1)

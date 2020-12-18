@@ -133,7 +133,6 @@ function validateClasses({
 		travel(map)
 	}
 
-	// check empty
 	for (let i = 0; i < empty.length; i++) {
 		result.push({
 			source,
@@ -180,19 +179,9 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 			})
 		}
 	}
-	if (info.token) {
+	if (info.token[2]) {
 		const variants = info.variants.map(v => v[2])
-		if (info.token[2] === "") {
-			result.push({
-				source,
-				message: `miss something?`,
-				range: {
-					start: document.positionAt(base + info.token[0]),
-					end: document.positionAt(base + info.token[1]),
-				},
-				severity: DiagnosticSeverity.Warning,
-			})
-		} else if (!state.classnames.isClassName(info.token[2], variants, true)) {
+		if (!state.classnames.isClassName(info.token[2], variants, true)) {
 			const ans = state.classnames.getSearcher(variants, true).classes.search(info.token[2])
 			if (ans?.length > 0) {
 				result.push({
