@@ -2,106 +2,12 @@ import parser from "postcss-selector-parser"
 import type { Result, Node, Rule } from "postcss"
 import chroma from "chroma-js"
 import Fuse from "fuse.js"
+import __baseVariants from "./baseVariants.yml"
+import twinVariants from "./twinVariants.yml"
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
 const selectorProcessor = parser()
-
-const __baseVariants: Record<string, string[]> = {
-	hover: ["&:hover"],
-	focus: ["&:focus"],
-	"group-hover": [".group:hover"],
-	"focus-within": ["&:focus-within"],
-	active: ["&:active"],
-	"group-focus": [".group:focus"],
-	"focus-visible": ["&:focus-visible"],
-	"motion-safe": ["@media (prefers-reduced-motion: no-preference)"],
-	"motion-reduce": ["@media (prefers-reduced-motion: reduce)"],
-	disabled: ["&:disabled"],
-	visited: ["&:visited"],
-	checked: ["&:checked"],
-	first: ["&:first-child"],
-	last: ["&:last-child"],
-	odd: ["&:nth-child(odd)"],
-	even: ["&:nth-child(even)"],
-}
-
-// source: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-//
-// In Twin, these are always available on just about any class
-const twinVariants: Record<string, string[]> = {
-	// Before/after pseudo elements
-	// Usage: tw`before:(content block w-10 h-10 bg-black)`
-	before: ["&:before"],
-	after: ["&:after"],
-
-	// Interactive links/buttons
-	hover: ["&:hover"], // Tailwind
-	focus: ["&:focus"], // Tailwind
-	active: ["&:active"], // Tailwind
-	visited: ["&:visited"], // Tailwind
-	hocus: ["&:hover", "&:focus"],
-	link: ["&:link"],
-	target: ["&:target"],
-	"focus-visible": ["&:focus-visible"], // Tailwind
-	"focus-within": ["&:focus-within"], // Tailwind
-
-	// Form element states
-	disabled: ["&:disabled"], // Tailwind
-	checked: ["&:checked"], // Tailwind
-	"not-checked": ["&:not(:checked)"],
-	default: ["&:default"],
-	enabled: ["&:enabled"],
-	indeterminate: ["&:indeterminate"],
-	invalid: ["&:invalid"],
-	valid: ["&:valid"],
-	optional: ["&:optional"],
-	required: ["&:required"],
-	"placeholder-shown": ["&:placeholder-shown"],
-	"read-only": ["&:read-only"],
-	"read-write": ["&:read-write"],
-
-	// Child selectors
-	"not-disabled": ["&:not(:disabled)"],
-	"first-of-type": ["&:first-of-type"],
-	"not-first-of-type": ["&:not(:first-of-type)"],
-	"last-of-type": ["&:last-of-type"],
-	"not-last-of-type": ["&:not(:last-of-type)"],
-	first: ["&:first-child"], // Tailwind
-	"not-first": ["&:not(:first-child)"],
-	last: ["&:last-child"], // Tailwind
-	"not-last": [":not(:last-child)"],
-	"only-child": ["&:only-child"],
-	"not-only-child": ["&:not(:only-child)"],
-	"only-of-type": ["&:only-of-type"],
-	"not-only-of-type": ["&:not(:only-of-type)"],
-	even: ["&:nth-child(even)"], // Tailwind
-	odd: ["&:nth-child(odd)"], // Tailwind
-	"even-of-type": ["&:nth-of-type(even)"],
-	"odd-of-type": ["&:nth-of-type(odd)"],
-	svg: ["svg"],
-	all: ["*"],
-	"all-child": ["> *"],
-	sibling: ["~ *"],
-
-	// Group states
-	// You'll need to add className="group" to an ancestor to make these work
-	// https://github.com/ben-rogerson/twin.macro/blob/master/docs/group.md
-	"group-hover": [".group:hover"],
-	"group-focus": [".group:focus"],
-	"group-hocus": [".group:hover", ".group:focus"],
-	"group-active": [".group:active"],
-	"group-visited": [".group:visited"],
-
-	// Motion control
-	// https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
-	"motion-safe": ["@media (prefers-reduced-motion: no-preference)"],
-	"motion-reduce": ["@media (prefers-reduced-motion: reduce)"],
-
-	// Dark mode
-	dark: ["@media (prefers-color-scheme: dark)"],
-	light: ["@media (prefers-color-scheme: light)"],
-}
 
 const TWIN_CONTAINER: CSSRuleItem = { __source: "utilities", __pseudo: [], __context: [] }
 
