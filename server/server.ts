@@ -73,7 +73,7 @@ connection.onInitialize(async (params, _cancel, progress) => {
 			},
 			textDocumentSync: {
 				openClose: true,
-				change: TextDocumentSyncKind.Full,
+				change: TextDocumentSyncKind.Incremental,
 				willSaveWaitUntil: false,
 				save: {
 					includeText: false,
