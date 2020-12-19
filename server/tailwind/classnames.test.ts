@@ -9,7 +9,7 @@ const process = async (css: string) => {
 const __source = "test"
 
 const processCss = async (css: string) => {
-	return parseResults([{ source: __source, result: await process(css) }], "media")
+	return parseResults([{ source: __source, result: await process(css) }])
 }
 
 test("processes default container plugin", async () => {

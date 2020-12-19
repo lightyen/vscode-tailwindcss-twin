@@ -1,0 +1,18 @@
+{
+  "active": ["&:active"],
+  "checked": ["&:checked"],
+  "disabled": ["&:disabled"],
+  "even": ["&:nth-child(even)"],
+  "first": ["&:first-child"],
+  "focus": ["&:focus"],
+  "focus-visible": ["&:focus-visible"],
+  "focus-within": ["&:focus-within"],
+  "group-focus": [".group:focus"],
+  "group-hover": [".group:hover"],
+  "hover": ["&:hover"],
+  "last": ["&:last-child"],
+  "motion-reduce": ["@media (prefers-reduced-motion: reduce)"],
+  "motion-safe": ["@media (prefers-reduced-motion: no-preference)"],
+  "odd": ["&:nth-child(odd)"],
+  "visited": ["&:visited"]
+}

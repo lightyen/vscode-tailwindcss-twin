@@ -2,8 +2,8 @@ import parser from "postcss-selector-parser"
 import type { Result, Node, Rule } from "postcss"
 import chroma from "chroma-js"
 import Fuse from "fuse.js"
-import __baseVariants from "./baseVariants.yml"
-import twinVariants from "./twinVariants.yml"
+import __baseVariants from "./baseVariants.json"
+import twinVariants from "./twinVariants.json"
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
@@ -125,7 +125,7 @@ export function extractClassNames(
 
 export function parseResults(
 	groups: Array<{ source: string; result: Result }>,
-	darkMode: false | "media" | "class",
+	darkMode: false | "media" | "class" = false,
 	twin = false,
 ) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
