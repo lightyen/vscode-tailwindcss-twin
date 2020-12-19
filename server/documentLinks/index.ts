@@ -26,7 +26,7 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 		return []
 	}
 	const document = documents.get(textDocument.uri)
-	const patterns = getPatterns({ document })
+	const patterns = getPatterns(document.languageId, settings.twin)
 	const links: DocumentLink[] = []
 	const text = document.getText()
 	const s = new Set<number>()

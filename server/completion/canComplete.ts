@@ -1,11 +1,11 @@
 import { Range, TextDocumentPositionParams } from "vscode-languageserver"
 
-import { documents } from "~/server"
+import { documents, settings } from "~/server"
 import { getPatterns, canMatch } from "~/patterns"
 
 export default function canComplete({ textDocument, position }: TextDocumentPositionParams) {
 	const document = documents.get(textDocument.uri)
-	const patterns = getPatterns({ document })
+	const patterns = getPatterns(document.languageId, settings.twin)
 	for (const pattern of patterns) {
 		const { type, lpat, rpat } = pattern
 		let range: Range

@@ -27,6 +27,6 @@
       "~/*": ["./*"]
     }
   },
-  "include": ["**/*.json"],
+  "include": ["**/*.ts", "**/*.json"],
   "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

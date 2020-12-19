@@ -1,13 +1,13 @@
 import type { Range, TextDocumentPositionParams } from "vscode-languageserver"
 
-import { documents } from "~/server"
+import { documents, settings } from "~/server"
 import { getPatterns, canMatch } from "~/patterns"
 import { findClasses } from "~/find"
 import { state } from "~/tailwind"
 
 export function canHover({ textDocument, position }: TextDocumentPositionParams) {
 	const document = documents.get(textDocument.uri)
-	const patterns = getPatterns({ document })
+	const patterns = getPatterns(document.languageId, settings.twin)
 	for (const { type, lpat, rpat, handleBrackets, handleImportant, ...meta } of patterns) {
 		let range: Range
 		if (type === "single") {

@@ -18,7 +18,7 @@ export default function updateDocumentColor(document: TextDocument) {
 		return
 	}
 	const text = document.getText()
-	const patterns = getPatterns({ document })
+	const patterns = getPatterns(document.languageId, settings.twin)
 	const colors: ColorInformation[] = []
 	const colorTable = state.classnames.colors
 	for (const { lpat, rpat, handleBrackets, handleImportant } of patterns) {

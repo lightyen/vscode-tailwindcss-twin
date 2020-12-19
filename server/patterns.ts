@@ -1,6 +1,3 @@
-import { TextDocument } from "vscode-languageserver-textdocument"
-import { settings } from "~/server"
-
 import { Token } from "./typings"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
@@ -168,7 +165,7 @@ const jsxPatterns: Pattern[] = [
 	}),
 ]
 
-export function getPatterns({ document: { languageId } }: { document: TextDocument }): Pattern[] {
+export function getPatterns(languageId: string, twin = false) {
 	const patterns: Pattern[] = []
 	switch (languageId) {
 		case "html":
@@ -176,17 +173,17 @@ export function getPatterns({ document: { languageId } }: { document: TextDocume
 			break
 		case "typescriptreact":
 			patterns.push(...jsxPatterns)
-			settings.twin && patterns.push(...twinPatterns)
+			twin && patterns.push(...twinPatterns)
 			break
 		case "javascriptreact":
 			patterns.push(...jsxPatterns)
-			settings.twin && patterns.push(...twinPatterns)
+			twin && patterns.push(...twinPatterns)
 			break
 		case "typescript":
-			settings.twin && patterns.push(...twinPatterns)
+			twin && patterns.push(...twinPatterns)
 			break
 		case "javascript":
-			settings.twin && patterns.push(...twinPatterns)
+			twin && patterns.push(...twinPatterns)
 			break
 	}
 	return patterns

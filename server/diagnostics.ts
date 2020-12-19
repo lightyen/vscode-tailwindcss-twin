@@ -18,7 +18,7 @@ export function validateTextDocument(document: TextDocument) {
 
 	const text = document.getText()
 	const diagnostics: Diagnostic[] = []
-	const patterns = getPatterns({ document })
+	const patterns = getPatterns(document.languageId, settings.twin)
 
 	for (const pattern of patterns) {
 		const { lpat, rpat, kind } = pattern
