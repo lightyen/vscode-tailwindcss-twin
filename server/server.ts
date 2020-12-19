@@ -7,7 +7,6 @@ import {
 import { createConnection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
-import path from "path"
 
 import { state, init } from "./tailwind"
 
@@ -20,8 +19,8 @@ import { didOpenTextDocument, didChangeChangeTextDocument } from "./document"
 import { validateTextDocument } from "./diagnostics"
 
 interface InitializationOptions {
-	base: string
-	filename: string
+	workspaceFoloder: string
+	tailwindConfigPath: string
 	colorDecorators: boolean
 	links: boolean
 	twin: boolean
@@ -32,18 +31,7 @@ interface InitializationOptions {
 	}
 }
 
-export let settings: InitializationOptions = {
-	base: "",
-	filename: "",
-	colorDecorators: false,
-	links: false,
-	twin: false,
-	validate: false,
-	fallbackDefaultConfig: false,
-	diagnostics: {
-		conflict: false,
-	},
-}
+export let settings: Partial<InitializationOptions> = {}
 
 export const connection = createConnection(ProposedFeatures.all)
 export let documents: TextDocuments<TextDocument>
@@ -121,14 +109,12 @@ connection.onDidChangeWatchedFiles(async ({ changes }) => {
 	connection.sendNotification("tailwindcss/info", `onDidChangeWatchedFiles`)
 	const result = await connection.sendRequest<string[]>("tailwindcss/findConfig")
 	if (result.length === 1) {
-		settings.base = path.dirname(result[0])
-		settings.filename = path.basename(result[0])
+		settings.tailwindConfigPath = result[0]
 		await init(connection, settings)
 	} else {
 		for (const f of changes) {
 			const p = URI.parse(f.uri).fsPath
-			settings.base = path.dirname(p)
-			settings.filename = path.basename(p)
+			settings.tailwindConfigPath = p
 			await init(connection, settings)
 			break
 		}

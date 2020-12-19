@@ -2,8 +2,6 @@ import { Connection } from "vscode-languageserver"
 import { serializeError } from "serialize-error"
 import { processTailwindConfig } from "./config"
 
-import type { ConfigPath } from "./config"
-export type { ConfigPath }
 export type { CSSRuleItem } from "./classnames"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

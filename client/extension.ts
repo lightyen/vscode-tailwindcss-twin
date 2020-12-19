@@ -54,8 +54,8 @@ function getOuterMostWorkspaceFolder(folder: vscode.WorkspaceFolder): vscode.Wor
 }
 
 interface InitializationOptions {
-	base: string
-	filename: string
+	workspaceFoloder: string
+	tailwindConfigPath: string
 	colorDecorators: boolean
 	links: boolean
 	twin: boolean
@@ -80,17 +80,15 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		},
 	}
 	const initializationOptions: Partial<InitializationOptions> = {}
-	let base = ws.uri.fsPath
 	const results = await vscode.workspace.findFiles(
-		new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
+		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 		new vscode.RelativePattern(ws, "node_modules/**"),
 		1,
 	)
 	if (results.length === 1) {
-		base = path.dirname(results[0].fsPath)
-		initializationOptions.filename = path.basename(results[0].fsPath)
+		initializationOptions.tailwindConfigPath = results[0].fsPath
 	}
-	initializationOptions.base = base
+	initializationOptions.workspaceFoloder = ws.uri.fsPath
 	const tailwindcss = vscode.workspace.getConfiguration("tailwindcss", ws)
 	initializationOptions.colorDecorators = tailwindcss.get("colorDecorators")
 	if (typeof initializationOptions.colorDecorators !== "boolean") {
@@ -109,11 +107,11 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		documentSelector: languages.get(ws.uri.toString()).map(language => ({
 			scheme: "file",
 			language,
-			pattern: `${base}/**/*`,
+			pattern: `${path.dirname(initializationOptions.tailwindConfigPath)}/**/*`,
 		})),
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher(
-				new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js,package.json}"),
+				new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js,package.json}"),
 			),
 		},
 		diagnosticCollectionName: CLIENT_ID,

@@ -19,11 +19,6 @@ export interface TailwindConfig {
 	// ...
 }
 
-export interface ConfigPath {
-	base: string
-	filename: string
-}
-
 interface _Payload {
 	tailwindcss?: (config: string | TailwindConfig) => Plugin
 	tailwindcssResolveConfig?: (config: TailwindConfig) => TailwindConfig
@@ -113,12 +108,21 @@ function prepareTailwind(payload: _Payload, base: string) {
 	return m
 }
 
-interface Params extends ConfigPath {
+interface Params {
+	workspaceFoloder: string
+	tailwindConfigPath: string
 	twin: boolean
 	fallbackDefaultConfig: boolean
 }
 
-export async function processTailwindConfig({ base, filename, twin, fallbackDefaultConfig }: Params) {
+export async function processTailwindConfig({
+	workspaceFoloder = "",
+	tailwindConfigPath = "",
+	twin = false,
+	fallbackDefaultConfig = false,
+}: Partial<Params>) {
+	const base = workspaceFoloder
+	const filename = path.relative(workspaceFoloder, tailwindConfigPath)
 	const payload: _Payload = {
 		versions: {},
 		separator: ":",
