@@ -27,7 +27,7 @@ interface InitializationOptions {
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
-		conflict: boolean
+		conflict: "none" | "loose" | "strict"
 	}
 }
 

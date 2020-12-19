@@ -82,7 +82,7 @@ function validateClasses({
 					for (const token of t) {
 						result.push({
 							source,
-							message: `${token[2]} is conflicted on property: ${k}`,
+							message: `${token[2]} is conflicted on property: ${k.split(":")}`,
 							range: {
 								start: document.positionAt(base + token[0]),
 								end: document.positionAt(base + token[1]),
@@ -97,7 +97,7 @@ function validateClasses({
 		}
 	}
 
-	if (settings.diagnostics.conflict) {
+	if (settings.diagnostics.conflict !== "none") {
 		const map = {}
 		for (let i = 0; i < classList.length; i++) {
 			const variants = classList[i].variants.map(v => v[2])
@@ -116,17 +116,33 @@ function validateClasses({
 				}
 				continue
 			}
-			for (const d of data) {
-				for (const property of Object.keys(d.decls)) {
-					const target = dlv(map, [...variants, property])
-					if (target instanceof Array) {
-						target.push(classList[i].token)
-					} else {
-						dset(map, [...variants, property], [classList[i].token])
+			if (settings.diagnostics.conflict === "strict") {
+				for (const d of data) {
+					for (const property of Object.keys(d.decls)) {
+						const target = dlv(map, [...variants, property])
+						if (target instanceof Array) {
+							target.push(classList[i].token)
+						} else {
+							dset(map, [...variants, property], [classList[i].token])
+						}
+					}
+					if (d.__source === "components") {
+						break
 					}
 				}
-				if (d.__source === "components") {
-					break
+			} else if (settings.diagnostics.conflict === "loose") {
+				const s = new Set<string>()
+				for (const d of data) {
+					for (const c of Object.keys(d.decls)) {
+						s.add(c)
+					}
+				}
+				const key = Array.from(s).sort().join(":")
+				const target = dlv(map, [...variants, key])
+				if (target instanceof Array) {
+					target.push(classList[i].token)
+				} else {
+					dset(map, [...variants, key], [classList[i].token])
 				}
 			}
 		}

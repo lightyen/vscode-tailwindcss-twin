@@ -62,7 +62,7 @@ interface InitializationOptions {
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
-		conflict?: boolean
+		conflict?: string
 	}
 }
 

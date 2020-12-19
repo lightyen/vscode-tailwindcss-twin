@@ -104,8 +104,18 @@
           "default": true
         },
         "tailwindcss.diagnostics.conflict": {
-          "type": "boolean",
-          "default": true
+          "type": "string",
+          "enum": [
+            "none",
+            "loose",
+            "strict"
+          ],
+          "default": "strict",
+          "enumDescriptions": [
+            "Disabled",
+            "Show warning when all css property conflicted",
+            "Show warning when one css property conflicted"
+          ]
         }
       }
     },
