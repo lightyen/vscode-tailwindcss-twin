@@ -3,8 +3,15 @@ import type { Postcss, Plugin, Result } from "postcss"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { TModule } from "./module"
 
+type PurgeOption =
+	| {
+			enabled: boolean
+			content: string[]
+	  }
+	| string[]
+
 export interface TailwindConfig {
-	purge: string[]
+	purge: PurgeOption
 	darkMode: false | "media" | "class"
 	theme: Record<string, unknown>
 	plugins: unknown[]
@@ -148,6 +155,9 @@ export async function processTailwindConfig({
 	getConfig(payload, { base, filename, m, fallbackDefaultConfig })
 
 	// TODO: apply plugin?
+
+	// force disable purge
+	payload.config.purge = { enabled: false, content: [] }
 
 	// change config for twin
 	if (twin) {
