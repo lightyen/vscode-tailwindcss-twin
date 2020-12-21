@@ -177,11 +177,7 @@ export function parseResults(
 						dset(tree, [...baseKeys, ...index, "decls", key], decls[key])
 					}
 					dset(tree, [...baseKeys, ...index, "__source"], source)
-					dset(
-						tree,
-						[...baseKeys, ...index, "__pseudo"],
-						classNames[i].pseudo.map(x => `&${x}`),
-					)
+					dset(tree, [...baseKeys, ...index, "__pseudo"], classNames[i].pseudo)
 					dset(tree, [...baseKeys, ...index, "__context"], context.slice().reverse())
 				}
 
@@ -488,6 +484,10 @@ export function parseResults(
 				if (i !== -1) {
 					variants[i] = "dark"
 					keys.push("dark")
+				}
+				const first = variants.find(v => this.isCommonVariant(v, twinPattern))
+				if (first && Object.keys(baseVariants).includes(first)) {
+					keys.push(first)
 				}
 				dictionary = dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
 			} else {

@@ -83,15 +83,16 @@ async function getHoverContents({
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 	const meta = data
 		.filter(d => {
-			for (const context of d.__context) {
-				for (const k in __variants) {
-					if (!__variants[k].includes(context)) {
-						continue
-					}
-					if (!notCommon.includes(k)) {
+			if (
+				!d.__context.every(context => {
+					const e = Object.entries(__variants).find(([, values]) => values.includes(context))
+					if (!e) {
 						return false
 					}
-				}
+					return notCommon.includes(e[0])
+				})
+			) {
+				return false
 			}
 			if (common.length === 0 && d.__pseudo.length > 0) {
 				return false
