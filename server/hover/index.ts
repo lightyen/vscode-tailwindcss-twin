@@ -79,6 +79,8 @@ async function getHoverContents({
 	}
 
 	const __variants = state.classnames.getVariants(twin)
+	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v, twin))
+	const notCommon = inputVariants.filter(v => !common.includes(v))
 	const meta = data
 		.filter(d => {
 			for (const context of d.__context) {
@@ -86,12 +88,15 @@ async function getHoverContents({
 					if (!__variants[k].includes(context)) {
 						continue
 					}
-					if (!inputVariants.includes(k)) {
+					if (!notCommon.includes(k)) {
 						return false
 					}
 				}
 			}
-			return true
+			if (common.length === 0 && d.__pseudo.length > 0) {
+				return false
+			}
+			return common.flatMap(v => __variants[v]).every(c => d.__pseudo.some(p => "&" + p === c))
 		})
 		.map(i =>
 			Object.entries(i.decls).flatMap(([label, values]) => values.map<[string, string]>(v => [label, v])),

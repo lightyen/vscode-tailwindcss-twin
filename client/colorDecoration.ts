@@ -50,8 +50,6 @@ class ColorMap {
 			}
 		}
 		if (__color) {
-			const c = new vscode.ThemeColor("workbench.background")
-			console.log(c)
 			const color = chroma(__color === "transparent" ? transparent : __color || transparent)
 			if (__color !== "transparent") {
 				options.color = color.css()
