@@ -183,6 +183,7 @@ export function getPatterns(languageId: string, twin = false) {
 			twin && patterns.push(...twinPatterns)
 			break
 		case "javascript":
+			patterns.push(...jsxPatterns)
 			twin && patterns.push(...twinPatterns)
 			break
 	}
