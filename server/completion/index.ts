@@ -174,27 +174,27 @@ function getCompletionItem({
 		sortText: (label[0] === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
-	const color = state.classnames.colors[label]
-	if (!color) {
+	const info = state.classnames.colors[label]
+	if (!info) {
 		return item
 	}
 
 	item.kind = lsp.CompletionItemKind.Color
-	if (color == "currentColor") {
+	if (label.includes("current")) {
 		item.documentation = "currentColor"
 		item.data.type = "color"
 		item.data.data = "currentColor"
 		return item
 	}
 
-	if (color === "transparent") {
+	if (label.includes("transparent")) {
 		item.documentation = { kind: lsp.MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.0)" }
 		item.data.type = "color"
 		item.data.data = "transparent"
 		return item
 	}
 
-	item.documentation = color
+	item.documentation = info.backgroundColor || info.borderColor || info.color
 	item.data.type = "color"
 	return item
 }

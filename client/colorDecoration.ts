@@ -8,42 +8,83 @@ class ColorMap {
 	constructor(primaryColor: vscode.ThemeColor) {
 		this.primaryColor = primaryColor
 	}
-	get(color: string) {
-		if (this.colorMap.has(color)) {
-			return this.colorMap.get(color)
+	get(key: string) {
+		if (this.colorMap.has(key)) {
+			return this.colorMap.get(key)
 		}
-		const c = chroma(color !== "transparent" ? color : "rgba(0, 0, 0, 0.0)")
-		const x = 0.3
-		const options: vscode.DecorationRenderOptions = {
-			borderWidth: "3px",
-			borderStyle: "solid",
-			backgroundColor: c.css(),
-			borderColor: c.css(),
-			color: c.luminance() < x ? "rgb(227, 227, 227, 0.9)" : "rgb(28, 28, 28, 0.9)",
-		}
-		if (color === "transparent") {
-			options.light = {
-				color: "rgb(28, 28, 28, 0.7)",
-				borderColor: "rgba(28, 28, 28, 0.1)",
-				borderStyle: "dashed",
+		const transparent = "rgba(255, 255, 0, 0.0)"
+		const options: vscode.DecorationRenderOptions = { light: {}, dark: {} }
+		const [__color, __backgroundColor, __borderColor] = key.split("_")
+		if (__backgroundColor) {
+			const backgroundColor = chroma(
+				__backgroundColor === "transparent" ? transparent : __backgroundColor || transparent,
+			)
+			options.backgroundColor = backgroundColor.css()
+			if (__backgroundColor === "transparent") {
+				options.light.borderWidth = "3px"
+				options.light.borderStyle = "dashed"
+				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				options.dark.borderWidth = "3px"
+				options.dark.borderStyle = "dashed"
+				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+			} else {
+				options.color = backgroundColor.luminance() < 0.3 ? "rgba(227, 227, 227, 0.9)" : "rgba(28, 28, 28, 0.9)"
 			}
-			options.dark = {
-				color: "rgb(227, 227, 227, 0.7)",
-				borderColor: "rgba(227, 227, 227, 0.1)",
-				borderStyle: "dashed",
+		}
+		if (__borderColor) {
+			const borderColor = chroma(__borderColor === "transparent" ? transparent : __borderColor || transparent)
+			options.borderColor = borderColor.css()
+			options.borderWidth = "2px"
+			options.borderStyle = "solid"
+			if (__borderColor === "transparent") {
+				options.light.borderWidth = "3px"
+				options.light.borderStyle = "dashed"
+				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				options.dark.borderWidth = "3px"
+				options.dark.borderStyle = "dashed"
+				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
 			}
 		}
+		if (__color) {
+			const c = new vscode.ThemeColor("workbench.background")
+			console.log(c)
+			const color = chroma(__color === "transparent" ? transparent : __color || transparent)
+			if (__color !== "transparent") {
+				options.color = color.css()
+				if (!options.backgroundColor) {
+					if (color.luminance() < 0.1) {
+						options.dark.backgroundColor = "rgba(227, 227, 227, 0.7)"
+					} else if (color.luminance() > 0.6) {
+						options.light.backgroundColor = "rgba(28, 28, 28, 0.7)"
+					}
+				}
+			} else {
+				options.light.borderWidth = "3px"
+				options.light.borderStyle = "dashed"
+				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				options.dark.borderWidth = "3px"
+				options.dark.borderStyle = "dashed"
+				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+			}
+		}
+
 		const decorationType = vscode.window.createTextEditorDecorationType(options)
-		this.colorMap.set(color, decorationType)
+		this.colorMap.set(key, decorationType)
 		return decorationType
 	}
 	dispose() {
 		this.colorMap.forEach(d => d.dispose())
 	}
-	diff(colors: string[]) {
-		const add = colors.filter(c => !this.colorMap.has(c))
+	diff(keys: string[]) {
+		const add = keys.filter(c => !this.colorMap.has(c))
 		for (const c of Array.from(this.colorMap.keys())) {
-			if (colors.includes(c)) {
+			if (keys.includes(c)) {
 				continue
 			}
 			this.get(c).dispose()
@@ -58,6 +99,8 @@ export default async function ({ client }: { client: LanguageClient }) {
 	type ColorInformation = {
 		range: vscode.Range
 		color: string
+		backgroundColor: string
+		borderColor: string
 	}
 
 	function updateDecorations(enabled: boolean, uri: string, colors: ColorInformation[]) {
@@ -69,18 +112,25 @@ export default async function ({ client }: { client: LanguageClient }) {
 			editor.setDecorations(null, [])
 			return
 		}
-		const list = new Map<string, { color: string; ranges: vscode.Range[] }>()
-		const rs = colors.filter(({ color }) => color !== "currentColor")
-		rs.forEach(c => {
-			if (!list.has(c.color)) {
-				list.set(c.color, { color: c.color, ranges: [] })
+		const list = new Map<
+			string,
+			{ ranges: vscode.Range[]; color: string; backgroundColor: string; borderColor: string }
+		>()
+		const rs = colors.filter(
+			({ color, backgroundColor, borderColor }) =>
+				color !== "currentColor" && backgroundColor !== "currentColor" && borderColor !== "currentColor",
+		)
+		rs.forEach(({ range, color, backgroundColor, borderColor }) => {
+			const key = [color, backgroundColor, borderColor].join("_")
+			if (!list.has(key)) {
+				list.set(key, { color, backgroundColor, borderColor, ranges: [] })
 			}
-			list.get(c.color).ranges.push(c.range)
+			list.get(key).ranges.push(range)
 		})
 
 		colorMap.diff(Array.from(list.keys()))
-		list.forEach(({ color, ranges }) => {
-			editor.setDecorations(colorMap.get(color), ranges)
+		list.forEach(({ ranges }, key) => {
+			editor.setDecorations(colorMap.get(key), ranges)
 		})
 	}
 

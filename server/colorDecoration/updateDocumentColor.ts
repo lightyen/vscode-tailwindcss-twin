@@ -7,7 +7,9 @@ import { state } from "~/tailwind"
 
 interface ColorInformation {
 	range: Range
-	color: string
+	color?: string
+	backgroundColor?: string
+	borderColor?: string
 }
 
 export default function updateDocumentColor(document: TextDocument) {
@@ -20,7 +22,6 @@ export default function updateDocumentColor(document: TextDocument) {
 	const text = document.getText()
 	const patterns = getPatterns(document.languageId, settings.twin)
 	const colors: ColorInformation[] = []
-	const colorTable = state.classnames.colors
 	for (const { lpat, rpat, handleBrackets, handleImportant } of patterns) {
 		findMatch({
 			text,
@@ -39,13 +40,15 @@ export default function updateDocumentColor(document: TextDocument) {
 					handleImportant,
 				})
 				for (const c of classList) {
-					if (colorTable[c.token[2]]) {
+					// XXX: should let variants in?
+					const color = state.classnames.getColorInfo(c.token[2])
+					if (color) {
 						colors.push({
 							range: {
 								start: document.positionAt(start + c.token[0]),
 								end: document.positionAt(start + c.token[1]),
 							},
-							color: colorTable[c.token[2]],
+							...color,
 						})
 					}
 				}

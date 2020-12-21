@@ -177,7 +177,11 @@ export function parseResults(
 						dset(tree, [...baseKeys, ...index, "decls", key], decls[key])
 					}
 					dset(tree, [...baseKeys, ...index, "__source"], source)
-					dset(tree, [...baseKeys, ...index, "__pseudo"], classNames[i].pseudo)
+					dset(
+						tree,
+						[...baseKeys, ...index, "__pseudo"],
+						classNames[i].pseudo.map(x => `&${x}`),
+					)
 					dset(tree, [...baseKeys, ...index, "__context"], context.slice().reverse())
 				}
 
@@ -237,60 +241,132 @@ export function parseResults(
 		return result
 	}
 
+	type ColorInfo = {
+		color?: string
+		backgroundColor?: string
+		borderColor?: string
+	}
+
 	function collectColors(tree: Record<string, CSSRuleItem | CSSRuleItem[]>) {
-		const colors: Record<string, string> = {}
+		const colors: Record<string, ColorInfo> = {}
 		Object.entries(tree).forEach(([label, info]) => {
 			if (!(info instanceof Array)) {
 				return
 			}
-			const decls = (info as CSSRuleItem[])
-				.filter(i => i.__rule)
-				.flatMap(v => {
-					const ret: Array<[string, string]> = []
-					for (const key in v.decls) {
-						for (const value of v.decls[key]) {
-							ret.unshift([key, value])
-						}
-					}
-					return ret
-				})
+
+			type D = [property: string, value: string]
+			const decls: D[] = info
+				.filter(i => i.__rule && i.__pseudo.length === 0)
+				.flatMap(v =>
+					Object.keys(v.decls || {}).flatMap(key => v.decls[key].map<D>(v => [key, v])),
+				)
+
 			if (decls.length === 0) {
 				return
 			}
 
-			const index = decls.findIndex(
-				v => v[0].includes("color") || v[0].includes("gradient") || v[0] === "fill" || v[0] === "stroke",
-			)
-			if (index === -1) {
-				return
+			for (let i = 0; i < decls.length; i++) {
+				const prop = decls[i][0]
+				const value = decls[i][1]
+				if (!prop.includes("color") && !prop.includes("gradient") && prop !== "fill" && prop !== "stroke") {
+					continue
+				}
+
+				if (!colors[label]) {
+					colors[label] = {}
+				}
+
+				const isFg = prop === "color"
+				const isBg = prop.includes("background")
+				const isBd = prop.includes("border") || prop.includes("divide")
+				const isOther = !isFg && !isBg && !isBd
+
+				if (label.includes("current")) {
+					if (isFg) {
+						colors[label].color = "currentColor"
+					}
+					if (isBd) {
+						colors[label].borderColor = "currentColor"
+					}
+					if (isBg || isOther) {
+						colors[label].backgroundColor = "currentColor"
+					}
+					continue
+				}
+
+				if (label.includes("transparent")) {
+					if (isFg) {
+						colors[label].color = "transparent"
+					}
+					if (isBd) {
+						colors[label].borderColor = "transparent"
+					}
+					if (isBg || isOther) {
+						colors[label].backgroundColor = "transparent"
+					}
+					continue
+				}
+
+				const reg = /^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
+				const m = value.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1").match(reg)
+				if (m == null) {
+					continue
+				}
+
+				let color: chroma.Color
+				if (m.groups?.r) {
+					const { r, g, b } = m.groups
+					color = chroma(+r, +g, +b)
+				} else {
+					color = chroma(m[0])
+				}
+
+				const val = color.hex()
+
+				if (isBd) {
+					colors[label].borderColor = val
+				}
+				if (isFg) {
+					colors[label].color = val
+				}
+				if (isBg || isOther) {
+					colors[label].backgroundColor = val
+				}
 			}
 
-			if (label.includes("current")) {
-				colors[label] = "currentColor"
-				return
-			}
+			// const index = decls.findIndex(
+			// 	v => v[0].includes("color") || v[0].includes("gradient") || v[0] === "fill" || v[0] === "stroke",
+			// )
+			// if (index === -1) {
+			// 	return
+			// }
 
-			if (label.includes("transparent")) {
-				colors[label] = "transparent"
-				return
-			}
-			let lastVal = decls[index][1]
+			// if (label.includes("current")) {
+			// 	colors[label] = "currentColor"
+			// 	return
+			// }
 
-			lastVal = lastVal.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1")
-			const reg = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
-			const m = lastVal.match(reg)
-			if (m == null) {
-				return
-			}
-			let color: chroma.Color
-			if (m.groups?.r) {
-				const { r, g, b } = m.groups
-				color = chroma(+r, +g, +b)
-			} else {
-				color = chroma(m[0])
-			}
+			// if (label.includes("transparent")) {
+			// 	colors[label] = "transparent"
+			// 	return
+			// }
+			// let lastVal = decls[index][1]
 
-			colors[label] = color.hex()
+			// lastVal = lastVal.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1")
+			// const reg = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
+			// const m = lastVal.match(reg)
+			// if (m == null) {
+			// 	return
+			// }
+			// let color: chroma.Color
+			// if (m.groups?.r) {
+			// 	const { r, g, b } = m.groups
+			// 	color = chroma(+r, +g, +b)
+			// } else {
+			// 	color = chroma(m[0])
+			// }
+
+			// colors[label] = color.hex()
 		})
 		return colors
 	}
@@ -534,6 +610,83 @@ export function parseResults(
 				variants: new Fuse(this.getVariantList(variants, twinPattern)),
 				classes: new Fuse(this.getClassNameList(variants, twinPattern)),
 			}
+		},
+		getColorInfo(label: string) {
+			const info = dlv(this.dictionary, [label]) as CSSRuleItem | CSSRuleItem[]
+			if (!(info instanceof Array)) {
+				return undefined
+			}
+
+			const colorInfo: ColorInfo = {}
+
+			for (let i = 0; i < info.length; i++) {
+				const pseudo = info[i].__pseudo
+				if (pseudo.length > 0) continue
+				for (const [prop, values] of Object.entries(info[i].decls)) {
+					const value = values[values.length - 1]
+					if (!prop.includes("color") && !prop.includes("gradient") && prop !== "fill" && prop !== "stroke") {
+						continue
+					}
+
+					const isFg = prop === "color"
+					const isBg = prop.includes("background")
+					const isBd = prop.includes("border") || prop.includes("divide")
+					const isOther = !isFg && !isBg && !isBd
+
+					if (label.includes("current")) {
+						if (isFg) {
+							colorInfo.color = "currentColor"
+						}
+						if (isBd) {
+							colorInfo.borderColor = "currentColor"
+						}
+						if (isBg || isOther) {
+							colorInfo.backgroundColor = "currentColor"
+						}
+						continue
+					}
+
+					if (label.includes("transparent")) {
+						if (isFg) {
+							colorInfo.color = "transparent"
+						}
+						if (isBd) {
+							colorInfo.borderColor = "transparent"
+						}
+						if (isBg || isOther) {
+							colorInfo.backgroundColor = "transparent"
+						}
+						continue
+					}
+
+					const reg = /^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
+					const m = value.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1").match(reg)
+					if (m == null) {
+						continue
+					}
+
+					let color: chroma.Color
+					if (m.groups?.r) {
+						const { r, g, b } = m.groups
+						color = chroma(+r, +g, +b)
+					} else {
+						color = chroma(m[0])
+					}
+
+					const val = color.hex()
+
+					if (isBd) {
+						colorInfo.borderColor = val
+					}
+					if (isFg) {
+						colorInfo.color = val
+					}
+					if (isBg || isOther) {
+						colorInfo.backgroundColor = val
+					}
+				}
+			}
+			return colorInfo
 		},
 	}
 }

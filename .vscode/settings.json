@@ -2,7 +2,7 @@
   "editor.formatOnSave": true,
   "formatFiles.excludePattern": "node_modules,out,.gitignore,.editorconfig,yarn.lock",
   "search.exclude": {
-    "**/out": true,
+    "**/dist": true,
     "**/node_modules": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
