@@ -94,9 +94,17 @@ async function getHoverContents({
 			) {
 				return false
 			}
-			if (common.length === 0 && d.__pseudo.length > 0) {
-				return false
+			if (common.length === 0) {
+				if (d.__pseudo.length > 0) {
+					return false
+				}
+			} else if (twin) {
+				const v = common[common.length - 1]
+				if (!state.classnames.baseVariants[v]) {
+					return true
+				}
 			}
+
 			return common.flatMap(v => __variants[v]).every(c => d.__pseudo.some(p => "&" + p === c))
 		})
 		.map(i =>
