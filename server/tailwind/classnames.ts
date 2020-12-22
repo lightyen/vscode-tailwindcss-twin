@@ -329,40 +329,6 @@ export function parseResults(
 					colors[label].backgroundColor = val
 				}
 			}
-
-			// const index = decls.findIndex(
-			// 	v => v[0].includes("color") || v[0].includes("gradient") || v[0] === "fill" || v[0] === "stroke",
-			// )
-			// if (index === -1) {
-			// 	return
-			// }
-
-			// if (label.includes("current")) {
-			// 	colors[label] = "currentColor"
-			// 	return
-			// }
-
-			// if (label.includes("transparent")) {
-			// 	colors[label] = "transparent"
-			// 	return
-			// }
-			// let lastVal = decls[index][1]
-
-			// lastVal = lastVal.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1")
-			// const reg = /#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
-			// const m = lastVal.match(reg)
-			// if (m == null) {
-			// 	return
-			// }
-			// let color: chroma.Color
-			// if (m.groups?.r) {
-			// 	const { r, g, b } = m.groups
-			// 	color = chroma(+r, +g, +b)
-			// } else {
-			// 	color = chroma(m[0])
-			// }
-
-			// colors[label] = color.hex()
 		})
 		return colors
 	}
@@ -485,7 +451,7 @@ export function parseResults(
 					variants[i] = "dark"
 					keys.push("dark")
 				}
-				const first = variants.find(v => this.isCommonVariant(v, twinPattern))
+				const first = variants.find(v => this.isCommonVariant(v, false))
 				if (first && Object.keys(baseVariants).includes(first)) {
 					keys.push(first)
 				}

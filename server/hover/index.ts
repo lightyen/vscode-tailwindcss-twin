@@ -81,47 +81,56 @@ async function getHoverContents({
 	const __variants = state.classnames.getVariants(twin)
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v, twin))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
-	const meta = data
-		.filter(d => {
-			if (
-				!d.__context.every(context => {
-					const e = Object.entries(__variants).find(([, values]) => values.includes(context))
-					if (!e) {
-						return false
-					}
-					return notCommon.includes(e[0])
-				})
-			) {
-				return false
-			}
-			if (common.length === 0) {
-				if (d.__pseudo.length > 0) {
+
+	const meta = data.filter(d => {
+		if (
+			!d.__context.every(context => {
+				const e = Object.entries(__variants).find(([, values]) => values.includes(context))
+				if (!e) {
 					return false
 				}
-			} else if (twin) {
-				const v = common[common.length - 1]
-				if (!state.classnames.baseVariants[v]) {
-					return true
-				}
-			}
+				return notCommon.includes(e[0])
+			})
+		) {
+			return false
+		}
+		if (d.__source === "components") {
+			return true
+		}
+		if (common.length === 0 && d.__pseudo.length > 0) {
+			return false
+		}
+		if (common.every(c => state.classnames.isVariant(c, twin) && !state.classnames.baseVariants[c])) {
+			return true
+		}
+		return common.flatMap(v => __variants[v]).every(c => d.__pseudo.some(p => "&" + p === c))
+	})
 
-			return common.flatMap(v => __variants[v]).every(c => d.__pseudo.some(p => "&" + p === c))
-		})
-		.map(i =>
-			Object.entries(i.decls).flatMap(([label, values]) => values.map<[string, string]>(v => [label, v])),
+	const blocks: Map<string, string[]> = new Map()
+	meta.map(rule => {
+		const selector = value + rule.__pseudo.join("")
+		const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
+			values.map<[string, string]>(v => [prop, v]),
 		)
-		.flat()
-
-	const result: Record<string, string> = {}
-	for (const d of meta) {
-		result[d[0]] = d[1]
-	}
-	const text = Object.entries(result)
-		.map(i => `\t${i[0]}: ${i[1]}${important ? " !important" : ""};`)
-		.join("\n")
+		return { selector, decls }
+	}).map(c => {
+		const selector = c.selector.replace(/\//g, "\\/")
+		if (!blocks.has(selector)) {
+			blocks.set(selector, [])
+		}
+		blocks
+			.get(selector)
+			.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
+	})
 
 	return {
 		kind: MarkupKind.Markdown,
-		value: ["```scss", `.${value.replace(/\//g, "\\/")} {\n${text}\n}`, "```"].join("\n"),
+		value: [
+			"```scss",
+			...Array.from(blocks).map(([selector, contents]) => {
+				return `.${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}`
+			}),
+			"```",
+		].join("\n"),
 	}
 }
