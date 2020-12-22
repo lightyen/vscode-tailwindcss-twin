@@ -7,7 +7,7 @@ import docs from "./docs.yaml"
 import { state } from "~/tailwind"
 
 function lastUrlToken(url: string) {
-	if (url.includes("twin.macro")) {
+	if (url.includes("twin")) {
 		return "twin"
 	}
 	const i = url.lastIndexOf("/")
@@ -67,7 +67,7 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 							s.add(start + a)
 						}
 					}
-					let value = c.token[2]
+					const value = c.token[2]
 					if (
 						!state.classnames.isClassName(
 							c.variants.map(v => v[2]),
@@ -77,19 +77,10 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 					) {
 						continue
 					}
-					switch (value) {
-						case "group":
-						case "container":
-							value = prefix + value
-							break
-						case "content":
-							if (c.variants.every(v => v[2] !== "before" && v[2] !== "after")) {
-								continue
-							}
-							value = prefix + value
-							break
+					if (value === "content" && c.variants.every(v => v[2] !== "before" && v[2] !== "after")) {
+						continue
 					}
-					const target = docs[value]
+					const target = docs[prefix + value] || docs[value]
 					if (target) {
 						links.push({
 							target,
