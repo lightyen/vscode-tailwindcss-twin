@@ -465,6 +465,26 @@ export function parseResults(
 			return dictionary
 		},
 		getClassNameRule(variants: string[], twinPattern: boolean, value: string): CSSRuleItem | CSSRuleItem[] {
+			if (twinPattern) {
+				const index = variants.findIndex(v => {
+					return v === "hocus" || v === "group-hocus"
+				})
+				if (index !== -1) {
+					const va = [...variants]
+					va.splice(index, 1, variants[index].replace("hocus", "hover"))
+					const a = this.getClassNames(va, twinPattern)?.[value]
+					if (!(a instanceof Array)) {
+						return undefined
+					}
+					const vb = [...variants]
+					vb.splice(index, 1, variants[index].replace("hocus", "focus"))
+					const b = this.getClassNames(vb, twinPattern)?.[value]
+					if (!(b instanceof Array)) {
+						return undefined
+					}
+					return a.concat(b)
+				}
+			}
 			return this.getClassNames(variants, twinPattern)?.[value]
 		},
 		/**

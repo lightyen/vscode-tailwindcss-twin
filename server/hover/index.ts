@@ -3,6 +3,7 @@ import { Connection, MarkupContent, MarkupKind } from "vscode-languageserver"
 import { state } from "~/tailwind"
 import { canHover } from "./canHover"
 import { serializeError } from "serialize-error"
+import produce from "immer"
 
 export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 	try {
@@ -31,15 +32,19 @@ async function getHoverContents({
 }: Omit<ReturnType<typeof canHover>, "range">): Promise<MarkupContent> {
 	const twin = kind === "twin"
 	const inputVariants = variants.map(([, , v]) => v)
+	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v, twin))
+	const notCommon = inputVariants.filter(v => !common.includes(v))
+
 	if (twin) {
 		if (value === "group" || value === "container") {
 			return null
 		}
 		if (value === "content") {
-			if (inputVariants.some(v => v === "before" || v === "after")) {
+			const i = common.findIndex(v => v === "before" || v === "after")
+			if (i !== -1) {
 				return {
 					kind: MarkupKind.Markdown,
-					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
+					value: ["```scss", `.content::${common[i]} {`, '\tcontent: "";', "}", "```"].join("\n"),
 				}
 			}
 			return null
@@ -79,56 +84,79 @@ async function getHoverContents({
 	}
 
 	const __variants = state.classnames.getVariants(twin)
-	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v, twin))
-	const notCommon = inputVariants.filter(v => !common.includes(v))
+	const variantValues = common.flatMap(c => __variants[c])
 
-	const meta = data.filter(d => {
-		if (
-			!d.__context.every(context => {
-				const e = Object.entries(__variants).find(([, values]) => values.includes(context))
-				if (!e) {
-					return false
+	const filterContext: boolean[] = []
+	const meta = produce(data, draft => {
+		for (let i = 0; i < draft.length; i++) {
+			const d = draft[i]
+			if (
+				!d.__context.every(context => {
+					const e = Object.entries(__variants).find(([, values]) => values.includes(context))
+					if (!e) {
+						return false
+					}
+					return notCommon.includes(e[0])
+				})
+			) {
+				filterContext.push(false)
+				continue
+			}
+			if (d.__source === "components") {
+				filterContext.push(true)
+				continue
+			}
+			if (variantValues.length === 0) {
+				if (d.__pseudo.length > 0) {
+					filterContext.push(false)
+					continue
 				}
-				return notCommon.includes(e[0])
-			})
-		) {
-			return false
+				if (d.__scope) {
+					filterContext.push(false)
+					continue
+				}
+			}
+			if (d.__scope) {
+				filterContext.push(variantValues.includes(d.__scope))
+				continue
+			}
+			if (twin && common.every(c => state.classnames.isVariant(c, twin) && !state.classnames.baseVariants[c])) {
+				if (d.__pseudo.length === 0) {
+					d.__pseudo = variantValues // inject pseudoes
+				}
+				filterContext.push(true)
+				continue
+			}
+			filterContext.push(variantValues.every(c => d.__pseudo.some(p => p === c)))
+			continue
 		}
-		if (d.__source === "components") {
-			return true
-		}
-		if (common.length === 0 && d.__pseudo.length > 0) {
-			return false
-		}
-		if (common.every(c => state.classnames.isVariant(c, twin) && !state.classnames.baseVariants[c])) {
-			return true
-		}
-		return common.flatMap(v => __variants[v]).every(c => d.__pseudo.some(p => "&" + p === c))
 	})
 
 	const blocks: Map<string, string[]> = new Map()
-	meta.map(rule => {
-		const selector = value + rule.__pseudo.join("")
-		const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
-			values.map<[string, string]>(v => [prop, v]),
-		)
-		return { selector, decls }
-	}).map(c => {
-		const selector = c.selector.replace(/\//g, "\\/")
-		if (!blocks.has(selector)) {
-			blocks.set(selector, [])
-		}
-		blocks
-			.get(selector)
-			.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
-	})
+	meta.filter((_, i) => filterContext[i])
+		.map(rule => {
+			const selector = value + rule.__pseudo.join("")
+			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
+				values.map<[string, string]>(v => [prop, v]),
+			)
+			return { scope: rule.__scope ? rule.__scope + " " : "", selector, decls }
+		})
+		.map(c => {
+			const selector = `${c.scope}.${c.selector.replace(/\//g, "\\/")}`
+			if (!blocks.has(selector)) {
+				blocks.set(selector, [])
+			}
+			blocks
+				.get(selector)
+				.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
+		})
 
 	return {
 		kind: MarkupKind.Markdown,
 		value: [
 			"```scss",
 			...Array.from(blocks).map(([selector, contents]) => {
-				return `.${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}`
+				return `${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}`
 			}),
 			"```",
 		].join("\n"),

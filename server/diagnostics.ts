@@ -5,7 +5,7 @@ import { findMatch, getPatterns, Pattern, PatternKind } from "~/patterns"
 import { connection, settings } from "~/server"
 import { ClassInfo, findClasses } from "~/find"
 import { state } from "./tailwind"
-import { dlv, dset } from "./tailwind/classnames"
+import { Token } from "./typings"
 
 export function validateTextDocument(document: TextDocument) {
 	if (!settings.validate) {
@@ -73,32 +73,33 @@ function validateClasses({
 		})
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function travel(obj: any) {
+	function travel(obj: Record<string, Token[]>) {
 		for (const k in obj) {
 			const t = obj[k]
-			if (t instanceof Array) {
-				if (t.length > 1) {
-					for (const token of t) {
-						result.push({
-							source,
-							message: `${token[2]} is conflicted on property: ${k.split(":")}`,
-							range: {
-								start: document.positionAt(base + token[0]),
-								end: document.positionAt(base + token[1]),
-							},
-							severity: DiagnosticSeverity.Warning,
-						})
-					}
+			const parts = k.split(".")
+			const prop = parts[parts.length - 1]
+			if (t.length > 1) {
+				for (const token of t) {
+					const message =
+						settings.diagnostics.conflict === "strict"
+							? `${token[2]} is conflicted on property: ${prop}`
+							: `${token[2]} is conflicted`
+					result.push({
+						source,
+						message,
+						range: {
+							start: document.positionAt(base + token[0]),
+							end: document.positionAt(base + token[1]),
+						},
+						severity: DiagnosticSeverity.Warning,
+					})
 				}
-			} else {
-				travel(t)
 			}
 		}
 	}
 
 	if (settings.diagnostics.conflict !== "none") {
-		const map = {}
+		const map: Record<string, Token[]> = {}
 		for (let i = 0; i < classList.length; i++) {
 			const variants = classList[i].variants.map(v => v[2])
 			if (classList[i].important) {
@@ -107,11 +108,12 @@ function validateClasses({
 			const data = state.classnames.getClassNameRule(variants, kind === "twin", classList[i].token[2])
 			if (!(data instanceof Array)) {
 				if (kind !== "twin" && classList[i].token[2] === "group") {
-					const target = dlv(map, [...variants, "group"])
+					const key = [...data.__context, data.__scope, ...data.__pseudo, "group"].join(".")
+					const target = map[key]
 					if (target instanceof Array) {
 						target.push(classList[i].token)
 					} else {
-						dset(map, [...variants, "group"], [classList[i].token])
+						map[key] = [classList[i].token]
 					}
 				}
 				continue
@@ -119,11 +121,12 @@ function validateClasses({
 			if (settings.diagnostics.conflict === "strict") {
 				for (const d of data) {
 					for (const property of Object.keys(d.decls)) {
-						const target = dlv(map, [...variants, property])
+						const key = [...d.__context, d.__scope, ...d.__pseudo, property].join(".")
+						const target = map[key]
 						if (target instanceof Array) {
 							target.push(classList[i].token)
 						} else {
-							dset(map, [...variants, property], [classList[i].token])
+							map[key] = [classList[i].token]
 						}
 					}
 					if (d.__source === "components") {
@@ -137,12 +140,12 @@ function validateClasses({
 						s.add(c)
 					}
 				}
-				const key = Array.from(s).sort().join(":")
-				const target = dlv(map, [...variants, key])
+				const key = [...variants, Array.from(s).sort().join(":")].join(".")
+				const target = map[key]
 				if (target instanceof Array) {
 					target.push(classList[i].token)
 				} else {
-					dset(map, [...variants, key], [classList[i].token])
+					map[key] = [classList[i].token]
 				}
 			}
 		}

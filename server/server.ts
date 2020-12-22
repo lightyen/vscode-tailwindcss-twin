@@ -61,7 +61,7 @@ connection.onInitialize(async (params, _cancel, progress) => {
 			},
 			textDocumentSync: {
 				openClose: true,
-				change: TextDocumentSyncKind.Incremental,
+				change: TextDocumentSyncKind.Full,
 				willSaveWaitUntil: false,
 				save: {
 					includeText: false,
@@ -101,7 +101,7 @@ connection.onInitialized(async e => {
 		connection.sendNotification("tailwindcss/info", `documentLinks = ${settings.links}`)
 		connection.sendNotification("tailwindcss/info", `twin = ${settings.twin}`)
 		connection.sendNotification("tailwindcss/info", `validate = ${settings.validate}`)
-		// connection.sendNotification("tailwindcss/info", `theme = ${state.config.theme.colors.red["100"]}`)
+		connection.sendNotification("tailwindcss/info", `diagnostics.conflict = ${settings.diagnostics.conflict}`)
 	}
 })
 
@@ -165,7 +165,8 @@ connection.onDidChangeConfiguration(async params => {
 			settings.diagnostics.conflict = tailwindcss.diagnostics.conflict
 			documents.all().forEach(validateTextDocument)
 		}
-		connection.sendNotification("tailwindcss/info", `diagnostics = ${settings.validate}`)
+		connection.sendNotification("tailwindcss/info", `validate = ${settings.validate}`)
+		connection.sendNotification("tailwindcss/info", `diagnostics.conflict = ${settings.diagnostics.conflict}`)
 	}
 })
 
