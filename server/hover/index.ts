@@ -32,7 +32,7 @@ async function getHoverContents({
 }: Omit<ReturnType<typeof canHover>, "range">): Promise<MarkupContent> {
 	const twin = kind === "twin"
 	const inputVariants = variants.map(([, , v]) => v)
-	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v, twin))
+	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
 	if (twin) {

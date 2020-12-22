@@ -76,8 +76,8 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 			} else {
 				return {
 					label,
-					sortText: state.classnames.isDarkMode(label, twin) ? "*" + label : "~~~:" + label,
-					kind: state.classnames.isDarkMode(label, twin)
+					sortText: state.classnames.isDark(twin, label) ? "*" + label : "~~~:" + label,
+					kind: state.classnames.isDark(twin, label)
 						? lsp.CompletionItemKind.Color
 						: lsp.CompletionItemKind.Field,
 					data: { type: "variant", data, value, variants, kind },

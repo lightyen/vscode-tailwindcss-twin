@@ -68,6 +68,15 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 						}
 					}
 					let value = c.token[2]
+					if (
+						!state.classnames.isClassName(
+							c.variants.map(v => v[2]),
+							twin,
+							value,
+						)
+					) {
+						continue
+					}
 					switch (value) {
 						case "group":
 						case "container":

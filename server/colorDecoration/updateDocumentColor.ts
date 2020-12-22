@@ -22,7 +22,8 @@ export default function updateDocumentColor(document: TextDocument) {
 	const text = document.getText()
 	const patterns = getPatterns(document.languageId, settings.twin)
 	const colors: ColorInformation[] = []
-	for (const { lpat, rpat, handleBrackets, handleImportant } of patterns) {
+	for (const { lpat, rpat, handleBrackets, handleImportant, kind } of patterns) {
+		const twin = kind === "twin"
 		findMatch({
 			text,
 			lpat,
@@ -40,7 +41,15 @@ export default function updateDocumentColor(document: TextDocument) {
 					handleImportant,
 				})
 				for (const c of classList) {
-					// XXX: should let variants in?
+					if (
+						!state.classnames.isClassName(
+							c.variants.map(v => v[2]),
+							twin,
+							c.token[2],
+						)
+					) {
+						continue
+					}
 					const color = state.classnames.getColorInfo(c.token[2])
 					if (color) {
 						colors.push({

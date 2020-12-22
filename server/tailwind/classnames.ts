@@ -182,7 +182,7 @@ export function parseResults(
 				}
 
 				// common context
-				context.push(...classNames[i].pseudo.map(x => `&${x}`))
+				context.push(...classNames[i].pseudo)
 				for (let i = 0; i < variantKeys.length; i++) {
 					if (!variants[variantKeys[i]]) {
 						variants[variantKeys[i]] = context
@@ -191,7 +191,7 @@ export function parseResults(
 					}
 				}
 				if (classNames[i].scope === ".dark") {
-					for (const p of classNames[i].pseudo) notRules["dark"].add(`&${p}`)
+					for (const p of classNames[i].pseudo) notRules["dark"].add(p)
 				}
 			}
 		})
@@ -361,31 +361,17 @@ export function parseResults(
 		// common
 		/**
 		 * Test the label whether it is a dark mode keyword
-		 * @param label input
 		 * @param twinPattern is current pattern twin?
+		 * @param label input
 		 */
-		isDarkMode(label: string, twinPattern: boolean) {
-			if (twinPattern) {
-				return label === "dark" || label === "light"
-			} else {
-				return label === "dark"
-			}
-		},
-		hasDarkMode(variants: string[], twinPattern: boolean) {
-			return variants.some(v => this.isDarkMode(v, twinPattern))
+		isDark(twinPattern: boolean, label: string) {
+			return twinPattern ? label === "dark" || label === "light" : label === "dark"
 		},
 		getBreakingPoint(label: string) {
 			return this.breakingPoints[label]
 		},
-		hasBreakingPoint(variants: string[]) {
-			return variants.some(v => this.getBreakingPoint(v))
-		},
-		getVariants(twinPattern: boolean) {
-			if (twinPattern) {
-				return this.variants
-			} else {
-				return this.baseVariants
-			}
+		isResponsive(label: string) {
+			return !!this.getBreakingPoint(label)
 		},
 		/**
 		 * Test the variant whether it is a valid variant
@@ -395,16 +381,29 @@ export function parseResults(
 		isVariant(variant: string, twinPattern: boolean) {
 			return !!this.getVariants(twinPattern)[variant]
 		},
+		hasDarkMode(variants: string[], twinPattern: boolean) {
+			return variants.some(v => this.isDark(twinPattern, v))
+		},
+		hasBreakingPoint(variants: string[]) {
+			return variants.some(v => this.isResponsive(v))
+		},
+		getVariants(twinPattern: boolean) {
+			if (twinPattern) {
+				return this.variants
+			} else {
+				return this.baseVariants
+			}
+		},
 		/**
 		 * Test the variant whether it is a valid common variant.(not breaking point, not dark mode)
 		 * @param label input
 		 * @param twinPattern is current pattern twin?
 		 */
-		isCommonVariant(label: string, twinPattern: boolean) {
-			if (this.getBreakingPoint(label)) {
+		isCommonVariant(twinPattern: boolean, label: string) {
+			if (this.isResponsive(label)) {
 				return false
 			}
-			if (this.isDarkMode(label, twinPattern)) {
+			if (this.isDark(twinPattern, label)) {
 				return false
 			}
 			return !!this.getVariants(twinPattern)[label]
@@ -415,7 +414,7 @@ export function parseResults(
 		 * @param variants input variant space
 		 * @param twinPattern is current pattern twin?
 		 */
-		isClassName(label: string, variants: string[], twinPattern: boolean) {
+		isClassName(variants: string[], twinPattern: boolean, label: string) {
 			if (twinPattern) {
 				if (label === "group") {
 					return false
@@ -430,7 +429,7 @@ export function parseResults(
 			if (!this.getClassNames(variants, twinPattern)?.[label]) {
 				return false
 			}
-			if (this.isDarkMode(label, twinPattern)) {
+			if (this.isDark(twinPattern, label)) {
 				return false
 			}
 			return true
@@ -444,16 +443,20 @@ export function parseResults(
 			let dictionary = undefined
 			if (variants.length > 0) {
 				const keys: string[] = []
-				const bp = variants.find(b => this.getBreakingPoint(b))
+				const bp = variants.find(v => this.isResponsive(v))
 				if (bp) keys.push(bp)
-				const i = variants.findIndex(x => this.isDarkMode(x, twinPattern))
+				const i = variants.findIndex(x => this.isDark(twinPattern, x))
 				if (i !== -1) {
 					variants[i] = "dark"
 					keys.push("dark")
 				}
-				const first = variants.find(v => this.isCommonVariant(v, false))
-				if (first && Object.keys(baseVariants).includes(first)) {
-					keys.push(first)
+				if (!twinPattern) {
+					keys.push(...variants.filter(v => !this.isResponsive(v) && !this.isDark(twinPattern, v)))
+				} else {
+					const first = variants.find(v => this.isCommonVariant(false, v))
+					if (first && Object.keys(baseVariants).includes(first)) {
+						keys.push(first)
+					}
 				}
 				dictionary = dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
 			} else {
@@ -496,7 +499,7 @@ export function parseResults(
 			const payload = {
 				hasBreakingPoint: this.hasBreakingPoint(variants),
 				hasDarkMode: this.hasDarkMode(variants, twinPattern),
-				hasCommonVariant: variants.some(v => this.isCommonVariant(v, twinPattern)),
+				hasCommonVariant: variants.some(v => this.isCommonVariant(twinPattern, v)),
 			}
 			return label => {
 				if (twinPattern) {
@@ -505,7 +508,7 @@ export function parseResults(
 					}
 					if (
 						(payload.hasDarkMode || payload.hasCommonVariant) &&
-						(this.getBreakingPoint(label) || this.isDarkMode(label, twinPattern))
+						(this.getBreakingPoint(label) || this.isDark(twinPattern, label))
 					) {
 						return false
 					}
@@ -515,7 +518,7 @@ export function parseResults(
 						}
 					}
 				} else {
-					if (!darkMode && this.isDarkMode(label, twinPattern)) {
+					if (!darkMode && this.isDark(twinPattern, label)) {
 						return false
 					}
 					if (
@@ -524,7 +527,7 @@ export function parseResults(
 					) {
 						return false
 					}
-					if (payload.hasDarkMode && (this.getBreakingPoint(label) || this.isDarkMode(label, twinPattern))) {
+					if (payload.hasDarkMode && (this.getBreakingPoint(label) || this.isDark(twinPattern, label))) {
 						return false
 					}
 					if (payload.hasBreakingPoint) {
@@ -549,7 +552,7 @@ export function parseResults(
 			const payload = {
 				hasBreakingPoint: this.hasBreakingPoint(variants),
 				hasDarkMode: this.hasDarkMode(variants, twinPattern),
-				hasCommonVariant: variants.some(v => this.isCommonVariant(v, twinPattern)),
+				hasCommonVariant: variants.some(v => this.isCommonVariant(twinPattern, v)),
 			}
 			return ([label, info]) => {
 				if (label === "group") {

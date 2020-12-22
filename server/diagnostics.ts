@@ -200,7 +200,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 	}
 	if (info.token[2]) {
 		const variants = info.variants.map(v => v[2])
-		if (!state.classnames.isClassName(info.token[2], variants, true)) {
+		if (!state.classnames.isClassName(variants, true, info.token[2])) {
 			const ans = state.classnames.getSearcher(variants, true).classes.search(info.token[2])
 			if (ans?.length > 0) {
 				result.push({
