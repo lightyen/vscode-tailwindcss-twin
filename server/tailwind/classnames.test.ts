@@ -110,7 +110,7 @@ test("foo", async () => {
 	`)
 	expect(result.variants).toEqual({
 		sm: ["@media (min-width: 640px)"],
-		hover: ["&:hover"],
+		hover: [":hover"],
 	})
 	expect(result.dictionary).toEqual({
 		sm: {

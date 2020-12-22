@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Tailwind CSS Extension with twin features for VS Code",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
@@ -112,7 +112,7 @@
           ],
           "default": "strict",
           "enumDescriptions": [
-            "Disabled",
+            "Silent when conflict",
             "Show warning when all css property conflicted",
             "Show warning when one css property conflicted"
           ]
