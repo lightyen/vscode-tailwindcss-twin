@@ -11,6 +11,8 @@ import { serializeError } from "serialize-error"
 import { findClasses } from "~/find"
 import { Token } from "~/typings"
 import { dlv } from "~/tailwind/classnames"
+import chroma from "chroma-js"
+import { CompletionItem } from "vscode-languageserver"
 
 export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async params => {
 	try {
@@ -25,7 +27,7 @@ export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async p
 
 		const { kind } = result.pattern
 		if (kind === "twinTheme") {
-			return twinThemeCompletion(result.index, result.match, result.pattern)
+			return twinThemeCompletion(result.index, result.match)
 		} else {
 			return classesCompletion(result.index, result.match, result.pattern)
 		}
@@ -112,7 +114,7 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 	}
 }
 
-function twinThemeCompletion(index: number, match: Token, pattern: Pattern): lsp.CompletionList {
+function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 	const [offset, , text] = match
 	const inputChar = text[index - offset - 1]
 	if (inputChar !== "." && text.indexOf(".") !== -1) {
@@ -140,17 +142,57 @@ function twinThemeCompletion(index: number, match: Token, pattern: Pattern): lsp
 	if (typeof target !== "object") {
 		return null
 	}
-
 	return {
-		isIncomplete: false,
-		items: Object.keys(target).map(label => ({
-			label,
-			sortText: formatDigital(label),
-			kind: lsp.CompletionItemKind.Field,
-			data: {
-				kind: "twinTheme",
-			},
-		})),
+		isIncomplete: true,
+		items: Object.keys(target).map(label => {
+			const item: CompletionItem = {
+				label,
+				sortText: formatDigital(label),
+			}
+			const value = dlv(state.config.theme, [...keys, label])
+			const isObject = typeof value === "object"
+			if (isObject) {
+				item.kind = lsp.CompletionItemKind.Module
+				item.insertText = label + "."
+				item.command = {
+					title: "",
+					command: "editor.action.triggerSuggest",
+				}
+				item.data = {
+					kind: "twinTheme",
+					type: "other",
+				}
+			} else {
+				item.data = {
+					kind: "twinTheme",
+					type: "other",
+				}
+				if (typeof value === "string") {
+					try {
+						if (value === "transparent") {
+							item.kind = lsp.CompletionItemKind.Color
+							item.documentation = "rgba(0, 0, 0, 0.0)"
+							item.data.type = "color"
+							item.data.data = "transparent"
+							return item
+						}
+						chroma(value)
+						item.kind = lsp.CompletionItemKind.Color
+						item.documentation = value
+						item.data.type = "color"
+					} catch {
+						item.kind = lsp.CompletionItemKind.Constant
+						item.documentation = value
+						item.detail = label
+					}
+				} else if (value instanceof Array) {
+					item.kind = lsp.CompletionItemKind.Field
+					item.documentation = label
+					item.detail = value.join("\n")
+				}
+			}
+			return item
+		}),
 	}
 }
 

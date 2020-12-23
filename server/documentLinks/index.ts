@@ -31,6 +31,9 @@ export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async
 	const text = document.getText()
 	const s = new Set<number>()
 	for (const { lpat, rpat, handleBrackets, handleImportant, kind } of patterns) {
+		if (kind === "twinTheme") {
+			continue
+		}
 		const twin = kind === "twin"
 		const prefix = twin ? "tw." : ""
 		findMatch({

@@ -1,9 +1,14 @@
 import { Connection, MarkupContent, MarkupKind } from "vscode-languageserver"
+import chroma from "chroma-js"
+import { serializeError } from "serialize-error"
+import produce from "immer"
 
 import { state } from "~/tailwind"
 import { canHover } from "./canHover"
-import { serializeError } from "serialize-error"
-import produce from "immer"
+import { documents } from "~/server"
+import { findClasses, SelectionInfo } from "~/find"
+import { Pattern } from "~/patterns"
+import { dlv } from "~/tailwind/classnames"
 
 export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 	try {
@@ -14,8 +19,82 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 		if (!result) {
 			return null
 		}
-		const { range, ...rest } = result
-		return { range, contents: await getHoverContents(rest) }
+		const document = documents.get(params.textDocument.uri)
+		const { match, pattern, offset } = result
+		let { base, index } = result
+		base = base + match[0]
+		index = offset - base
+		const { handleBrackets, handleImportant } = pattern
+		const classes = findClasses({
+			classes: match[2],
+			index,
+			separator: state.separator,
+			handleBrackets,
+			handleImportant,
+			greedy: false,
+			hover: true,
+		})
+		if (!classes.selection.selected) {
+			return null
+		}
+		if (pattern.kind === "twinTheme") {
+			const parts = match[2].split(".")
+
+			const value = dlv(state.config.theme, parts)
+			const range = {
+				start: document.positionAt(base),
+				end: document.positionAt(base + match[2].length),
+			}
+			if (typeof value === "string") {
+				if (value === "transparent") {
+					return {
+						range,
+						contents: {
+							kind: MarkupKind.Markdown,
+							value: "transparent",
+						},
+					}
+				}
+				try {
+					chroma(value)
+					return {
+						range,
+						contents: {
+							kind: MarkupKind.Markdown,
+							value,
+						},
+					}
+				} catch {
+					return {
+						range,
+						contents: {
+							kind: MarkupKind.Markdown,
+							value: `"${value}"`,
+						},
+					}
+				}
+			} else if (value instanceof Array) {
+				return {
+					range,
+					contents: {
+						kind: MarkupKind.Markdown,
+						value: value.join(),
+					},
+				}
+			}
+			return null
+		} else {
+			return {
+				range: {
+					start: document.positionAt(base + classes.selection.selected[0]),
+					end: document.positionAt(base + classes.selection.selected[1]),
+				},
+				contents: await getHoverContents({
+					pattern,
+					selection: classes.selection,
+				}),
+			}
+		}
 	} catch (err) {
 		console.log(serializeError(err))
 		return null
@@ -25,11 +104,16 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 export default hover
 
 async function getHoverContents({
-	important,
-	value,
-	variants,
-	kind,
-}: Omit<ReturnType<typeof canHover>, "range">): Promise<MarkupContent> {
+	pattern,
+	selection,
+}: {
+	pattern: Pattern
+	selection: SelectionInfo
+}): Promise<MarkupContent> {
+	const { kind } = pattern
+	const { selected, important, variants } = selection
+	const [, , value] = selected
+
 	const twin = kind === "twin"
 	const inputVariants = variants.map(([, , v]) => v)
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))

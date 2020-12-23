@@ -4,6 +4,8 @@ import { Range, TextDocument } from "vscode-languageserver-textdocument"
 import { findClasses } from "~/find"
 import { settings } from "~/server"
 import { state } from "~/tailwind"
+import { dlv } from "~/tailwind/classnames"
+import chroma from "chroma-js"
 
 interface ColorInformation {
 	range: Range
@@ -34,6 +36,19 @@ export default function updateDocumentColor(document: TextDocument) {
 				const a = document.positionAt(start)
 				const b = document.positionAt(end)
 				const classes = document.getText({ start: a, end: b })
+				if (kind === "twinTheme") {
+					const color = getThemeDecoration(classes)
+					if (color) {
+						colors.push({
+							range: {
+								start: a,
+								end: b,
+							},
+							backgroundColor: color,
+						})
+					}
+					return
+				}
 				const { classList } = findClasses({
 					classes,
 					separator: state.separator,
@@ -64,4 +79,21 @@ export default function updateDocumentColor(document: TextDocument) {
 			})
 	}
 	connection.sendNotification("tailwindcss/documentColors", { colors, uri: document.uri })
+}
+
+function getThemeDecoration(text: string): string {
+	const parts = text.split(".")
+	const t = dlv(state.config.theme, parts)
+	if (typeof t === "string") {
+		if (t === "transparent") {
+			return t
+		}
+		try {
+			const c = chroma(t)
+			return c.css()
+		} catch {
+			return null
+		}
+	}
+	return null
 }
