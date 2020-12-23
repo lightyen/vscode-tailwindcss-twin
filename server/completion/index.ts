@@ -10,7 +10,6 @@ export { completionResolve } from "./resolve"
 import { serializeError } from "serialize-error"
 import { findClasses } from "~/find"
 import { Token } from "~/typings"
-import { dlv } from "~/tailwind/classnames"
 import chroma from "chroma-js"
 import { CompletionItem } from "vscode-languageserver"
 
@@ -138,18 +137,18 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 		keys.push(key)
 	}
 
-	const target = dlv(state.config.theme, keys)
-	if (typeof target !== "object") {
+	const value = state.getTheme(keys.join("."))
+	if (typeof value !== "object") {
 		return null
 	}
 	return {
 		isIncomplete: true,
-		items: Object.keys(target).map(label => {
+		items: Object.keys(value).map(label => {
 			const item: CompletionItem = {
 				label,
 				sortText: formatDigital(label),
 			}
-			const value = dlv(state.config.theme, [...keys, label])
+			const value = state.getTheme([...keys, label].join("."))
 			const isObject = typeof value === "object"
 			if (isObject) {
 				item.kind = lsp.CompletionItemKind.Module

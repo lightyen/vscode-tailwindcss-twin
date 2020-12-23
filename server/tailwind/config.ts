@@ -1,6 +1,7 @@
 import path from "path"
 import type { Postcss, Plugin, Result } from "postcss"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
+import { dlv } from "./common"
 import { TModule } from "./module"
 
 type PurgeOption =
@@ -188,5 +189,17 @@ export async function processTailwindConfig({
 		...payload,
 		classnames: extractClassNames(postcssResults, payload.darkMode, twin),
 		__INNER_TAILWIND_SEPARATOR__,
+		/**
+		 * get theme value.
+		 *
+		 * example: ```getTheme("colors.blue.500")```
+		 * @param keys
+		 */
+		getTheme(keys: string) {
+			if (!this.config) {
+				return undefined
+			}
+			return dlv(this.config.theme, keys.split(".").filter(Boolean))
+		},
 	}
 }

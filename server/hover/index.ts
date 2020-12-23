@@ -8,7 +8,6 @@ import { canHover } from "./canHover"
 import { documents } from "~/server"
 import { findClasses, SelectionInfo } from "~/find"
 import { Pattern } from "~/patterns"
-import { dlv } from "~/tailwind/classnames"
 
 export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 	try {
@@ -38,9 +37,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 			return null
 		}
 		if (pattern.kind === "twinTheme") {
-			const parts = match[2].split(".")
-
-			const value = dlv(state.config.theme, parts)
+			const value = state.getTheme(match[2])
 			const range = {
 				start: document.positionAt(base),
 				end: document.positionAt(base + match[2].length),

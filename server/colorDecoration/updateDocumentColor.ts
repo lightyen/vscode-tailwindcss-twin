@@ -4,7 +4,6 @@ import { Range, TextDocument } from "vscode-languageserver-textdocument"
 import { findClasses } from "~/find"
 import { settings } from "~/server"
 import { state } from "~/tailwind"
-import { dlv } from "~/tailwind/classnames"
 import chroma from "chroma-js"
 
 interface ColorInformation {
@@ -82,14 +81,13 @@ export default function updateDocumentColor(document: TextDocument) {
 }
 
 function getThemeDecoration(text: string): string {
-	const parts = text.split(".")
-	const t = dlv(state.config.theme, parts)
-	if (typeof t === "string") {
-		if (t === "transparent") {
-			return t
+	const value = state.getTheme(text)
+	if (typeof value === "string") {
+		if (value === "transparent") {
+			return value
 		}
 		try {
-			const c = chroma(t)
+			const c = chroma(value)
 			return c.css()
 		} catch {
 			return null

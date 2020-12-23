@@ -24,9 +24,6 @@ export function validateTextDocument(document: TextDocument) {
 
 	for (const pattern of patterns) {
 		const { lpat, rpat, kind } = pattern
-		if (kind === "twinTheme") {
-			continue
-		}
 		findMatch({
 			text,
 			lpat,
@@ -35,6 +32,19 @@ export function validateTextDocument(document: TextDocument) {
 			.filter(v => v.length > 0)
 			.forEach(([start, end]) => {
 				const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
+				if (kind === "twinTheme") {
+					const text = document.getText(range)
+					const value = state.getTheme(text)
+					if (value == undefined) {
+						diagnostics.push({
+							range,
+							source,
+							message: `${text} is undefined`,
+							severity: DiagnosticSeverity.Error,
+						})
+					}
+					return
+				}
 				const classes = document.getText(range)
 				diagnostics.push(
 					...validateClasses({ document, range, classes, pattern, separator: state.separator, kind }),
