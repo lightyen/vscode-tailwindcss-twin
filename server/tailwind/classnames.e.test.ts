@@ -123,7 +123,7 @@ test("B", async () => {
 
 	const result = await processCss(text)
 	expect(result.variants).toEqual({
-		dark: [":focus-within"],
+		dark: [".dark"],
 		"2xl": [],
 		"focus-within": [":focus-within"],
 		"group-hover": [".group:hover"],
