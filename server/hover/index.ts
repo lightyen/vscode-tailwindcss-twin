@@ -37,7 +37,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 			return null
 		}
 		if (pattern.kind === "twinTheme") {
-			const value = state.getTheme(match[2])
+			const value = state.getTheme(match[2].split("."))
 			const range = {
 				start: document.positionAt(base),
 				end: document.positionAt(base + match[2].length),

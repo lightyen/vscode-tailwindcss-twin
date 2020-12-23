@@ -197,11 +197,17 @@ export async function processTailwindConfig({
 		 * example: ```getTheme("colors.blue.500")```
 		 * @param keys
 		 */
-		getTheme(keys: string) {
+		getTheme(keys: string[]) {
 			if (!this.config) {
 				return undefined
 			}
-			return dlv(this.config.theme, keys.split(".").filter(Boolean))
+			return dlv(this.config.theme, keys)
+		},
+		getConfig(keys: string[]) {
+			if (!this.config) {
+				return undefined
+			}
+			return dlv(this.config, keys)
 		},
 	}
 }

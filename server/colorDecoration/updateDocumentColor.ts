@@ -81,7 +81,7 @@ export default function updateDocumentColor(document: TextDocument) {
 }
 
 function getThemeDecoration(text: string): string {
-	const value = state.getTheme(text)
+	const value = state.getTheme(text.split("."))
 	if (typeof value === "string") {
 		if (value === "transparent") {
 			return value

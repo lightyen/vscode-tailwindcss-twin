@@ -123,7 +123,7 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 		return null
 	}
 
-	const reg = /(\w+)\.(\s*)/g
+	const reg = /([^.]+)\./g
 	const keys: string[] = []
 	let m: RegExpExecArray
 	while ((m = reg.exec(text))) {
@@ -136,8 +136,7 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 		}
 		keys.push(key)
 	}
-
-	const value = state.getTheme(keys.join("."))
+	const value = state.getTheme(keys)
 	if (typeof value !== "object") {
 		return null
 	}
@@ -146,9 +145,9 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 		items: Object.keys(value).map(label => {
 			const item: CompletionItem = {
 				label,
-				sortText: formatDigital(label),
+				sortText: Number.isNaN(Number(label)) ? label : formatDigital(label),
 			}
-			const value = state.getTheme([...keys, label].join("."))
+			const value = state.getTheme([...keys, label])
 			const isObject = typeof value === "object"
 			if (isObject) {
 				item.kind = lsp.CompletionItemKind.Module

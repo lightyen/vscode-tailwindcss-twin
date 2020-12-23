@@ -34,7 +34,7 @@ export function validateTextDocument(document: TextDocument) {
 				const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
 				if (kind === "twinTheme") {
 					const text = document.getText(range)
-					const value = state.getTheme(text)
+					const value = state.getTheme(text.split("."))
 					if (value == undefined) {
 						diagnostics.push({
 							range,
