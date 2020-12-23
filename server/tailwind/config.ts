@@ -162,7 +162,9 @@ export async function processTailwindConfig({
 
 	// change config for twin
 	if (twin) {
-		payload.config.darkMode = "media"
+		if (!payload.config.darkMode) {
+			payload.config.darkMode = "media"
+		}
 		payload.config.corePlugins = undefined
 		payload.config.prefix = undefined
 		payload.config.important = undefined

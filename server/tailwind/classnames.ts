@@ -165,7 +165,7 @@ export function parseResults(
 
 		for (const [name, pesudos] of Object.entries(notRules)) {
 			if (name === "dark") {
-				variants["dark"] = Array.from(pesudos)
+				variants["dark"] = [".dark"]
 				continue
 			}
 			dset(tree, [name, "__source"], source)
@@ -184,9 +184,13 @@ export function parseResults(
 		for (const k in twinVariants) {
 			variants[k] = twinVariants[k]
 		}
+		// for light
+		if (darkMode === "media") {
+			variants["light"] = ["@media (prefers-color-scheme: light)"]
+		} else if (darkMode === "class") {
+			variants["light"] = [".light"]
+		}
 	}
-
-	// take a coffee...
 
 	function collectBreakingPoints(variants: Record<string, string[]>) {
 		const reg = /@media\s\(.*width:\s*(\d+)px/

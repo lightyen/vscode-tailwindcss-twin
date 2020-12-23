@@ -70,7 +70,6 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	if (clients.has(ws.uri.toString())) {
 		return
 	}
-	console.log(ws.uri.toString())
 
 	const serverOptions: ServerOptions = {
 		run: { module: serverModule, transport: TransportKind.ipc },
@@ -194,11 +193,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (!languages.has(ws.uri.toString())) {
 			languages.set(ws.uri.toString(), DEFAULT_SUPPORT_LANGUAGES)
 		}
+
 		await addClient(serverModule, outputChannel, ws)
 	}
-
+	for (const doc of vscode.workspace.textDocuments) {
+		await didOpenTextDocument(doc)
+	}
 	vscode.workspace.onDidOpenTextDocument(didOpenTextDocument)
-	vscode.workspace.textDocuments.forEach(didOpenTextDocument)
 }
 
 export async function deactivate() {

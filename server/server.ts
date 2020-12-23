@@ -157,7 +157,6 @@ connection.onDidChangeConfiguration(async params => {
 		settings.links = typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
 		connection.sendNotification("tailwindcss/info", `documentLinks = ${settings.links}`)
 
-		console.log(settings.diagnostics.conflict, tailwindcss.diagnostics.conflict)
 		if (
 			settings.validate !== tailwindcss.validate ||
 			settings.diagnostics.conflict !== tailwindcss.diagnostics.conflict

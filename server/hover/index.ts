@@ -116,6 +116,13 @@ async function getHoverContents({
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
+	if (state.darkMode === "class") {
+		const f = notCommon.findIndex(v => state.classnames.isDark(twin, v))
+		if (f !== -1) {
+			common.push(...notCommon.splice(f, 1))
+		}
+	}
+
 	if (twin) {
 		if (value === "group" || value === "container") {
 			return null
@@ -125,7 +132,7 @@ async function getHoverContents({
 			if (i !== -1) {
 				return {
 					kind: MarkupKind.Markdown,
-					value: ["```scss", `.content::${common[i]} {`, '\tcontent: "";', "}", "```"].join("\n"),
+					value: ["```scss", `.content::${common[i]} {`, '  content: "";', "}", "```"].join("\n"),
 				}
 			}
 			return null
@@ -173,11 +180,21 @@ async function getHoverContents({
 			const d = draft[i]
 			if (
 				!d.__context.every(context => {
-					const e = Object.entries(__variants).find(([, values]) => values.includes(context))
+					const e = Object.entries(__variants).find(([, values], index) => {
+						return values.includes(context)
+					})
 					if (!e) {
 						return false
 					}
-					return notCommon.includes(e[0])
+					return (
+						notCommon.findIndex(n => {
+							// hack
+							if (twin && n === "light") {
+								n = "dark"
+							}
+							return n === e[0]
+						}) !== -1
+					)
 				})
 			) {
 				filterContext.push(false)
@@ -192,13 +209,24 @@ async function getHoverContents({
 					filterContext.push(false)
 					continue
 				}
-				if (d.__scope) {
-					filterContext.push(false)
-					continue
-				}
+				// FIXME: not work in this scene: darMode === 'class'
+				// if (d.__scope) {
+				// 	filterContext.push(false)
+				// 	continue
+				// }
 			}
 			if (d.__scope) {
-				filterContext.push(variantValues.includes(d.__scope))
+				const scopes = d.__scope.split(" ")
+				filterContext.push(
+					scopes.every(s => {
+						// hack
+						if (twin && s === ".dark" && variantValues.includes(".light")) {
+							d.__scope = d.__scope.replace(".dark", ".light")
+							return true
+						}
+						return variantValues.includes(s)
+					}),
+				)
 				continue
 			}
 			if (twin && common.every(c => state.classnames.isVariant(c, twin) && !state.classnames.baseVariants[c])) {
@@ -237,7 +265,7 @@ async function getHoverContents({
 		value: [
 			"```scss",
 			...Array.from(blocks).map(([selector, contents]) => {
-				return `${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}`
+				return `${selector} {\n${contents.map(c => `  ${c}`).join("\n")}\n}`
 			}),
 			"```",
 		].join("\n"),

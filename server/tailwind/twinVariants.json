@@ -5,7 +5,6 @@
   "all-child": ["> *"],
   "before": ["::before"],
   "checked": [":checked"],
-  "dark": ["@media (prefers-color-scheme: dark)"],
   "default": [":default"],
   "disabled": [":disabled"],
   "enabled": [":enabled"],
