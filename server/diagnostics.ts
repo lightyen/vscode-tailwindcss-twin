@@ -132,11 +132,15 @@ function validateClasses({
 			}
 			if (settings.diagnostics.conflict === "strict") {
 				for (const d of data) {
+					let twinKeys: string[] = []
+					if (kind === "twin") {
+						twinKeys = variants.sort()
+					}
 					for (const property of Object.keys(d.decls)) {
 						if (property.startsWith("--tw")) {
 							continue
 						}
-						const key = [...d.__context, d.__scope, ...d.__pseudo, property].join(".")
+						const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
 						const target = map[key]
 						if (target instanceof Array) {
 							target.push(classList[i].token)
