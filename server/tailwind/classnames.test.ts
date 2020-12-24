@@ -46,7 +46,6 @@ test("processes default container plugin", async () => {
 	expect(result.dictionary).toEqual({
 		container: [
 			{
-				__rule: true,
 				decls: {
 					width: ["100%"],
 				},
@@ -55,7 +54,6 @@ test("processes default container plugin", async () => {
 				__pseudo: [],
 			},
 			{
-				__rule: true,
 				decls: {
 					"max-width": ["640px"],
 				},
@@ -64,7 +62,6 @@ test("processes default container plugin", async () => {
 				__pseudo: [],
 			},
 			{
-				__rule: true,
 				decls: {
 					"max-width": ["768px"],
 				},
@@ -73,7 +70,6 @@ test("processes default container plugin", async () => {
 				__pseudo: [],
 			},
 			{
-				__rule: true,
 				decls: {
 					"max-width": ["1024px"],
 				},
@@ -82,7 +78,6 @@ test("processes default container plugin", async () => {
 				__pseudo: [],
 			},
 			{
-				__rule: true,
 				decls: {
 					"max-width": ["1280px"],
 				},
@@ -116,7 +111,6 @@ test("foo", async () => {
 		sm: {
 			"bg-red": [
 				{
-					__rule: true,
 					decls: {
 						"background-color": ["red"],
 					},
@@ -128,7 +122,6 @@ test("foo", async () => {
 			hover: {
 				"bg-red": [
 					{
-						__rule: true,
 						decls: {
 							"background-color": ["red"],
 						},
@@ -142,7 +135,6 @@ test("foo", async () => {
 		hover: {
 			"bg-red": [
 				{
-					__rule: true,
 					decls: {
 						"background-color": ["red"],
 					},
@@ -165,7 +157,6 @@ test("processes basic css", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -187,7 +178,6 @@ test("processes pseudo selectors", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -215,7 +205,6 @@ test("processes pseudo selectors in scope", async () => {
 		"bg-red": [
 			{
 				__scope: ".scope:hover",
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -238,7 +227,6 @@ test("processes multiple class names in the same rule", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -249,7 +237,6 @@ test("processes multiple class names in the same rule", async () => {
 		],
 		"bg-red-again": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -273,7 +260,6 @@ test("processes media queries", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -299,7 +285,6 @@ test("processes nested at-rules", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -324,7 +309,6 @@ test("merges declarations", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -333,7 +317,6 @@ test("merges declarations", async () => {
 				__pseudo: [],
 			},
 			{
-				__rule: true,
 				decls: {
 					color: ["white"],
 				},
@@ -365,7 +348,6 @@ test("processes multiple scopes for the same class name", async () => {
 		"bg-red": [
 			{
 				__scope: ".scope1",
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -375,7 +357,6 @@ test("processes multiple scopes for the same class name", async () => {
 			},
 			{
 				__scope: ".scope2 +",
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -385,7 +366,6 @@ test("processes multiple scopes for the same class name", async () => {
 			},
 			{
 				__scope: ".scope3 >",
-				__rule: true,
 				decls: {
 					"background-color": ["red"],
 				},
@@ -408,7 +388,6 @@ test("processes multiple properties of the same name", async () => {
 	expect(result.dictionary).toEqual({
 		"bg-red": [
 			{
-				__rule: true,
 				decls: {
 					"background-color": ["blue", "red"],
 				},

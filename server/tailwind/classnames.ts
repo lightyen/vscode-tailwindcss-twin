@@ -21,7 +21,6 @@ interface ClassName {
 
 export interface CSSRuleItem {
 	__scope?: string
-	__rule?: boolean
 	decls?: Record<string, string[]>
 	__source?: string
 	__context: string[]
@@ -139,7 +138,6 @@ export function parseResults(
 					dset(tree, [...baseKeys, ...index, "__scope"], classNames[i].scope)
 				}
 				if (classNames[i].rule) {
-					dset(tree, [...baseKeys, ...index, "__rule"], true)
 					for (const key in decls) {
 						dset(tree, [...baseKeys, ...index, "decls", key], decls[key])
 					}
@@ -222,11 +220,9 @@ export function parseResults(
 			}
 
 			type D = [property: string, value: string]
-			const decls: D[] = info
-				.filter(i => i.__rule && i.__pseudo.length === 0)
-				.flatMap(v =>
-					Object.keys(v.decls || {}).flatMap(key => v.decls[key].map<D>(v => [key, v])),
-				)
+			const decls: D[] = info.flatMap(v =>
+				Object.keys(v.decls || {}).flatMap(key => v.decls[key].map<D>(v => [key, v])),
+			)
 
 			if (decls.length === 0) {
 				return

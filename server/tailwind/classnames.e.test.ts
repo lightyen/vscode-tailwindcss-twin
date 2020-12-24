@@ -133,7 +133,6 @@ test("B", async () => {
 		"2xl": {
 			"divide-black": [
 				{
-					__rule: true,
 					decls: {
 						"--tw-divide-opacity": ["1"],
 						"border-color": ["rgba(0, 0, 0, var(--tw-divide-opacity))"],
@@ -146,7 +145,6 @@ test("B", async () => {
 		},
 		"bg-red-500": [
 			{
-				__rule: true,
 				decls: {
 					"--tw-bg-opacity": ["1"],
 					"background-color": ["rgba(239, 68, 68, var(--tw-bg-opacity))"],
@@ -160,7 +158,6 @@ test("B", async () => {
 			"divide-gray-500": [
 				{
 					__scope: ".dark",
-					__rule: true,
 					decls: {
 						"--tw-divide-opacity": ["1"],
 						"border-color": ["rgba(107, 114, 128, var(--tw-divide-opacity))"],
@@ -178,7 +175,6 @@ test("B", async () => {
 		},
 		"divide-black": [
 			{
-				__rule: true,
 				decls: {
 					"--tw-divide-opacity": ["1"],
 					"border-color": ["rgba(0, 0, 0, var(--tw-divide-opacity))"],
@@ -192,7 +188,6 @@ test("B", async () => {
 			"bg-red-500": [
 				{
 					__scope: ".group:hover",
-					__rule: true,
 					decls: {
 						"--tw-bg-opacity": ["1"],
 						"background-color": ["rgba(239, 68, 68, var(--tw-bg-opacity))"],
@@ -209,7 +204,6 @@ test("B", async () => {
 					"ring-offset-red-200": [
 						{
 							__scope: ".dark",
-							__rule: true,
 							decls: {
 								"--tw-ring-offset-color": ["#fecaca"],
 							},
@@ -222,7 +216,6 @@ test("B", async () => {
 				"divide-gray-500": [
 					{
 						__scope: ".dark",
-						__rule: true,
 						decls: {
 							"--tw-divide-opacity": ["1"],
 							"border-color": ["rgba(107, 114, 128, var(--tw-divide-opacity))"],
@@ -235,7 +228,6 @@ test("B", async () => {
 			},
 			"ring-0": [
 				{
-					__rule: true,
 					decls: {
 						"--tw-ring-offset-shadow": [
 							"var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color)",
@@ -276,7 +268,6 @@ test("C", async () => {
 		"group-hover": {
 			"bg-transparent": [
 				{
-					__rule: true,
 					__scope: ".group:hover",
 					decls: {
 						"background-color": ["transparent"],
@@ -288,7 +279,6 @@ test("C", async () => {
 			],
 			"bg-current": [
 				{
-					__rule: true,
 					__scope: ".group:hover",
 					decls: {
 						"background-color": ["currentColor"],
