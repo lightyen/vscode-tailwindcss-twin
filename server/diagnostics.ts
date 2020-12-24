@@ -7,8 +7,6 @@ import { ClassInfo, findClasses } from "~/find"
 import { state } from "./tailwind"
 import { Token } from "./typings"
 
-// TODO: add theme validate
-
 export function validateTextDocument(document: TextDocument) {
 	if (!settings.validate) {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: [] })

@@ -155,8 +155,6 @@ export async function processTailwindConfig({
 	let postcssResults: [Result, Result, Result]
 	getConfig(payload, { base, filename, m, fallbackDefaultConfig })
 
-	// TODO: apply plugin?
-
 	// force disable purge
 	payload.config.purge = { enabled: false, content: [] }
 
