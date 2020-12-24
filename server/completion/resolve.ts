@@ -10,7 +10,6 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 
 	const { type, variants, kind } = item.data as {
 		type: string
-		value: string
 		variants: string[]
 		kind: PatternKind
 	}
@@ -39,11 +38,22 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 	}
 
 	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
-	if (variants.length > 0 && !item.label.endsWith(":")) {
-		if (!data) {
-			return item
-		}
+	if (!data) {
+		return item
+	}
 
+	if (!(data instanceof Array)) {
+		item.detail = item.label
+		if (data.__pseudo) {
+			item.documentation = {
+				kind: MarkupKind.Markdown,
+				value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
+			}
+		}
+		return item
+	}
+
+	if (variants.length > 0 && !item.label.endsWith(":")) {
 		const __variants = state.classnames.getVariants(kind === "twin")
 		if (data instanceof Array) {
 			data = data.filter(d => {
@@ -63,41 +73,31 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		}
 	}
 
-	if (type === "class" || type === "color") {
-		if (data instanceof Array) {
-			const result: Record<string, string> = {}
-			for (const d of data) {
-				for (const k in d.decls) {
-					for (const v of d.decls[k]) {
-						result[k] = v
-					}
+	if (type === "utilities" || type === "color") {
+		const result: Record<string, string> = {}
+		for (const d of data) {
+			for (const k in d.decls) {
+				for (const v of d.decls[k]) {
+					result[k] = v
 				}
 			}
-			if (type === "color") {
-				item.detail = Object.entries(result)
-					.map(([prop, value]) => `${prop}: ${value};`)
-					.join("\n")
-				return item
-			}
-			// class
-			item.documentation = {
-				kind: MarkupKind.Markdown,
-				value: [
-					"```scss",
-					`.${item.label} {\n${Object.entries(result)
-						.map(([prop, value]) => `\t${prop}: ${value};`)
-						.join("\n")}\n}`,
-					"```",
-				].join("\n"),
-			}
-		} else {
-			item.detail = item.label
-			if (data.__pseudo) {
-				item.documentation = {
-					kind: MarkupKind.Markdown,
-					value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
-				}
-			}
+		}
+		if (type === "color") {
+			item.detail = Object.entries(result)
+				.map(([prop, value]) => `${prop}: ${value};`)
+				.join("\n")
+			return item
+		}
+		// class
+		item.documentation = {
+			kind: MarkupKind.Markdown,
+			value: [
+				"```scss",
+				`.${item.label} {\n${Object.entries(result)
+					.map(([prop, value]) => `\t${prop}: ${value};`)
+					.join("\n")}\n}`,
+				"```",
+			].join("\n"),
 		}
 	} else if (type === "variant" || type === "screen") {
 		if (data instanceof Array) {
@@ -113,8 +113,33 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 				value: ["```scss", ...text, "```"].join("\n"),
 			}
 		}
-	}
+	} else if (type === "components") {
+		const blocks: Map<string, string[]> = new Map()
+		data.map(rule => {
+			const selector = item.label + rule.__pseudo.join("")
+			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
+				values.map<[string, string]>(v => [prop, v]),
+			)
+			return { scope: rule.__scope ? rule.__scope + " " : "", selector, decls }
+		}).forEach(c => {
+			const selector = `${c.scope}.${c.selector.replace(/\//g, "\\/")}`
+			if (!blocks.has(selector)) {
+				blocks.set(selector, [])
+			}
+			blocks.get(selector).push(...c.decls.map(([prop, value]) => `${prop}: ${value};`))
+		})
 
+		item.documentation = {
+			kind: MarkupKind.Markdown,
+			value: [
+				"```scss",
+				...Array.from(blocks).map(([selector, contents]) => {
+					return `${selector} {\n${contents.map(c => `  ${c}`).join("\n")}\n}`
+				}),
+				"```",
+			].join("\n"),
+		}
+	}
 	return item
 }
 

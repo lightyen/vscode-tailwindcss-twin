@@ -57,7 +57,6 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 		return null
 	}
 
-	const value = selection.selected?.[2]
 	const variantFilter = state.classnames.getVariantFilter(variants, twin)
 	const variantItems = Object.entries(state.classnames.getVariants(twin))
 		.filter(([label]) => variantFilter(label))
@@ -68,20 +67,19 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 					label,
 					sortText: bp.toString().padStart(5, " "),
 					kind: lsp.CompletionItemKind.Module,
-					data: { type: "screen", data, value, variants, kind },
+					data: { type: "screen", data, variants, kind },
 					command: {
 						title: "",
 						command: "editor.action.triggerSuggest",
 					},
 				}
 			} else {
+				const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 				return {
 					label,
-					sortText: state.classnames.isDark(twin, label) ? "*" + label : "~~~:" + label,
-					kind: state.classnames.isDark(twin, label)
-						? lsp.CompletionItemKind.Color
-						: lsp.CompletionItemKind.Field,
-					data: { type: "variant", data, value, variants, kind },
+					sortText: f ? "*" + label : "~~~:" + label,
+					kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
+					data: { type: "variant", data, variants, kind },
 					command: {
 						title: "",
 						command: "editor.action.triggerSuggest",
@@ -96,15 +94,17 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
 	const classesItems = Object.entries(state.classnames.getClassNames(variants, twin))
 		.filter(classesFilter)
-		.map(([label, data]) => getCompletionItem({ label, data, value, variants, kind }))
+		.map(([label, data]) => createCompletionItem({ label, data, variants, kind }))
 
-	if (twin && variants.some(v => v === "before" || v === "after")) {
-		classesItems.push({
-			label: "content",
-			kind: lsp.CompletionItemKind.Constant,
-			sortText: "~~content",
-			data: { type: "class", data: null, value, variants, kind },
-		})
+	if (twin) {
+		if (variants.some(v => v === "before" || v === "after")) {
+			classesItems.push({
+				label: "content",
+				kind: lsp.CompletionItemKind.Constant,
+				sortText: "~~content",
+				data: { type: "utilities", data: null, variants, kind },
+			})
+		}
 	}
 
 	return {
@@ -194,28 +194,35 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 	}
 }
 
-function getCompletionItem({
+function createCompletionItem({
 	label,
 	data,
-	value,
 	variants,
 	kind,
 }: {
 	label: string
 	data: CSSRuleItem | CSSRuleItem[]
-	value: string
 	variants: string[]
 	kind: PatternKind
 }): lsp.CompletionItem {
 	const item: lsp.CompletionItem = {
 		label,
-		data: { type: "class", data, value, variants, kind },
+		data: { type: "utilities", data, variants, kind },
 		kind: lsp.CompletionItemKind.Constant,
 		sortText: (label[0] === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
 	const info = state.classnames.colors[label]
 	if (!info) {
+		return item
+	}
+
+	if (!(data instanceof Array)) {
+		return item
+	}
+
+	if (data.length === 0 || data[0].__source === "components") {
+		item.data.type = "components"
 		return item
 	}
 

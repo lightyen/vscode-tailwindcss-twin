@@ -121,7 +121,7 @@ export function findClasses({
 			variantReg.lastIndex = e.index
 			let last = variantReg.lastIndex
 			let m: RegExpExecArray
-			const isSelected = index >= e.index && (hover ? index < reg.lastIndex : index <= reg.lastIndex)
+			const inRange = index >= e.index && (hover ? index < reg.lastIndex : index <= reg.lastIndex)
 			const s = classes.substring(0, reg.lastIndex)
 			const item: ClassInfo = {
 				token: null,
@@ -129,14 +129,16 @@ export function findClasses({
 				inGroup: false,
 				important: false,
 			}
-			if (isSelected) {
+			if (inRange) {
 				variantsSelected = []
 			}
 			while ((m = variantReg.exec(s))) {
 				last = variantReg.lastIndex
 				const t: Token = [m.index, m.index + m[1].length, m[1]]
 				item.variants.push(t)
-				if (isSelected) {
+				if (!hover) {
+					if (index > t[1]) variantsSelected.push(t)
+				} else if (inRange) {
 					variantsSelected.push(t)
 				}
 				if (index >= t[0] && index < t[1]) {
@@ -144,7 +146,7 @@ export function findClasses({
 				}
 			}
 			item.token = [last, reg.lastIndex, classes.substring(last, reg.lastIndex)]
-			if (item.token[2] === "") {
+			if (last === reg.lastIndex) {
 				empty.push([last, last + 1, item.variants])
 			}
 			if (handleImportant && item.token[2].endsWith("!")) {
@@ -152,11 +154,11 @@ export function findClasses({
 				item.token[2] = item.token[2].substring(0, item.token[2].length - 1)
 				item.token[1] = item.token[1] - 1
 			}
-			if (isSelected && index >= item.token[0]) {
+			if (inRange && index >= item.token[0]) {
 				if (handleImportant && item.important) {
 					important = true
 				}
-				selected = item.token
+				if (item.token[2]) selected = item.token
 			}
 			classList.push(item)
 		}

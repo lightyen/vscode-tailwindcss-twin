@@ -117,7 +117,7 @@ async function getHoverContents({
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
 	if (state.darkMode === "class") {
-		const f = notCommon.findIndex(v => state.classnames.isDark(twin, v))
+		const f = notCommon.findIndex(v => state.classnames.isDarkLightMode(twin, v))
 		if (f !== -1) {
 			common.push(...notCommon.splice(f, 1))
 		}
@@ -132,7 +132,7 @@ async function getHoverContents({
 			if (i !== -1) {
 				return {
 					kind: MarkupKind.Markdown,
-					value: ["```scss", `.content::${common[i]} {`, '  content: "";', "}", "```"].join("\n"),
+					value: ["```scss", `::${common[i]} {`, '  content: "";', "}", "```"].join("\n"),
 				}
 			}
 			return null
@@ -188,10 +188,6 @@ async function getHoverContents({
 					}
 					return (
 						notCommon.findIndex(n => {
-							// hack
-							if (twin && n === "light") {
-								n = "dark"
-							}
 							return n === e[0]
 						}) !== -1
 					)
@@ -209,21 +205,11 @@ async function getHoverContents({
 					filterContext.push(false)
 					continue
 				}
-				// FIXME: not work in this scene: darMode === 'class'
-				// if (d.__scope) {
-				// 	filterContext.push(false)
-				// 	continue
-				// }
 			}
 			if (d.__scope) {
 				const scopes = d.__scope.split(" ")
 				filterContext.push(
 					scopes.every(s => {
-						// hack
-						if (twin && s === ".dark" && variantValues.includes(".light")) {
-							d.__scope = d.__scope.replace(".dark", ".light")
-							return true
-						}
 						return variantValues.includes(s)
 					}),
 				)
@@ -242,9 +228,12 @@ async function getHoverContents({
 	})
 
 	const blocks: Map<string, string[]> = new Map()
-	meta.filter((_, i) => filterContext[i])
+	meta.filter((_, i) => twin || filterContext[i])
 		.map(rule => {
-			const selector = value + rule.__pseudo.join("")
+			let selector = value
+			if (rule.__source === "components") {
+				selector = value + rule.__pseudo.join("")
+			}
 			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
 				values.map<[string, string]>(v => [prop, v]),
 			)

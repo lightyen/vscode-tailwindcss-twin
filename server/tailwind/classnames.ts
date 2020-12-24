@@ -304,6 +304,13 @@ export function parseResults(
 		return colors
 	}
 
+	enum Flag {
+		Responsive = 1,
+		DarkLightMode = 2,
+		MotionControl = 4,
+		CommonVariant = 8,
+	}
+
 	return {
 		/**
 		 * class rules
@@ -335,7 +342,7 @@ export function parseResults(
 		 * @param twinPattern is current pattern twin?
 		 * @param label input
 		 */
-		isDark(twinPattern: boolean, label: string) {
+		isDarkLightMode(twinPattern: boolean, label: string) {
 			return twinPattern ? label === "dark" || label === "light" : label === "dark"
 		},
 		getBreakingPoint(label: string) {
@@ -352,11 +359,17 @@ export function parseResults(
 		isVariant(variant: string, twinPattern: boolean) {
 			return !!this.getVariants(twinPattern)[variant]
 		},
-		hasDarkMode(variants: string[], twinPattern: boolean) {
-			return variants.some(v => this.isDark(twinPattern, v))
+		hasDarkLightMode(variants: string[], twinPattern: boolean) {
+			return variants.some(v => this.isDarkLightMode(twinPattern, v))
 		},
 		hasBreakingPoint(variants: string[]) {
 			return variants.some(v => this.isResponsive(v))
+		},
+		isMotionControl(variant: string) {
+			return variant === "motion-reduce" || variant === "motion-safe"
+		},
+		hasMotionControl(variants: string[]) {
+			return variants.some(v => this.isMotionControl(v))
 		},
 		getVariants(twinPattern: boolean) {
 			if (twinPattern) {
@@ -374,7 +387,10 @@ export function parseResults(
 			if (this.isResponsive(label)) {
 				return false
 			}
-			if (this.isDark(twinPattern, label)) {
+			if (this.isDarkLightMode(twinPattern, label)) {
+				return false
+			}
+			if (this.isMotionControl(label)) {
 				return false
 			}
 			return !!this.getVariants(twinPattern)[label]
@@ -400,7 +416,7 @@ export function parseResults(
 			if (!this.getClassNames(variants, twinPattern)?.[label]) {
 				return false
 			}
-			if (this.isDark(twinPattern, label)) {
+			if (this.isDarkLightMode(twinPattern, label)) {
 				return false
 			}
 			return true
@@ -416,18 +432,13 @@ export function parseResults(
 				const keys: string[] = []
 				const bp = variants.find(v => this.isResponsive(v))
 				if (bp) keys.push(bp)
-				const i = variants.findIndex(x => this.isDark(twinPattern, x))
-				if (i !== -1) {
-					variants[i] = "dark"
-					keys.push("dark")
-				}
 				if (!twinPattern) {
-					keys.push(...variants.filter(v => !this.isResponsive(v) && !this.isDark(twinPattern, v)))
-				} else {
-					const first = variants.find(v => this.isCommonVariant(false, v))
-					if (first && Object.keys(baseVariants).includes(first)) {
-						keys.push(first)
+					const i = variants.findIndex(x => this.isDarkLightMode(twinPattern, x))
+					if (i !== -1) {
+						variants[i] = "dark"
+						keys.push("dark")
 					}
+					keys.push(...variants.filter(v => !this.isResponsive(v) && !this.isDarkLightMode(twinPattern, v)))
 				}
 				dictionary = dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
 			} else {
@@ -439,26 +450,6 @@ export function parseResults(
 			return dictionary
 		},
 		getClassNameRule(variants: string[], twinPattern: boolean, value: string): CSSRuleItem | CSSRuleItem[] {
-			if (twinPattern) {
-				const index = variants.findIndex(v => {
-					return v === "hocus" || v === "group-hocus"
-				})
-				if (index !== -1) {
-					const va = [...variants]
-					va.splice(index, 1, variants[index].replace("hocus", "hover"))
-					const a = this.getClassNames(va, twinPattern)?.[value]
-					if (!(a instanceof Array)) {
-						return undefined
-					}
-					const vb = [...variants]
-					vb.splice(index, 1, variants[index].replace("hocus", "focus"))
-					const b = this.getClassNames(vb, twinPattern)?.[value]
-					if (!(b instanceof Array)) {
-						return undefined
-					}
-					return a.concat(b)
-				}
-			}
 			return this.getClassNames(variants, twinPattern)?.[value]
 		},
 		/**
@@ -467,42 +458,56 @@ export function parseResults(
 		 * @param twinPattern is current pattern twin?
 		 */
 		getVariantFilter(variants: string[], twinPattern: boolean): (label: string) => boolean {
-			const payload = {
-				hasBreakingPoint: this.hasBreakingPoint(variants),
-				hasDarkMode: this.hasDarkMode(variants, twinPattern),
-				hasCommonVariant: variants.some(v => this.isCommonVariant(twinPattern, v)),
-			}
+			const flags: Flag =
+				(this.hasBreakingPoint(variants) && Flag.Responsive) |
+				(this.hasDarkLightMode(variants, twinPattern) && Flag.DarkLightMode) |
+				(this.hasMotionControl(variants) && Flag.MotionControl) |
+				(variants.some(v => this.isCommonVariant(twinPattern, v)) && Flag.CommonVariant)
 			return label => {
 				if (twinPattern) {
 					if (variants.some(v => v === label)) {
 						return false
 					}
-					if (
-						(payload.hasDarkMode || payload.hasCommonVariant) &&
-						(this.getBreakingPoint(label) || this.isDark(twinPattern, label))
-					) {
-						return false
+					if (flags & Flag.Responsive) {
+						if (this.isResponsive(label)) {
+							return false
+						}
 					}
-					if (payload.hasBreakingPoint) {
-						if (this.getBreakingPoint(label)) {
+					if (flags & Flag.DarkLightMode) {
+						if (this.isResponsive(label) || this.isDarkLightMode(twinPattern, label)) {
+							return false
+						}
+					}
+					if (flags & Flag.MotionControl || flags & Flag.CommonVariant) {
+						if (
+							this.isResponsive(label) ||
+							this.isDarkLightMode(twinPattern, label) ||
+							this.isMotionControl(label)
+						) {
 							return false
 						}
 					}
 				} else {
-					if (!darkMode && this.isDark(twinPattern, label)) {
+					if (!darkMode && this.isDarkLightMode(twinPattern, label)) {
+						return false
+					}
+					if (flags & Flag.MotionControl && !this.isCommonVariant(twinPattern, label)) {
 						return false
 					}
 					if (
-						payload.hasCommonVariant &&
-						(this.getBreakingPoint(label) || this.isVariant(label, twinPattern))
+						flags & Flag.CommonVariant &&
+						(this.isResponsive(label) || this.isVariant(label, twinPattern))
 					) {
 						return false
 					}
-					if (payload.hasDarkMode && (this.getBreakingPoint(label) || this.isDark(twinPattern, label))) {
+					if (
+						flags & Flag.DarkLightMode &&
+						(this.isResponsive(label) || this.isDarkLightMode(twinPattern, label))
+					) {
 						return false
 					}
-					if (payload.hasBreakingPoint) {
-						if (this.getBreakingPoint(label)) return false
+					if (flags & Flag.Responsive) {
+						if (this.isResponsive(label)) return false
 					}
 				}
 				return true
@@ -520,20 +525,20 @@ export function parseResults(
 			variants: string[],
 			twinPattern: boolean,
 		): (v: [string, CSSRuleItem | CSSRuleItem[]]) => boolean {
-			const payload = {
-				hasBreakingPoint: this.hasBreakingPoint(variants),
-				hasDarkMode: this.hasDarkMode(variants, twinPattern),
-				hasCommonVariant: variants.some(v => this.isCommonVariant(twinPattern, v)),
-			}
+			const flags: Flag =
+				(this.hasBreakingPoint(variants) && Flag.Responsive) |
+				(this.hasDarkLightMode(variants, twinPattern) && Flag.DarkLightMode) |
+				(this.hasMotionControl(variants) && Flag.MotionControl) |
+				(variants.some(v => this.isCommonVariant(twinPattern, v)) && Flag.CommonVariant)
 			return ([label, info]) => {
 				if (label === "group") {
-					if (twinPattern || payload.hasBreakingPoint) {
+					if (twinPattern) {
 						return false
 					}
 					return true
 				}
 				if (label === "container") {
-					if (twinPattern && payload.hasBreakingPoint) {
+					if (twinPattern && flags & Flag.Responsive) {
 						return false
 					}
 					return true

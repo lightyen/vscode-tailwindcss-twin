@@ -144,3 +144,51 @@ test("findClasses Important", async () => {
 		])
 	}
 })
+
+test("find on invalid input", async () => {
+	let classes = "   dark    bg-black  "
+	let index = 8
+	let result = findClasses({
+		classes,
+		index,
+		separator: ":",
+		handleBrackets: true,
+		handleImportant: true,
+	})
+	expect(result.selection.variants).toEqual([])
+	expect(result.selection.selected).toEqual(null)
+
+	index = 7
+	result = findClasses({
+		classes,
+		index,
+		separator: ":",
+		handleBrackets: true,
+		handleImportant: true,
+	})
+	expect(result.selection.variants).toEqual([])
+	expect(result.selection.selected).toEqual([3, 7, "dark"])
+
+	classes = "   dark:    bg-black  "
+	index = 7
+	result = findClasses({
+		classes,
+		index,
+		separator: ":",
+		handleBrackets: true,
+		handleImportant: true,
+	})
+	expect(result.selection.variants).toEqual([])
+	expect(result.selection.selected).toEqual(null)
+
+	index = 8
+	result = findClasses({
+		classes,
+		index,
+		separator: ":",
+		handleBrackets: true,
+		handleImportant: true,
+	})
+	expect(result.selection.variants).toEqual([[3, 7, "dark"]])
+	expect(result.selection.selected).toEqual(null)
+})
