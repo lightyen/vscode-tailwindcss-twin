@@ -1,7 +1,14 @@
 import { Token } from "./typings"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
-export type Language = "html" | "javascript" | "javascriptreact" | "plaintext" | "typescript" | "typescriptreact"
+export type Language =
+	| "html"
+	| "javascript"
+	| "javascriptreact"
+	| "plaintext"
+	| "typescript"
+	| "typescriptreact"
+	| "jade"
 
 export type PatternKind = "twin" | "html" | "jsx" | "twinTheme"
 
@@ -83,9 +90,9 @@ const htmlPatterns: Pattern[] = [
 		lpat: /class\s*=\s*"/,
 		rpat: '"',
 		type: "single",
-		languages: ["html"],
+		languages: ["html", "jade"],
 		handleBrackets: false,
-		handleImportant: true,
+		handleImportant: false,
 		id: "html",
 	}),
 ]
@@ -169,6 +176,7 @@ export function getPatterns(languageId: string, twin = false) {
 	const patterns: Pattern[] = []
 	switch (languageId) {
 		case "html":
+		case "jade":
 			patterns.push(...htmlPatterns)
 			break
 		case "typescriptreact":
