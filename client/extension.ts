@@ -10,7 +10,6 @@ const CLIENT_ID = "Tailwind CSS IntelliSense"
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "html", "jade"]
 
 const clients: Map<string, LanguageClient> = new Map()
-const languages: Map<string, string[]> = new Map()
 
 interface NLSConfig {
 	locale: string
@@ -54,8 +53,8 @@ function getOuterMostWorkspaceFolder(folder: vscode.WorkspaceFolder): vscode.Wor
 }
 
 interface InitializationOptions {
-	workspaceFoloder: string
-	tailwindConfigPath: string
+	workspaceFolder: string
+	configPath: string
 	colorDecorators: boolean
 	links: boolean
 	twin: boolean
@@ -85,10 +84,11 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		new vscode.RelativePattern(ws, "node_modules/**"),
 		1,
 	)
+	initializationOptions.configPath = ""
 	if (results.length === 1) {
-		initializationOptions.tailwindConfigPath = results[0].fsPath
+		initializationOptions.configPath = results[0].fsPath
 	}
-	initializationOptions.workspaceFoloder = ws.uri.fsPath
+	initializationOptions.workspaceFolder = ws.uri.fsPath
 	const tailwindcss = vscode.workspace.getConfiguration("tailwindcss", ws)
 	initializationOptions.colorDecorators = tailwindcss.get("colorDecorators")
 	if (typeof initializationOptions.colorDecorators !== "boolean") {
@@ -103,11 +103,12 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	initializationOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
 	initializationOptions.diagnostics = {}
 	initializationOptions.diagnostics.conflict = tailwindcss.get("diagnostics.conflict")
+
 	const clientOptions: LanguageClientOptions = {
-		documentSelector: languages.get(ws.uri.toString()).map(language => ({
+		documentSelector: DEFAULT_SUPPORT_LANGUAGES.map(language => ({
 			scheme: "file",
 			language,
-			pattern: `${path.dirname(initializationOptions.tailwindConfigPath)}/**/*`,
+			pattern: `${ws.uri.fsPath}/**/*`,
 		})),
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher(
@@ -137,28 +138,6 @@ let serverModule: string
 export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel(CLIENT_ID)
 	serverModule = context.asAbsolutePath(path.join("dist", "server", "server.js"))
-	vscode.workspace.onDidChangeConfiguration(e => {
-		for (const [w] of clients) {
-			const s = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(w))
-			if (e.affectsConfiguration("tailwindcss", s)) {
-				// const cfg = workspace.getConfiguration("tailwindcss")
-				// const v = cfg.get("logLevel")
-				// const userLanguages = getUserLanguages(folder)
-				// if (userLanguages) {
-				// 	const userLanguageIds = Object.keys(userLanguages)
-				// 	const newLanguages = dedupe([...DEFAULT_LANGUAGES, ...userLanguageIds])
-				// 	if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
-				// 		languages.set(folder.uri.toString(), newLanguages)
-				// 		if (client) {
-				// 			clients.delete(folder.uri.toString())
-				// 			client.stop()
-				// 			bootWorkspaceClient(folder)
-				// 		}
-				// 	}
-				// }
-			}
-		}
-	})
 
 	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []
@@ -190,16 +169,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		ws = getOuterMostWorkspaceFolder(ws)
 
-		if (!languages.has(ws.uri.toString())) {
-			languages.set(ws.uri.toString(), DEFAULT_SUPPORT_LANGUAGES)
-		}
-
 		await addClient(serverModule, outputChannel, ws)
 	}
 	for (const doc of vscode.workspace.textDocuments) {
 		await didOpenTextDocument(doc)
 	}
-	vscode.workspace.onDidOpenTextDocument(didOpenTextDocument)
 }
 
 export async function deactivate() {

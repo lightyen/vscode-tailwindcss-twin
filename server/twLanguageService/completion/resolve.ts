@@ -1,13 +1,9 @@
-import { Connection, MarkupKind } from "vscode-languageserver"
-import { PatternKind } from "~/patterns"
+import * as lsp from "vscode-languageserver"
+import type { PatternKind } from "~/patterns"
+import type { CSSRuleItem } from "~/tailwind/classnames"
+import { Tailwind } from "~/tailwind"
 
-import { state, CSSRuleItem } from "~/tailwind"
-
-export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0] = async item => {
-	if (!state) {
-		return item
-	}
-
+export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem => {
 	const { type, variants, kind } = item.data as {
 		type: string
 		variants: string[]
@@ -23,14 +19,14 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 			case "content":
 				item.detail = "content"
 				item.documentation = {
-					kind: MarkupKind.Markdown,
+					kind: lsp.MarkupKind.Markdown,
 					value: ["```scss", ".content {", '\tcontent:"";', "}", "```"].join("\n"),
 				}
 				return item
 			case "container":
 				item.detail = "container"
 				item.documentation = {
-					kind: MarkupKind.Markdown,
+					kind: lsp.MarkupKind.Markdown,
 					value: "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md",
 				}
 				return item
@@ -46,7 +42,7 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		item.detail = item.label
 		if (data.__pseudo) {
 			item.documentation = {
-				kind: MarkupKind.Markdown,
+				kind: lsp.MarkupKind.Markdown,
 				value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
 			}
 		}
@@ -90,7 +86,7 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		}
 		// class
 		item.documentation = {
-			kind: MarkupKind.Markdown,
+			kind: lsp.MarkupKind.Markdown,
 			value: [
 				"```scss",
 				`.${item.label} {\n${Object.entries(result)
@@ -109,7 +105,7 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 				text.push(`${data.join(", ")}`)
 			}
 			item.documentation = {
-				kind: MarkupKind.Markdown,
+				kind: lsp.MarkupKind.Markdown,
 				value: ["```scss", ...text, "```"].join("\n"),
 			}
 		}
@@ -130,7 +126,7 @@ export const completionResolve: Parameters<Connection["onCompletionResolve"]>[0]
 		})
 
 		item.documentation = {
-			kind: MarkupKind.Markdown,
+			kind: lsp.MarkupKind.Markdown,
 			value: [
 				"```scss",
 				...Array.from(blocks).map(([selector, contents]) => {

@@ -1,34 +1,36 @@
 // dash word issue: https://github.com/microsoft/language-server-protocol/issues/937
 
 import * as lsp from "vscode-languageserver"
-
-import { CSSRuleItem, state } from "~/tailwind"
-import { Pattern, PatternKind } from "~/patterns"
-
-import canComplete from "./canComplete"
-export { completionResolve } from "./resolve"
-import { serializeError } from "serialize-error"
-import { findClasses } from "~/find"
-import { Token } from "~/typings"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
-import { CompletionItem } from "vscode-languageserver"
+import { serializeError } from "serialize-error"
+import canComplete from "./canComplete"
+import { findClasses } from "~/find"
+import type { Token } from "~/typings"
+import type { Pattern, PatternKind } from "~/patterns"
+import type { CSSRuleItem } from "~/tailwind/classnames"
+import type { InitOptions } from "~/twLanguageService"
+import type { Tailwind } from "~/tailwind"
 
-export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async params => {
+export { completionResolve } from "./resolve"
+
+export const completion = (
+	document: TextDocument,
+	position: lsp.Position,
+	state: Tailwind,
+	{ twin }: InitOptions,
+): lsp.CompletionList => {
 	try {
-		if (!state) {
-			return null
-		}
-
-		const result = canComplete(params)
+		const result = canComplete(document, position, twin)
 		if (!result) {
 			return null
 		}
 
 		const { kind } = result.pattern
 		if (kind === "twinTheme") {
-			return twinThemeCompletion(result.index, result.match)
+			return twinThemeCompletion(result.index, result.match, state)
 		} else {
-			return classesCompletion(result.index, result.match, result.pattern)
+			return classesCompletion(result.index, result.match, result.pattern, state)
 		}
 	} catch (err) {
 		console.log(serializeError(err))
@@ -36,7 +38,7 @@ export const completion: Parameters<lsp.Connection["onCompletion"]>[0] = async p
 	}
 }
 
-function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.CompletionList {
+function classesCompletion(index: number, match: Token, pattern: Pattern, state: Tailwind): lsp.CompletionList {
 	const [start, , classes] = match
 	const { kind, handleBrackets, handleImportant } = pattern
 	const { selection } = findClasses({
@@ -94,7 +96,7 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
 	const classesItems = Object.entries(state.classnames.getClassNames(variants, twin))
 		.filter(classesFilter)
-		.map(([label, data]) => createCompletionItem({ label, data, variants, kind }))
+		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
 
 	if (twin) {
 		if (variants.some(v => v === "before" || v === "after")) {
@@ -113,7 +115,7 @@ function classesCompletion(index: number, match: Token, pattern: Pattern): lsp.C
 	}
 }
 
-function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
+function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.CompletionList {
 	const [offset, , text] = match
 	const inputChar = text[index - offset - 1]
 	if (inputChar !== "." && text.indexOf(".") !== -1) {
@@ -143,7 +145,7 @@ function twinThemeCompletion(index: number, match: Token): lsp.CompletionList {
 	return {
 		isIncomplete: true,
 		items: Object.keys(value).map(label => {
-			const item: CompletionItem = {
+			const item: lsp.CompletionItem = {
 				label,
 				sortText: Number.isNaN(Number(label)) ? label : formatDigital(label),
 			}
@@ -199,11 +201,13 @@ function createCompletionItem({
 	data,
 	variants,
 	kind,
+	state,
 }: {
 	label: string
 	data: CSSRuleItem | CSSRuleItem[]
 	variants: string[]
 	kind: PatternKind
+	state: Tailwind
 }): lsp.CompletionItem {
 	const item: lsp.CompletionItem = {
 		label,

@@ -7,12 +7,22 @@ interface PnpEntry {
 	setup?(): void
 }
 
+type ResolveParams = {
+	moduleId: string
+	base?: string
+	silent?: boolean
+}
+
+type RequireParams = ResolveParams & {
+	removeCache?: boolean
+}
+
 export class TModule {
-	static resolve({ base, moduleId, silent }: { base: string; moduleId: string; silent?: boolean }): string {
-		if (!base) {
-			return __non_webpack_require__.resolve(moduleId)
-		}
+	static resolve({ moduleId, base = "", silent = true }: ResolveParams): string {
 		try {
+			if (!base) {
+				return __non_webpack_require__.resolve(moduleId)
+			}
 			base = fs.realpathSync(base)
 		} catch (error) {
 			if (error.code === "ENOENT") {
@@ -43,17 +53,7 @@ export class TModule {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	static require<T = any>({
-		base,
-		moduleId,
-		removeCache,
-		silent,
-	}: {
-		base?: string
-		moduleId: string
-		removeCache?: boolean
-		silent?: boolean
-	}): T {
+	static require<T = any>({ moduleId, base = "", silent = true, removeCache = true }: RequireParams): T {
 		const m = TModule.resolve({ base, moduleId, silent })
 		if (!m) {
 			return undefined
@@ -64,29 +64,38 @@ export class TModule {
 		return __non_webpack_require__(m)
 	}
 
-	private userSpace: string
-	private isPnp = false // user is using pnp.
+	private _base: string
+	private _isPnp: boolean
 	private pnp: PnpEntry
 
-	constructor(userSpace: string) {
-		this.userSpace = userSpace || ""
-		if (this.userSpace !== "") {
+	get base() {
+		return this._base
+	}
+
+	get isPnp() {
+		return this._isPnp
+	}
+
+	constructor(userSpace = "") {
+		this._isPnp = false
+		this._base = userSpace
+		if (this._base !== "") {
 			try {
 				this.pnp = TModule.require({
-					base: this.userSpace,
+					base: this._base,
 					moduleId: "./.pnp.js",
 					silent: true,
 					removeCache: true,
 				})
 				if (this.pnp) {
 					this.pnp.setup?.()
-					this.isPnp = true
+					this._isPnp = true
 				}
 			} catch (err) {}
 		}
 	}
 
-	private pnpResolve({ moduleId, base, silent }: { moduleId: string; base: string; silent?: boolean }): string {
+	private pnpResolve({ moduleId, base = this._base, silent = true }: ResolveParams): string {
 		try {
 			return this.pnp.resolveRequest?.(moduleId, base)
 		} catch (err) {
@@ -97,27 +106,12 @@ export class TModule {
 		}
 	}
 
-	resolve({ base = "", moduleId, silent }: { base: string; moduleId: string; silent?: boolean }) {
-		const { isPnp } = this
-		if (isPnp) {
-			return this.pnpResolve({ moduleId, base, silent })
-		} else {
-			return TModule.resolve({ moduleId, base, silent })
-		}
+	resolve({ moduleId, base = this._base, silent = true }: ResolveParams) {
+		return this._isPnp ? this.pnpResolve({ moduleId, base, silent }) : TModule.resolve({ moduleId, base, silent })
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	require<T = any>({
-		base = "",
-		moduleId,
-		removeCache,
-		silent,
-	}: {
-		base: string
-		moduleId: string
-		removeCache?: boolean
-		silent?: boolean
-	}): T {
+	require<T = any>({ moduleId, base = this._base, silent = true, removeCache = true }: RequireParams): T {
 		const m = this.resolve({ base, moduleId, silent })
 		if (!m) {
 			return undefined

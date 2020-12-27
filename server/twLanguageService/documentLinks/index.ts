@@ -1,10 +1,10 @@
-import { Connection, DocumentLink } from "vscode-languageserver"
-import { documents, settings } from "~/server"
+import type { DocumentLink } from "vscode-languageserver"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { findClasses } from "~/find"
 import { findMatch, getPatterns } from "~/patterns"
-
+import { Tailwind } from "~/tailwind"
+import { InitOptions } from ".."
 import docs from "./docs.yaml"
-import { state } from "~/tailwind"
 
 function lastUrlToken(url: string) {
 	if (url.includes("twin")) {
@@ -18,15 +18,8 @@ function lastUrlToken(url: string) {
 	return token
 }
 
-export const documentLinks: Parameters<Connection["onDocumentLinks"]>[0] = async ({ textDocument }) => {
-	if (!settings.links) {
-		return []
-	}
-	if (!state) {
-		return []
-	}
-	const document = documents.get(textDocument.uri)
-	const patterns = getPatterns(document.languageId, settings.twin)
+export const documentLinks = (document: TextDocument, state: Tailwind, { twin }: InitOptions) => {
+	const patterns = getPatterns(document.languageId, twin)
 	const links: DocumentLink[] = []
 	const text = document.getText()
 	const s = new Set<number>()

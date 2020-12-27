@@ -1,25 +1,15 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { Range, TextDocument } from "vscode-languageserver-textdocument"
-
 import { findMatch, getPatterns, Pattern, PatternKind } from "~/patterns"
-import { connection, settings } from "~/server"
 import { ClassInfo, findClasses } from "~/find"
-import { state } from "./tailwind"
-import { Token } from "./typings"
+import type { InitOptions } from "./twLanguageService"
+import type { Tailwind } from "./tailwind"
+import type { Token } from "./typings"
 
-export function validateTextDocument(document: TextDocument) {
-	if (!settings.validate) {
-		connection.sendDiagnostics({ uri: document.uri, diagnostics: [] })
-		return
-	}
-	if (!state) {
-		return
-	}
-
+export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
 	const text = document.getText()
 	const diagnostics: Diagnostic[] = []
-	const patterns = getPatterns(document.languageId, settings.twin)
-
+	const patterns = getPatterns(document.languageId, initOptions.twin)
 	for (const pattern of patterns) {
 		const { lpat, rpat, kind } = pattern
 		findMatch({
@@ -45,15 +35,20 @@ export function validateTextDocument(document: TextDocument) {
 				}
 				const classes = document.getText(range)
 				diagnostics.push(
-					...validateClasses({ document, range, classes, pattern, separator: state.separator, kind }),
+					...validateClasses({
+						document,
+						range,
+						classes,
+						pattern,
+						separator: state.separator,
+						kind,
+						diagnostics: initOptions.diagnostics,
+						state,
+					}),
 				)
 			})
 	}
-
-	connection.sendDiagnostics({
-		uri: document.uri,
-		diagnostics,
-	})
+	return diagnostics
 }
 
 const source = "tailwindcss"
@@ -65,6 +60,8 @@ function validateClasses({
 	separator,
 	kind,
 	pattern: { handleBrackets, handleImportant },
+	state,
+	diagnostics,
 }: {
 	document: TextDocument
 	range: Range
@@ -72,6 +69,8 @@ function validateClasses({
 	separator: string
 	pattern: Pattern
 	kind: PatternKind
+	state: Tailwind
+	diagnostics: InitOptions["diagnostics"]
 }): Diagnostic[] {
 	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
@@ -79,7 +78,7 @@ function validateClasses({
 
 	if (kind === "twin") {
 		classList.forEach(c => {
-			result.push(...checkTwinClassName(c, document, base))
+			result.push(...checkTwinClassName(c, document, base, state))
 		})
 	}
 
@@ -91,7 +90,7 @@ function validateClasses({
 			if (t.length > 1) {
 				for (const token of t) {
 					const message =
-						settings.diagnostics.conflict === "strict"
+						diagnostics.conflict === "strict"
 							? `${token[2]} is conflicted on property: ${prop}`
 							: `${token[2]} is conflicted`
 					result.push({
@@ -108,7 +107,7 @@ function validateClasses({
 		}
 	}
 
-	if (settings.diagnostics.conflict !== "none") {
+	if (diagnostics.conflict !== "none") {
 		const map: Record<string, Token[]> = {}
 		for (let i = 0; i < classList.length; i++) {
 			const variants = classList[i].variants.map(v => v[2])
@@ -128,7 +127,7 @@ function validateClasses({
 				}
 				continue
 			}
-			if (settings.diagnostics.conflict === "strict") {
+			if (diagnostics.conflict === "strict") {
 				for (const d of data) {
 					let twinKeys: string[] = []
 					if (kind === "twin") {
@@ -150,7 +149,7 @@ function validateClasses({
 						break
 					}
 				}
-			} else if (settings.diagnostics.conflict === "loose") {
+			} else if (diagnostics.conflict === "loose") {
 				const s = new Set<string>()
 				for (const d of data) {
 					for (const c of Object.keys(d.decls)) {
@@ -184,7 +183,7 @@ function validateClasses({
 	return result
 }
 
-function checkTwinClassName(info: ClassInfo, document: TextDocument, base: number) {
+function checkTwinClassName(info: ClassInfo, document: TextDocument, base: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	const variants = info.variants.map(v => v[2])
 	for (const [a, b, value] of info.variants) {

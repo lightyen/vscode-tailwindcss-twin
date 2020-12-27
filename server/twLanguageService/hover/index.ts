@@ -1,24 +1,20 @@
-import { Connection, MarkupContent, MarkupKind } from "vscode-languageserver"
+import * as lsp from "vscode-languageserver"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
-
-import { state } from "~/tailwind"
-import { canHover } from "./canHover"
-import { documents } from "~/server"
 import { findClasses, SelectionInfo } from "~/find"
+import { Tailwind } from "~/tailwind"
 import { Pattern } from "~/patterns"
+import { canHover } from "./canHover"
+import { InitOptions } from ".."
 
-export const hover: Parameters<Connection["onHover"]>[0] = async params => {
+export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, initOptions: InitOptions) => {
 	try {
-		if (!state) {
-			return null
-		}
-		const result = canHover(params)
+		const result = canHover(document, position, initOptions)
 		if (!result) {
 			return null
 		}
-		const document = documents.get(params.textDocument.uri)
 		const { match, pattern, offset } = result
 		let { base, index } = result
 		base = base + match[0]
@@ -47,7 +43,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 					return {
 						range,
 						contents: {
-							kind: MarkupKind.Markdown,
+							kind: lsp.MarkupKind.Markdown,
 							value: "transparent",
 						},
 					}
@@ -57,7 +53,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 					return {
 						range,
 						contents: {
-							kind: MarkupKind.Markdown,
+							kind: lsp.MarkupKind.Markdown,
 							value,
 						},
 					}
@@ -65,7 +61,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 					return {
 						range,
 						contents: {
-							kind: MarkupKind.Markdown,
+							kind: lsp.MarkupKind.Markdown,
 							value: `"${value}"`,
 						},
 					}
@@ -74,7 +70,7 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 				return {
 					range,
 					contents: {
-						kind: MarkupKind.Markdown,
+						kind: lsp.MarkupKind.Markdown,
 						value: value.join(),
 					},
 				}
@@ -86,9 +82,10 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 					start: document.positionAt(base + classes.selection.selected[0]),
 					end: document.positionAt(base + classes.selection.selected[1]),
 				},
-				contents: await getHoverContents({
+				contents: getHoverContents({
 					pattern,
 					selection: classes.selection,
+					state,
 				}),
 			}
 		}
@@ -100,13 +97,15 @@ export const hover: Parameters<Connection["onHover"]>[0] = async params => {
 
 export default hover
 
-async function getHoverContents({
+function getHoverContents({
 	pattern,
 	selection,
+	state,
 }: {
 	pattern: Pattern
 	selection: SelectionInfo
-}): Promise<MarkupContent> {
+	state: Tailwind
+}): lsp.MarkupContent {
 	const { kind } = pattern
 	const { selected, important, variants } = selection
 	const [, , value] = selected
@@ -116,7 +115,7 @@ async function getHoverContents({
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
-	if (state.darkMode === "class") {
+	if (state.config.darkMode === "class") {
 		const f = notCommon.findIndex(v => state.classnames.isDarkLightMode(twin, v))
 		if (f !== -1) {
 			common.push(...notCommon.splice(f, 1))
@@ -131,7 +130,7 @@ async function getHoverContents({
 			const i = common.findIndex(v => v === "before" || v === "after")
 			if (i !== -1) {
 				return {
-					kind: MarkupKind.Markdown,
+					kind: lsp.MarkupKind.Markdown,
 					value: ["```scss", `::${common[i]} {`, '  content: "";', "}", "```"].join("\n"),
 				}
 			}
@@ -149,7 +148,7 @@ async function getHoverContents({
 				text.push(`${data.join(", ")}`)
 			}
 			return {
-				kind: MarkupKind.Markdown,
+				kind: lsp.MarkupKind.Markdown,
 				value: ["```scss", ...text, "```"].join("\n"),
 			}
 		}
@@ -164,7 +163,7 @@ async function getHoverContents({
 	if (!(data instanceof Array)) {
 		if (data.__pseudo) {
 			return {
-				kind: MarkupKind.Markdown,
+				kind: lsp.MarkupKind.Markdown,
 				value: ["```scss", data.__pseudo.map(v => `.${value}${v}`).join("\n"), "```"].join("\n"),
 			}
 		}
@@ -250,7 +249,7 @@ async function getHoverContents({
 		})
 
 	return {
-		kind: MarkupKind.Markdown,
+		kind: lsp.MarkupKind.Markdown,
 		value: [
 			"```scss",
 			...Array.from(blocks).map(([selector, contents]) => {

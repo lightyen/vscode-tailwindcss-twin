@@ -1,27 +1,14 @@
-import { connection } from "~/server"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { findMatch, getPatterns } from "~/patterns"
-import { Range, TextDocument } from "vscode-languageserver-textdocument"
 import { findClasses } from "~/find"
-import { settings } from "~/server"
-import { state } from "~/tailwind"
 import chroma from "chroma-js"
+import { ColorInformation } from "~/LanguageService"
+import { Tailwind } from "~/tailwind"
+import { InitOptions } from ".."
 
-interface ColorInformation {
-	range: Range
-	color?: string
-	backgroundColor?: string
-	borderColor?: string
-}
-
-export default function updateDocumentColor(document: TextDocument) {
-	if (!settings.colorDecorators) {
-		return
-	}
-	if (!state) {
-		return
-	}
+export function provideColor(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
 	const text = document.getText()
-	const patterns = getPatterns(document.languageId, settings.twin)
+	const patterns = getPatterns(document.languageId, initOptions.twin)
 	const colors: ColorInformation[] = []
 	for (const { lpat, rpat, handleBrackets, handleImportant, kind } of patterns) {
 		const twin = kind === "twin"
@@ -36,7 +23,7 @@ export default function updateDocumentColor(document: TextDocument) {
 				const b = document.positionAt(end)
 				const classes = document.getText({ start: a, end: b })
 				if (kind === "twinTheme") {
-					const color = getThemeDecoration(classes)
+					const color = getThemeDecoration(classes, state)
 					if (color) {
 						colors.push({
 							range: {
@@ -77,10 +64,10 @@ export default function updateDocumentColor(document: TextDocument) {
 				}
 			})
 	}
-	connection.sendNotification("tailwindcss/documentColors", { colors, uri: document.uri })
+	return colors
 }
 
-function getThemeDecoration(text: string): string {
+function getThemeDecoration(text: string, state: Tailwind): string {
 	const value = state.getTheme(text.split("."))
 	if (typeof value === "string") {
 		if (value === "transparent") {

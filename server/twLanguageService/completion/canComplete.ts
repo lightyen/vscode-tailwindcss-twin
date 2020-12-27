@@ -1,14 +1,12 @@
-import type { Range, TextDocumentPositionParams } from "vscode-languageserver"
-
-import { documents, settings } from "~/server"
+import * as lsp from "vscode-languageserver"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { getPatterns, canMatch } from "~/patterns"
 
-export function canHover({ textDocument, position }: TextDocumentPositionParams) {
-	const document = documents.get(textDocument.uri)
-	const patterns = getPatterns(document.languageId, settings.twin)
+export default function canComplete(document: TextDocument, position: lsp.Position, twinEnabled: boolean) {
+	const patterns = getPatterns(document.languageId, twinEnabled)
 	for (const pattern of patterns) {
 		const { type, lpat, rpat } = pattern
-		let range: Range
+		let range: lsp.Range
 		if (type === "single") {
 			range = {
 				start: { line: position.line, character: 0 },
@@ -22,8 +20,7 @@ export function canHover({ textDocument, position }: TextDocumentPositionParams)
 		}
 		const text = document.getText(range)
 		const offset = document.offsetAt(position)
-		const base = document.offsetAt(range.start)
-		const index = offset - base
+		const index = offset - document.offsetAt(range.start)
 		const match = canMatch({
 			text,
 			lpat,
@@ -35,10 +32,8 @@ export function canHover({ textDocument, position }: TextDocumentPositionParams)
 			continue
 		}
 		return {
-			base,
-			index,
-			offset,
 			pattern,
+			index,
 			match,
 		}
 	}
