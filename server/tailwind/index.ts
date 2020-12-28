@@ -49,32 +49,24 @@ export class Tailwind {
 		twin = false,
 		fallbackDefaultConfig = false,
 	}: Partial<InitParams & Settings>) {
-		try {
-			this.workspaceFolder = workspaceFolder
-			configPath = configPath || ""
-			const isAbs = configPath && path.isAbsolute(configPath)
-			configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
-			this.lookup(path.dirname(configPath))
-			this.twin = twin
-			this.fallbackDefaultConfig = fallbackDefaultConfig
-			this.hasConfig = false
-			if (isAbs) {
-				const result = this.findConfig(configPath)
-				if (result.config) {
-					this.config = result.config
-					this.configPath = result.configPath
-					this.hasConfig = true
-				}
+		this.workspaceFolder = workspaceFolder
+		configPath = configPath || ""
+		const isAbs = configPath && path.isAbsolute(configPath)
+		configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
+		this.lookup(path.dirname(configPath))
+		this.twin = twin
+		this.fallbackDefaultConfig = fallbackDefaultConfig
+		this.hasConfig = false
+		if (isAbs) {
+			const result = this.findConfig(configPath)
+			if (result.config) {
+				this.config = result.config
+				this.configPath = result.configPath
+				this.hasConfig = true
 			}
-			if (!this.config) {
-				if (!fallbackDefaultConfig) {
-					throw Error("not found: " + configPath)
-				}
-				this.config = this.defaultConfig
-				this.configPath = this.defaultConfigPath
-			}
-		} catch (err) {
-			if (!fallbackDefaultConfig) {
+		}
+		if (!this.config) {
+			if (isAbs || !fallbackDefaultConfig) {
 				throw Error("not found: " + configPath)
 			}
 			this.config = this.defaultConfig
@@ -134,7 +126,11 @@ export class Tailwind {
 		const hasTailwind = (packageJSON: any) =>
 			!!packageJSON?.dependencies?.tailwindcss || !!packageJSON?.devDependencies?.tailwindcss
 
-		const json = JSON.parse(readFileSync(path.join(base, "package.json"), { encoding: "utf-8" }))
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let json: any
+		try {
+			json = JSON.parse(readFileSync(path.join(base, "package.json"), { encoding: "utf-8" }))
+		} catch {}
 
 		if (json) {
 			this.jsonTwin = json.twin
@@ -184,19 +180,23 @@ export class Tailwind {
 	private findConfig(configPath: string) {
 		const result: { configPath?: string; config?: TailwindConfigJS } = {}
 		try {
-			result.configPath = TModule.resolve({
+			const _configPath = TModule.resolve({
 				base: path.dirname(configPath),
 				moduleId: "./" + path.basename(configPath),
 				silent: false,
 			})
-			result.config = TModule.require({
-				base: path.dirname(configPath),
-				moduleId: "./" + path.basename(configPath),
-				silent: false,
-			})
-		} catch {
+			if (path.resolve(configPath) === _configPath) {
+				result.config = TModule.require({
+					base: path.dirname(configPath),
+					moduleId: "./" + path.basename(configPath),
+					silent: false,
+				})
+				result.configPath = _configPath
+			}
+		} catch {}
+		if (!result.config) {
 			const _configPath = path.resolve(configPath)
-			const str = readFileSync(configPath, { encoding: "utf-8" })
+			const str = readFileSync(_configPath, { encoding: "utf-8" })
 			const config = eval(str)
 			result.configPath = _configPath
 			result.config = config

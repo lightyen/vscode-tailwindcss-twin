@@ -75,6 +75,7 @@ class Server {
 			documents.all().forEach(document => {
 				matchService(document.uri, this.services)?.init()
 			})
+			// console.log(Array.from(this.services).map(v => v[0]))
 			this.bind()
 			progress.done()
 			return {
@@ -220,12 +221,14 @@ class Server {
 
 	private addService(configUri: string, workspaceFolder: string, settings: Settings) {
 		if (!this.services.has(configUri)) {
-			const srv = new TailwindLanguageService(this.documents, {
-				...settings,
-				workspaceFolder: URI.parse(workspaceFolder).fsPath,
-				configPath: URI.parse(configUri).fsPath,
-			})
-			this.services.set(configUri, srv)
+			try {
+				const srv = new TailwindLanguageService(this.documents, {
+					...settings,
+					workspaceFolder: URI.parse(workspaceFolder).fsPath,
+					configPath: URI.parse(configUri).fsPath,
+				})
+				this.services.set(configUri, srv)
+			} catch {}
 		}
 	}
 
