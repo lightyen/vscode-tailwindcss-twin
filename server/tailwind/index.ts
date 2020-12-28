@@ -54,7 +54,7 @@ export class Tailwind {
 			configPath = configPath || ""
 			const isAbs = configPath && path.isAbsolute(configPath)
 			configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
-			this.lookup(workspaceFolder)
+			this.lookup(path.dirname(configPath))
 			this.twin = twin
 			this.fallbackDefaultConfig = fallbackDefaultConfig
 			this.hasConfig = false
@@ -137,7 +137,7 @@ export class Tailwind {
 		const hasPostcss = (packageJSON: any) =>
 			!!packageJSON?.dependencies?.postcss || !!packageJSON?.devDependencies?.postcss
 
-		const json = TModule.require({ base, moduleId: "./package.json" })
+		const json = JSON.parse(readFileSync(path.join(base, "package.json"), { encoding: "utf-8" }))
 
 		if (json) {
 			this.jsonTwin = json.twin
