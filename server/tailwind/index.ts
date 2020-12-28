@@ -74,6 +74,9 @@ export class Tailwind {
 				this.configPath = this.defaultConfigPath
 			}
 		} catch (err) {
+			if (err.code) {
+				throw err
+			}
 			if (!fallbackDefaultConfig) {
 				throw Error("tailwind config is not found." + configPath)
 			}
@@ -212,26 +215,26 @@ export class Tailwind {
 	fallbackDefaultConfig: boolean
 
 	private findConfig(configPath: string) {
-		const _configPath = path.resolve(configPath)
-		const str = readFileSync(configPath, { encoding: "utf-8" })
-		const config = eval(str)
-		return {
-			configPath: _configPath,
-			config: config as TailwindConfigJS,
+		const result: { configPath?: string; config?: TailwindConfigJS } = {}
+		try {
+			result.configPath = TModule.resolve({
+				base: path.dirname(configPath),
+				moduleId: "./" + path.basename(configPath),
+				silent: false,
+			})
+			result.config = TModule.require({
+				base: path.dirname(configPath),
+				moduleId: "./" + path.basename(configPath),
+				silent: false,
+			})
+		} catch {
+			const _configPath = path.resolve(configPath)
+			const str = readFileSync(configPath, { encoding: "utf-8" })
+			const config = eval(str)
+			result.configPath = _configPath
+			result.config = config
 		}
-		// const _configPath = TModule.resolve({
-		// 	base: path.dirname(configPath),
-		// 	moduleId: "./" + path.basename(configPath),
-		// 	silent: false,
-		// })
-		// return {
-		// 	configPath: _configPath,
-		// 	config: TModule.require({
-		// 		base: path.dirname(configPath),
-		// 		moduleId: "./" + path.basename(configPath),
-		// 		silent: false,
-		// 	}) as TailwindConfigJS,
-		// }
+		return result
 	}
 
 	classnames: ReturnType<typeof extractClassNames>
