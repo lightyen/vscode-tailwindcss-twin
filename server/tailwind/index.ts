@@ -133,9 +133,6 @@ export class Tailwind {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const hasTailwind = (packageJSON: any) =>
 			!!packageJSON?.dependencies?.tailwindcss || !!packageJSON?.devDependencies?.tailwindcss
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const hasPostcss = (packageJSON: any) =>
-			!!packageJSON?.dependencies?.postcss || !!packageJSON?.devDependencies?.postcss
 
 		const json = JSON.parse(readFileSync(path.join(base, "package.json"), { encoding: "utf-8" }))
 
@@ -170,38 +167,11 @@ export class Tailwind {
 			this.defaultConfig = TModule.require({ moduleId: "tailwindcss/defaultConfig" })
 		}
 
-		if (json && hasPostcss(json)) {
-			const m = new TModule(base)
-			this.postcssPath = m.resolve({ moduleId: "postcss/package.json" })
-			if (this.postcssPath) {
-				const postcss = m.require({ moduleId: "postcss" })
-				const _json = m.require({ moduleId: "postcss/package.json" })
-				if (postcss && _json) {
-					this.postcss = postcss
-					this.postcssVersion = _json.version
-				}
-			}
-		}
-
-		if (!this.postcss) {
-			if (this.tailwindcssPath) {
-				const m = new TModule(path.dirname(this.tailwindcssPath))
-				this.postcssPath = m.resolve({ moduleId: "postcss/package.json" })
-				if (this.postcssPath) {
-					const postcss = m.require({ moduleId: "postcss" })
-					const _json = m.require({ moduleId: "postcss/package.json" })
-					if (postcss && _json) {
-						this.postcss = postcss
-						this.postcssVersion = _json.version
-					}
-				}
-			} else {
-				this.postcssPath = TModule.resolve({ moduleId: "postcss/package.json" })
-				this.postcss = TModule.require({ moduleId: "postcss" })
-				const _json = TModule.require({ moduleId: "postcss/package.json" })
-				this.postcssVersion = _json.version
-			}
-		}
+		// force postcss version
+		this.postcssPath = TModule.resolve({ moduleId: "postcss/package.json" })
+		this.postcss = TModule.require({ moduleId: "postcss", removeCache: false })
+		const _json = TModule.require({ moduleId: "postcss/package.json", removeCache: false })
+		this.postcssVersion = _json.version
 	}
 
 	// user config
