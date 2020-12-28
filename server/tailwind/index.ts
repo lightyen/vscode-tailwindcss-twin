@@ -68,17 +68,14 @@ export class Tailwind {
 			}
 			if (!this.config) {
 				if (!fallbackDefaultConfig) {
-					throw Error("tailwind config is not found.")
+					throw Error("not found: " + configPath)
 				}
 				this.config = this.defaultConfig
 				this.configPath = this.defaultConfigPath
 			}
 		} catch (err) {
-			if (err.code) {
-				throw err
-			}
 			if (!fallbackDefaultConfig) {
-				throw Error("tailwind config is not found." + configPath)
+				throw Error("not found: " + configPath)
 			}
 			this.config = this.defaultConfig
 			this.configPath = this.defaultConfigPath

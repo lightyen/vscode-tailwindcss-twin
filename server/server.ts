@@ -69,6 +69,9 @@ class Server {
 			for (const configUri of configs) {
 				this.addService(configUri, workspaceFolder, settings)
 			}
+			if (configs.length === 0) {
+				this.addService(path.join(workspaceFolder, "tailwind.config.js"), workspaceFolder, settings)
+			}
 			documents.all().forEach(document => {
 				matchService(document.uri, this.services)?.init()
 			})
