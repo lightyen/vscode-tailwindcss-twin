@@ -31,6 +31,7 @@ export class TailwindLanguageService implements LanguageService {
 		this.state = new Tailwind(initOptions)
 	}
 	init() {
+		if (this.isReady()) return void 0
 		return this.state.process()
 	}
 	reload(...params: Parameters<Tailwind["reload"]>) {

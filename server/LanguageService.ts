@@ -10,6 +10,7 @@ export interface ColorInformation {
 
 export interface LanguageService {
 	init(): Promise<void>
+	isReady(): boolean
 	onCompletion: Parameters<lsp.Connection["onCompletion"]>[0]
 	onCompletionResolve: Parameters<lsp.Connection["onCompletionResolve"]>[0]
 	onHover: Parameters<lsp.Connection["onHover"]>[0]

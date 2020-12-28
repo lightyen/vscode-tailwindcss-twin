@@ -3,6 +3,7 @@ import path from "path"
 import { TModule } from "./module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
+import { readFileSync } from "fs"
 
 interface InitParams {
 	workspaceFolder: string
@@ -73,11 +74,8 @@ export class Tailwind {
 				this.configPath = this.defaultConfigPath
 			}
 		} catch (err) {
-			if (err.code !== "MODULE_NOT_FOUND") {
-				// throw "QQ"
-			}
 			if (!fallbackDefaultConfig) {
-				throw Error("tailwind config is not found.")
+				throw Error("tailwind config is not found." + configPath)
 			}
 			this.config = this.defaultConfig
 			this.configPath = this.defaultConfigPath
@@ -98,12 +96,13 @@ export class Tailwind {
 		}
 	}
 
-	async reload({
-		workspaceFolder = this.workspaceFolder,
-		configPath = this.configPath,
-		twin = this.twin,
-		fallbackDefaultConfig = this.fallbackDefaultConfig,
-	}: Partial<InitParams & Settings>) {
+	async reload(params?: Partial<InitParams & Settings>) {
+		const {
+			workspaceFolder = this.workspaceFolder,
+			configPath = this.configPath,
+			twin = this.twin,
+			fallbackDefaultConfig = this.fallbackDefaultConfig,
+		} = params || {}
 		this.load({
 			workspaceFolder,
 			configPath,
@@ -213,19 +212,26 @@ export class Tailwind {
 	fallbackDefaultConfig: boolean
 
 	private findConfig(configPath: string) {
-		const _configPath = TModule.resolve({
-			base: path.dirname(configPath),
-			moduleId: "./" + path.basename(configPath),
-			silent: false,
-		})
+		const _configPath = path.resolve(configPath)
+		const str = readFileSync(configPath, { encoding: "utf-8" })
+		const config = eval(str)
 		return {
 			configPath: _configPath,
-			config: TModule.require({
-				base: path.dirname(configPath),
-				moduleId: "./" + path.basename(configPath),
-				silent: false,
-			}) as TailwindConfigJS,
+			config: config as TailwindConfigJS,
 		}
+		// const _configPath = TModule.resolve({
+		// 	base: path.dirname(configPath),
+		// 	moduleId: "./" + path.basename(configPath),
+		// 	silent: false,
+		// })
+		// return {
+		// 	configPath: _configPath,
+		// 	config: TModule.require({
+		// 		base: path.dirname(configPath),
+		// 		moduleId: "./" + path.basename(configPath),
+		// 		silent: false,
+		// 	}) as TailwindConfigJS,
+		// }
 	}
 
 	classnames: ReturnType<typeof extractClassNames>

@@ -1,37 +1,78 @@
 import * as lsp from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
-import { InitOptions, TailwindLanguageService } from "./twLanguageService"
+import { TailwindLanguageService } from "./twLanguageService"
 import { LanguageService } from "./LanguageService"
+import { FileChangeType } from "vscode-languageserver/node"
+import path from "path"
+
+interface Settings {
+	colorDecorators: boolean
+	links: boolean
+	twin: boolean
+	validate: boolean
+	fallbackDefaultConfig: boolean
+	diagnostics: {
+		conflict: "none" | "loose" | "strict"
+	}
+}
+
+interface InitializationOptions extends Settings {
+	/** uri */
+	workspaceFolder: string
+	/** uri */
+	configs: string[]
+}
+
+function matchService(uri: string, services: Map<string, LanguageService>) {
+	const arr = Array.from(services)
+		.filter(([cfg]) => {
+			const rel = path.relative(path.dirname(cfg), uri)
+			return !rel.startsWith("..")
+		})
+		.sort((a, b) => b[0].localeCompare(a[0]))
+	return arr[0]?.[1]
+}
 
 class Server {
+	services: Map<string, LanguageService>
 	connection: lsp.Connection
 	documents: lsp.TextDocuments<TextDocument>
 	hasConfigurationCapability = false
 	hasDiagnosticRelatedInformationCapability = false
-	initOptions: InitOptions
+	/** uri */
+	configs: string[]
+	/** uri */
+	workspaceFolder: string
+	settings: Settings
 
 	constructor() {
+		this.services = new Map()
 		const connection = lsp.createConnection(lsp.ProposedFeatures.all)
 		this.connection = connection
 		connection.listen()
 		const documents = new lsp.TextDocuments(TextDocument)
 		this.documents = documents
 		documents.listen(this.connection)
-		let srv: TailwindLanguageService
+
 		connection.onInitialize(async (params, _cancel, progress) => {
-			// interface InitializationOptions extends ConfigPath {}
 			const { capabilities } = params
-			// Does the client support the `workspace/configuration` request?
-			// If not, we fall back using global settings.
 			this.hasConfigurationCapability = capabilities.workspace?.configuration ?? false
 			this.hasDiagnosticRelatedInformationCapability =
 				capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
-			this.initOptions = params.initializationOptions
-			// TODO: multiple instance?
-			srv = new TailwindLanguageService(this.documents, this.initOptions)
+
+			const { configs, workspaceFolder, ...settings } = params.initializationOptions as InitializationOptions
+			this.configs = configs
+			this.workspaceFolder = workspaceFolder
+			this.settings = settings
 			progress.begin("Initializing Tailwind CSS features")
-			this.bindService(srv)
+			for (const configUri of configs) {
+				this.addService(configUri, workspaceFolder, settings)
+			}
+			documents.all().forEach(document => {
+				matchService(document.uri, this.services)?.init()
+			})
+			this.bind()
 			progress.done()
 			return {
 				capabilities: {
@@ -66,50 +107,65 @@ class Server {
 				connection.client.register(lsp.DidChangeConfigurationNotification.type)
 			}
 
-			connection.workspace.onDidChangeWorkspaceFolders(_event => {
-				console.log("Workspace folder change event received.")
-			})
-			connection.sendNotification("tailwindcss/info", `userConfig = ${srv.state.hasConfig}`)
-			connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
-			connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
-			connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
-			connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
-			connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
-			connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
-			connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
-			connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.initOptions.colorDecorators}`)
-			connection.sendNotification("tailwindcss/info", `documentLinks = ${this.initOptions.links}`)
-			connection.sendNotification("tailwindcss/info", `twin = ${this.initOptions.twin}`)
-			connection.sendNotification("tailwindcss/info", `validate = ${this.initOptions.validate}`)
-			connection.sendNotification(
-				"tailwindcss/info",
-				`diagnostics.conflict = ${this.initOptions.diagnostics.conflict}`,
-			)
+			// for (const [cfg, service] of this.services) {
+			// 	const srv = service as TailwindLanguageService
+			// 	connection.sendNotification("tailwindcss/info", `=>${cfg.toString()}`)
+			// 	connection.sendNotification("tailwindcss/info", `userConfig = ${srv.state.hasConfig}`)
+			// 	connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
+			// 	connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
+			// 	connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
+			// 	connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
+			// 	connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
+			// 	connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
+			// 	connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
+			// 	connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
+			// 	connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
+			// 	connection.sendNotification("tailwindcss/info", `twin = ${this.settings.twin}`)
+			// 	connection.sendNotification("tailwindcss/info", `validate = ${this.settings.validate}`)
+			// 	connection.sendNotification(
+			// 		"tailwindcss/info",
+			// 		`diagnostics.conflict = ${this.settings.diagnostics.conflict}`,
+			// 	)
+			// }
 		})
 
+		// when changed tailwind.config.js
 		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			connection.sendNotification("tailwindcss/info", `onDidChangeWatchedFiles`)
-			const result = await connection.sendRequest<string[]>("tailwindcss/findConfig")
-			if (result.length === 1) {
-				this.initOptions.configPath = result[0]
-				await srv.reload(this.initOptions)
-			} else {
-				for (const f of changes) {
-					const p = URI.parse(f.uri).fsPath
-					this.initOptions.configPath = p
-					await srv.reload(this.initOptions)
-					break
+			connection.sendNotification("tailwindcss/info", `tailwind.config.js changes were detected`)
+			// const configs = await connection.sendRequest<string[]>("tailwindcss/findConfig")
+			for (const change of changes) {
+				switch (change.type) {
+					case FileChangeType.Created:
+						this.addService(change.uri, this.workspaceFolder, this.settings)
+						break
+					case FileChangeType.Deleted:
+						this.removeService(change.uri)
+						break
+					case FileChangeType.Changed:
+						{
+							const srv = this.services.get(change.uri) as TailwindLanguageService
+							await srv?.reload()
+						}
+						break
 				}
 			}
-			documents.all().forEach(doc => srv.validate(doc))
-			connection.sendNotification("tailwindcss/info", `hasConfig = ${srv.state.hasConfig}`)
-			connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
-			connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
-			connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
-			connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
-			connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
-			connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
-			connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
+			this.configs = Array.from(this.services).map(([cfg]) => cfg)
+
+			documents.all().forEach(document => {
+				matchService(document.uri, this.services)?.validate(document)
+			})
+			for (const [cfg, service] of this.services) {
+				const srv = service as TailwindLanguageService
+				connection.sendNotification("tailwindcss/info", `=>${cfg.toString()}`)
+				connection.sendNotification("tailwindcss/info", `hasConfig = ${srv.state.hasConfig}`)
+				connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
+				connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
+				connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
+				connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
+				connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
+				connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
+				connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
+			}
 		})
 
 		connection.onDidChangeConfiguration(async params => {
@@ -119,72 +175,120 @@ class Server {
 					{ section: "editor" },
 				])
 				if (
-					this.initOptions.twin !== tailwindcss.twin ||
-					this.initOptions.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig
+					this.settings.twin !== tailwindcss.twin ||
+					this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig
 				) {
-					this.initOptions.twin = tailwindcss.twin
-					this.initOptions.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
-					await srv.reload(this.initOptions)
+					this.settings.twin = tailwindcss.twin
+					this.settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
+					for (const [, service] of this.services) {
+						;(service as TailwindLanguageService).reload(this.settings)
+					}
 				}
-				connection.sendNotification("tailwindcss/info", `twin = ${this.initOptions.twin}`)
+				connection.sendNotification("tailwindcss/info", `twin = ${this.settings.twin}`)
 
-				this.initOptions.colorDecorators =
+				this.settings.colorDecorators =
 					typeof tailwindcss?.colorDecorators === "boolean"
 						? tailwindcss.colorDecorators
 						: editor.colorDecorators ?? false
-				connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.initOptions.colorDecorators}`)
+				connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
 
-				this.initOptions.links =
+				this.settings.links =
 					typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
-				connection.sendNotification("tailwindcss/info", `documentLinks = ${this.initOptions.links}`)
+				connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
 
 				if (
-					this.initOptions.validate !== tailwindcss.validate ||
-					this.initOptions.diagnostics.conflict !== tailwindcss.diagnostics.conflict
+					this.settings.validate !== tailwindcss.validate ||
+					this.settings.diagnostics.conflict !== tailwindcss.diagnostics.conflict
 				) {
-					this.initOptions.validate = tailwindcss.validate
-					this.initOptions.diagnostics.conflict = tailwindcss.diagnostics.conflict
-					documents.all().forEach(doc => srv.validate(doc))
+					this.settings.validate = tailwindcss.validate
+					this.settings.diagnostics.conflict = tailwindcss.diagnostics.conflict
+					documents.all().forEach(document => {
+						matchService(document.uri, this.services)?.validate(document)
+					})
 				}
-				connection.sendNotification("tailwindcss/info", `validate = ${this.initOptions.validate}`)
+				connection.sendNotification("tailwindcss/info", `validate = ${this.settings.validate}`)
 				connection.sendNotification(
 					"tailwindcss/info",
-					`diagnostics.conflict = ${this.initOptions.diagnostics.conflict}`,
+					`diagnostics.conflict = ${this.settings.diagnostics.conflict}`,
 				)
 			}
 		})
 	}
 
-	bindService(service: LanguageService) {
-		service.init()
+	private addService(configUri: string, workspaceFolder: string, settings: Settings) {
+		if (!this.services.has(configUri)) {
+			const srv = new TailwindLanguageService(this.documents, {
+				...settings,
+				workspaceFolder: URI.parse(workspaceFolder).fsPath,
+				configPath: URI.parse(configUri).fsPath,
+			})
+			this.services.set(configUri, srv)
+		}
+	}
+
+	private removeService(configUri: string) {
+		const srv = this.services.get(configUri)
+		if (srv) {
+			this.services.delete(configUri)
+		}
+	}
+
+	bind() {
 		const { documents, connection } = this
 		documents.onDidOpen(params => {
+			const service = matchService(params.document.uri, this.services)
+			service?.init()
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}
-			service.validate(params.document)
+			if (service) {
+				const diagnostics = service.validate(params.document)
+				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
+			}
 		})
+
 		documents.onDidChangeContent(params => {
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}
-			service.validate(params.document)
+			const service = matchService(params.document.uri, this.services)
+			if (service) {
+				const diagnostics = service.validate(params.document)
+				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
+			}
 		})
-		connection.onCompletion((...params) => service.onCompletion(...params))
-		connection.onCompletionResolve((...params) => service.onCompletionResolve(...params))
-		connection.onHover((...params) => service.onHover(...params))
-		connection.onDocumentLinks((...params) => service.onDocumentLinks(...params))
+
+		connection.onCompletion((...params) => {
+			return matchService(params[0].textDocument.uri, this.services)?.onCompletion(...params)
+		})
+		connection.onCompletionResolve((...params) => {
+			const uri = params[0].data.uri
+			return matchService(uri, this.services)?.onCompletionResolve(...params)
+		})
+		connection.onHover((...params) => {
+			return matchService(params[0].textDocument.uri, this.services)?.onHover(...params)
+		})
+		connection.onDocumentLinks((...params) => {
+			if (!this.settings.links) {
+				return []
+			}
+			return matchService(params[0].textDocument.uri, this.services)?.onDocumentLinks(...params) ?? []
+		})
 		connection.onDocumentColor(params => {
-			if (!this.initOptions.colorDecorators) {
+			if (!this.settings.colorDecorators) {
 				return []
 			}
 			const document = documents.get(params.textDocument.uri)
-			const colors = service.provideColor(document)
-			if (colors?.length > 0) {
-				connection.sendNotification("tailwindcss/documentColors", {
-					colors,
-					uri: document.uri,
-				})
+			const service = matchService(params.textDocument.uri, this.services)
+			if (service) {
+				const colors = service.provideColor(document)
+				if (colors?.length > 0) {
+					connection.sendNotification("tailwindcss/documentColors", {
+						colors,
+						uri: document.uri,
+					})
+				}
+				return []
 			}
 			return []
 		})

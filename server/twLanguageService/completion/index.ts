@@ -14,6 +14,14 @@ import type { Tailwind } from "~/tailwind"
 
 export { completionResolve } from "./resolve"
 
+export interface InnerData {
+	type: "screen" | "utilities" | "variant" | "other"
+	kind: PatternKind
+	uri: string
+	variants?: string[]
+	data?: CSSRuleItem | CSSRuleItem[]
+}
+
 export const completion = (
 	document: TextDocument,
 	position: lsp.Position,
@@ -28,9 +36,17 @@ export const completion = (
 
 		const { kind } = result.pattern
 		if (kind === "twinTheme") {
-			return twinThemeCompletion(result.index, result.match, state)
+			const list = twinThemeCompletion(result.index, result.match, state)
+			for (let i = 0; i < list.items.length; i++) {
+				list.items[i].data.uri = document.uri
+			}
+			return list
 		} else {
-			return classesCompletion(result.index, result.match, result.pattern, state)
+			const list = classesCompletion(result.index, result.match, result.pattern, state)
+			for (let i = 0; i < list.items.length; i++) {
+				list.items[i].data.uri = document.uri
+			}
+			return list
 		}
 	} catch (err) {
 		console.log(serializeError(err))

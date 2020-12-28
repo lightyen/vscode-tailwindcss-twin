@@ -199,12 +199,6 @@ function getHoverContents({
 				filterContext.push(true)
 				continue
 			}
-			if (variantValues.length === 0) {
-				if (d.__pseudo.length > 0) {
-					filterContext.push(false)
-					continue
-				}
-			}
 			if (d.__scope) {
 				const scopes = d.__scope.split(" ")
 				filterContext.push(

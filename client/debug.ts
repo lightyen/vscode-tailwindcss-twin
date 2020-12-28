@@ -48,9 +48,8 @@ export default async function ({ client }: { client: LanguageClient }) {
 		const result = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
 			new vscode.RelativePattern(ws, "node_modules/**"),
-			1,
 		)
-		return result.map(v => v.fsPath)
+		return result.map(v => v.toString())
 	})
 
 	// const cfg = workspace.getConfiguration("tailwindcss")

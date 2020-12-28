@@ -19,49 +19,18 @@ interface NLSConfig {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG) as NLSConfig
 
-let _sortedWorkspaceFolders: string[]
-function sortedWorkspaceFolders(): string[] {
-	if (_sortedWorkspaceFolders == undefined) {
-		_sortedWorkspaceFolders = vscode.workspace.workspaceFolders
-			? vscode.workspace.workspaceFolders
-					.map(folder => {
-						let result = folder.uri.toString()
-						if (result.charAt(result.length - 1) !== "/") {
-							result = result + "/"
-						}
-						return result
-					})
-					.sort((a, b) => a.length - b.length)
-			: []
-	}
-	return _sortedWorkspaceFolders
-}
-vscode.workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined))
-
-function getOuterMostWorkspaceFolder(folder: vscode.WorkspaceFolder): vscode.WorkspaceFolder {
-	const sorted = sortedWorkspaceFolders()
-	for (const element of sorted) {
-		let uri = folder.uri.toString()
-		if (uri.charAt(uri.length - 1) !== "/") {
-			uri = uri + "/"
-		}
-		if (uri.startsWith(element)) {
-			return vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(element))
-		}
-	}
-	return folder
-}
-
 interface InitializationOptions {
+	/** uri */
 	workspaceFolder: string
-	configPath: string
+	/** uri */
+	configs: string[]
 	colorDecorators: boolean
 	links: boolean
 	twin: boolean
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
-		conflict?: string
+		conflict?: "none" | "loose" | "strict"
 	}
 }
 
@@ -78,31 +47,27 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 			options: { execArgv: ["--nolazy", "--inspect=6009"] },
 		},
 	}
-	const initializationOptions: Partial<InitializationOptions> = {}
-	const results = await vscode.workspace.findFiles(
+	const initOptions: Partial<InitializationOptions> = {}
+	const configs = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 		new vscode.RelativePattern(ws, "node_modules/**"),
-		1,
 	)
-	initializationOptions.configPath = ""
-	if (results.length === 1) {
-		initializationOptions.configPath = results[0].fsPath
-	}
-	initializationOptions.workspaceFolder = ws.uri.fsPath
+	initOptions.configs = configs.map(c => c.toString())
+	initOptions.workspaceFolder = ws.uri.toString()
 	const tailwindcss = vscode.workspace.getConfiguration("tailwindcss", ws)
-	initializationOptions.colorDecorators = tailwindcss.get("colorDecorators")
-	if (typeof initializationOptions.colorDecorators !== "boolean") {
-		initializationOptions.colorDecorators = vscode.workspace.getConfiguration("editor", ws).get("colorDecorators")
+	initOptions.colorDecorators = tailwindcss.get("colorDecorators")
+	if (typeof initOptions.colorDecorators !== "boolean") {
+		initOptions.colorDecorators = vscode.workspace.getConfiguration("editor", ws).get("colorDecorators")
 	}
-	initializationOptions.links = tailwindcss.get("links")
-	if (typeof initializationOptions.links !== "boolean") {
-		initializationOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
+	initOptions.links = tailwindcss.get("links")
+	if (typeof initOptions.links !== "boolean") {
+		initOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
 	}
-	initializationOptions.twin = tailwindcss.get("twin")
-	initializationOptions.validate = tailwindcss.get("validate")
-	initializationOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
-	initializationOptions.diagnostics = {}
-	initializationOptions.diagnostics.conflict = tailwindcss.get("diagnostics.conflict")
+	initOptions.twin = tailwindcss.get("twin")
+	initOptions.validate = tailwindcss.get("validate")
+	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
+	initOptions.diagnostics = {}
+	initOptions.diagnostics.conflict = tailwindcss.get("diagnostics.conflict")
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: DEFAULT_SUPPORT_LANGUAGES.map(language => ({
@@ -120,7 +85,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		outputChannel: outputChannel,
 		middleware: {},
 		progressOnInitialization: true,
-		initializationOptions,
+		initializationOptions: initOptions,
 	}
 
 	const client = new LanguageClient(CLIENT_ID, CLIENT_ID, serverOptions, clientOptions)
@@ -138,7 +103,6 @@ let serverModule: string
 export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel(CLIENT_ID)
 	serverModule = context.asAbsolutePath(path.join("dist", "server", "server.js"))
-
 	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []
 		for (const ws of e.removed) {
@@ -154,25 +118,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		return Promise.all(promises)
 	})
 
-	async function didOpenTextDocument(document: vscode.TextDocument) {
-		if (document.uri.scheme !== "file") {
-			return
-		}
-		if (!DEFAULT_SUPPORT_LANGUAGES.includes(document.languageId)) {
-			return
-		}
-
-		let ws = vscode.workspace.getWorkspaceFolder(document.uri)
-		if (!ws) {
-			return
-		}
-
-		ws = getOuterMostWorkspaceFolder(ws)
-
+	for (const ws of vscode.workspace.workspaceFolders) {
 		await addClient(serverModule, outputChannel, ws)
-	}
-	for (const doc of vscode.workspace.textDocuments) {
-		await didOpenTextDocument(doc)
 	}
 }
 
