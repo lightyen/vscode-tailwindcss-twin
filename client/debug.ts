@@ -42,20 +42,4 @@ export default async function ({ client }: { client: LanguageClient }) {
 	client.onNotification("tailwindcss/error", err => {
 		client.error(`${name}: ${err.stack}`, err.stack, err.showNotification)
 	})
-
-	const ws = client.clientOptions.workspaceFolder
-	client.onRequest("tailwindcss/findConfig", async () => {
-		const result = await vscode.workspace.findFiles(
-			new vscode.RelativePattern(ws, "{tailwind.js,tailwind.config.js}"),
-			new vscode.RelativePattern(ws, "node_modules/**"),
-		)
-		return result.map(v => v.toString())
-	})
-
-	// const cfg = workspace.getConfiguration("tailwindcss")
-
-	// const emitter = createEmitter(client)
-	// registerConfigErrorHandler(emitter)
-	// registerColorDecorator(client, context, emitter)
-	// onMessage(client, "getConfiguration", async scope => workspace.getConfiguration("tailwindcss", scope))
 }

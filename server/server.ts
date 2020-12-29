@@ -135,8 +135,7 @@ class Server {
 
 		// when changed tailwind.config.js
 		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			connection.sendNotification("tailwindcss/info", `tailwind.config.js changes were detected`)
-			// const configs = await connection.sendRequest<string[]>("tailwindcss/findConfig")
+			connection.sendNotification("tailwindcss/info", `some changes were detected`)
 			for (const change of changes) {
 				switch (change.type) {
 					case FileChangeType.Created:
@@ -158,18 +157,6 @@ class Server {
 			documents.all().forEach(document => {
 				matchService(document.uri, this.services)?.validate(document)
 			})
-			for (const [cfg, service] of this.services) {
-				const srv = service as TailwindLanguageService
-				connection.sendNotification("tailwindcss/info", `=>${cfg.toString()}`)
-				connection.sendNotification("tailwindcss/info", `hasConfig = ${srv.state.hasConfig}`)
-				connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
-				connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
-				connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
-				connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
-				connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
-				connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
-				connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
-			}
 		})
 
 		connection.onDidChangeConfiguration(async params => {

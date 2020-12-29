@@ -50,7 +50,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	const initOptions: Partial<InitializationOptions> = {}
 	const configs = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
-		new vscode.RelativePattern(ws, "**/node_modules/*"),
+		new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),
 	)
 	initOptions.configs = configs.map(c => c.toString())
 	initOptions.workspaceFolder = ws.uri.toString()
