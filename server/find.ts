@@ -160,6 +160,9 @@ export function findClasses({
 				}
 				if (item.token[2]) selected = item.token
 			}
+			if (item.token[2] && index >= item.token[1]) {
+				variantsSelected = []
+			}
 			classList.push(item)
 		}
 		if (!greedy) {

@@ -1,57 +1,53 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { Range, TextDocument } from "vscode-languageserver-textdocument"
-import { findMatch, getPatterns, Pattern, PatternKind } from "~/patterns"
 import { ClassInfo, findClasses } from "~/find"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
+import { findAllToken, getScriptKind, PatternKind } from "~/ast"
+import ts from "typescript"
+
+const source = "tailwindcss"
 
 export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
-	const text = document.getText()
 	const diagnostics: Diagnostic[] = []
-	const patterns = getPatterns(document.languageId, initOptions.twin)
-	for (const pattern of patterns) {
-		const { lpat, rpat, kind } = pattern
-		findMatch({
-			text,
-			lpat,
-			rpat,
-		})
-			.filter(v => v.length > 0)
-			.forEach(([start, end]) => {
-				const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
-				if (kind === "twinTheme") {
-					const text = document.getText(range)
-					const value = state.getTheme(text.split("."))
-					if (value == undefined) {
-						diagnostics.push({
-							range,
-							source,
-							message: `${text} is undefined`,
-							severity: DiagnosticSeverity.Error,
-						})
-					}
-					return
-				}
-				const classes = document.getText(range)
-				diagnostics.push(
-					...validateClasses({
-						document,
-						range,
-						classes,
-						pattern,
-						separator: state.separator,
-						kind,
-						diagnostics: initOptions.diagnostics,
-						state,
-					}),
-				)
-			})
+	const src = ts.createSourceFile(
+		"",
+		document.getText(),
+		ts.ScriptTarget.Latest,
+		false,
+		getScriptKind(document.languageId),
+	)
+	const tokens = findAllToken(src, initOptions.twin)
+	for (const { token, kind } of tokens) {
+		const [start, end, value] = token
+		const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
+		if (kind === PatternKind.TwinTheme) {
+			const v = state.getTheme(value.split("."))
+			if (v == undefined) {
+				diagnostics.push({
+					range,
+					source,
+					message: `${value} is undefined`,
+					severity: DiagnosticSeverity.Error,
+				})
+			}
+		} else {
+			diagnostics.push(
+				...validateClasses({
+					document,
+					range,
+					classes: value,
+					separator: state.separator,
+					kind,
+					diagnostics: initOptions.diagnostics,
+					state,
+				}),
+			)
+		}
 	}
 	return diagnostics
 }
-
-const source = "tailwindcss"
 
 function validateClasses({
 	document,
@@ -59,7 +55,6 @@ function validateClasses({
 	classes,
 	separator,
 	kind,
-	pattern: { handleBrackets, handleImportant },
 	state,
 	diagnostics,
 }: {
@@ -67,16 +62,17 @@ function validateClasses({
 	range: Range
 	classes: string
 	separator: string
-	pattern: Pattern
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
 }): Diagnostic[] {
+	const handleBrackets = kind === PatternKind.Twin
+	const handleImportant = kind === PatternKind.Twin
 	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
 	const base = document.offsetAt(range.start)
 
-	if (kind === "twin") {
+	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
 			result.push(...checkTwinClassName(c, document, base, state))
 		})
@@ -114,9 +110,9 @@ function validateClasses({
 			if (classList[i].important) {
 				continue
 			}
-			const data = state.classnames.getClassNameRule(variants, kind === "twin", classList[i].token[2])
+			const data = state.classnames.getClassNameRule(variants, kind === PatternKind.Twin, classList[i].token[2])
 			if (!(data instanceof Array)) {
-				if (kind !== "twin" && classList[i].token[2] === "group") {
+				if (kind !== PatternKind.Twin && classList[i].token[2] === "group") {
 					const key = [...data.__context, data.__scope, ...data.__pseudo, "group"].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
@@ -130,7 +126,7 @@ function validateClasses({
 			if (diagnostics.conflict === "strict") {
 				for (const d of data) {
 					let twinKeys: string[] = []
-					if (kind === "twin") {
+					if (kind === PatternKind.Twin) {
 						twinKeys = variants.sort()
 					}
 					for (const property of Object.keys(d.decls)) {

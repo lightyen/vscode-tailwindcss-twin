@@ -7,10 +7,10 @@ import { serializeError } from "serialize-error"
 import canComplete from "./canComplete"
 import { findClasses } from "~/find"
 import type { Token } from "~/typings"
-import type { Pattern, PatternKind } from "~/patterns"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
+import { PatternKind } from "~/ast"
 
 export { completionResolve } from "./resolve"
 
@@ -33,16 +33,16 @@ export const completion = (
 		if (!result) {
 			return null
 		}
-
-		const { kind } = result.pattern
-		if (kind === "twinTheme") {
-			const list = twinThemeCompletion(result.index, result.match, state)
+		const index = document.offsetAt(position)
+		const { kind, token } = result
+		if (kind === PatternKind.TwinTheme) {
+			const list = twinThemeCompletion(index, token, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
 			return list
 		} else {
-			const list = classesCompletion(result.index, result.match, result.pattern, state)
+			const list = classesCompletion(index, token, kind, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
@@ -54,25 +54,24 @@ export const completion = (
 	}
 }
 
-function classesCompletion(index: number, match: Token, pattern: Pattern, state: Tailwind): lsp.CompletionList {
+function classesCompletion(index: number, match: Token, kind: PatternKind, state: Tailwind): lsp.CompletionList {
 	const [start, , classes] = match
-	const { kind, handleBrackets, handleImportant } = pattern
 	const { selection } = findClasses({
 		classes,
 		index: index - start,
 		separator: state.separator,
-		handleBrackets,
-		handleImportant,
+		handleBrackets: kind === PatternKind.Twin,
+		handleImportant: kind === PatternKind.Twin,
 	})
 
 	if (selection.selected?.[2] === state.separator) {
-		return null
+		return { isIncomplete: false, items: [] }
 	}
 
-	const twin = kind === "twin"
+	const twin = kind === PatternKind.Twin
 	const variants = selection.variants.map(([, , v]) => v)
 	if (!variants.every(v => state.classnames.isVariant(v, twin))) {
-		return null
+		return { isIncomplete: false, items: [] }
 	}
 
 	const variantFilter = state.classnames.getVariantFilter(variants, twin)

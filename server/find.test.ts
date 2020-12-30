@@ -51,11 +51,11 @@ test("findClasses", async () => {
 })
 
 test("findClasses Selected", async () => {
-	const text = `text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
+	const text = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
 	const result = findClasses({
 		classes: text,
 		separator: ":",
-		index: 15,
+		index: 18,
 		handleBrackets: true,
 		handleImportant: true,
 	})

@@ -105,6 +105,7 @@ const configServer: Configuration = {
 				configFile: path.resolve(serverWorkspaceFolder, "tsconfig.json"),
 			},
 		}),
+		new ExternalsVendorPlugin("typescript"),
 		new ESLintPlugin({ extensions: ["ts"] }),
 		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["server*"] }),
 	],

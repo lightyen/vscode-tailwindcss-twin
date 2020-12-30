@@ -244,6 +244,9 @@ class Server {
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}
+			if (!this.settings.validate) {
+				return
+			}
 			const service = matchService(params.document.uri, this.services)
 			if (service) {
 				const diagnostics = service.validate(params.document)
