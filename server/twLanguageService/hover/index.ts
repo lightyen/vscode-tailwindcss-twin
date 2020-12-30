@@ -5,7 +5,7 @@ import { serializeError } from "serialize-error"
 import produce from "immer"
 import { findClasses, SelectionInfo } from "~/find"
 import { Tailwind } from "~/tailwind"
-import { Pattern } from "~/patterns"
+import { PatternKind } from "~/ast"
 import { canHover } from "./canHover"
 import { InitOptions } from ".."
 
@@ -15,14 +15,12 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		if (!result) {
 			return null
 		}
-		const { match, pattern, offset } = result
-		let { base, index } = result
-		base = base + match[0]
-		index = offset - base
-		const { handleBrackets, handleImportant } = pattern
+		const { token, kind } = result
+		const handleBrackets = kind === PatternKind.Twin
+		const handleImportant = kind === PatternKind.Twin
 		const classes = findClasses({
-			classes: match[2],
-			index,
+			classes: token[2],
+			index: document.offsetAt(position) - token[0],
 			separator: state.separator,
 			handleBrackets,
 			handleImportant,
@@ -32,11 +30,11 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		if (!classes.selection.selected) {
 			return null
 		}
-		if (pattern.kind === "twinTheme") {
-			const value = state.getTheme(match[2].split("."))
+		if (kind === PatternKind.TwinTheme) {
+			const value = state.getTheme(token[2].split("."))
 			const range = {
-				start: document.positionAt(base),
-				end: document.positionAt(base + match[2].length),
+				start: document.positionAt(token[0]),
+				end: document.positionAt(token[1]),
 			}
 			if (typeof value === "string") {
 				if (value === "transparent") {
@@ -79,11 +77,11 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		} else {
 			return {
 				range: {
-					start: document.positionAt(base + classes.selection.selected[0]),
-					end: document.positionAt(base + classes.selection.selected[1]),
+					start: document.positionAt(token[0] + classes.selection.selected[0]),
+					end: document.positionAt(token[0] + classes.selection.selected[1]),
 				},
 				contents: getHoverContents({
-					pattern,
+					kind,
 					selection: classes.selection,
 					state,
 				}),
@@ -98,19 +96,18 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 export default hover
 
 function getHoverContents({
-	pattern,
+	kind,
 	selection,
 	state,
 }: {
-	pattern: Pattern
+	kind: PatternKind
 	selection: SelectionInfo
 	state: Tailwind
 }): lsp.MarkupContent {
-	const { kind } = pattern
 	const { selected, important, variants } = selection
 	const [, , value] = selected
 
-	const twin = kind === "twin"
+	const twin = kind === PatternKind.Twin
 	const inputVariants = variants.map(([, , v]) => v)
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))

@@ -142,8 +142,8 @@ export function findAllNode(
 		.flat()
 }
 
-export function findToken(source: ts.SourceFile, position: number, twin = false) {
-	const n = findNode(source, source, position, twin)
+export function findToken(source: ts.SourceFile, position: number, twin: boolean, hover = false) {
+	const n = findNode(source, source, hover ? position + 1 : position, twin)
 	if (n) {
 		return transfromToken(n, source)
 	}
