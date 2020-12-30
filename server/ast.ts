@@ -48,7 +48,7 @@ function find(
 	node: ts.Node,
 	cb: (node: ts.Node) => boolean,
 	position: number | undefined = undefined,
-) {
+): ts.Node {
 	if (typeof position == "number") {
 		if (position < node.getStart(source) || position >= node.getEnd()) {
 			return undefined
@@ -70,20 +70,28 @@ export function findNode(
 		return undefined
 	}
 	if (ts.isJsxAttribute(node)) {
-		const token = find(source, node, node => ts.isStringLiteral(node), position)
-		if (!token) {
-			return undefined
-		}
-		if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
-			return undefined
-		}
 		const id = node.getFirstToken(source).getText(source)
 		if (twin && id === "tw") {
+			const token = find(source, node, node => ts.isStringLiteral(node), position)
+			if (!token) {
+				return undefined
+			}
+			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				return undefined
+			}
 			return { token, kind: PatternKind.Twin }
 		} else if (id === "className") {
+			const token = find(source, node, node => ts.isStringLiteral(node), position)
+			if (!token) {
+				return undefined
+			}
+			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				return undefined
+			}
 			return { token, kind: PatternKind.ClassName }
+		} else if (id !== "css") {
+			return undefined
 		}
-		return undefined
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		// QUESTION: match TemplateExpression?
 		const token = find(source, node, node => ts.isNoSubstitutionTemplateLiteral(node), position)
@@ -110,17 +118,22 @@ export function findAllNode(
 	twin = false,
 ): Array<{ token: ts.Node; kind: PatternKind }> {
 	if (ts.isJsxAttribute(node)) {
-		const token = find(source, node, node => ts.isStringLiteral(node))
-		if (!token) {
-			return undefined
-		}
 		const id = node.getFirstToken(source).getText(source)
 		if (twin && id === "tw") {
+			const token = find(source, node, node => ts.isStringLiteral(node))
+			if (!token) {
+				return undefined
+			}
 			return [{ token, kind: PatternKind.Twin }]
 		} else if (id === "className") {
+			const token = find(source, node, node => ts.isStringLiteral(node))
+			if (!token) {
+				return undefined
+			}
 			return [{ token, kind: PatternKind.ClassName }]
+		} else if (id !== "css") {
+			return undefined
 		}
-		return undefined
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		// QUESTION: match TemplateExpression?
 		const token = find(source, node, node => ts.isNoSubstitutionTemplateLiteral(node))
