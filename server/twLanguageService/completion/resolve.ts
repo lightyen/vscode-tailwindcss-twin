@@ -1,6 +1,6 @@
 import * as lsp from "vscode-languageserver"
-import type { PatternKind } from "~/patterns"
 import type { CSSRuleItem } from "~/tailwind/classnames"
+import { PatternKind } from "~/ast"
 import { Tailwind } from "~/tailwind"
 
 export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem => {
@@ -10,11 +10,11 @@ export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): ls
 		kind: PatternKind
 	}
 
-	if (kind === "twinTheme") {
+	if (kind === PatternKind.TwinTheme) {
 		return item
 	}
 
-	if (kind === "twin") {
+	if (kind === PatternKind.Twin) {
 		switch (item.label) {
 			case "content":
 				item.detail = "content"
@@ -50,7 +50,7 @@ export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): ls
 	}
 
 	if (variants.length > 0 && !item.label.endsWith(":")) {
-		const __variants = state.classnames.getVariants(kind === "twin")
+		const __variants = state.classnames.getVariants(kind === PatternKind.Twin)
 		if (data instanceof Array) {
 			data = data.filter(d => {
 				for (const context of d.__context) {

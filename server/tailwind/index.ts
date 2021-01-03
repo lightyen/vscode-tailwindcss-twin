@@ -11,7 +11,6 @@ interface InitParams {
 }
 
 interface Settings {
-	twin: boolean
 	fallbackDefaultConfig: boolean
 }
 
@@ -43,18 +42,12 @@ export class Tailwind {
 		this.load(options)
 	}
 
-	private load({
-		configPath,
-		workspaceFolder,
-		twin = false,
-		fallbackDefaultConfig = false,
-	}: Partial<InitParams & Settings>) {
+	private load({ configPath, workspaceFolder, fallbackDefaultConfig = false }: Partial<InitParams & Settings>) {
 		this.workspaceFolder = workspaceFolder
 		configPath = configPath || ""
 		const isAbs = configPath && path.isAbsolute(configPath)
 		configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
 		this.lookup(path.dirname(configPath))
-		this.twin = twin
 		this.fallbackDefaultConfig = fallbackDefaultConfig
 		this.hasConfig = false
 		if (isAbs) {
@@ -76,35 +69,30 @@ export class Tailwind {
 		this.config.separator = __INNER_TAILWIND_SEPARATOR__
 
 		// change config for twin
-		if (twin) {
-			this.separator = ":" // always use ":" in twin
-			this.config.purge = { enabled: false, content: [] }
-			if (!this.config.darkMode) {
-				this.config.darkMode = "media"
-			}
-			this.config.corePlugins = undefined
-			this.config.prefix = undefined
-			this.config.important = undefined
+		this.separator = ":" // always use ":" in twin
+		this.config.purge = { enabled: false, content: [] }
+		if (!this.config.darkMode) {
+			this.config.darkMode = "media"
 		}
+		this.config.corePlugins = undefined
+		this.config.prefix = undefined
+		this.config.important = undefined
 	}
 
 	async reload(params?: Partial<InitParams & Settings>) {
 		const {
 			workspaceFolder = this.workspaceFolder,
 			configPath = this.configPath,
-			twin = this.twin,
 			fallbackDefaultConfig = this.fallbackDefaultConfig,
 		} = params || {}
 		this.load({
 			workspaceFolder,
 			configPath,
-			twin,
 			fallbackDefaultConfig,
 		})
 		await this.process()
 	}
 
-	twin: boolean
 	jsonTwin?: { config?: string }
 
 	// tailwindcss
@@ -214,7 +202,7 @@ export class Tailwind {
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 		])
 		this.config = this.resolveConfig(this.config)
-		this.classnames = extractClassNames(results, this.config.darkMode, this.twin)
+		this.classnames = extractClassNames(results, this.config.darkMode)
 	}
 
 	/**

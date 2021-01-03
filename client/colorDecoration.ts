@@ -36,7 +36,7 @@ class ColorMap {
 		if (__borderColor) {
 			const borderColor = chroma(__borderColor === "transparent" ? transparent : __borderColor || transparent)
 			options.borderColor = borderColor.css()
-			options.borderWidth = "2px"
+			options.borderWidth = "1.5px"
 			options.borderStyle = "solid"
 			if (__borderColor === "transparent") {
 				options.light.borderWidth = "3px"

@@ -5,19 +5,11 @@ import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from ".."
 
-import { findAllToken, getScriptKind, PatternKind } from "~/ast"
-import ts from "typescript"
+import { findAllMatch, PatternKind } from "~/ast"
 
-export function provideColor(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
+export function provideColor(document: TextDocument, state: Tailwind, _: InitOptions) {
 	const colors: ColorInformation[] = []
-	const src = ts.createSourceFile(
-		"",
-		document.getText(),
-		ts.ScriptTarget.Latest,
-		false,
-		getScriptKind(document.languageId),
-	)
-	const tokens = findAllToken(src, initOptions.twin)
+	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
 		const twin = kind === PatternKind.Twin

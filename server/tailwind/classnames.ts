@@ -76,7 +76,7 @@ export function getClassNames(rule: Rule, notRules: Record<string, Set<string>>)
 export function extractClassNames(
 	[_base, components, utilities]: [Result, Result, Result],
 	darkMode: false | "media" | "class",
-	twin = false,
+	twin = true,
 ) {
 	return parseResults(
 		[
@@ -92,7 +92,7 @@ export function extractClassNames(
 export function parseResults(
 	groups: Array<{ source: string; result: Result }>,
 	darkMode: false | "media" | "class" = false,
-	twin = false,
+	twin = true,
 ) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const tree: Record<string, any> = {}
@@ -549,7 +549,7 @@ export function parseResults(
 			const classes = Object.entries(this.getClassNames(variants, twinPattern))
 				.filter(this.getClassNameFilter(variants, twinPattern))
 				.map(([label]) => label)
-			if (twin && variants.some(v => v === "before" || v === "after")) {
+			if (twinPattern && variants.some(v => v === "before" || v === "after")) {
 				classes.push("content")
 			}
 			return classes

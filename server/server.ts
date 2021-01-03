@@ -5,17 +5,7 @@ import { TailwindLanguageService } from "./twLanguageService"
 import { LanguageService } from "./LanguageService"
 import { FileChangeType } from "vscode-languageserver/node"
 import path from "path"
-
-interface Settings {
-	colorDecorators: boolean
-	links: boolean
-	twin: boolean
-	validate: boolean
-	fallbackDefaultConfig: boolean
-	diagnostics: {
-		conflict: "none" | "loose" | "strict"
-	}
-}
+import { Settings } from "./LanguageService"
 
 interface InitializationOptions extends Settings {
 	/** uri */
@@ -96,7 +86,7 @@ class Server {
 					colorProvider: true,
 					completionProvider: {
 						resolveProvider: true,
-						triggerCharacters: ['"', "'", "`", " ", ".", ":", "(", "[", "_"],
+						triggerCharacters: ['"', "'", "`", " ", ".", ":", "("],
 					},
 					hoverProvider: true,
 					documentLinkProvider: {
@@ -165,18 +155,12 @@ class Server {
 					{ section: "tailwindcss" },
 					{ section: "editor" },
 				])
-				if (
-					this.settings.twin !== tailwindcss.twin ||
-					this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig
-				) {
-					this.settings.twin = tailwindcss.twin
+				if (this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig) {
 					this.settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
 					for (const [, service] of this.services) {
 						;(service as TailwindLanguageService).reload(this.settings)
 					}
 				}
-				connection.sendNotification("tailwindcss/info", `twin = ${this.settings.twin}`)
-
 				this.settings.colorDecorators =
 					typeof tailwindcss?.colorDecorators === "boolean"
 						? tailwindcss.colorDecorators
@@ -194,7 +178,12 @@ class Server {
 					this.settings.validate = tailwindcss.validate
 					this.settings.diagnostics.conflict = tailwindcss.diagnostics.conflict
 					documents.all().forEach(document => {
-						matchService(document.uri, this.services)?.validate(document)
+						const service = matchService(document.uri, this.services)
+						if (service) {
+							service.updateSettings(this.settings)
+							const diagnostics = service.validate(document)
+							this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
+						}
 					})
 				}
 				connection.sendNotification("tailwindcss/info", `validate = ${this.settings.validate}`)
@@ -277,14 +266,10 @@ class Server {
 			const document = documents.get(params.textDocument.uri)
 			const service = matchService(params.textDocument.uri, this.services)
 			if (service) {
-				const colors = service.provideColor(document)
-				if (colors?.length > 0) {
-					connection.sendNotification("tailwindcss/documentColors", {
-						colors,
-						uri: document.uri,
-					})
-				}
-				return []
+				connection.sendNotification("tailwindcss/documentColors", {
+					colors: service.provideColor(document),
+					uri: document.uri,
+				})
 			}
 			return []
 		})

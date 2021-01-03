@@ -13,7 +13,6 @@ export interface InitOptions {
 	configPath: string
 	colorDecorators: boolean
 	links: boolean
-	twin: boolean
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
@@ -28,7 +27,7 @@ export class TailwindLanguageService implements LanguageService {
 	constructor(documents: lsp.TextDocuments<TextDocument>, initOptions: InitOptions) {
 		this.initOptions = initOptions
 		this.documents = documents
-		this.state = new Tailwind(initOptions)
+		this.state = new Tailwind(this.initOptions)
 	}
 	init() {
 		if (this.isReady()) return void 0
@@ -36,6 +35,9 @@ export class TailwindLanguageService implements LanguageService {
 	}
 	reload(...params: Parameters<Tailwind["reload"]>) {
 		return this.state.reload(...params)
+	}
+	updateSettings(setting: Partial<InitOptions>) {
+		this.initOptions = { ...this.initOptions, ...setting }
 	}
 	isReady() {
 		return !!this.state.classnames

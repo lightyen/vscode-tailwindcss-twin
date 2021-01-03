@@ -4,8 +4,7 @@ import { findClasses } from "~/find"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from ".."
 import docs from "./docs.yaml"
-import { findAllToken, getScriptKind, PatternKind } from "~/ast"
-import ts from "typescript"
+import { findAllMatch, PatternKind } from "~/ast"
 
 function lastUrlToken(url: string) {
 	if (url.includes("twin")) {
@@ -19,18 +18,10 @@ function lastUrlToken(url: string) {
 	return token
 }
 
-export const documentLinks = (document: TextDocument, state: Tailwind, initOptions: InitOptions) => {
+export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOptions) => {
 	const links: DocumentLink[] = []
 	const s = new Set<number>()
-
-	const src = ts.createSourceFile(
-		"",
-		document.getText(),
-		ts.ScriptTarget.Latest,
-		false,
-		getScriptKind(document.languageId),
-	)
-	const tokens = findAllToken(src, initOptions.twin)
+	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const twin = kind === PatternKind.Twin
 		const prefix = twin ? "tw." : ""

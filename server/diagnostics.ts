@@ -1,32 +1,24 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
-import { Range, TextDocument } from "vscode-languageserver-textdocument"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { ClassInfo, findClasses } from "~/find"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
-import { findAllToken, getScriptKind, PatternKind } from "~/ast"
-import ts from "typescript"
+import { findAllMatch, PatternKind } from "~/ast"
 
 const source = "tailwindcss"
 
 export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
 	const diagnostics: Diagnostic[] = []
-	const src = ts.createSourceFile(
-		"",
-		document.getText(),
-		ts.ScriptTarget.Latest,
-		false,
-		getScriptKind(document.languageId),
-	)
-	const tokens = findAllToken(src, initOptions.twin)
+	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
-		const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
+		// const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
 		if (kind === PatternKind.TwinTheme) {
 			const v = state.getTheme(value.split("."))
 			if (v == undefined) {
 				diagnostics.push({
-					range,
+					range: { start: document.positionAt(start), end: document.positionAt(end) },
 					source,
 					message: `${value} is undefined`,
 					severity: DiagnosticSeverity.Error,
@@ -36,7 +28,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 			diagnostics.push(
 				...validateClasses({
 					document,
-					range,
+					offset: start,
 					classes: value,
 					separator: state.separator,
 					kind,
@@ -51,7 +43,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 
 function validateClasses({
 	document,
-	range,
+	offset,
 	classes,
 	separator,
 	kind,
@@ -59,7 +51,7 @@ function validateClasses({
 	diagnostics,
 }: {
 	document: TextDocument
-	range: Range
+	offset: number
 	classes: string
 	separator: string
 	kind: PatternKind
@@ -70,11 +62,10 @@ function validateClasses({
 	const handleImportant = kind === PatternKind.Twin
 	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
 	const result: Diagnostic[] = []
-	const base = document.offsetAt(range.start)
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
-			result.push(...checkTwinClassName(c, document, base, state))
+			result.push(...checkTwinClassName(c, document, offset, state))
 		})
 	}
 
@@ -93,8 +84,8 @@ function validateClasses({
 						source,
 						message,
 						range: {
-							start: document.positionAt(base + token[0]),
-							end: document.positionAt(base + token[1]),
+							start: document.positionAt(offset + token[0]),
+							end: document.positionAt(offset + token[1]),
 						},
 						severity: DiagnosticSeverity.Warning,
 					})
@@ -169,8 +160,8 @@ function validateClasses({
 			source,
 			message: `miss something?`,
 			range: {
-				start: document.positionAt(base + empty[i][0]),
-				end: document.positionAt(base + empty[i][1]),
+				start: document.positionAt(offset + empty[i][0]),
+				end: document.positionAt(offset + empty[i][1]),
 			},
 			severity: DiagnosticSeverity.Warning,
 		})
@@ -179,7 +170,7 @@ function validateClasses({
 	return result
 }
 
-function checkTwinClassName(info: ClassInfo, document: TextDocument, base: number, state: Tailwind) {
+function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	const variants = info.variants.map(v => v[2])
 	for (const [a, b, value] of info.variants) {
@@ -193,8 +184,8 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 				source,
 				message: `'${value}' is undefined, do you mean '${ans[0].item}'?`,
 				range: {
-					start: document.positionAt(base + a),
-					end: document.positionAt(base + b),
+					start: document.positionAt(offset + a),
+					end: document.positionAt(offset + b),
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
@@ -203,8 +194,8 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 				source,
 				message: `'${value}' is undefined`,
 				range: {
-					start: document.positionAt(base + a),
-					end: document.positionAt(base + b),
+					start: document.positionAt(offset + a),
+					end: document.positionAt(offset + b),
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
@@ -219,8 +210,8 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 					source,
 					message: `'${info.token[2]}' is undefined, do you mean '${ans[0].item}'?`,
 					range: {
-						start: document.positionAt(base + info.token[0]),
-						end: document.positionAt(base + info.token[1]),
+						start: document.positionAt(offset + info.token[0]),
+						end: document.positionAt(offset + info.token[1]),
 					},
 					severity: DiagnosticSeverity.Warning,
 				})
@@ -229,8 +220,8 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, base: numbe
 					source,
 					message: `'${info.token[2]}' is undefined`,
 					range: {
-						start: document.positionAt(base + info.token[0]),
-						end: document.positionAt(base + info.token[1]),
+						start: document.positionAt(offset + info.token[0]),
+						end: document.positionAt(offset + info.token[1]),
 					},
 					severity: DiagnosticSeverity.Warning,
 				})

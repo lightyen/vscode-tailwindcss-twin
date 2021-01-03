@@ -7,7 +7,7 @@ import debug from "./debug"
 
 const CLIENT_ID = "Tailwind CSS IntelliSense"
 
-const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "html", "jade"]
+const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "html"]
 
 const clients: Map<string, LanguageClient> = new Map()
 
@@ -26,7 +26,6 @@ interface InitializationOptions {
 	configs: string[]
 	colorDecorators: boolean
 	links: boolean
-	twin: boolean
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
@@ -63,7 +62,6 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	if (typeof initOptions.links !== "boolean") {
 		initOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
 	}
-	initOptions.twin = tailwindcss.get("twin")
 	initOptions.validate = tailwindcss.get("validate")
 	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
 	initOptions.diagnostics = {}

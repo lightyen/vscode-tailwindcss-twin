@@ -4,13 +4,12 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
-import canComplete from "./canComplete"
 import { findClasses } from "~/find"
 import type { Token } from "~/typings"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
-import { PatternKind } from "~/ast"
+import { canMatch, PatternKind } from "~/ast"
 
 export { completionResolve } from "./resolve"
 
@@ -26,10 +25,10 @@ export const completion = (
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
-	{ twin }: InitOptions,
+	_: InitOptions,
 ): lsp.CompletionList => {
 	try {
-		const result = canComplete(document, position, twin)
+		const result = canMatch(document, position)
 		if (!result) {
 			return null
 		}
@@ -134,10 +133,10 @@ function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.
 	const [offset, , text] = match
 	const inputChar = text[index - offset - 1]
 	if (inputChar !== "." && text.indexOf(".") !== -1) {
-		return null
+		return { isIncomplete: false, items: [] }
 	}
 	if (text.indexOf("..") !== -1) {
-		return null
+		return { isIncomplete: false, items: [] }
 	}
 
 	const reg = /([^.]+)\./g
@@ -146,7 +145,7 @@ function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.
 	while ((m = reg.exec(text))) {
 		const [, key, space] = m
 		if (space) {
-			return null
+			return { isIncomplete: false, items: [] }
 		}
 		if (index >= offset + m.index && index < offset + reg.lastIndex) {
 			break
@@ -155,7 +154,7 @@ function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.
 	}
 	const value = state.getTheme(keys)
 	if (typeof value !== "object") {
-		return null
+		return { isIncomplete: false, items: [] }
 	}
 	return {
 		isIncomplete: true,

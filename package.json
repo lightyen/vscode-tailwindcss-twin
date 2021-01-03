@@ -91,10 +91,6 @@
           ],
           "default": null
         },
-        "tailwindcss.twin": {
-          "type": "boolean",
-          "default": true
-        },
         "tailwindcss.fallbackDefaultConfig": {
           "type": "boolean",
           "default": true

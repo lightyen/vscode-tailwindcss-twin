@@ -5,13 +5,12 @@ import { serializeError } from "serialize-error"
 import produce from "immer"
 import { findClasses, SelectionInfo } from "~/find"
 import { Tailwind } from "~/tailwind"
-import { PatternKind } from "~/ast"
-import { canHover } from "./canHover"
+import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from ".."
 
-export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, initOptions: InitOptions) => {
+export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions) => {
 	try {
-		const result = canHover(document, position, initOptions)
+		const result = canMatch(document, position, true)
 		if (!result) {
 			return null
 		}
