@@ -161,21 +161,22 @@ function checkImportTwin(source: ts.SourceFile): Features {
 						twTemplate = true
 					}
 					if (!themeTemplate) {
-						clause.forEachChild(node => {
-							if (ts.isNamedImports(node)) {
-								node.forEachChild(node => {
-									if (ts.isImportSpecifier(node)) {
-										if (node.getFirstToken(source)?.getText(source) === "theme") {
-											themeTemplate = "theme"
-										}
-										if (themeTemplate) {
-											const b = node.getLastToken(source)
-											if (b) themeTemplate = b.getText(source)
-										}
+						const namedImports = find(source, clause, ts.isNamedImports)
+						if (namedImports) {
+							namedImports.forEachChild(node => {
+								if (ts.isImportSpecifier(node)) {
+									if (node.getFirstToken(source)?.getText(source) === "theme") {
+										themeTemplate = "theme"
 									}
-								})
-							}
-						})
+									if (themeTemplate) {
+										const b = node.getLastToken(source)
+										if (b) themeTemplate = b.getText(source)
+										return true
+									}
+								}
+								return undefined
+							})
+						}
 					}
 				}
 			}
@@ -195,8 +196,12 @@ export function findToken(source: ts.SourceFile, position: number): TokenResult 
 
 export function findAllToken(source: ts.SourceFile): TokenResult[] {
 	const features = checkImportTwin(source)
-	const nodes = findAllNode(source, source, features)
-	return nodes.map(node => transfromToken(node, source))
+	try {
+		const nodes = findAllNode(source, source, features)
+		return nodes.map(node => transfromToken(node, source))
+	} catch {
+		return []
+	}
 }
 
 type __Pattern = {
