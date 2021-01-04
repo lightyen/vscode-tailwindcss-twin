@@ -13,7 +13,6 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
-		// const range: Range = { start: document.positionAt(start), end: document.positionAt(end) }
 		if (kind === PatternKind.TwinTheme) {
 			const v = state.getTheme(value.split("."))
 			if (v == undefined) {

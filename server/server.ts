@@ -161,15 +161,35 @@ class Server {
 						;(service as TailwindLanguageService).reload(this.settings)
 					}
 				}
-				this.settings.colorDecorators =
-					typeof tailwindcss?.colorDecorators === "boolean"
-						? tailwindcss.colorDecorators
-						: editor.colorDecorators ?? false
-				connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
+				if (this.settings.colorDecorators !== tailwindcss?.colorDecorators) {
+					this.settings.colorDecorators =
+						typeof tailwindcss?.colorDecorators === "boolean"
+							? tailwindcss.colorDecorators
+							: editor.colorDecorators ?? false
+					for (const document of documents.all()) {
+						const service = matchService(document.uri, this.services)
+						if (service) {
+							service.updateSettings(this.settings)
+							connection.sendNotification("tailwindcss/documentColors", {
+								colors: service.provideColor(document),
+								uri: document.uri,
+							})
+						}
+					}
+					connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
+				}
 
-				this.settings.links =
-					typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
-				connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
+				if (this.settings.links !== tailwindcss?.links) {
+					this.settings.links =
+						typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
+					for (const document of documents.all()) {
+						const service = matchService(document.uri, this.services)
+						if (service) {
+							service.updateSettings(this.settings)
+						}
+					}
+					connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
+				}
 
 				if (
 					this.settings.validate !== tailwindcss.validate ||
