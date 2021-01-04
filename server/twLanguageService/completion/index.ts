@@ -131,10 +131,6 @@ function classesCompletion(index: number, match: Token, kind: PatternKind, state
 
 function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.CompletionList {
 	const [offset, , text] = match
-	const inputChar = text[index - offset - 1]
-	if (inputChar !== "." && text.indexOf(".") !== -1) {
-		return { isIncomplete: false, items: [] }
-	}
 	if (text.indexOf("..") !== -1) {
 		return { isIncomplete: false, items: [] }
 	}
