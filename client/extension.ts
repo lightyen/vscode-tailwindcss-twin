@@ -116,8 +116,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		return Promise.all(promises)
 	})
 
-	for (const ws of vscode.workspace.workspaceFolders) {
-		await addClient(serverModule, outputChannel, ws)
+	if (vscode.workspace.workspaceFolders instanceof Array) {
+		for (const ws of vscode.workspace.workspaceFolders) {
+			await addClient(serverModule, outputChannel, ws)
+		}
 	}
 }
 
