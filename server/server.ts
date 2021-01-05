@@ -100,27 +100,6 @@ class Server {
 			if (this.hasConfigurationCapability) {
 				connection.client.register(lsp.DidChangeConfigurationNotification.type)
 			}
-
-			// for (const [cfg, service] of this.services) {
-			// 	const srv = service as TailwindLanguageService
-			// 	connection.sendNotification("tailwindcss/info", `=>${cfg.toString()}`)
-			// 	connection.sendNotification("tailwindcss/info", `userConfig = ${srv.state.hasConfig}`)
-			// 	connection.sendNotification("tailwindcss/info", `configPath = ${srv.state.configPath}`)
-			// 	connection.sendNotification("tailwindcss/info", `tailwind path = ${srv.state.tailwindcssPath}`)
-			// 	connection.sendNotification("tailwindcss/info", `tailwindcss version = ${srv.state.tailwindcssVersion}`)
-			// 	connection.sendNotification("tailwindcss/info", `postcss path = ${srv.state.postcssPath}`)
-			// 	connection.sendNotification("tailwindcss/info", `postcss version = ${srv.state.postcssVersion}`)
-			// 	connection.sendNotification("tailwindcss/info", `user separator = ${srv.state.separator}`)
-			// 	connection.sendNotification("tailwindcss/info", `inner separator = ${srv.state.config.separator}`)
-			// 	connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
-			// 	connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
-			// 	connection.sendNotification("tailwindcss/info", `twin = ${this.settings.twin}`)
-			// 	connection.sendNotification("tailwindcss/info", `validate = ${this.settings.validate}`)
-			// 	connection.sendNotification(
-			// 		"tailwindcss/info",
-			// 		`diagnostics.conflict = ${this.settings.diagnostics.conflict}`,
-			// 	)
-			// }
 		})
 
 		// when changed tailwind.config.js
@@ -135,10 +114,7 @@ class Server {
 						this.removeService(change.uri)
 						break
 					case FileChangeType.Changed:
-						{
-							const srv = this.services.get(change.uri) as TailwindLanguageService
-							await srv?.reload()
-						}
+						await this.reloadService(change.uri)
 						break
 				}
 			}
@@ -218,12 +194,22 @@ class Server {
 	private addService(configUri: string, workspaceFolder: string, settings: Settings) {
 		if (!this.services.has(configUri)) {
 			try {
+				const configPath = URI.parse(configUri).fsPath
 				const srv = new TailwindLanguageService(this.documents, {
 					...settings,
 					workspaceFolder: URI.parse(workspaceFolder).fsPath,
-					configPath: URI.parse(configUri).fsPath,
+					configPath,
 				})
 				this.services.set(configUri, srv)
+				console.log("process:", configPath)
+				if (srv.state) {
+					console.log(`userConfig = ${srv.state.hasConfig}`)
+					console.log(`configPath = ${srv.state.configPath}`)
+					console.log(`tailwind path = ${srv.state.tailwindcssPath}`)
+					console.log(`tailwindcss version = ${srv.state.tailwindcssVersion}`)
+					console.log(`postcss path = ${srv.state.postcssPath}`)
+					console.log(`postcss version = ${srv.state.postcssVersion}`)
+				}
 			} catch {}
 		}
 	}
@@ -232,6 +218,21 @@ class Server {
 		const srv = this.services.get(configUri)
 		if (srv) {
 			this.services.delete(configUri)
+			console.log("remove:", URI.parse(configUri).fsPath)
+		}
+	}
+
+	private async reloadService(configUri: string) {
+		const srv = this.services.get(configUri) as TailwindLanguageService
+		await srv?.reload()
+		console.log("reload:", URI.parse(configUri).fsPath)
+		if (srv.state) {
+			console.log(`userConfig = ${srv.state.hasConfig}`)
+			console.log(`configPath = ${srv.state.configPath}`)
+			console.log(`tailwind path = ${srv.state.tailwindcssPath}`)
+			console.log(`tailwindcss version = ${srv.state.tailwindcssVersion}`)
+			console.log(`postcss path = ${srv.state.postcssPath}`)
+			console.log(`postcss version = ${srv.state.postcssVersion}`)
 		}
 	}
 
