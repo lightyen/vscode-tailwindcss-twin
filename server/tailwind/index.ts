@@ -59,7 +59,7 @@ export class Tailwind {
 			}
 		}
 		if (!this.config) {
-			if (isAbs || !fallbackDefaultConfig) {
+			if (!fallbackDefaultConfig) {
 				throw Error("not found: " + configPath)
 			}
 			this.config = this.defaultConfig
@@ -182,12 +182,16 @@ export class Tailwind {
 				result.configPath = _configPath
 			}
 		} catch {}
-		if (!result.config) {
-			const _configPath = path.resolve(configPath)
-			const str = readFileSync(_configPath, { encoding: "utf-8" })
-			const config = eval(str)
-			result.configPath = _configPath
-			result.config = config
+		try {
+			if (!result.config) {
+				const _configPath = path.resolve(configPath)
+				const str = readFileSync(_configPath, { encoding: "utf-8" })
+				const config = eval(str)
+				result.configPath = _configPath
+				result.config = config
+			}
+		} catch (err) {
+			console.log(err)
 		}
 		return result
 	}

@@ -226,7 +226,7 @@ class Server {
 		const srv = this.services.get(configUri) as TailwindLanguageService
 		await srv?.reload()
 		console.log("reload:", URI.parse(configUri).fsPath)
-		if (srv.state) {
+		if (srv?.state) {
 			console.log(`userConfig = ${srv.state.hasConfig}`)
 			console.log(`configPath = ${srv.state.configPath}`)
 			console.log(`tailwind path = ${srv.state.tailwindcssPath}`)
