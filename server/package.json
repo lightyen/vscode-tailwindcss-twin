@@ -20,6 +20,7 @@
     "semver": "^7.3.4",
     "serialize-error": "^7.0.1",
     "tailwindcss": "^2.0.2",
+    "twin.macro": "^2.0.7",
     "vscode-languageserver": "^7.0.0",
     "vscode-languageserver-textdocument": "^1.0.1",
     "vscode-uri": "^2.1.2"
