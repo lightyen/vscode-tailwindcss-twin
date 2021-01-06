@@ -181,7 +181,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 		if (ans?.length > 0) {
 			result.push({
 				source,
-				message: `'${value}' is undefined, do you mean '${ans[0].item}'?`,
+				message: `'${value}' is undefined, did you mean '${ans[0].item}'?`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
@@ -207,7 +207,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 			if (ans?.length > 0) {
 				result.push({
 					source,
-					message: `'${info.token[2]}' is undefined, do you mean '${ans[0].item}'?`,
+					message: `'${info.token[2]}' is undefined, did you mean '${ans[0].item}'?`,
 					range: {
 						start: document.positionAt(offset + info.token[0]),
 						end: document.positionAt(offset + info.token[1]),
