@@ -37,12 +37,19 @@ interface TailwindConfigJS {
 	// ...
 }
 
+console.log(
+	"tailwindcss version:",
+	TModule.require({ moduleId: "tailwindcss/package.json", removeCache: false }).version,
+)
+console.log("postcss version:", TModule.require({ moduleId: "postcss/package.json", removeCache: false }).version)
+
 export class Tailwind {
 	constructor(options: Partial<InitParams & Settings>) {
 		this.load(options)
 	}
 
 	private load({ configPath, workspaceFolder, fallbackDefaultConfig = false }: Partial<InitParams & Settings>) {
+		this.configPath = configPath
 		this.workspaceFolder = workspaceFolder
 		configPath = configPath || ""
 		const isAbs = configPath && path.isAbsolute(configPath)
@@ -50,20 +57,20 @@ export class Tailwind {
 		this.lookup(path.dirname(configPath))
 		this.fallbackDefaultConfig = fallbackDefaultConfig
 		this.hasConfig = false
+		let result: ReturnType<Tailwind["findConfig"]> = {}
 		if (isAbs) {
-			const result = this.findConfig(configPath)
-			if (result.config) {
-				this.config = result.config
-				this.configPath = result.configPath
-				this.hasConfig = true
-			}
+			result = this.findConfig(configPath)
 		}
-		if (!this.config) {
+		if (!result.config) {
 			if (!fallbackDefaultConfig) {
-				throw Error("not found: " + configPath)
+				throw Error("Error: resolve config " + configPath)
 			}
 			this.config = this.defaultConfig
-			this.configPath = this.defaultConfigPath
+			this.distConfigPath = this.defaultConfigPath
+		} else {
+			this.config = result.config
+			this.distConfigPath = result.configPath
+			this.hasConfig = true
 		}
 		this.separator = this.config.separator || ":"
 		this.config.separator = __INNER_TAILWIND_SEPARATOR__
@@ -110,56 +117,20 @@ export class Tailwind {
 	postcssVersion: string
 
 	private lookup(base: string) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const hasTailwind = (packageJSON: any) =>
-			!!packageJSON?.dependencies?.tailwindcss || !!packageJSON?.devDependencies?.tailwindcss
-
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let json: any
-		try {
-			json = JSON.parse(readFileSync(path.join(base, "package.json"), { encoding: "utf-8" }))
-		} catch {}
-
-		if (json) {
-			this.jsonTwin = json.twin
-		}
-
-		if (json && hasTailwind(json)) {
-			const m = new TModule(base)
-			this.tailwindcssPath = m.resolve({ moduleId: "tailwindcss/package.json" })
-			if (this.tailwindcssPath) {
-				const tailwindcss = m.require({ moduleId: "tailwindcss" })
-				const resolveConfig = m.require({ moduleId: "tailwindcss/resolveConfig" })
-				const _json = m.require({ moduleId: "tailwindcss/package.json" })
-				if (tailwindcss && resolveConfig && _json) {
-					this.tailwindcss = tailwindcss
-					this.resolveConfig = resolveConfig
-					this.tailwindcssVersion = _json.version
-					this.defaultConfigPath = m.resolve({ moduleId: "tailwindcss/defaultConfig" })
-					this.defaultConfig = m.require({ moduleId: "tailwindcss/defaultConfig" })
-				}
-			}
-		}
-
-		if (!this.tailwindcss) {
-			this.tailwindcssPath = TModule.resolve({ moduleId: "tailwindcss/package.json" })
-			this.tailwindcss = TModule.require({ moduleId: "tailwindcss" })
-			this.resolveConfig = TModule.require({ moduleId: "tailwindcss/resolveConfig" })
-			const _json = TModule.require({ moduleId: "tailwindcss/package.json" })
-			this.tailwindcssVersion = _json.version
-			this.defaultConfigPath = TModule.resolve({ moduleId: "tailwindcss/defaultConfig" })
-			this.defaultConfig = TModule.require({ moduleId: "tailwindcss/defaultConfig" })
-		}
-
-		// force postcss version
+		this.tailwindcssPath = TModule.resolve({ moduleId: "tailwindcss/package.json" })
+		this.tailwindcss = TModule.require({ moduleId: "tailwindcss", removeCache: false })
+		this.resolveConfig = TModule.require({ moduleId: "tailwindcss/resolveConfig", removeCache: false })
+		this.tailwindcssVersion = TModule.require({ moduleId: "tailwindcss/package.json", removeCache: false }).version
+		this.defaultConfigPath = TModule.resolve({ moduleId: "tailwindcss/defaultConfig" })
+		this.defaultConfig = TModule.require({ moduleId: "tailwindcss/defaultConfig", removeCache: false })
 		this.postcssPath = TModule.resolve({ moduleId: "postcss/package.json" })
 		this.postcss = TModule.require({ moduleId: "postcss", removeCache: false })
-		const _json = TModule.require({ moduleId: "postcss/package.json", removeCache: false })
-		this.postcssVersion = _json.version
+		this.postcssVersion = TModule.require({ moduleId: "postcss/package.json", removeCache: false }).version
 	}
 
 	// user config
 	configPath: string
+	distConfigPath: string
 	workspaceFolder: string
 	hasConfig: boolean
 	config: TailwindConfigJS
@@ -167,6 +138,7 @@ export class Tailwind {
 
 	private findConfig(configPath: string) {
 		const result: { configPath?: string; config?: TailwindConfigJS } = {}
+		let err: Error
 		try {
 			const _configPath = TModule.resolve({
 				base: path.dirname(configPath),
@@ -181,7 +153,9 @@ export class Tailwind {
 				})
 				result.configPath = _configPath
 			}
-		} catch {}
+		} catch (error) {
+			err = error
+		}
 		try {
 			if (!result.config) {
 				const _configPath = path.resolve(configPath)
@@ -190,9 +164,10 @@ export class Tailwind {
 				result.configPath = _configPath
 				result.config = config
 			}
-		} catch (err) {
-			console.log(err)
+		} catch (error) {
+			err = error
 		}
+		if (err instanceof Error) console.log("[Error] resolving config:\n", err)
 		return result
 	}
 

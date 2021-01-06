@@ -196,20 +196,16 @@ class Server {
 		if (!this.services.has(configUri)) {
 			try {
 				const configPath = URI.parse(configUri).fsPath
+				console.log("process:", configPath)
 				const srv = new TailwindLanguageService(this.documents, {
 					...settings,
 					workspaceFolder: URI.parse(workspaceFolder).fsPath,
 					configPath,
 				})
 				this.services.set(configUri, srv)
-				console.log("process:", configPath)
 				if (srv.state) {
 					console.log(`userConfig = ${srv.state.hasConfig}`)
-					console.log(`configPath = ${srv.state.configPath}`)
-					console.log(`tailwind path = ${srv.state.tailwindcssPath}`)
-					console.log(`tailwindcss version = ${srv.state.tailwindcssVersion}`)
-					console.log(`postcss path = ${srv.state.postcssPath}`)
-					console.log(`postcss version = ${srv.state.postcssVersion}`)
+					console.log(`distConfig = ${srv.state.distConfigPath}`)
 				}
 			} catch {}
 		}
@@ -225,15 +221,11 @@ class Server {
 
 	private async reloadService(configUri: string) {
 		const srv = this.services.get(configUri) as TailwindLanguageService
-		await srv?.reload()
 		console.log("reload:", URI.parse(configUri).fsPath)
+		await srv?.reload()
 		if (srv?.state) {
 			console.log(`userConfig = ${srv.state.hasConfig}`)
-			console.log(`configPath = ${srv.state.configPath}`)
-			console.log(`tailwind path = ${srv.state.tailwindcssPath}`)
-			console.log(`tailwindcss version = ${srv.state.tailwindcssVersion}`)
-			console.log(`postcss path = ${srv.state.postcssPath}`)
-			console.log(`postcss version = ${srv.state.postcssVersion}`)
+			console.log(`distConfig = ${srv.state.distConfigPath}`)
 		}
 	}
 

@@ -75,7 +75,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		})),
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher(
-				new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js,package.json}"),
+				new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 			),
 		},
 		diagnosticCollectionName: CLIENT_ID,
