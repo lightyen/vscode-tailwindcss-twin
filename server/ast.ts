@@ -4,13 +4,11 @@ import ts from "typescript"
 import { Token } from "./typings"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
-export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | "html"
+export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"
 
 export enum PatternKind {
 	Twin = 1,
 	TwinTheme = 2,
-	ClassName = 3,
-	Html = 4,
 }
 
 interface Features {
@@ -76,15 +74,6 @@ function findNode(
 				return undefined
 			}
 			return { token, kind: PatternKind.Twin }
-		} else if (id === "className") {
-			const token = find(source, node, ts.isStringLiteral, position)
-			if (!token) {
-				return undefined
-			}
-			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
-				return undefined
-			}
-			return { token, kind: PatternKind.ClassName }
 		} else if (id !== "css") {
 			return undefined
 		}
@@ -118,12 +107,6 @@ function findAllNode(
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
-		} else if (id === "className") {
-			const token = find(source, node, ts.isStringLiteral)
-			if (!token) {
-				return undefined
-			}
-			return [{ token, kind: PatternKind.ClassName }]
 		} else if (id !== "css") {
 			return undefined
 		}
@@ -204,84 +187,6 @@ export function findAllToken(source: ts.SourceFile): TokenResult[] {
 	}
 }
 
-type __Pattern = {
-	lpat: string | RegExp
-	rpat: string | RegExp
-	kind: PatternKind
-	type: "single" | "multiple"
-	languages: Language[]
-}
-
-const htmlPatterns: __Pattern[] = [
-	{
-		lpat: /class\s*=\s*"/,
-		rpat: '"',
-		kind: PatternKind.Html,
-		type: "single",
-		languages: ["html"],
-	},
-]
-
-function __findToken({
-	text,
-	index,
-	lpat,
-	rpat,
-	type,
-}: {
-	text: string
-	index?: number
-	lpat: string | RegExp
-	rpat: string | RegExp
-	type: "single" | "multiple"
-}): Token {
-	let m: RegExpExecArray
-	const lpt = typeof lpat === "string" ? lpat : lpat.toString().substring(1, lpat.toString().length - 1)
-	const l = new RegExp(`(${lpt})((?:.(?!${lpt}))*)$`, type === "multiple" ? "gs" : "g") // find last left bracket pattern
-	const r = new RegExp(rpat, type === "multiple" ? "gs" : "g")
-	const leftPart = text.substring(0, index)
-	const rightPart = text.substring(index)
-
-	if ((m = l.exec(leftPart))) {
-		const [, lbrace] = m
-		const start = m.index + lbrace.length
-		r.lastIndex = start
-		if ((m = r.exec(leftPart))) {
-			return null
-		} else {
-			r.lastIndex = 0
-			if ((m = r.exec(rightPart))) {
-				const end = index + m.index
-				return [start, end, text.substring(start, end)]
-			}
-		}
-	}
-	return null
-}
-
-function __findAllToken({
-	text,
-	lpat,
-	rpat,
-}: {
-	text: string
-	lpat: string | RegExp
-	rpat: string | RegExp
-}): Array<[start: number, end: number]> {
-	const result: Array<[start: number, end: number]> = []
-	let m: RegExpExecArray
-	const l = new RegExp(lpat, "g")
-	const r = new RegExp(rpat, "g")
-	while ((m = l.exec(text))) {
-		r.lastIndex = l.lastIndex
-		if ((m = r.exec(text))) {
-			result.push([l.lastIndex, m.index])
-		}
-		l.lastIndex = r.lastIndex
-	}
-	return result
-}
-
 export function canMatch(document: TextDocument, position: lsp.Position, hover = false): TokenResult {
 	const pos = document.offsetAt(position) + (hover ? 1 : 0)
 	let scriptKind: ts.ScriptKind
@@ -308,38 +213,6 @@ export function canMatch(document: TextDocument, position: lsp.Position, hover =
 			return undefined
 		}
 		return token
-	} else if (document.languageId === "html") {
-		for (const pattern of htmlPatterns) {
-			const { type, lpat, rpat, kind } = pattern
-			let range: lsp.Range
-			if (type === "single") {
-				range = {
-					start: { line: position.line, character: 0 },
-					end: { line: position.line + 1, character: 0 },
-				}
-			} else if (type === "multiple") {
-				range = {
-					start: { line: position.line - 20, character: 0 },
-					end: { line: position.line + 20, character: 0 },
-				}
-			}
-			const text = document.getText(range)
-			const start = document.offsetAt(range.start)
-			const token = __findToken({
-				text,
-				lpat,
-				rpat,
-				index: pos - start,
-				type,
-			})
-			if (!token) {
-				continue
-			}
-			return {
-				kind,
-				token: [start + token[0], start + token[1], token[2]],
-			}
-		}
 	}
 	return undefined
 }
@@ -365,20 +238,6 @@ export function findAllMatch(document: TextDocument): TokenResult[] {
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
 		return findAllToken(source)
-	} else if (document.languageId === "html") {
-		const text = document.getText()
-		for (const pattern of htmlPatterns) {
-			const { lpat, rpat, kind } = pattern
-			const tokens = __findAllToken({
-				text,
-				lpat,
-				rpat,
-			})
-			return tokens.map(([a, b]) => ({
-				kind,
-				token: [a, b, document.getText({ start: document.positionAt(a), end: document.positionAt(b) })],
-			}))
-		}
 	}
 	return []
 }

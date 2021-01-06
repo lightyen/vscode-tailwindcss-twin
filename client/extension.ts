@@ -7,7 +7,7 @@ import debug from "./debug"
 
 const CLIENT_ID = "Tailwind CSS IntelliSense"
 
-const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "html"]
+const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact"]
 
 const clients: Map<string, LanguageClient> = new Map()
 
