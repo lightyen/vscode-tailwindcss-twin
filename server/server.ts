@@ -92,6 +92,7 @@ class Server {
 					documentLinkProvider: {
 						resolveProvider: false,
 					},
+					codeActionProvider: true,
 				},
 			}
 		})
@@ -293,6 +294,34 @@ class Server {
 				})
 			}
 			return []
+		})
+		connection.onCodeAction(params => {
+			type Data = { text: string; newText: string }
+			const diagnostics = params.context.diagnostics.filter(dia => {
+				if (dia.source !== "tailwindcss") {
+					return false
+				}
+				if (!dia.data) {
+					return false
+				}
+				const { text, newText } = dia.data as Data
+				return !!text && !!newText
+			})
+
+			return diagnostics.map<lsp.CodeAction>(dia => {
+				const range = dia.range
+				const { text, newText } = dia.data as Data
+				return {
+					title: `Replace '${text}' with '${newText}'`,
+					diagnostics: [dia],
+					kind: lsp.CodeActionKind.QuickFix,
+					edit: {
+						changes: {
+							[params.textDocument.uri.toString()]: [{ newText, range }],
+						},
+					},
+				}
+			})
 		})
 	}
 }

@@ -19,7 +19,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 				diagnostics.push({
 					range: { start: document.positionAt(start), end: document.positionAt(end) },
 					source,
-					message: `${value} is undefined`,
+					message: `Can't find ${value}`,
 					severity: DiagnosticSeverity.Error,
 				})
 			}
@@ -181,17 +181,18 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 		if (ans?.length > 0) {
 			result.push({
 				source,
-				message: `'${value}' is undefined, did you mean '${ans[0].item}'?`,
+				message: `Can't find '${value}', did you mean '${ans[0].item}'?`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
 				},
+				data: { text: value, newText: ans[0].item },
 				severity: DiagnosticSeverity.Warning,
 			})
 		} else {
 			result.push({
 				source,
-				message: `'${value}' is undefined`,
+				message: `Can't find '${value}'`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
@@ -207,17 +208,18 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 			if (ans?.length > 0) {
 				result.push({
 					source,
-					message: `'${info.token[2]}' is undefined, did you mean '${ans[0].item}'?`,
+					message: `Can't find '${info.token[2]}', did you mean '${ans[0].item}'?`,
 					range: {
 						start: document.positionAt(offset + info.token[0]),
 						end: document.positionAt(offset + info.token[1]),
 					},
+					data: { text: info.token[2], newText: ans[0].item },
 					severity: DiagnosticSeverity.Warning,
 				})
 			} else {
 				result.push({
 					source,
-					message: `'${info.token[2]}' is undefined`,
+					message: `Can't find '${info.token[2]}'`,
 					range: {
 						start: document.positionAt(offset + info.token[0]),
 						end: document.positionAt(offset + info.token[1]),
