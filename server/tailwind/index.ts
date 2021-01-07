@@ -27,7 +27,6 @@ interface TailwindConfigJS {
 	theme: Record<string, unknown>
 	plugins: unknown[]
 	separator: string
-	corePlugins: unknown
 	prefix: string
 	important: boolean
 	variants: {
@@ -81,7 +80,6 @@ export class Tailwind {
 		if (!this.config.darkMode) {
 			this.config.darkMode = "media"
 		}
-		this.config.corePlugins = undefined
 		this.config.prefix = undefined
 		this.config.important = undefined
 	}
