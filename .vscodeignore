@@ -15,3 +15,4 @@ client/**/*
 server/**/*
 tests/**
 .github/**
+examples

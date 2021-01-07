@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "jsx": "react",
+    "module": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "baseUrl": "./src",
+    "paths": {
+      "~/*": ["./*"]
+    }
+  }
+}

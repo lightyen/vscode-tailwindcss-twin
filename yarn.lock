@@ -4521,19 +4521,10 @@ postcss@^8.1.6:
     source-map "^0.6.1"
     vfile-location "^3.2.0"
 
-postcss@^8.1.8:
+postcss@^8.1.8, postcss@^8.2.2:
   version "8.2.2"
   resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.2.2.tgz#60613b62297005084fd21024a68637798864fe26"
   integrity sha512-HM1NDNWLgglJPQQMNwvLxgH2KcrKZklKLi/xXYIOaqQB57p/pDWEJNS83PVICYsn1Dg/9C26TiejNr422/ePaQ==
-  dependencies:
-    colorette "^1.2.1"
-    nanoid "^3.1.20"
-    source-map "^0.6.1"
-
-postcss@^8.2.1:
-  version "8.2.1"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.2.1.tgz#eabc5557c4558059b9d9e5b15bce7ffa9089c2a8"
-  integrity sha512-RhsqOOAQzTgh1UB/IZdca7F9WDb7SUCR2Vnv1x7DbvuuggQIpoDwjK+q0rzoPffhYvWNKX5JSwS4so4K3UC6vA==
   dependencies:
     colorette "^1.2.1"
     nanoid "^3.1.20"
@@ -5592,10 +5583,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-twin.macro@^2.0.7:
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/twin.macro/-/twin.macro-2.0.7.tgz#b8a6f770c95032e0a532e47143b78ee3c2bbd55b"
-  integrity sha512-AXLs9WAf3njusUVDMS6EGZOpxatsBokgSF6xTie/2hZ1MVHlDFz2ervL6O1FqiaWtu7Pi9/8HJLJILAmAUwlGg==
+twin.macro@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/twin.macro/-/twin.macro-2.0.8.tgz#ac27579051e8c87f3163ecddf04febf731ed45b5"
+  integrity sha512-5yY9QNv/R0amIH+JaPMqr35wbkJyICvrGAANZmaXZHNMMmRDfqH/XcefrvEw7eHKC3GremEWAh5rVcGXePd3gg==
   dependencies:
     "@babel/parser" "^7.12.5"
     babel-plugin-macros "^2.8.0"

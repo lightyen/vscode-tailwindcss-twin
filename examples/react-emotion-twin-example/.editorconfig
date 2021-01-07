@@ -1,0 +1,23 @@
+# EditorConfig is awesome: https://editorconfig.org/
+
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+indent_style = tab
+indent_size = 4
+
+[*.{tsx,ts,jsx,js,html,ejs}]
+max_line_length = 120
+
+[*.{scss,less,css}]
+max_line_length = 80
+
+[*.{json,yaml,yml,babelrc}]
+max_line_length = 80
+indent_style = space
+indent_size = 2

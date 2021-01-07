@@ -1,8 +1,8 @@
 {
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind CSS IntelliSense",
-  "description": "Tailwind CSS Extension with twin features for VS Code",
-  "version": "0.2.1",
+  "description": "Tailwind CSS Extension for twin.macro features",
+  "version": "0.3.0",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
@@ -109,8 +109,8 @@
           "default": "strict",
           "enumDescriptions": [
             "Silent when conflict",
-            "Show warning when all css property conflicted",
-            "Show warning when one css property conflicted"
+            "Show warning when all css property were conflicted",
+            "Show warning when one css property was conflicted"
           ]
         }
       }

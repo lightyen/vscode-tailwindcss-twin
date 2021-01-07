@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["esnext"],
+    "target": "es6",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"]
+    }
+  }
+}

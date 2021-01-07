@@ -1,12 +1,12 @@
 # vscode-tailwindcss-twin
 
-This is a custom Tailwind CSS IntelliSense VSCode Extension supports [twin](https://github.com/ben-rogerson/twin.macro) features.
+This is a custom Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro) features.
 
 ---
 
 ## Supported
 
-ONLY for React and twin.
+ONLY for React and twin.macro
 
 ## Recommended VS Code Settings
 
@@ -18,9 +18,3 @@ ONLY for React and twin.
   "editor.autoClosingQuotes": "always"
 }
 ```
-
-### Notice
-
-The extension will search your project to find out `tailwindcss` and `postcss` and execute them in the runtime, if they were not found, it will use the embedded version in extension.
-
-Need to put `tailwind.config.js` in your workspace, or use default version config when it is not found.
