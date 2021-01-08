@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
-import { findClasses, SelectionInfo } from "~/find"
+import findClasses, { SelectionInfo } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from ".."
@@ -15,14 +15,10 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			return null
 		}
 		const { token, kind } = result
-		const handleBrackets = kind === PatternKind.Twin
-		const handleImportant = kind === PatternKind.Twin
 		const classes = findClasses({
-			classes: token[2],
-			index: document.offsetAt(position) - token[0],
+			input: token[2],
+			position: document.offsetAt(position) - token[0],
 			separator: state.separator,
-			handleBrackets,
-			handleImportant,
 			greedy: false,
 			hover: true,
 		})

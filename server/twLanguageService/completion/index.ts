@@ -4,7 +4,7 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
-import { findClasses } from "~/find"
+import findClasses from "~/findClasses"
 import type { Token } from "~/typings"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
@@ -33,15 +33,16 @@ export const completion = (
 			return null
 		}
 		const index = document.offsetAt(position)
+		const character = document.getText({ start: position, end: position })
 		const { kind, token } = result
 		if (kind === PatternKind.TwinTheme) {
-			const list = twinThemeCompletion(index, token, state)
+			const list = twinThemeCompletion(index, character, token, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
 			return list
 		} else {
-			const list = classesCompletion(index, token, kind, state)
+			const list = classesCompletion(index, character, token, kind, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
@@ -53,14 +54,18 @@ export const completion = (
 	}
 }
 
-function classesCompletion(index: number, match: Token, kind: PatternKind, state: Tailwind): lsp.CompletionList {
-	const [start, , classes] = match
+function classesCompletion(
+	index: number,
+	character: string,
+	match: Token,
+	kind: PatternKind,
+	state: Tailwind,
+): lsp.CompletionList {
+	const [start, , input] = match
 	const { selection } = findClasses({
-		classes,
-		index: index - start,
+		input,
+		position: index - start,
 		separator: state.separator,
-		handleBrackets: kind === PatternKind.Twin,
-		handleImportant: kind === PatternKind.Twin,
 	})
 
 	if (selection.selected?.[2] === state.separator) {
@@ -93,6 +98,7 @@ function classesCompletion(index: number, match: Token, kind: PatternKind, state
 				const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 				return {
 					label,
+					insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
 					sortText: f ? "*" + label : "~~~:" + label,
 					kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
 					data: { type: "variant", data, variants, kind },
@@ -129,7 +135,7 @@ function classesCompletion(index: number, match: Token, kind: PatternKind, state
 	}
 }
 
-function twinThemeCompletion(index: number, match: Token, state: Tailwind): lsp.CompletionList {
+function twinThemeCompletion(index: number, character: string, match: Token, state: Tailwind): lsp.CompletionList {
 	const [offset, , text] = match
 	if (text.indexOf("..") !== -1) {
 		return { isIncomplete: false, items: [] }

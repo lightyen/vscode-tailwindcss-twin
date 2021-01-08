@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { ClassInfo, findClasses } from "~/find"
+import findClasses, { ClassInfo } from "~/findClasses"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
@@ -57,9 +57,7 @@ function validateClasses({
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
 }): Diagnostic[] {
-	const handleBrackets = kind === PatternKind.Twin
-	const handleImportant = kind === PatternKind.Twin
-	const { classList, empty } = findClasses({ classes, separator, handleBrackets, handleImportant })
+	const { classList, empty } = findClasses({ input: classes, separator })
 	const result: Diagnostic[] = []
 
 	if (kind === PatternKind.Twin) {

@@ -1,6 +1,6 @@
 import type { DocumentLink } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { findClasses } from "~/find"
+import findClasses from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from ".."
 import docs from "./docs.yaml"
@@ -27,10 +27,8 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 		const prefix = twin ? "tw." : ""
 		const [start, , value] = token
 		const { classList, empty } = findClasses({
-			classes: value,
+			input: value,
 			separator: state.separator,
-			handleBrackets: twin,
-			handleImportant: twin,
 		})
 		for (const c of classList) {
 			for (const [a, b, value] of c.variants) {

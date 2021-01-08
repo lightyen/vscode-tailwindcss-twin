@@ -1,5 +1,5 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { findClasses } from "~/find"
+import findClasses from "~/findClasses"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
@@ -29,10 +29,8 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 			continue
 		}
 		const { classList } = findClasses({
-			classes: value,
+			input: value,
 			separator: state.separator,
-			handleBrackets: twin,
-			handleImportant: twin,
 		})
 		for (const c of classList) {
 			if (

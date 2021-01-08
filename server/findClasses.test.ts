@@ -1,11 +1,11 @@
 import findClasses from "./findClasses"
 
 test("findClasses", async () => {
-	const text = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
-	for (let index = 0; index < text.length; index += 1) {
+	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)) `
+	for (let position = 0; position < input.length; position += 1) {
 		const result = findClasses({
-			classes: text,
-			index,
+			input,
+			position,
 		})
 		expect(result.classList).toEqual([
 			{
@@ -39,16 +39,26 @@ test("findClasses", async () => {
 				],
 				important: false,
 			},
+			{
+				token: [78, 82, "flex"],
+				variants: [],
+				important: false,
+			},
+			{
+				token: [83, 94, "text-center"],
+				variants: [],
+				important: false,
+			},
 		])
 	}
 })
 
 test("findClasses Selected", async () => {
-	const text = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
+	const input = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
 	const result = findClasses({
-		classes: text,
+		input,
 		separator: ":",
-		index: 18,
+		position: 18,
 	})
 	expect(result.selection).toEqual({
 		important: false,
@@ -58,12 +68,12 @@ test("findClasses Selected", async () => {
 })
 
 test("findClasses Empty", async () => {
-	const text = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( ) lg:(light:bg-black)`
-	for (let index = 0; index < text.length; index += 1) {
+	const input = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( ) lg:(light:bg-black)`
+	for (let position = 0; position < input.length; position += 1) {
 		const result = findClasses({
-			classes: text,
+			input,
 			separator: ":",
-			index,
+			position,
 		})
 		expect(result.empty).toEqual([
 			[18, 20, [[15, 17, "lg"]]],
@@ -73,23 +83,23 @@ test("findClasses Empty", async () => {
 	}
 
 	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:  `
-	for (let index = 0; index < text2.length; index += 1) {
+	for (let position = 0; position < text2.length; position += 1) {
 		const result = findClasses({
-			classes: text2,
+			input: text2,
 			separator: ":",
-			index,
+			position,
 		})
 		expect(result.empty).toEqual([[55, 56, [[52, 54, "md"]]]])
 	}
 })
 
 test("findClasses Important", async () => {
-	const text = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
-	for (let index = 0; index < text.length; index += 1) {
+	const input = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
+	for (let index = 0; index < input.length; index += 1) {
 		const result = findClasses({
-			classes: text,
+			input,
 			separator: ":",
-			index: 37,
+			position: 37,
 		})
 		expect(result.selection).toEqual({
 			selected: [37, 50, "bg-purple-500"],
@@ -125,40 +135,36 @@ test("findClasses Important", async () => {
 })
 
 test("find on invalid input", async () => {
-	let classes = "   dark    bg-black  "
-	let index = 8
+	let input = "   dark    bg-black  "
+	let position = 8
 	let result = findClasses({
-		classes,
-		index,
-		separator: ":",
+		input,
+		position,
 	})
 	expect(result.selection.variants).toEqual([])
 	expect(result.selection.selected).toEqual(null)
 
-	index = 7
+	position = 7
 	result = findClasses({
-		classes,
-		index,
-		separator: ":",
+		input,
+		position,
 	})
 	expect(result.selection.variants).toEqual([])
 	expect(result.selection.selected).toEqual([3, 7, "dark"])
 
-	classes = "   dark:    bg-black  "
-	index = 7
+	input = "   dark:    bg-black  "
+	position = 7
 	result = findClasses({
-		classes,
-		index,
-		separator: ":",
+		input,
+		position,
 	})
 	expect(result.selection.variants).toEqual([])
 	expect(result.selection.selected).toEqual(null)
 
-	index = 8
+	position = 8
 	result = findClasses({
-		classes,
-		index,
-		separator: ":",
+		input,
+		position,
 	})
 	expect(result.selection.variants).toEqual([[3, 7, "dark"]])
 	expect(result.selection.selected).toEqual(null)
