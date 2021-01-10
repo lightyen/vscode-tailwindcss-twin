@@ -91,51 +91,13 @@ export default function findClasses({
 	greedy?: boolean
 	separator?: string
 }): ClassesTokenResult {
-	;[start, end] = trimLeft(input, start, end)
 	if (start === end) {
 		return zero()
 	}
 
-	if (input[start] === "(") {
-		const endBracket = findRightBracket({ input, start, end })
-		if (typeof endBracket !== "number") {
-			return zero()
-		} else {
-			const isImportant = input[endBracket + 1] === "!"
-			const prev = findClasses({
-				input,
-				context: [...context],
-				importantContext: importantContext || isImportant,
-				start: start + 1,
-				end: endBracket,
-				position,
-				hover,
-				greedy,
-				separator,
-			})
-			const tail = isImportant ? endBracket + 1 : endBracket
-			if (tail < end) {
-				const result = merge(
-					prev,
-					findClasses({
-						input,
-						context: [...context],
-						importantContext,
-						start: tail + 1,
-						end,
-						position,
-						hover,
-						greedy,
-						separator,
-					}),
-				)
-				return result
-			}
-			return prev
-		}
-	}
+	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|\\S+`, "g")
+	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-./]+!?)|\\(|(\\S+)`, "g")
 
 	let result: ClassesTokenResult = zero()
 	let match: RegExpExecArray
@@ -144,7 +106,7 @@ export default function findClasses({
 	input = input.slice(0, end)
 	const baseContext = [...context]
 	while ((match = reg.exec(input))) {
-		const [value, variant] = match
+		const [value, variant, className, weird] = match
 		if (variant) {
 			const variantToken: Token = [match.index, reg.lastIndex - 1, variant]
 			if (position >= variantToken[0] && position < variantToken[1]) {
@@ -193,7 +155,33 @@ export default function findClasses({
 				}
 				context = [...baseContext]
 			}
-		} else if (value[0].startsWith("(")) {
+		} else if (className) {
+			const token: Token = [match.index, reg.lastIndex, value]
+			let important = value.endsWith("!")
+			if (important) {
+				token[1] -= 1
+				token[2] = token[2].slice(0, token[2].length - 1)
+			}
+			important ||= importantContext
+			if (position >= token[0] && (hover ? position < token[1] : position <= token[1])) {
+				result.selection.important = important
+				result.selection.variants = [...context]
+				result.selection.selected = token
+			}
+			result.classList.push({
+				variants: [...context],
+				token,
+				important,
+			})
+			context = [...baseContext]
+		} else if (weird) {
+			const token: Token = [match.index, reg.lastIndex, value]
+			result.classList.push({
+				variants: [...context],
+				token,
+				important: false,
+			})
+		} else {
 			const endBracket = findRightBracket({ input, start: match.index, end })
 			if (typeof endBracket !== "number") {
 				// throw `except to find a ')' to match the '('`
@@ -217,25 +205,6 @@ export default function findClasses({
 				result = merge(result, innerResult)
 				reg.lastIndex = endBracket + (importantGroup ? 2 : 1)
 			}
-		} else {
-			const token: Token = [match.index, reg.lastIndex, value]
-			let important = value.endsWith("!")
-			if (important) {
-				token[1] -= 1
-				token[2] = token[2].slice(0, token[2].length - 1)
-			}
-			important ||= importantContext
-			if (position >= token[0] && (hover ? position < token[1] : position <= token[1])) {
-				result.selection.important = important
-				result.selection.variants = [...context]
-				result.selection.selected = token
-			}
-			result.classList.push({
-				variants: [...context],
-				token,
-				important,
-			})
-			context = [...baseContext]
 		}
 
 		if (!greedy) {

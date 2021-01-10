@@ -21,36 +21,23 @@ function findRightBracket(classes: string, start = 0) {
 }
 
 function spreadVariantGroups(classes: string, context = "", importantContext = false, start = 0, end?: number) {
-	classes = classes.slice(start, end).trim()
-	const results: string[] = []
 	if (classes === "") {
-		return results
+		return []
 	}
-	if (classes[0] === "(") {
-		const closeBracket = findRightBracket(classes)
-		if (typeof closeBracket !== "number") {
-			throw `"${classes}" except to find a ')' to match the '('`
-		} else {
-			const isImportant = classes[closeBracket + 1] === "!"
-			results.push(...spreadVariantGroups(classes, context, importantContext || isImportant, 1, closeBracket))
-			const end = isImportant ? closeBracket + 1 : closeBracket
-			if (end < classes.length) {
-				results.push(...spreadVariantGroups(classes, context, importantContext, end + 1))
-			}
-			return results
-		}
-	}
-	// variant format: /[\w-]+:/
-	const reg = /([\w-]+:)|\S+/g
+	const results: string[] = []
+	classes = classes.slice(start, end).trim()
+
+	const reg = /([\w-]+:)|([\w-./]+!?)|\(|(\S+)/g
 	let match: RegExpExecArray
 	const baseContext = context
 	while ((match = reg.exec(classes))) {
-		const [text, variant] = match
+		const [, variant, className, weird] = match
 		if (variant) {
 			context += variant
 
 			if (/\s/.test(classes[reg.lastIndex])) {
-				throw "empty variant value"
+				context = baseContext
+				continue
 			}
 
 			if (classes[reg.lastIndex] === "(") {
@@ -72,7 +59,13 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 					context = baseContext
 				}
 			}
-		} else if (text.startsWith("(")) {
+		} else if (className) {
+			const tail = !className.endsWith("!") && importantContext ? "!" : ""
+			results.push(context + className + tail)
+			context = baseContext
+		} else if (weird) {
+			throw `${weird} unexpected token`
+		} else {
 			const closeBracket = findRightBracket(classes, match.index)
 			if (typeof closeBracket !== "number") {
 				throw `"${classes}" except to find a ')' to match the '('`
@@ -89,16 +82,9 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 				)
 				reg.lastIndex = closeBracket + (importantGroup ? 2 : 1)
 			}
-		} else {
-			const tail = !match[0].endsWith("!") && importantContext ? "!" : ""
-			results.push(context + match[0] + tail)
-			context = baseContext
 		}
 	}
 
-	if (results.length === 0) {
-		throw `except non-empty variant group`
-	}
 	return results
 }
 
