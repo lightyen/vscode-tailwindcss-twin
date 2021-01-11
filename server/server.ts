@@ -96,19 +96,10 @@ class Server {
 					semanticTokensProvider: {
 						documentSelector: [{ language: "typescriptreact", scheme: "file" }],
 						legend: {
-							tokenModifiers: [],
-							tokenTypes: [
-								"comment",
-								"string",
-								"keyword",
-								"type",
-								"enumMember",
-								"function",
-								"property",
-								"macro",
-							],
+							tokenModifiers: ["documentation"],
+							tokenTypes: ["keyword", "number"],
 						},
-						full: true,
+						range: true,
 					},
 				},
 			}
@@ -332,9 +323,8 @@ class Server {
 				}
 			})
 		})
-		connection.languages.semanticTokens.on(async (...params) => {
-			return null
-			// return matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
+		connection.languages.semanticTokens.onRange(async (...params) => {
+			return matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
 		})
 	}
 }

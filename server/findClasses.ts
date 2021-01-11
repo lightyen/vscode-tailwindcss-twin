@@ -136,12 +136,16 @@ export default function findClasses({
 
 			context.push(variantToken)
 
-			let hasSpace = false
-			while (spaceReg.test(input[reg.lastIndex])) {
-				hasSpace = true
-				reg.lastIndex++
+			let isEmpty = false
+			if (reg.lastIndex < end) {
+				while (spaceReg.test(input[reg.lastIndex])) {
+					isEmpty = true
+					reg.lastIndex++
+				}
+			} else {
+				isEmpty = true
 			}
-			if (hasSpace) {
+			if (isEmpty) {
 				const index = match.index + value.length
 				result.empty.push([index, index + 1, [...context]])
 				context = [...baseContext]

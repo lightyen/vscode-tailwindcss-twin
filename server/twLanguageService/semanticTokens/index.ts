@@ -5,27 +5,28 @@ import { InitOptions } from ".."
 import * as lsp from "vscode-languageserver"
 import { findAllMatch, PatternKind } from "~/ast"
 
+// https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
+
 enum SemanticKind {
-	comment,
-	string,
 	keyword,
-	type,
-	enumMember,
-	function,
-	property,
-	macro,
+	number,
 }
 
-export function provideSemanticTokens(document: TextDocument, state: Tailwind, _: InitOptions): lsp.SemanticTokens {
+export function provideSemanticTokens(
+	document: TextDocument,
+	state: Tailwind,
+	{ colorDecorators }: InitOptions,
+): lsp.SemanticTokens {
 	const builder = new lsp.SemanticTokensBuilder()
 	const tokens = findAllMatch(document)
+	const table = new Set<number>()
 	for (const { token, kind } of tokens) {
 		const [start, , value] = token
 		const twin = kind === PatternKind.Twin
 		if (kind === PatternKind.TwinTheme) {
 			continue
 		}
-		const { classList } = findClasses({
+		const { classList, empty } = findClasses({
 			input: value,
 			separator: state.separator,
 		})
@@ -39,15 +40,35 @@ export function provideSemanticTokens(document: TextDocument, state: Tailwind, _
 			) {
 				continue
 			}
-			// for (const v of c.variants) {
-			// 	const pos = document.positionAt(start + v[0])
-			// 	builder.push(pos.line, pos.character, v[1] - v[0], SemanticKind.macro, null)
-			// }
 
-			const color = state.classnames.getColorInfo(c.token[2])
+			for (const v of c.variants) {
+				if (table.has(start + v[0])) {
+					continue
+				}
+				table.add(start + v[0])
+				const pos = document.positionAt(start + v[0])
+				builder.push(pos.line, pos.character, v[1] - v[0], SemanticKind.keyword, 0)
+			}
+
 			const pos = document.positionAt(start + c.token[0])
-			if (!color || (!color.backgroundColor && !color.color)) {
-				builder.push(pos.line, pos.character, c.token[1] - c.token[0], SemanticKind.enumMember, null)
+			if (colorDecorators) {
+				const color = state.classnames.getColorInfo(c.token[2])
+				if (!color || (!color.backgroundColor && !color.color)) {
+					builder.push(pos.line, pos.character, c.token[1] - c.token[0], SemanticKind.number, 0)
+				}
+			} else {
+				builder.push(pos.line, pos.character, c.token[1] - c.token[0], SemanticKind.number, 0)
+			}
+		}
+
+		for (const [, , variants] of empty) {
+			for (const v of variants) {
+				if (table.has(start + v[0])) {
+					continue
+				}
+				table.add(start + v[0])
+				const pos = document.positionAt(start + v[0])
+				builder.push(pos.line, pos.character, v[1] - v[0], SemanticKind.keyword, 0)
 			}
 		}
 	}

@@ -12,9 +12,7 @@ ONLY for React and twin.macro
 
 ```json
 {
-  "editor.quickSuggestions": {
-    "strings": true
-  },
+  "editor.quickSuggestions": { "strings": true },
   "editor.autoClosingQuotes": "always"
 }
 ```
