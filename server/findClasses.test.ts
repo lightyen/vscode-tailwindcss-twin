@@ -1,7 +1,18 @@
-import findClasses from "./findClasses"
+import findClasses, { toClassNames } from "./findClasses"
+
+test("seprate", async () => {
+	const input = "  text-gray-100! md:dark:(hover:(text-gray-500 bg-white!)) lg:(light:bg-black) "
+	const output = toClassNames(findClasses({ input }))
+	expect(output).toEqual([
+		"text-gray-100!",
+		"md:dark:hover:text-gray-500",
+		"md:dark:hover:bg-white!",
+		"lg:light:bg-black",
+	])
+})
 
 test("findClasses", async () => {
-	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)) `
+	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)))))!`
 	for (let position = 0; position < input.length; position += 1) {
 		const result = findClasses({
 			input,
@@ -46,6 +57,11 @@ test("findClasses", async () => {
 			},
 			{
 				token: [83, 94, "text-center"],
+				variants: [],
+				important: false,
+			},
+			{
+				token: [96, 100, ")))!"],
 				variants: [],
 				important: false,
 			},

@@ -27,18 +27,18 @@ function trimLeft(str: string, start = 0, end = str.length) {
 }
 
 function findRightBracket({ input, start, end }: { input: string; start: number; end: number }): number {
-	const stack: number[] = []
+	let stack = 0
 	for (let i = start; i < end; i++) {
 		if (input[i] === "(") {
-			stack.push(i)
+			stack += 1
 		} else if (input[i] === ")") {
-			if (stack.length === 0) {
+			if (stack === 0) {
 				return undefined
 			}
-			if (stack.length === 1) {
+			if (stack === 1) {
 				return i
 			}
-			stack.pop()
+			stack -= 1
 		}
 	}
 	return undefined
@@ -129,29 +129,29 @@ export default function findClasses({
 				context = [...baseContext]
 				continue
 			}
+
 			if (input[reg.lastIndex] === "(") {
-				const endBracket = findRightBracket({ input, start: reg.lastIndex, end })
-				if (typeof endBracket !== "number") {
-					// throw `except to find a ')' to match the '('`
+				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
+				if (typeof closedBracket !== "number") {
 					return result
 				} else {
-					const importantGroup = input[endBracket + 1] === "!"
+					const importantGroup = input[closedBracket + 1] === "!"
 					const innerResult = findClasses({
 						input: input,
 						context: [...context],
 						importantContext: importantContext || importantGroup,
 						start: reg.lastIndex + 1,
-						end: endBracket,
+						end: closedBracket,
 						position,
 						hover,
 						greedy,
 						separator,
 					})
 					if (innerResult.classList.length === 0) {
-						result.empty.push([reg.lastIndex, endBracket + 1, [...context]])
+						result.empty.push([reg.lastIndex, closedBracket + 1, [...context]])
 					}
 					result = merge(result, innerResult)
-					reg.lastIndex = endBracket + (importantGroup ? 2 : 1)
+					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
 				}
 				context = [...baseContext]
 			}
@@ -182,28 +182,27 @@ export default function findClasses({
 				important: false,
 			})
 		} else {
-			const endBracket = findRightBracket({ input, start: match.index, end })
-			if (typeof endBracket !== "number") {
-				// throw `except to find a ')' to match the '('`
+			const closedBracket = findRightBracket({ input, start: match.index, end })
+			if (typeof closedBracket !== "number") {
 				return result
 			} else {
-				const importantGroup = input[endBracket + 1] === "!"
+				const importantGroup = input[closedBracket + 1] === "!"
 				const innerResult = findClasses({
 					input: input,
 					context: [...context],
 					importantContext: importantContext || importantGroup,
 					start: match.index + 1,
-					end: endBracket,
+					end: closedBracket,
 					position,
 					hover,
 					greedy,
 					separator,
 				})
 				if (innerResult.classList.length === 0) {
-					result.empty.push([match.index, endBracket + 1, [...context]])
+					result.empty.push([match.index, closedBracket + 1, [...context]])
 				}
 				result = merge(result, innerResult)
-				reg.lastIndex = endBracket + (importantGroup ? 2 : 1)
+				reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
 			}
 		}
 
@@ -213,4 +212,17 @@ export default function findClasses({
 	}
 
 	return result
+}
+
+export function toClassNames(result: ClassesTokenResult, separator = ":"): string[] {
+	const { classList } = result
+	const results: string[] = []
+	for (let i = 0; i < classList.length; i++) {
+		let str = ""
+		for (let j = 0; j < classList[i].variants.length; j++) {
+			str += classList[i].variants[j][2] + separator
+		}
+		results.push(str + classList[i].token[2] + (classList[i].important ? "!" : ""))
+	}
+	return results
 }
