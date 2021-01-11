@@ -27,4 +27,5 @@ export interface LanguageService {
 	onDocumentLinks: Parameters<lsp.Connection["onDocumentLinks"]>[0]
 	validate: (document: TextDocument) => lsp.Diagnostic[]
 	provideColor: (document: TextDocument) => ColorInformation[]
+	provideSemanticTokens: Parameters<lsp.Connection["languages"]["semanticTokens"]["on"]>[0]
 }

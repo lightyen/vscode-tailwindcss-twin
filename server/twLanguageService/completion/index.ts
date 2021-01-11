@@ -98,7 +98,7 @@ function classesCompletion(
 				const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 				return {
 					label,
-					insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
+					// insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
 					sortText: f ? "*" + label : "~~~:" + label,
 					kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
 					data: { type: "variant", data, variants, kind },

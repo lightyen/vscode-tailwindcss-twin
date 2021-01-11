@@ -7,6 +7,7 @@ import { hover } from "./hover"
 import { documentLinks } from "./documentLinks"
 import { validate } from "~/diagnostics"
 import { provideColor } from "./colorDecoration"
+import { provideSemanticTokens } from "./semanticTokens"
 
 export interface InitOptions {
 	workspaceFolder: string
@@ -71,5 +72,10 @@ export class TailwindLanguageService implements LanguageService {
 		if (!this.initOptions.colorDecorators) return []
 		if (!this.isReady()) return []
 		return provideColor(document, this.state, this.initOptions)
+	}
+	provideSemanticTokens(params: lsp.SemanticTokensParams) {
+		if (!this.isReady()) return null
+		const document = this.documents.get(params.textDocument.uri)
+		return provideSemanticTokens(document, this.state, this.initOptions)
 	}
 }

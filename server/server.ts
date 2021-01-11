@@ -93,6 +93,23 @@ class Server {
 						resolveProvider: false,
 					},
 					codeActionProvider: true,
+					semanticTokensProvider: {
+						documentSelector: [{ language: "typescriptreact", scheme: "file" }],
+						legend: {
+							tokenModifiers: [],
+							tokenTypes: [
+								"comment",
+								"string",
+								"keyword",
+								"type",
+								"enumMember",
+								"function",
+								"property",
+								"macro",
+							],
+						},
+						full: true,
+					},
 				},
 			}
 		})
@@ -314,6 +331,10 @@ class Server {
 					},
 				}
 			})
+		})
+		connection.languages.semanticTokens.on(async (...params) => {
+			return null
+			// return matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
 		})
 	}
 }
