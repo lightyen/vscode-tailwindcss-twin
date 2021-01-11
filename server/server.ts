@@ -248,9 +248,9 @@ class Server {
 
 	bind() {
 		const { documents, connection } = this
-		documents.onDidOpen(params => {
+		documents.onDidOpen(async params => {
 			const service = matchService(params.document.uri, this.services)
-			service?.init()
+			await service?.init()
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}

@@ -12,7 +12,18 @@ export interface ClassInfo {
 	important: boolean
 }
 
-export type ClassesTokenResult = { classList: ClassInfo[]; selection: SelectionInfo; empty: EmptyGroup[] }
+export interface Error {
+	message: string
+	start: number
+	end: number
+}
+
+export type ClassesTokenResult = {
+	classList: ClassInfo[]
+	selection: SelectionInfo
+	empty: EmptyGroup[]
+	error?: Error
+}
 
 const spaceReg = /\s/
 
@@ -57,6 +68,7 @@ function merge(a: ClassesTokenResult, b: ClassesTokenResult): ClassesTokenResult
 		classList: [...a.classList, ...b.classList],
 		empty: [...a.empty, ...b.empty],
 		selection: null,
+		error: a.error || b.error,
 	}
 	if (a.selection.selected) {
 		returnValue.selection = a.selection
@@ -142,6 +154,11 @@ export default function findClasses({
 				}
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
 				if (typeof closedBracket !== "number") {
+					result.error = {
+						message: `except to find a ')' to match the '('`,
+						start: reg.lastIndex,
+						end,
+					}
 					return result
 				} else {
 					const importantGroup = input[closedBracket + 1] === "!"
@@ -193,6 +210,11 @@ export default function findClasses({
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			if (typeof closedBracket !== "number") {
+				result.error = {
+					message: `"${input.slice(start, end)}" except to find a ')' to match the '('`,
+					start: match.index,
+					end,
+				}
 				return result
 			} else {
 				const importantGroup = input[closedBracket + 1] === "!"

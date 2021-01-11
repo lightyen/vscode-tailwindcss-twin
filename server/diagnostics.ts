@@ -57,8 +57,20 @@ function validateClasses({
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
 }): Diagnostic[] {
-	const { classList, empty } = findClasses({ input: classes, separator })
+	const { classList, empty, error } = findClasses({ input: classes, separator })
 	const result: Diagnostic[] = []
+
+	if (error) {
+		result.push({
+			source,
+			message: error.message,
+			range: {
+				start: document.positionAt(offset + error.start),
+				end: document.positionAt(offset + error.end),
+			},
+			severity: DiagnosticSeverity.Error,
+		})
+	}
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
@@ -185,7 +197,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 					end: document.positionAt(offset + b),
 				},
 				data: { text: value, newText: ans[0].item },
-				severity: DiagnosticSeverity.Warning,
+				severity: DiagnosticSeverity.Error,
 			})
 		} else {
 			result.push({
@@ -195,7 +207,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
 				},
-				severity: DiagnosticSeverity.Warning,
+				severity: DiagnosticSeverity.Error,
 			})
 		}
 	}
@@ -212,7 +224,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 						end: document.positionAt(offset + info.token[1]),
 					},
 					data: { text: info.token[2], newText: ans[0].item },
-					severity: DiagnosticSeverity.Warning,
+					severity: DiagnosticSeverity.Error,
 				})
 			} else {
 				result.push({
@@ -222,7 +234,7 @@ function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: num
 						start: document.positionAt(offset + info.token[0]),
 						end: document.positionAt(offset + info.token[1]),
 					},
-					severity: DiagnosticSeverity.Warning,
+					severity: DiagnosticSeverity.Error,
 				})
 			}
 		}
