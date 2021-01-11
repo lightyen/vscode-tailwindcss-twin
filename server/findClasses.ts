@@ -53,15 +53,21 @@ function zero(): ClassesTokenResult {
 }
 
 function merge(a: ClassesTokenResult, b: ClassesTokenResult): ClassesTokenResult {
-	const returnValue = {
+	const returnValue: ClassesTokenResult = {
 		classList: [...a.classList, ...b.classList],
 		empty: [...a.empty, ...b.empty],
 		selection: null,
 	}
 	if (a.selection.selected) {
 		returnValue.selection = a.selection
-	} else {
+	} else if (b.selection.selected) {
 		returnValue.selection = b.selection
+	} else {
+		returnValue.selection = {
+			important: false,
+			selected: null,
+			variants: [...a.selection.variants, ...b.selection.variants],
+		}
 	}
 	return returnValue
 }
@@ -131,6 +137,9 @@ export default function findClasses({
 			}
 
 			if (input[reg.lastIndex] === "(") {
+				if (!hover && position > reg.lastIndex) {
+					result.selection.variants = [...context]
+				}
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
 				if (typeof closedBracket !== "number") {
 					return result

@@ -70,16 +70,32 @@ test("findClasses", async () => {
 })
 
 test("findClasses Selected", async () => {
-	const input = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black)`
-	const result = findClasses({
-		input,
-		separator: ":",
-		position: 18,
+	const input = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) before:()`
+	expect(
+		findClasses({
+			input,
+			position: 35,
+			greedy: false,
+		}).selection,
+	).toEqual({
+		important: false,
+		selected: [35, 48, "text-gray-500"],
+		variants: [
+			[19, 21, "md"],
+			[22, 26, "dark"],
+			[28, 33, "hover"],
+		],
 	})
-	expect(result.selection).toEqual({
+	expect(
+		findClasses({
+			input,
+			position: 88,
+			greedy: false,
+		}).selection,
+	).toEqual({
 		important: false,
 		selected: null,
-		variants: [],
+		variants: [[80, 86, "before"]],
 	})
 })
 
