@@ -97,7 +97,7 @@ class Server {
 						documentSelector: [{ language: "typescriptreact", scheme: "file" }],
 						legend: {
 							tokenModifiers: ["documentation"],
-							tokenTypes: ["keyword", "number"],
+							tokenTypes: ["keyword", "number", "interface", "variable", "function", "enumMember"],
 						},
 						range: true,
 					},
