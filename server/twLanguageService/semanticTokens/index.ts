@@ -42,15 +42,18 @@ export function provideSemanticTokens(
 		const isValidClass = (variants: string[], value: string) =>
 			state.classnames.isClassName(variants, kind === PatternKind.Twin, value)
 
+		const isValidVariant = (variant: string) => state.classnames.isVariant(variant, kind === PatternKind.Twin)
+
 		const getPosition = (offset: number) => document.positionAt(start + offset)
 
-		renderClasses(isValidClass, canRender, getPosition, builder, parseClasses(value))
+		renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, parseClasses(value))
 	}
 	return builder.build()
 }
 
 function renderClasses(
 	isValidClass: (variants: string[], value: string) => boolean,
+	isValidVariant: (variant: string) => boolean,
 	canRender: (value: string) => boolean,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
@@ -58,9 +61,12 @@ function renderClasses(
 	context: Token[] = [],
 ) {
 	for (const node of nodes) {
-		for (const v of node.variants) {
-			const pos = getPosition(v[0])
-			const len = v[1] - v[0]
+		for (const variant of node.variants) {
+			if (!isValidVariant(variant[2])) {
+				continue
+			}
+			const pos = getPosition(variant[0])
+			const len = variant[1] - variant[0]
 			builder.push(pos.line, pos.character, len + 1, SemanticKind.keyword, 0)
 		}
 
@@ -82,7 +88,10 @@ function renderClasses(
 				}
 			}
 		} else if (node.children.length > 0) {
-			renderClasses(isValidClass, canRender, getPosition, builder, node.children, [...context, ...node.variants])
+			renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
+				...context,
+				...node.variants,
+			])
 		}
 
 		if (typeof node.rbrace === "number") {

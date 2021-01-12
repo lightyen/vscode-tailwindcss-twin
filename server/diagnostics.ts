@@ -174,6 +174,35 @@ function validateClasses({
 			},
 			severity: DiagnosticSeverity.Warning,
 		})
+		const variants = empty[i][2].map(v => v[2])
+		const searcher = state.classnames.getSearcher(variants, kind === PatternKind.Twin)
+		for (const [a, b, variant] of empty[i][2]) {
+			if (!state.classnames.isVariant(variant, kind === PatternKind.Twin)) {
+				const ans = searcher.variants.search(variant)
+				if (ans?.length > 0) {
+					result.push({
+						source,
+						message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
+						range: {
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
+						},
+						data: { text: variant, newText: ans[0].item },
+						severity: DiagnosticSeverity.Error,
+					})
+				} else {
+					result.push({
+						source,
+						message: `Can't find '${variant}'`,
+						range: {
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
+						},
+						severity: DiagnosticSeverity.Error,
+					})
+				}
+			}
+		}
 	}
 
 	return result
