@@ -64,7 +64,7 @@ function renderClasses(
 			builder.push(pos.line, pos.character, len + 1, SemanticKind.keyword, 0)
 		}
 
-		if (node.lbrace) {
+		if (typeof node.lbrace === "number") {
 			const pos = getPosition(node.lbrace)
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
 		}
@@ -85,11 +85,11 @@ function renderClasses(
 			renderClasses(isValidClass, canRender, getPosition, builder, node.children, [...context, ...node.variants])
 		}
 
-		if (node.rbrace) {
+		if (typeof node.rbrace === "number") {
 			const pos = getPosition(node.rbrace)
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
 		}
-		if (node.important) {
+		if (typeof node.important === "number") {
 			const pos = getPosition(node.important)
 			builder.push(pos.line, pos.character, 1, SemanticKind.function, 0)
 		}
