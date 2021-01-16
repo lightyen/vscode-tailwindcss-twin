@@ -1,5 +1,5 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import parseClasses from "./parseClasses"
+import parseClasses, { TwElement } from "./parseClasses"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from ".."
 import * as lsp from "vscode-languageserver"
@@ -57,10 +57,10 @@ function renderClasses(
 	canRender: (value: string) => boolean,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
-	nodes: ReturnType<typeof parseClasses>,
+	blocks: ReturnType<typeof parseClasses>,
 	context: Token[] = [],
 ) {
-	for (const node of nodes) {
+	for (const node of blocks) {
 		for (const variant of node.variants) {
 			if (!isValidVariant(variant[2])) {
 				continue
@@ -70,12 +70,12 @@ function renderClasses(
 			builder.push(pos.line, pos.character, len + 1, SemanticKind.keyword, 0)
 		}
 
-		if (typeof node.lbrace === "number") {
+		if (node.kind === TwElement.Group) {
 			const pos = getPosition(node.lbrace)
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
 		}
 
-		if (node.value) {
+		if (node.kind === TwElement.Class) {
 			if (
 				isValidClass(
 					[...context, ...node.variants].map(v => v[2]),
@@ -87,20 +87,23 @@ function renderClasses(
 					builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
 				}
 			}
-		} else if (node.children.length > 0) {
+		} else if (node.kind === TwElement.Group && node.children.length > 0) {
 			renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
 				...context,
 				...node.variants,
 			])
 		}
 
-		if (typeof node.rbrace === "number") {
+		if (node.kind === TwElement.Group) {
 			const pos = getPosition(node.rbrace)
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
 		}
-		if (typeof node.important === "number") {
-			const pos = getPosition(node.important)
-			builder.push(pos.line, pos.character, 1, SemanticKind.function, 0)
+
+		if (node.kind === TwElement.Group || node.kind === TwElement.Class) {
+			if (typeof node.important === "number") {
+				const pos = getPosition(node.important)
+				builder.push(pos.line, pos.character, 1, SemanticKind.function, 0)
+			}
 		}
 	}
 }
