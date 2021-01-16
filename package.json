@@ -32,7 +32,7 @@
   },
   "icon": "media/icon.png",
   "activationEvents": [
-    "onStartupFinished"
+    "*"
   ],
   "main": "./dist/extension",
   "scripts": {
