@@ -1,6 +1,6 @@
 import { Token } from "~/typings"
 
-export enum TwElement {
+export enum TwElementKind {
 	Unknown,
 	Class,
 	Group,
@@ -12,27 +12,27 @@ type Block = TwUnknownElement | TwEmptyElement | TwGroupElement | TwClassElement
 type Index = number
 
 interface TwUnknownElement {
-	kind: TwElement.Unknown
+	kind: TwElementKind.Unknown
 	variants: Token[]
 	value?: Token
 }
 
 interface TwEmptyElement {
-	kind: TwElement.Empty
+	kind: TwElementKind.Empty
 	variants: Token[]
 }
 
 interface TwGroupElement {
-	kind: TwElement.Group
+	kind: TwElementKind.Group
 	variants: Token[]
 	children: Block[]
 	lbrace: Index
-	rbrace: Index
+	rbrace?: Index
 	important?: Index
 }
 
 interface TwClassElement {
-	kind: TwElement.Class
+	kind: TwElementKind.Class
 	variants: Token[]
 	value: Token
 	important?: Index
@@ -40,7 +40,7 @@ interface TwClassElement {
 
 function createBlock(): Block {
 	return {
-		kind: TwElement.Unknown,
+		kind: TwElementKind.Unknown,
 		variants: [],
 	}
 }
@@ -98,15 +98,15 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 
 			if (reg.lastIndex < end) {
 				while (/\s/.test(input[reg.lastIndex])) {
-					node.kind = TwElement.Empty
+					node.kind = TwElementKind.Empty
 					reg.lastIndex++
 				}
 			} else {
-				node.kind = TwElement.Empty
+				node.kind = TwElementKind.Empty
 			}
 
-			if (node.kind === TwElement.Empty) {
-				node.kind = TwElement.Empty
+			if (node.kind === TwElementKind.Empty) {
+				node.kind = TwElementKind.Empty
 				node.variants = context
 				result.push(node)
 				node = createBlock()
@@ -115,10 +115,11 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 			}
 
 			if (input[reg.lastIndex] === "(") {
-				node.kind = TwElement.Group
+				node.kind = TwElementKind.Group
 			}
 
-			if (node.kind === TwElement.Group) {
+			if (node.kind === TwElementKind.Group) {
+				node.children = []
 				node.lbrace = reg.lastIndex
 				node.variants = context
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
@@ -141,8 +142,8 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				context = []
 			}
 		} else if (className) {
-			node.kind = TwElement.Class
-			if (node.kind === TwElement.Class) {
+			node.kind = TwElementKind.Class
+			if (node.kind === TwElementKind.Class) {
 				const token: Token = [match.index, reg.lastIndex, value]
 				const important = value.indexOf("!")
 				if (important !== -1) {
@@ -157,8 +158,8 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				context = []
 			}
 		} else if (weird) {
-			node.kind = TwElement.Unknown
-			if (node.kind === TwElement.Unknown) {
+			node.kind = TwElementKind.Unknown
+			if (node.kind === TwElementKind.Unknown) {
 				const weirdToken: Token = [match.index, reg.lastIndex, value]
 				node.variants = [...context]
 				node.value = weirdToken
@@ -167,8 +168,8 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				context = []
 			}
 		} else {
-			node.kind = TwElement.Group
-			if (node.kind === TwElement.Group) {
+			node.kind = TwElementKind.Group
+			if (node.kind === TwElementKind.Group) {
 				node.lbrace = match.index
 				const closedBracket = findRightBracket({ input, start: match.index, end })
 				if (typeof closedBracket !== "number") {
@@ -200,13 +201,13 @@ export function format(blocks: ReturnType<typeof parseClasses>): string {
 			out += v[2] + ":"
 		}
 		switch (block.kind) {
-			case TwElement.Group:
+			case TwElementKind.Group:
 				out += `(${format(block.children)})` + (typeof block.important === "number" ? "!" : "")
 				break
-			case TwElement.Class:
+			case TwElementKind.Class:
 				out += block.value[2] + (typeof block.important === "number" ? "!" : "")
 				break
-			case TwElement.Unknown:
+			case TwElementKind.Unknown:
 				out += block.value[2]
 				break
 		}

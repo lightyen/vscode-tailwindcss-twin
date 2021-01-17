@@ -5,6 +5,7 @@ import { TailwindLanguageService } from "./twLanguageService"
 import { LanguageService } from "./LanguageService"
 import { FileChangeType } from "vscode-languageserver/node"
 import path from "path"
+import { deepStrictEqual } from "assert"
 import { Settings } from "./LanguageService"
 
 interface InitializationOptions extends Settings {
@@ -113,7 +114,7 @@ class Server {
 
 		// when changed tailwind.config.js
 		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			connection.sendNotification("tailwindcss/info", `some changes were detected`)
+			console.log(`some changes were detected`)
 			for (const change of changes) {
 				switch (change.type) {
 					case FileChangeType.Created:
@@ -135,22 +136,40 @@ class Server {
 		})
 
 		connection.onDidChangeConfiguration(async params => {
+			console.log(`some changes were detected`)
 			if (this.hasConfigurationCapability) {
-				const [tailwindcss, editor] = await connection.workspace.getConfiguration([
+				type Config = {
+					colorDecorators?: boolean
+					links?: boolean
+					validate: boolean
+					fallbackDefaultConfig: boolean
+					diagnostics: {
+						conflict: "none" | "loose" | "strict"
+						emptyClass: boolean
+						emptyGroup: boolean
+					}
+				}
+				type EditorConfig = {
+					colorDecorators: boolean
+					links: boolean
+				}
+				const configs = await connection.workspace.getConfiguration([
 					{ section: "tailwindcss" },
 					{ section: "editor" },
 				])
+				const tailwindcss: Config = configs[0]
+				const editor: EditorConfig = configs[1]
+
 				if (this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig) {
 					this.settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
 					for (const [, service] of this.services) {
 						;(service as TailwindLanguageService).reload(this.settings)
 					}
 				}
-				if (this.settings.colorDecorators !== tailwindcss?.colorDecorators) {
-					this.settings.colorDecorators =
-						typeof tailwindcss?.colorDecorators === "boolean"
-							? tailwindcss.colorDecorators
-							: editor.colorDecorators ?? false
+
+				const colorDecorators = tailwindcss?.colorDecorators ?? editor.colorDecorators
+				if (this.settings.colorDecorators !== colorDecorators) {
+					this.settings.colorDecorators = colorDecorators
 					for (const document of documents.all()) {
 						const service = matchService(document.uri, this.services)
 						if (service) {
@@ -161,27 +180,27 @@ class Server {
 							})
 						}
 					}
-					connection.sendNotification("tailwindcss/info", `codeDecorators = ${this.settings.colorDecorators}`)
+					console.log(`codeDecorators = ${this.settings.colorDecorators}`)
 				}
 
-				if (this.settings.links !== tailwindcss?.links) {
-					this.settings.links =
-						typeof tailwindcss?.links === "boolean" ? tailwindcss.links : editor.links ?? false
+				const links = tailwindcss?.links ?? editor.links
+				if (this.settings.links !== links) {
+					this.settings.links = links
 					for (const document of documents.all()) {
 						const service = matchService(document.uri, this.services)
 						if (service) {
 							service.updateSettings(this.settings)
 						}
 					}
-					connection.sendNotification("tailwindcss/info", `documentLinks = ${this.settings.links}`)
+					console.log(`documentLinks = ${this.settings.links}`)
 				}
 
-				if (
-					this.settings.validate !== tailwindcss.validate ||
-					this.settings.diagnostics.conflict !== tailwindcss.diagnostics.conflict
-				) {
-					this.settings.validate = tailwindcss.validate
-					this.settings.diagnostics.conflict = tailwindcss.diagnostics.conflict
+				try {
+					deepStrictEqual(this.settings.validate, tailwindcss?.validate)
+					deepStrictEqual(this.settings.diagnostics, tailwindcss?.diagnostics)
+				} catch {
+					this.settings.validate = tailwindcss?.validate
+					this.settings.diagnostics = tailwindcss?.diagnostics
 					documents.all().forEach(document => {
 						const service = matchService(document.uri, this.services)
 						if (service) {
@@ -190,12 +209,9 @@ class Server {
 							this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
 						}
 					})
+					console.log(`validate = ${this.settings.validate}`)
+					console.log(`diagnostics = ${JSON.stringify(this.settings.diagnostics)}`)
 				}
-				connection.sendNotification("tailwindcss/info", `validate = ${this.settings.validate}`)
-				connection.sendNotification(
-					"tailwindcss/info",
-					`diagnostics.conflict = ${this.settings.diagnostics.conflict}`,
-				)
 			}
 		})
 	}

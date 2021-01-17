@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
-import findClasses, { SelectionInfo } from "~/findClasses"
+import findClasses, { Selection } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from ".."
@@ -96,7 +96,7 @@ function getHoverContents({
 	state,
 }: {
 	kind: PatternKind
-	selection: SelectionInfo
+	selection: Selection
 	state: Tailwind
 }): lsp.MarkupContent {
 	const { selected, important, variants } = selection

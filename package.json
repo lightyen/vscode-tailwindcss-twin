@@ -99,6 +99,14 @@
           "type": "boolean",
           "default": true
         },
+        "tailwindcss.diagnostics.emptyClass": {
+          "type": "boolean",
+          "default": true
+        },
+        "tailwindcss.diagnostics.emptyGroup": {
+          "type": "boolean",
+          "default": true
+        },
         "tailwindcss.diagnostics.conflict": {
           "type": "string",
           "enum": [

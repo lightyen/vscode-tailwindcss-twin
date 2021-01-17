@@ -18,6 +18,8 @@ export interface InitOptions {
 	fallbackDefaultConfig: boolean
 	diagnostics: {
 		conflict: "none" | "loose" | "strict"
+		emptyClass: boolean
+		emptyGroup: boolean
 	}
 }
 

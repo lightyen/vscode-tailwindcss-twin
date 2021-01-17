@@ -1,4 +1,4 @@
-import findClasses, { toClassNames } from "./findClasses"
+import findClasses, { EmptyKind, toClassNames } from "./findClasses"
 
 test("seprate", async () => {
 	const input = "  text-gray-100! md:dark:(hover:(text-gray-500 bg-white!)) lg:(light:bg-black) "
@@ -104,24 +104,42 @@ test("findClasses Empty", async () => {
 	for (let position = 0; position < input.length; position += 1) {
 		const result = findClasses({
 			input,
-			separator: ":",
 			position,
 		})
 		expect(result.empty).toEqual([
-			[18, 20, [[15, 17, "lg"]]],
-			[24, 25, [[21, 23, "md"]]],
-			[72, 75, [[66, 71, "focus"]]],
+			{
+				kind: EmptyKind.Group,
+				start: 18,
+				end: 20,
+				variants: [[15, 17, "lg"]],
+			},
+			{
+				kind: EmptyKind.Class,
+				start: 24,
+				variants: [[21, 23, "md"]],
+			},
+			{
+				kind: EmptyKind.Group,
+				start: 72,
+				end: 75,
+				variants: [[66, 71, "focus"]],
+			},
 		])
 	}
 
-	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:  `
+	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:`
 	for (let position = 0; position < text2.length; position += 1) {
 		const result = findClasses({
 			input: text2,
-			separator: ":",
 			position,
 		})
-		expect(result.empty).toEqual([[55, 56, [[52, 54, "md"]]]])
+		expect(result.empty).toEqual([
+			{
+				kind: EmptyKind.Class,
+				start: 55,
+				variants: [[52, 54, "md"]],
+			},
+		])
 	}
 })
 

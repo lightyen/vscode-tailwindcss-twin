@@ -29,7 +29,9 @@ interface InitializationOptions {
 	validate: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
-		conflict?: "none" | "loose" | "strict"
+		conflict: "none" | "loose" | "strict"
+		emptyClass: boolean
+		emptyGroup: boolean
 	}
 }
 
@@ -64,8 +66,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	}
 	initOptions.validate = tailwindcss.get("validate")
 	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
-	initOptions.diagnostics = {}
-	initOptions.diagnostics.conflict = tailwindcss.get("diagnostics.conflict")
+	initOptions.diagnostics = tailwindcss.get("diagnostics")
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: DEFAULT_SUPPORT_LANGUAGES.map(language => ({

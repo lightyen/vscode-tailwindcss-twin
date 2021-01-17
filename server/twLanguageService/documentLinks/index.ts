@@ -73,7 +73,7 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 				})
 			}
 		}
-		for (const [, , variants] of empty) {
+		for (const { variants } of empty) {
 			for (const [a, b, value] of variants) {
 				const bg = state.classnames.getBreakingPoint(value)
 				const iv = state.classnames.isVariant(value, twin)

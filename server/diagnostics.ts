@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses, { ClassInfo } from "~/findClasses"
+import findClasses, { TwClassName, EmptyKind } from "~/findClasses"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
@@ -165,18 +165,10 @@ function validateClasses({
 	}
 
 	for (let i = 0; i < empty.length; i++) {
-		result.push({
-			source,
-			message: `miss something?`,
-			range: {
-				start: document.positionAt(offset + empty[i][0]),
-				end: document.positionAt(offset + empty[i][1]),
-			},
-			severity: DiagnosticSeverity.Warning,
-		})
-		const variants = empty[i][2].map(v => v[2])
+		const item = empty[i]
+		const variants = item.variants.map(v => v[2])
 		const searcher = state.classnames.getSearcher(variants, kind === PatternKind.Twin)
-		for (const [a, b, variant] of empty[i][2]) {
+		for (const [a, b, variant] of item.variants) {
 			if (!state.classnames.isVariant(variant, kind === PatternKind.Twin)) {
 				const ans = searcher.variants.search(variant)
 				if (ans?.length > 0) {
@@ -203,12 +195,34 @@ function validateClasses({
 				}
 			}
 		}
+
+		if (item.kind === EmptyKind.Group && diagnostics.emptyGroup) {
+			result.push({
+				source,
+				message: `forgot something?`,
+				range: {
+					start: document.positionAt(offset + item.start),
+					end: document.positionAt(offset + item.end),
+				},
+				severity: DiagnosticSeverity.Warning,
+			})
+		} else if (item.kind === EmptyKind.Class && diagnostics.emptyClass) {
+			result.push({
+				source,
+				message: `forgot something?`,
+				range: {
+					start: document.positionAt(offset + item.start),
+					end: document.positionAt(offset + item.start + 1),
+				},
+				severity: DiagnosticSeverity.Warning,
+			})
+		}
 	}
 
 	return result
 }
 
-function checkTwinClassName(info: ClassInfo, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(info: TwClassName, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	const variants = info.variants.map(v => v[2])
 	for (const [a, b, value] of info.variants) {

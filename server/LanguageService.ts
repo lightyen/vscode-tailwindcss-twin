@@ -8,6 +8,8 @@ export interface Settings {
 	fallbackDefaultConfig: boolean
 	diagnostics: {
 		conflict: "none" | "loose" | "strict"
+		emptyClass: boolean
+		emptyGroup: boolean
 	}
 }
 

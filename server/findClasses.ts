@@ -1,12 +1,28 @@
-import { Token, EmptyGroup } from "./typings"
+import { Token } from "./typings"
 
-export interface SelectionInfo {
+export enum EmptyKind {
+	Class,
+	Group,
+}
+export interface EmptyClass {
+	kind: EmptyKind.Class
+	variants: Token[]
+	start: number
+}
+
+export interface EmptyGroup {
+	kind: EmptyKind.Group
+	variants: Token[]
+	start: number
+	end: number
+}
+export interface Selection {
 	selected?: Token
 	variants: Token[]
 	important: boolean
 }
 
-export interface ClassInfo {
+export interface TwClassName {
 	token: Token
 	variants: Token[]
 	important: boolean
@@ -19,16 +35,14 @@ export interface Error {
 }
 
 export type ClassesTokenResult = {
-	classList: ClassInfo[]
-	selection: SelectionInfo
-	empty: EmptyGroup[]
+	classList: TwClassName[]
+	selection: Selection
+	empty: Array<EmptyClass | EmptyGroup>
 	error?: Error
 }
 
-const spaceReg = /\s/
-
 function trimLeft(str: string, start = 0, end = str.length) {
-	while (spaceReg.test(str[start])) {
+	while (/\s/.test(str[start])) {
 		start += 1
 	}
 	if (start > end) {
@@ -138,7 +152,7 @@ export default function findClasses({
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
-				while (spaceReg.test(input[reg.lastIndex])) {
+				while (/\s/.test(input[reg.lastIndex])) {
 					isEmpty = true
 					reg.lastIndex++
 				}
@@ -147,7 +161,11 @@ export default function findClasses({
 			}
 			if (isEmpty) {
 				const index = match.index + value.length
-				result.empty.push([index, index + 1, [...context]])
+				result.empty.push({
+					kind: EmptyKind.Class,
+					start: index,
+					variants: [...context],
+				})
 				context = [...baseContext]
 				continue
 			}
@@ -178,7 +196,12 @@ export default function findClasses({
 						separator,
 					})
 					if (innerResult.classList.length === 0) {
-						result.empty.push([reg.lastIndex, closedBracket + 1, [...context]])
+						result.empty.push({
+							kind: EmptyKind.Group,
+							start: reg.lastIndex,
+							end: closedBracket + 1,
+							variants: [...context],
+						})
 					}
 					result = merge(result, innerResult)
 					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
@@ -234,7 +257,12 @@ export default function findClasses({
 					separator,
 				})
 				if (innerResult.classList.length === 0) {
-					result.empty.push([match.index, closedBracket + 1, [...context]])
+					result.empty.push({
+						kind: EmptyKind.Group,
+						start: match.index,
+						end: closedBracket + 1,
+						variants: [...context],
+					})
 				}
 				result = merge(result, innerResult)
 				reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
