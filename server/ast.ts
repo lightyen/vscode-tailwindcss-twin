@@ -74,20 +74,42 @@ function findNode(
 				return undefined
 			}
 			return { token, kind: PatternKind.Twin }
-		} else if (id !== "css") {
-			return undefined
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
-		const token = find(source, node, ts.isNoSubstitutionTemplateLiteral, position)
-		if (token) {
-			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+		const getLiteral = (node: ts.Node) => {
+			const literal = node.getChildAt(1, source)
+			if (ts.isNoSubstitutionTemplateLiteral(literal)) {
+				return literal
+			}
+			return undefined
+		}
+
+		const id = node.getFirstToken(source).getText(source)
+
+		if (features.twTemplate && id === "tw") {
+			const token = getLiteral(node)
+			if (token) {
+				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+					return undefined
+				}
+				return { token, kind: PatternKind.Twin }
+			} else {
 				return undefined
 			}
-			const id = node.getFirstToken(source).getText(source)
-			if (features.twTemplate && id === "tw") {
-				return { token, kind: PatternKind.Twin }
-			} else if (features.themeTemplate && id === features.themeTemplate) {
+		} else if (features.themeTemplate && id === features.themeTemplate) {
+			const token = getLiteral(node)
+			if (token) {
+				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+					return undefined
+				}
 				return { token, kind: PatternKind.TwinTheme }
+			} else {
+				return undefined
+			}
+		} else {
+			const expr = find(source, node, ts.isTemplateExpression)
+			if (!expr) {
+				return undefined
 			}
 		}
 	}
@@ -107,17 +129,36 @@ function findAllNode(
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
-		} else if (id !== "css") {
-			return undefined
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
-		const token = find(source, node, ts.isNoSubstitutionTemplateLiteral)
-		if (token) {
-			const id = node.getFirstToken(source).getText(source)
-			if (features.twTemplate && id === "tw") {
-				return [{ token, kind: PatternKind.Twin }]
-			} else if (features.themeTemplate && id === features.themeTemplate) {
-				return [{ token, kind: PatternKind.TwinTheme }]
+		const getLiteral = (node: ts.Node) => {
+			const literal = node.getChildAt(1, source)
+			if (ts.isNoSubstitutionTemplateLiteral(literal)) {
+				return literal
+			}
+			return undefined
+		}
+
+		const id = node.getFirstToken(source).getText(source)
+
+		if (features.twTemplate && id === "tw") {
+			const literal = getLiteral(node)
+			if (literal) {
+				return [{ token: literal, kind: PatternKind.Twin }]
+			} else {
+				return undefined
+			}
+		} else if (features.themeTemplate && id === features.themeTemplate) {
+			const literal = getLiteral(node)
+			if (literal) {
+				return [{ token: literal, kind: PatternKind.TwinTheme }]
+			} else {
+				return undefined
+			}
+		} else {
+			const expr = find(source, node, ts.isTemplateExpression)
+			if (!expr) {
+				return undefined
 			}
 		}
 	}
