@@ -1,17 +1,14 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["esnext"],
     "strict": true,
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitThis": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "removeComments": true,
-    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "experimentalDecorators": false,
-    "sourceMap": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false
   }
 }
