@@ -26,34 +26,6 @@ const config: Configuration = {
 	cache: {
 		type: "memory",
 	},
-	module: {
-		rules: [
-			{
-				test: /\.worker\.ts$/,
-				exclude: /node_modules/,
-				use: ["worker-loader", "babel-loader", { loader: "ts-loader", options: { happyPackMode: true } }],
-			},
-			{
-				test: /\.tsx?$/,
-				exclude: /node_modules|\.test.tsx?|\.worker\.ts$/,
-				use: [
-					{ loader: "thread-loader" },
-					{ loader: "babel-loader" },
-					{
-						loader: "ts-loader",
-						options: {
-							happyPackMode: true,
-						},
-					},
-				],
-			},
-			{
-				test: /\.jsx?$/,
-				exclude: /node_modules/,
-				use: ["thread-loader", "babel-loader"],
-			},
-		],
-	},
 	plugins: [
 		new ForkTsCheckerPlugin({
 			typescript: {

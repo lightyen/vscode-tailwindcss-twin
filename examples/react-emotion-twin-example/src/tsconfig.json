@@ -1,8 +1,6 @@
 {
   "extends": "../tsconfig",
   "compilerOptions": {
-    "noImplicitAny": false,
-    "strictNullChecks": false,
     "jsx": "preserve",
     "module": "esnext",
     "moduleResolution": "node",

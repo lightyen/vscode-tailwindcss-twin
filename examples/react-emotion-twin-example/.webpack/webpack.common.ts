@@ -9,23 +9,28 @@ import HtmlWebpackPlugin from "html-webpack-plugin"
 import MiniCssExtractPlugin from "mini-css-extract-plugin"
 import WebpackBarPlugin from "webpackbar"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
+import glob from "glob"
 
 export default function (): Configuration {
+	const workspaceFolder = path.resolve(__dirname, "..")
+	const isDev = process.env.NODE_ENV !== "production"
 	const outputCSS = "css"
 	const outputJS = "js"
 	const publicPath = "/"
 
-	const workingDirectory = process.cwd()
-	const src = path.resolve(workingDirectory, "src")
-	const dist = path.resolve(workingDirectory, "build")
-	const isDevelopment = process.env.NODE_ENV === "development"
+	const src = path.resolve(workspaceFolder, "src")
+	const dist = path.resolve(workspaceFolder, "build")
 
 	const join_network = (...args: string[]) => path.join(...args).replace(path.sep, "/")
 
+	const indices = glob.sync("index.*", { cwd: src })
+
+	const entry: Configuration["entry"] = indices.map(i => path.resolve(src, i))
+
 	const styleLoader = {
-		loader: isDevelopment ? "style-loader" : MiniCssExtractPlugin.loader,
+		loader: isDev ? "style-loader" : MiniCssExtractPlugin.loader,
 		options: {
-			...(!isDevelopment && { publicPath: path.relative(path.join(publicPath, outputCSS), publicPath) }),
+			...(!isDev && { publicPath: path.relative(path.join(publicPath, outputCSS), publicPath) }),
 		},
 	}
 
@@ -43,12 +48,11 @@ export default function (): Configuration {
 				chunkFilename: join_network(outputCSS, "[name].chunk.css?[fullhash:8]"),
 			}),
 			new HtmlWebpackPlugin({
-				inject: true,
 				title: "React App",
+				inject: true,
 				minify: true,
-				template: path.join(workingDirectory, "public", "index.ejs"),
-				favicon: path.join(workingDirectory, "public", "favicon.ico"),
-				isDevelopment,
+				template: path.join(workspaceFolder, "public", "index.html"),
+				favicon: path.join(workspaceFolder, "public", "favicon.ico"),
 			}),
 		],
 		// NOTE: https://webpack.js.org/configuration/resolve/
@@ -56,9 +60,7 @@ export default function (): Configuration {
 			extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
 			plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(src, "tsconfig.json") })],
 		},
-		entry: {
-			index: path.resolve(src, "index.tsx"),
-		},
+		entry,
 		output: {
 			path: dist,
 			filename: join_network(outputJS, "[name].js?[fullhash]"),
@@ -67,6 +69,32 @@ export default function (): Configuration {
 		},
 		module: {
 			rules: [
+				{
+					test: /\.tsx?$/,
+					exclude: /node_modules|__tests?__|\.test\.tsx?$|\.worker\.ts$/,
+					use: [
+						"babel-loader",
+						{
+							loader: "ts-loader",
+							options: { context: path.join(workspaceFolder, "src"), happyPackMode: true },
+						},
+					],
+				},
+				{
+					test: /\.jsx?$/,
+					exclude: /node_modules|__tests?__|\.test\.jsx?$|\.worker\.js$/,
+					use: ["babel-loader"],
+				},
+				{
+					test: /\.worker\.ts$/,
+					exclude: /node_modules/,
+					use: ["worker-loader", "babel-loader", { loader: "ts-loader", options: { happyPackMode: true } }],
+				},
+				{
+					test: /\.worker\.js$/,
+					exclude: /node_modules/,
+					use: ["worker-loader", "babel-loader"],
+				},
 				{
 					test: /\.(png|jpe?g|gif|ico)$/i,
 					use: [

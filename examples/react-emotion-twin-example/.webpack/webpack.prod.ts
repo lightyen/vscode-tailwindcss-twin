@@ -30,35 +30,6 @@ const config: Configuration = {
 			new CssMinimizerPlugin(),
 		],
 	},
-	module: {
-		rules: [
-			{
-				test: /\.worker\.ts$/,
-				exclude: /node_modules/,
-				use: [
-					"worker-loader",
-					"babel-loader",
-					{
-						loader: "ts-loader",
-						options: { context: path.join(process.cwd(), "src"), happyPackMode: true },
-					},
-				],
-			},
-			{
-				test: /\.tsx?$/,
-				exclude: /node_modules|\.test.tsx?|\.worker\.ts$/,
-				use: [
-					"babel-loader",
-					{ loader: "ts-loader", options: { context: path.join(process.cwd(), "src"), happyPackMode: true } },
-				],
-			},
-			{
-				test: /\.jsx?$/,
-				exclude: /node_modules/,
-				use: ["babel-loader"],
-			},
-		],
-	},
 	plugins: [
 		new ForkTsCheckerPlugin({
 			typescript: {
