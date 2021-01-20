@@ -5,7 +5,7 @@ import path from "path"
 import colorDecoration from "./colorDecoration"
 import debug from "./debug"
 
-const CLIENT_ID = "Tailwind CSS IntelliSense"
+const CLIENT_ID = "Tailwind Twin IntelliSense"
 
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact"]
 

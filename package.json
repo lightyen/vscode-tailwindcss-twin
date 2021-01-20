@@ -1,7 +1,7 @@
 {
   "name": "tailwindcss-intellisense-twin",
-  "displayName": "Tailwind CSS IntelliSense",
-  "description": "Tailwind CSS Extension for twin.macro features",
+  "displayName": "Tailwind Twin IntelliSense",
+  "description": "Tailwind CSS Extension for twin.macro",
   "version": "0.3.2",
   "author": "lightyen",
   "license": "MIT",
@@ -75,7 +75,7 @@
   },
   "contributes": {
     "configuration": {
-      "title": "Tailwind CSS IntelliSense",
+      "title": "Tailwind Twin IntelliSense",
       "properties": {
         "tailwindcss.colorDecorators": {
           "type": [
