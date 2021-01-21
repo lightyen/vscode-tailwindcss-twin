@@ -48,35 +48,42 @@ export class TailwindLanguageService implements LanguageService {
 	onCompletion(params: lsp.TextDocumentPositionParams) {
 		if (!this.isReady()) return null
 		const document = this.documents.get(params.textDocument.uri)
+		// TODO: use cache
 		return completion(document, params.position, this.state, this.initOptions)
 	}
 	onCompletionResolve(item: lsp.CompletionItem) {
 		if (!this.isReady()) return null
+		// TODO: use cache
 		return completionResolve(item, this.state)
 	}
 	onHover(params: lsp.HoverParams) {
 		if (!this.isReady()) return null
+		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return hover(document, params.position, this.state, this.initOptions)
 	}
 	onDocumentLinks(params: lsp.DocumentLinkParams) {
 		if (!this.initOptions.links) return []
 		if (!this.isReady()) return []
+		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return documentLinks(document, this.state, this.initOptions)
 	}
 	validate(document: TextDocument) {
 		if (!this.initOptions.validate) return []
 		if (!this.isReady()) return []
+		// TODO: use cache
 		return validate(document, this.state, this.initOptions)
 	}
 	provideColor(document: TextDocument) {
 		if (!this.initOptions.colorDecorators) return []
 		if (!this.isReady()) return []
+		// TODO: use cache
 		return provideColor(document, this.state, this.initOptions)
 	}
 	provideSemanticTokens(params: lsp.SemanticTokensParams) {
 		if (!this.isReady()) return null
+		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return provideSemanticTokens(document, this.state, this.initOptions)
 	}
