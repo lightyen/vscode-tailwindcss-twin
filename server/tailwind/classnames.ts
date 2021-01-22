@@ -470,16 +470,12 @@ export function parseResults(
 						}
 					}
 					if (flags & Flag.DarkLightMode) {
-						if (this.isResponsive(label) || this.isDarkLightMode(twinPattern, label)) {
+						if (this.isDarkLightMode(twinPattern, label)) {
 							return false
 						}
 					}
-					if (flags & Flag.MotionControl || flags & Flag.CommonVariant) {
-						if (
-							this.isResponsive(label) ||
-							this.isDarkLightMode(twinPattern, label) ||
-							this.isMotionControl(label)
-						) {
+					if (flags & Flag.MotionControl) {
+						if (this.isMotionControl(label)) {
 							return false
 						}
 					}
