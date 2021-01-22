@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
 import parseClasses, { TwElementKind } from "./parseClasses"
 import { Tailwind } from "~/tailwind"
-import { InitOptions } from ".."
+import { InitOptions } from "~/twLanguageService"
 import * as lsp from "vscode-languageserver"
 import { findAllMatch, PatternKind } from "~/ast"
 import { Token } from "~/typings"

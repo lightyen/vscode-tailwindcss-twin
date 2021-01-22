@@ -8,6 +8,7 @@ import { documentLinks } from "./documentLinks"
 import { validate } from "~/diagnostics"
 import { provideColor } from "./colorDecoration"
 import { provideSemanticTokens } from "./semanticTokens"
+import findClasses from "~/findClasses"
 
 export interface InitOptions {
 	workspaceFolder: string
@@ -23,14 +24,18 @@ export interface InitOptions {
 	}
 }
 
+export type Cache = Record<string, Record<string, ReturnType<typeof findClasses>>>
+
 export class TailwindLanguageService implements LanguageService {
 	public state: Tailwind
 	initOptions: InitOptions
 	documents: lsp.TextDocuments<TextDocument>
+	cache: Cache
 	constructor(documents: lsp.TextDocuments<TextDocument>, initOptions: InitOptions) {
 		this.initOptions = initOptions
 		this.documents = documents
 		this.state = new Tailwind(this.initOptions)
+		this.cache = {}
 	}
 	init() {
 		if (this.isReady()) return void 0
@@ -48,38 +53,35 @@ export class TailwindLanguageService implements LanguageService {
 	onCompletion(params: lsp.TextDocumentPositionParams) {
 		if (!this.isReady()) return null
 		const document = this.documents.get(params.textDocument.uri)
-		// TODO: use cache
 		return completion(document, params.position, this.state, this.initOptions)
 	}
 	onCompletionResolve(item: lsp.CompletionItem) {
 		if (!this.isReady()) return null
-		// TODO: use cache
 		return completionResolve(item, this.state)
 	}
 	onHover(params: lsp.HoverParams) {
 		if (!this.isReady()) return null
-		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return hover(document, params.position, this.state, this.initOptions)
+	}
+	validate(document: TextDocument) {
+		const uri = document.uri.toString()
+		this.cache[uri] = null
+		this.cache[uri] = {}
+		if (!this.initOptions.validate) return []
+		if (!this.isReady()) return []
+		return validate(document, this.state, this.initOptions, this.cache)
 	}
 	onDocumentLinks(params: lsp.DocumentLinkParams) {
 		if (!this.initOptions.links) return []
 		if (!this.isReady()) return []
-		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
-		return documentLinks(document, this.state, this.initOptions)
-	}
-	validate(document: TextDocument) {
-		if (!this.initOptions.validate) return []
-		if (!this.isReady()) return []
-		// TODO: use cache
-		return validate(document, this.state, this.initOptions)
+		return documentLinks(document, this.state, this.initOptions, this.cache)
 	}
 	provideColor(document: TextDocument) {
 		if (!this.initOptions.colorDecorators) return []
 		if (!this.isReady()) return []
-		// TODO: use cache
-		return provideColor(document, this.state, this.initOptions)
+		return provideColor(document, this.state, this.initOptions, this.cache)
 	}
 	provideSemanticTokens(params: lsp.SemanticTokensParams) {
 		if (!this.isReady()) return null

@@ -3,12 +3,12 @@ import findClasses from "~/findClasses"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
-import { InitOptions } from ".."
-
+import { InitOptions, Cache } from "~/twLanguageService"
 import { findAllMatch, PatternKind } from "~/ast"
 
-export function provideColor(document: TextDocument, state: Tailwind, _: InitOptions) {
+export function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
 	const colors: ColorInformation[] = []
+	const cachedResult = cache[document.uri.toString()]
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
@@ -28,10 +28,18 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 			}
 			continue
 		}
-		const { classList } = findClasses({
-			input: value,
-			separator: state.separator,
-		})
+
+		const c = cachedResult[value]
+		if (!c) {
+			const result = findClasses({
+				input: value,
+				separator: state.separator,
+			})
+			cachedResult[value] = result
+		}
+
+		const { classList } = cachedResult[value]
+
 		for (const c of classList) {
 			if (
 				!state.classnames.isClassName(

@@ -2,7 +2,7 @@ import type { DocumentLink } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import findClasses from "~/findClasses"
 import { Tailwind } from "~/tailwind"
-import { InitOptions } from ".."
+import { Cache, InitOptions } from "~/twLanguageService"
 import docs from "./docs.yaml"
 import { findAllMatch, PatternKind } from "~/ast"
 
@@ -18,18 +18,27 @@ function lastUrlToken(url: string) {
 	return token
 }
 
-export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOptions) => {
+export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) => {
 	const links: DocumentLink[] = []
+	const cachedResult = cache[document.uri.toString()]
 	const s = new Set<number>()
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const twin = kind === PatternKind.Twin
 		const prefix = twin ? "tw." : ""
 		const [start, , value] = token
-		const { classList, empty } = findClasses({
-			input: value,
-			separator: state.separator,
-		})
+
+		const c = cachedResult[value]
+		if (!c) {
+			const result = findClasses({
+				input: value,
+				separator: state.separator,
+			})
+			cachedResult[value] = result
+		}
+
+		const { classList, empty } = cachedResult[value]
+
 		for (const c of classList) {
 			for (const [a, b, value] of c.variants) {
 				const bg = state.classnames.getBreakingPoint(value)

@@ -5,11 +5,13 @@ import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
 import { findAllMatch, PatternKind } from "~/ast"
+import { Cache } from "./twLanguageService"
 
 const source = "tailwindcss"
 
-export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions) {
+export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
+	const uri = document.uri.toString()
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
@@ -24,15 +26,19 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 				})
 			}
 		} else {
+			const c = cache[uri][value]
+			if (!c) {
+				const result = findClasses({ input: value, separator: state.separator })
+				cache[uri][value] = result
+			}
 			diagnostics.push(
 				...validateClasses({
 					document,
 					offset: start,
-					classes: value,
-					separator: state.separator,
 					kind,
 					diagnostics: initOptions.diagnostics,
 					state,
+					...cache[uri][value],
 				}),
 			)
 		}
@@ -43,21 +49,19 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 function validateClasses({
 	document,
 	offset,
-	classes,
-	separator,
 	kind,
 	state,
 	diagnostics,
+	classList,
+	empty,
+	error,
 }: {
 	document: TextDocument
 	offset: number
-	classes: string
-	separator: string
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
-}): Diagnostic[] {
-	const { classList, empty, error } = findClasses({ input: classes, separator })
+} & ReturnType<typeof findClasses>): Diagnostic[] {
 	const result: Diagnostic[] = []
 
 	if (error) {

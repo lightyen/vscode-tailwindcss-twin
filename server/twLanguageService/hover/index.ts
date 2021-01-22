@@ -6,7 +6,7 @@ import produce from "immer"
 import findClasses, { Selection } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
-import { InitOptions } from ".."
+import { InitOptions } from "~/twLanguageService"
 
 export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions) => {
 	try {
