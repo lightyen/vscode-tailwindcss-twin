@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind Twin IntelliSense",
   "description": "Tailwind CSS Extension for twin.macro",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
