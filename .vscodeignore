@@ -16,3 +16,5 @@ server/**/*
 tests/**
 .github/**
 examples
+media/icon.svg
+media/icon.xcf
