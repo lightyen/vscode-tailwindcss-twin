@@ -28,7 +28,7 @@
     "vscode": "^1.52.0"
   },
   "galleryBanner": {
-    "color": "#121b2d"
+    "color": "#ebeff5"
   },
   "icon": "media/icon.png",
   "activationEvents": [
