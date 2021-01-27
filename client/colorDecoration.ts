@@ -23,14 +23,15 @@ class ColorMap {
 			if (__backgroundColor === "transparent") {
 				options.light.borderWidth = "3px"
 				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.color = "rgb(28, 28, 28, 0.93)"
 				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
 				options.dark.borderWidth = "3px"
 				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.color = "rgba(255, 255, 255, 0.93)"
 				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
 			} else {
-				options.color = backgroundColor.luminance() < 0.3 ? "rgba(227, 227, 227, 0.9)" : "rgba(28, 28, 28, 0.9)"
+				options.color =
+					backgroundColor.luminance() < 0.3 ? "rgba(255, 255, 255, 0.93)" : "rgba(28, 28, 28, 0.93)"
 			}
 		}
 		if (__borderColor) {
@@ -41,11 +42,11 @@ class ColorMap {
 			if (__borderColor === "transparent") {
 				options.light.borderWidth = "3px"
 				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.color = "rgb(28, 28, 28, 0.93)"
 				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
 				options.dark.borderWidth = "3px"
 				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.color = "rgba(255, 255, 255, 0.93)"
 				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
 			}
 		}
@@ -55,19 +56,19 @@ class ColorMap {
 				options.color = color.css()
 				if (!options.backgroundColor) {
 					if (color.luminance() < 0.1) {
-						options.dark.backgroundColor = "rgba(227, 227, 227, 0.7)"
+						options.dark.backgroundColor = "rgba(255, 255, 255, 0.93)"
 					} else if (color.luminance() > 0.6) {
-						options.light.backgroundColor = "rgba(28, 28, 28, 0.7)"
+						options.light.backgroundColor = "rgba(28, 28, 28, 0.93)"
 					}
 				}
 			} else {
 				options.light.borderWidth = "3px"
 				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.7)"
+				options.light.color = "rgb(28, 28, 28, 0.93)"
 				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
 				options.dark.borderWidth = "3px"
 				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgb(227, 227, 227, 0.7)"
+				options.dark.color = "rgb(255, 255, 255, 0.93)"
 				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
 			}
 		}
