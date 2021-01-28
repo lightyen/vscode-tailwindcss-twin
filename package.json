@@ -15,14 +15,21 @@
     "url": "https://github.com/lightyen/vscode-tailwindcss-twin.git"
   },
   "publisher": "lightyen",
-  "categories": [],
+  "categories": [
+    "Programming Languages"
+  ],
   "keywords": [
     "tailwind",
     "tailwindcss",
-    "intellisense",
     "autocomplete",
+    "intellisense",
     "twin",
-    "vscode"
+    "twin.macro",
+    "css-in-js",
+    "react",
+    "babel-macro",
+    "javascript",
+    "typescript"
   ],
   "engines": {
     "vscode": "^1.52.0"
