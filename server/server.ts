@@ -33,6 +33,7 @@ class Server {
 	hasDiagnosticRelatedInformationCapability = false
 	/** uri */
 	configs: string[]
+	defaultConfigUri: string
 	/** uri */
 	workspaceFolder: string
 	settings: Settings
@@ -55,13 +56,15 @@ class Server {
 			const { configs, workspaceFolder, ...settings } = params.initializationOptions as InitializationOptions
 			this.configs = configs
 			this.workspaceFolder = workspaceFolder
+			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
 			this.settings = settings
 			progress.begin("Initializing Tailwind CSS features")
 			for (const configUri of configs) {
 				this.addService(configUri, workspaceFolder, settings)
 			}
 			if (configs.length === 0) {
-				this.addService(path.join(workspaceFolder, "tailwind.config.js"), workspaceFolder, settings)
+				console.log("add default service...")
+				this.addService(this.defaultConfigUri, workspaceFolder, settings)
 			}
 			documents.all().forEach(document => {
 				matchService(document.uri, this.services)?.init()
@@ -114,7 +117,7 @@ class Server {
 
 		// when changed tailwind.config.js
 		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			console.log(`some changes were detected`)
+			console.log(`[some changes were detected]`)
 			for (const change of changes) {
 				switch (change.type) {
 					case FileChangeType.Created:
@@ -217,10 +220,17 @@ class Server {
 	}
 
 	private addService(configUri: string, workspaceFolder: string, settings: Settings) {
+		if (configUri === this.defaultConfigUri) {
+			const srv = this.services.get(configUri)
+			if (srv) {
+				console.log("remove default service...")
+				this.services.delete(configUri)
+			}
+		}
 		if (!this.services.has(configUri)) {
 			try {
 				const configPath = URI.parse(configUri).fsPath
-				console.log("process:", configPath)
+				console.log("add:", configPath)
 				const srv = new TailwindLanguageService(this.documents, {
 					...settings,
 					workspaceFolder: URI.parse(workspaceFolder).fsPath,
@@ -240,6 +250,22 @@ class Server {
 		if (srv) {
 			this.services.delete(configUri)
 			console.log("remove:", URI.parse(configUri).fsPath)
+		}
+		if (this.services.size === 0) {
+			console.log("add default service...")
+			try {
+				const configPath = URI.parse(this.defaultConfigUri).fsPath
+				const srv = new TailwindLanguageService(this.documents, {
+					...this.settings,
+					workspaceFolder: URI.parse(this.workspaceFolder).fsPath,
+					configPath,
+				})
+				this.services.set(configUri, srv)
+				if (srv.state) {
+					console.log(`userConfig = ${srv.state.hasConfig}`)
+					console.log(`distConfig = ${srv.state.distConfigPath}`)
+				}
+			} catch {}
 		}
 	}
 

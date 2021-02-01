@@ -138,34 +138,14 @@ export class Tailwind {
 		const result: { configPath?: string; config?: TailwindConfigJS } = {}
 		let err: Error
 		try {
-			const _configPath = TModule.resolve({
-				base: path.dirname(configPath),
-				moduleId: "./" + path.basename(configPath),
-				silent: false,
-			})
-			if (path.resolve(configPath) === _configPath) {
-				result.config = TModule.require({
-					base: path.dirname(configPath),
-					moduleId: "./" + path.basename(configPath),
-					silent: false,
-				})
-				result.configPath = _configPath
-			}
+			// FIXME: clear cache failed at their deps, need to reload
+			delete __non_webpack_require__.cache[__non_webpack_require__.resolve(configPath)]
+			result.config = __non_webpack_require__(configPath)
+			result.configPath = configPath
 		} catch (error) {
 			err = error
 		}
-		try {
-			if (!result.config) {
-				const _configPath = path.resolve(configPath)
-				const str = readFileSync(_configPath, { encoding: "utf-8" })
-				const config = eval(str)
-				result.configPath = _configPath
-				result.config = config
-			}
-		} catch (error) {
-			err = error
-		}
-		if (err instanceof Error) console.log("[Error] resolving config:\n", err)
+		if (err instanceof Error) console.log(err)
 		return result
 	}
 
