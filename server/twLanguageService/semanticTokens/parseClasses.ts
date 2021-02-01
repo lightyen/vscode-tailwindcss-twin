@@ -5,9 +5,10 @@ export enum TwElementKind {
 	Class,
 	Group,
 	Empty,
+	CssProperty,
 }
 
-type Block = TwUnknownElement | TwEmptyElement | TwGroupElement | TwClassElement
+type Block = TwUnknownElement | TwEmptyElement | TwGroupElement | TwClassElement | TwCssPropertyElement
 
 type Index = number
 
@@ -38,6 +39,13 @@ interface TwClassElement {
 	important?: Index
 }
 
+interface TwCssPropertyElement {
+	kind: TwElementKind.CssProperty
+	variants: Token[]
+	value: Token
+	important?: Index
+}
+
 function createBlock(): Block {
 	return {
 		kind: TwElementKind.Unknown,
@@ -55,12 +63,22 @@ function trimLeft(str: string, start = 0, end = str.length) {
 	return [start, end]
 }
 
-function findRightBracket({ input, start, end }: { input: string; start: number; end: number }): number {
+function findRightBracket({
+	input,
+	start,
+	end,
+	brackets = ["(", ")"],
+}: {
+	input: string
+	start: number
+	end: number
+	brackets?: [string, string]
+}): number {
 	let stack = 0
 	for (let i = start; i < end; i++) {
-		if (input[i] === "(") {
+		if (input[i] === brackets[0]) {
 			stack += 1
-		} else if (input[i] === ")") {
+		} else if (input[i] === brackets[1]) {
 			if (stack === 0) {
 				return undefined
 			}
@@ -80,7 +98,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+):|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = /([\w-]+):|(\w+\[)|([\w-./]+!?)|\(|(\S+)/g
 
 	const result: Block[] = []
 	let node = createBlock()
@@ -90,7 +108,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 	input = input.slice(0, end)
 	let context: Token[] = []
 	while ((match = reg.exec(input))) {
-		const [value, variant, className, weird] = match
+		const [value, variant, cssProperty, className, weird] = match
 		if (variant) {
 			const variantToken: Token = [match.index, reg.lastIndex - 1, variant]
 
@@ -140,6 +158,25 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
 				}
 				context = []
+			}
+		} else if (cssProperty) {
+			node.kind = TwElementKind.CssProperty
+			if (node.kind === TwElementKind.CssProperty) {
+				const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
+				if (typeof closedBracket !== "number") {
+					return result
+				}
+				const token: Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
+				const important = input[closedBracket + 1] === "!"
+				if (important) {
+					node.important = closedBracket + 1
+				}
+				node.variants = context
+				node.value = token
+				result.push(node)
+				node = createBlock()
+				context = []
+				reg.lastIndex = closedBracket + (important ? 2 : 1)
 			}
 		} else if (className) {
 			node.kind = TwElementKind.Class

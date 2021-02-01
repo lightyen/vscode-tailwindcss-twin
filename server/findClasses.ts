@@ -20,6 +20,7 @@ export interface Selection {
 	selected?: Token
 	variants: Token[]
 	important: boolean
+	cssProperty: boolean
 }
 
 export interface TwClassName {
@@ -51,12 +52,22 @@ function trimLeft(str: string, start = 0, end = str.length) {
 	return [start, end]
 }
 
-function findRightBracket({ input, start, end }: { input: string; start: number; end: number }): number {
+function findRightBracket({
+	input,
+	start,
+	end,
+	brackets = ["(", ")"],
+}: {
+	input: string
+	start: number
+	end: number
+	brackets?: [string, string]
+}): number {
 	let stack = 0
 	for (let i = start; i < end; i++) {
-		if (input[i] === "(") {
+		if (input[i] === brackets[0]) {
 			stack += 1
-		} else if (input[i] === ")") {
+		} else if (input[i] === brackets[1]) {
 			if (stack === 0) {
 				return undefined
 			}
@@ -73,7 +84,7 @@ function zero(): ClassesTokenResult {
 	return {
 		classList: [],
 		empty: [],
-		selection: { selected: null, important: false, variants: [] },
+		selection: { selected: null, important: false, variants: [], cssProperty: false },
 	}
 }
 
@@ -93,6 +104,7 @@ function merge(a: ClassesTokenResult, b: ClassesTokenResult): ClassesTokenResult
 			important: false,
 			selected: null,
 			variants: [...a.selection.variants, ...b.selection.variants],
+			cssProperty: false,
 		}
 	}
 	return returnValue
@@ -129,7 +141,7 @@ export default function findClasses({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = new RegExp(`([\\w-]+)${separator}|(\\w+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
 
 	let result: ClassesTokenResult = zero()
 	let match: RegExpExecArray
@@ -138,7 +150,7 @@ export default function findClasses({
 	input = input.slice(0, end)
 	const baseContext = [...context]
 	while ((match = reg.exec(input))) {
-		const [value, variant, className, weird] = match
+		const [value, variant, cssProperty, className, weird] = match
 		if (variant) {
 			const variantToken: Token = [match.index, reg.lastIndex - 1, variant]
 			if (position >= variantToken[0] && position < variantToken[1]) {
@@ -207,6 +219,27 @@ export default function findClasses({
 					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
 				}
 				context = [...baseContext]
+			}
+		} else if (cssProperty) {
+			const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
+			if (typeof closedBracket !== "number") {
+				result.error = {
+					message: `except to find a ']' to match the '['`,
+					start: reg.lastIndex - 1,
+					end,
+				}
+				return result
+			} else {
+				const important = input[closedBracket + 1] === "!"
+				const token: Token = [match.index, closedBracket + 1, value]
+				if (position >= match.index && position < closedBracket + 1) {
+					result.selection.cssProperty = true
+					result.selection.important = important || importantContext
+					result.selection.variants = [...context]
+					result.selection.selected = token
+				}
+				reg.lastIndex = closedBracket + (important ? 2 : 1)
+				context = baseContext
 			}
 		} else if (className) {
 			const token: Token = [match.index, reg.lastIndex, value]

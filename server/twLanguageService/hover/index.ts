@@ -8,7 +8,7 @@ import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from "~/twLanguageService"
 
-export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions) => {
+export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions): lsp.Hover => {
 	try {
 		const result = canMatch(document, position, true)
 		if (!result) {
@@ -24,6 +24,15 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		})
 		if (!classes.selection.selected) {
 			return null
+		}
+		if (classes.selection.cssProperty) {
+			return {
+				range: {
+					start: document.positionAt(token[0] + classes.selection.selected[0]),
+					end: document.positionAt(token[0] + classes.selection.selected[1]),
+				},
+				contents: "cssProperty",
+			}
 		}
 		if (kind === PatternKind.TwinTheme) {
 			const value = state.getTheme(token[2].split("."))

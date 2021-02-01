@@ -9,6 +9,7 @@ export type Language = "javascript" | "javascriptreact" | "typescript" | "typesc
 export enum PatternKind {
 	Twin = 1,
 	TwinTheme = 2,
+	TwinCssProerty = 3,
 }
 
 interface Features {
@@ -85,7 +86,7 @@ function findNode(
 		}
 
 		const id = node.getFirstToken(source).getText(source)
-
+		// TODO: handle 'cs' prop
 		if (features.twTemplate && id === "tw") {
 			const token = getLiteral(node)
 			if (token) {

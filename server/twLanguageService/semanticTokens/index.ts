@@ -87,6 +87,9 @@ function renderClasses(
 					builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
 				}
 			}
+		} else if (node.kind === TwElementKind.CssProperty) {
+			const pos = getPosition(node.value[0])
+			builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
 		} else if (node.kind === TwElementKind.Group && node.children.length > 0) {
 			renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
 				...context,
@@ -99,7 +102,11 @@ function renderClasses(
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
 		}
 
-		if (node.kind === TwElementKind.Group || node.kind === TwElementKind.Class) {
+		if (
+			node.kind === TwElementKind.Group ||
+			node.kind === TwElementKind.Class ||
+			node.kind === TwElementKind.CssProperty
+		) {
 			if (typeof node.important === "number") {
 				const pos = getPosition(node.important)
 				builder.push(pos.line, pos.character, 1, SemanticKind.function, 0)

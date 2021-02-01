@@ -27,7 +27,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	const results: string[] = []
 	classes = classes.slice(start, end).trim()
 
-	const reg = /([\w-]+:)|(\w+\[)|([\w-./]+!?)|\(|(\S+)/g
+	const reg = /([\w-]+:)|(\w+)\[|([\w-./]+!?)|\(|(\S+)/g
 	let match: RegExpExecArray
 	const baseContext = context
 	while ((match = reg.exec(classes))) {
@@ -60,7 +60,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 				context = baseContext
 			}
 		} else if (cssProperty) {
-			const closeBracket = findRightBracket(classes, match.index, classes.length, ["[", "]"])
+			const closeBracket = findRightBracket(classes, reg.lastIndex - 1, classes.length, ["[", "]"])
 			if (typeof closeBracket !== "number") {
 				throw `"${classes}" except to find a ']' to match the '['`
 			}

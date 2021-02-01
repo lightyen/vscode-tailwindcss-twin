@@ -72,6 +72,10 @@ function classesCompletion(
 		return { isIncomplete: false, items: [] }
 	}
 
+	if (selection.cssProperty) {
+		return { isIncomplete: false, items: [] }
+	}
+
 	const twin = kind === PatternKind.Twin
 	const variants = selection.variants.map(([, , v]) => v)
 	if (!variants.every(v => state.classnames.isVariant(v, twin))) {
