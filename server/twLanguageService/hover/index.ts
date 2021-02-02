@@ -7,6 +7,7 @@ import findClasses, { Selection, TokenKind } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from "~/twLanguageService"
+import camel2kebab from "~/camel2kebab"
 
 export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions): lsp.Hover => {
 	try {
@@ -26,8 +27,9 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			return null
 		}
 		if (classes.selection.kind === TokenKind.CssProperty) {
-			const key = classes.selection.key[2].replace(/\B[A-Z][a-z]+/g, value => "-" + value.toLowerCase())
+			const key = classes.selection.key[2]
 			const value = classes.selection.value[2]
+			const important = classes.selection.important
 			return {
 				range: {
 					start: document.positionAt(token[0] + classes.selection.selected[0]),
@@ -35,7 +37,13 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 				},
 				contents: {
 					kind: lsp.MarkupKind.Markdown,
-					value: ["```scss", "& {", `\t${key}: ${value};`, "}", "```"].join("\n"),
+					value: [
+						"```scss",
+						"& {",
+						`\t${camel2kebab(key)}: ${value}${important ? " !important" : ""};`,
+						"}",
+						"```",
+					].join("\n"),
 				},
 			}
 		}
