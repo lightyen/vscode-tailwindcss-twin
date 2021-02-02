@@ -178,7 +178,7 @@ export default function findClasses({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|(\\w+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-]+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
 
 	let result: ClassesTokenResult = zero()
 	let match: RegExpExecArray
@@ -269,7 +269,7 @@ export default function findClasses({
 				return result
 			} else {
 				const important = input[closedBracket + 1] === "!"
-				const token: Token = [match.index, closedBracket + 1, value]
+				const token: Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
 				result.classList.push({
 					kind: TokenKind.CssProperty,
 					variants: [...context],

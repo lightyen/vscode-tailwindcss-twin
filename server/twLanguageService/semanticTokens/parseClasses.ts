@@ -98,7 +98,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /([\w-]+):|(\w+\[)|([\w-./]+!?)|\(|(\S+)/g
+	const reg = /([\w-]+):|([\w-]+\[)|([\w-./]+!?)|\(|(\S+)/g
 
 	const result: Block[] = []
 	let node = createBlock()
