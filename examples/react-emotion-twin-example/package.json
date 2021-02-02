@@ -71,6 +71,6 @@
     "babel-plugin-macros": "3.0.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
-    "twin.macro": "2.0.8"
+    "twin.macro": "2.2.0"
   }
 }

@@ -1,6 +1,6 @@
 import type { Postcss, Plugin } from "postcss"
 import path from "path"
-import { TModule } from "./module"
+import { TModule } from "~/module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
 
@@ -35,12 +35,6 @@ interface TailwindConfigJS {
 	// ...
 }
 
-console.log(
-	"tailwindcss version:",
-	TModule.require({ moduleId: "tailwindcss/package.json", removeCache: false }).version,
-)
-console.log("postcss version:", TModule.require({ moduleId: "postcss/package.json", removeCache: false }).version)
-
 export class Tailwind {
 	constructor(options: Partial<InitParams & Settings>) {
 		this.load(options)
@@ -52,7 +46,9 @@ export class Tailwind {
 		configPath = configPath || ""
 		const isAbs = configPath && path.isAbsolute(configPath)
 		configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
+
 		this.lookup(path.dirname(configPath))
+
 		this.fallbackDefaultConfig = fallbackDefaultConfig
 		this.hasConfig = false
 		let result: ReturnType<Tailwind["findConfig"]> = {}

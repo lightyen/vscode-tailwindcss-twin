@@ -4,7 +4,7 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
-import findClasses from "~/findClasses"
+import findClasses, { TokenKind } from "~/findClasses"
 import type { Token } from "~/typings"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
@@ -69,6 +69,10 @@ function classesCompletion(
 	})
 
 	if (selection.selected?.[2] === state.separator) {
+		return { isIncomplete: false, items: [] }
+	}
+
+	if (selection.kind === TokenKind.CssProperty) {
 		return { isIncomplete: false, items: [] }
 	}
 

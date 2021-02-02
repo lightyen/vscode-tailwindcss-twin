@@ -7,6 +7,7 @@ import { FileChangeType } from "vscode-languageserver/node"
 import path from "path"
 import { deepStrictEqual } from "assert"
 import { Settings } from "./LanguageService"
+import { TModule } from "~/module"
 
 interface InitializationOptions extends Settings {
 	/** uri */
@@ -59,6 +60,10 @@ class Server {
 			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
 			this.settings = settings
 			progress.begin("Initializing Tailwind CSS features")
+
+			console.log("tailwindcss version:", TModule.require({ moduleId: "tailwindcss/package.json" }).version)
+			console.log("postcss version:", TModule.require({ moduleId: "postcss/package.json" }).version)
+
 			for (const configUri of configs) {
 				this.addService(configUri, workspaceFolder, settings)
 			}
