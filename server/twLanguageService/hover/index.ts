@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
-import findClasses, { Selection } from "~/findClasses"
+import findClasses, { Selection, TokenKind } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from "~/twLanguageService"
@@ -25,13 +25,18 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		if (!classes.selection.selected) {
 			return null
 		}
-		if (classes.selection.cssProperty) {
+		if (classes.selection.kind === TokenKind.CssProperty) {
+			const key = classes.selection.key[2].replace(/\B[A-Z][a-z]+/g, value => "-" + value.toLowerCase())
+			const value = classes.selection.value[2]
 			return {
 				range: {
 					start: document.positionAt(token[0] + classes.selection.selected[0]),
 					end: document.positionAt(token[0] + classes.selection.selected[1]),
 				},
-				contents: "cssProperty",
+				contents: {
+					kind: lsp.MarkupKind.Markdown,
+					value: ["```scss", "& {", `\t${key}: ${value};`, "}", "```"].join("\n"),
+				},
 			}
 		}
 		if (kind === PatternKind.TwinTheme) {
@@ -79,6 +84,11 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			}
 			return null
 		} else {
+			if (kind === PatternKind.TwinCssProperty) {
+				if (classes.selection.kind === TokenKind.Unknown || classes.selection.kind === TokenKind.Classname) {
+					return null
+				}
+			}
 			return {
 				range: {
 					start: document.positionAt(token[0] + classes.selection.selected[0]),
@@ -93,8 +103,8 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 		}
 	} catch (err) {
 		console.log(serializeError(err))
-		return null
 	}
+	return null
 }
 
 export default hover
@@ -111,7 +121,7 @@ function getHoverContents({
 	const { selected, important, variants } = selection
 	const [, , value] = selected
 
-	const twin = kind === PatternKind.Twin
+	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const inputVariants = variants.map(([, , v]) => v)
 	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))

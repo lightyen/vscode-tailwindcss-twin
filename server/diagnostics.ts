@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses, { TwClassName, EmptyKind } from "~/findClasses"
+import findClasses, { TwClassName, EmptyKind, TokenKind } from "~/findClasses"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
 import type { Token } from "./typings"
@@ -25,7 +25,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 					severity: DiagnosticSeverity.Error,
 				})
 			}
-		} else {
+		} else if (kind === PatternKind.Twin) {
 			const c = cache[uri][value]
 			if (!c) {
 				const result = findClasses({ input: value, separator: state.separator })
@@ -41,6 +41,8 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 					...cache[uri][value],
 				}),
 			)
+		} else if (kind === PatternKind.TwinCssProperty) {
+			// TODO: validate cssProperty
 		}
 	}
 	return diagnostics
@@ -78,7 +80,9 @@ function validateClasses({
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
-			result.push(...checkTwinClassName(c, document, offset, state))
+			if (c.kind === TokenKind.Classname) {
+				result.push(...checkTwinClassName(c, document, offset, state))
+			}
 		})
 	}
 
@@ -210,7 +214,7 @@ function validateClasses({
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
-		} else if (item.kind === EmptyKind.Class && diagnostics.emptyClass) {
+		} else if (item.kind === EmptyKind.Classname && diagnostics.emptyClass) {
 			result.push({
 				source,
 				message: `forgot something?`,

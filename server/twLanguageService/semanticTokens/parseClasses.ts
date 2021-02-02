@@ -8,7 +8,7 @@ export enum TwElementKind {
 	CssProperty,
 }
 
-type Block = TwUnknownElement | TwEmptyElement | TwGroupElement | TwClassElement | TwCssPropertyElement
+export type Block = TwUnknownElement | TwEmptyElement | TwGroupElement | TwClassElement | TwCssPropertyElement
 
 type Index = number
 

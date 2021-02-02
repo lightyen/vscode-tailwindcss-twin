@@ -1,6 +1,6 @@
 import type { DocumentLink } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses from "~/findClasses"
+import findClasses, { TokenKind } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { Cache, InitOptions } from "~/twLanguageService"
 import docs from "./docs.yaml"
@@ -24,7 +24,7 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 	const s = new Set<number>()
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
-		const twin = kind === PatternKind.Twin
+		const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 		const prefix = twin ? "tw." : ""
 		const [start, , value] = token
 
@@ -41,10 +41,10 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 
 		for (const c of classList) {
 			for (const [a, b, value] of c.variants) {
-				const bg = state.classnames.getBreakingPoint(value)
+				const bp = state.classnames.getBreakingPoint(value)
 				const iv = state.classnames.isVariant(value, twin)
-				if (!bg && !iv) continue
-				const target = docs[bg ? value : prefix + value]
+				if (!bp && !iv) continue
+				const target = docs[bp ? value : prefix + value]
 				if (target && !s.has(start + a)) {
 					links.push({
 						target,
@@ -56,6 +56,12 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 					})
 					s.add(start + a)
 				}
+			}
+			if (c.kind !== TokenKind.Classname) {
+				continue
+			}
+			if (kind === PatternKind.TwinCssProperty) {
+				continue
 			}
 			const value = c.token[2]
 			if (

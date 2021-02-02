@@ -1,4 +1,4 @@
-import findClasses, { EmptyKind, toClassNames } from "./findClasses"
+import findClasses, { EmptyKind, toClassNames, TokenKind } from "./findClasses"
 
 test("seprate", async () => {
 	const input = "  text-gray-100! md:dark:(hover:(text-gray-500 bg-white!)) lg:(light:bg-black) "
@@ -23,6 +23,7 @@ test("findClasses", async () => {
 				token: [0, 13, "text-gray-100"],
 				variants: [],
 				important: true,
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [31, 44, "text-gray-500"],
@@ -32,6 +33,7 @@ test("findClasses", async () => {
 					[18, 22, "dark"],
 					[24, 29, "hover"],
 				],
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [45, 53, "bg-white"],
@@ -41,6 +43,7 @@ test("findClasses", async () => {
 					[18, 22, "dark"],
 					[24, 29, "hover"],
 				],
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [66, 74, "bg-black"],
@@ -49,21 +52,25 @@ test("findClasses", async () => {
 					[60, 65, "light"],
 				],
 				important: false,
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [78, 82, "flex"],
 				variants: [],
 				important: false,
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [83, 94, "text-center"],
 				variants: [],
 				important: false,
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [96, 100, ")))!"],
 				variants: [],
 				important: false,
+				kind: TokenKind.Unknown,
 			},
 		])
 	}
@@ -85,6 +92,7 @@ test("findClasses Selected", async () => {
 			[22, 26, "dark"],
 			[28, 33, "hover"],
 		],
+		kind: TokenKind.Classname,
 	})
 	expect(
 		findClasses({
@@ -96,6 +104,7 @@ test("findClasses Selected", async () => {
 		important: false,
 		selected: null,
 		variants: [[80, 86, "before"]],
+		kind: TokenKind.Unknown,
 	})
 })
 
@@ -114,7 +123,7 @@ test("findClasses Empty", async () => {
 				variants: [[15, 17, "lg"]],
 			},
 			{
-				kind: EmptyKind.Class,
+				kind: EmptyKind.Classname,
 				start: 24,
 				variants: [[21, 23, "md"]],
 			},
@@ -135,7 +144,7 @@ test("findClasses Empty", async () => {
 		})
 		expect(result.empty).toEqual([
 			{
-				kind: EmptyKind.Class,
+				kind: EmptyKind.Classname,
 				start: 55,
 				variants: [[52, 54, "md"]],
 			},
@@ -155,12 +164,14 @@ test("findClasses Important", async () => {
 			selected: [37, 50, "bg-purple-500"],
 			important: true,
 			variants: [[33, 35, "lg"]],
+			kind: TokenKind.Classname,
 		})
 		expect(result.classList).toEqual([
 			{
 				token: [0, 13, "text-gray-100"],
 				important: true,
 				variants: [],
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [23, 31, "bg-black"],
@@ -169,16 +180,19 @@ test("findClasses Important", async () => {
 					[15, 17, "md"],
 					[18, 22, "dark"],
 				],
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [37, 50, "bg-purple-500"],
 				important: true,
 				variants: [[33, 35, "lg"]],
+				kind: TokenKind.Classname,
 			},
 			{
 				token: [61, 68, "content"],
 				important: false,
 				variants: [[53, 59, "before"]],
+				kind: TokenKind.Classname,
 			},
 		])
 	}

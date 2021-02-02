@@ -9,7 +9,7 @@ export type Language = "javascript" | "javascriptreact" | "typescript" | "typesc
 export enum PatternKind {
 	Twin = 1,
 	TwinTheme = 2,
-	TwinCssProerty = 3,
+	TwinCssProperty = 3,
 }
 
 interface Features {
@@ -75,6 +75,15 @@ function findNode(
 				return undefined
 			}
 			return { token, kind: PatternKind.Twin }
+		} else if (features.twProp && id === "cs") {
+			const token = find(source, node, ts.isStringLiteral, position)
+			if (!token) {
+				return undefined
+			}
+			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				return undefined
+			}
+			return { token, kind: PatternKind.TwinCssProperty }
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {
@@ -86,7 +95,6 @@ function findNode(
 		}
 
 		const id = node.getFirstToken(source).getText(source)
-		// TODO: handle 'cs' prop
 		if (features.twTemplate && id === "tw") {
 			const token = getLiteral(node)
 			if (token) {
@@ -130,6 +138,12 @@ function findAllNode(
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
+		} else if (features.twProp && id === "cs") {
+			const token = find(source, node, ts.isStringLiteral)
+			if (!token) {
+				return undefined
+			}
+			return [{ token, kind: PatternKind.TwinCssProperty }]
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {

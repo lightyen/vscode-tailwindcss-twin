@@ -1,5 +1,5 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import parseClasses, { TwElementKind } from "./parseClasses"
+import parseClasses, { TwElementKind, Block } from "./parseClasses"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from "~/twLanguageService"
 import * as lsp from "vscode-languageserver"
@@ -25,14 +25,6 @@ export function provideSemanticTokens(
 	const builder = new lsp.SemanticTokensBuilder()
 	const tokens = findAllMatch(document)
 
-	const canRender = (value: string) => {
-		if (!colorDecorators) return true
-		const color = state.classnames.getColorInfo(value)
-		if (!color) return true
-		if (!color.backgroundColor && !color.color) return true
-		return false
-	}
-
 	for (const { token, kind } of tokens) {
 		const [start, , value] = token
 		if (kind === PatternKind.TwinTheme) {
@@ -42,19 +34,34 @@ export function provideSemanticTokens(
 		const isValidClass = (variants: string[], value: string) =>
 			state.classnames.isClassName(variants, kind === PatternKind.Twin, value)
 
-		const isValidVariant = (variant: string) => state.classnames.isVariant(variant, kind === PatternKind.Twin)
+		const isValidVariant = (variant: string) =>
+			state.classnames.isVariant(variant, kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty)
 
 		const getPosition = (offset: number) => document.positionAt(start + offset)
 
-		renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, parseClasses(value))
+		const canRender = (node: Block) => {
+			if (kind === PatternKind.TwinCssProperty) {
+				return true
+			}
+			if (!colorDecorators) return true
+			if (node.kind === TwElementKind.Class) {
+				const color = state.classnames.getColorInfo(node.value[2])
+				if (!color) return true
+				if (!color.backgroundColor && !color.color) return true
+			}
+			return false
+		}
+
+		renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, parseClasses(value))
 	}
 	return builder.build()
 }
 
 function renderClasses(
+	kind: PatternKind,
 	isValidClass: (variants: string[], value: string) => boolean,
 	isValidVariant: (variant: string) => boolean,
-	canRender: (value: string) => boolean,
+	canRender: (node: Block) => boolean,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
 	blocks: ReturnType<typeof parseClasses>,
@@ -77,12 +84,13 @@ function renderClasses(
 
 		if (node.kind === TwElementKind.Class) {
 			if (
+				kind === PatternKind.Twin &&
 				isValidClass(
 					[...context, ...node.variants].map(v => v[2]),
 					node.value[2],
 				)
 			) {
-				if (canRender(node.value[2])) {
+				if (canRender(node)) {
 					const pos = getPosition(node.value[0])
 					builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
 				}
@@ -91,7 +99,7 @@ function renderClasses(
 			const pos = getPosition(node.value[0])
 			builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
 		} else if (node.kind === TwElementKind.Group && node.children.length > 0) {
-			renderClasses(isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
+			renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
 				...context,
 				...node.variants,
 			])

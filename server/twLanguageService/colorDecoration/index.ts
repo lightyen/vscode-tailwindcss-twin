@@ -1,5 +1,5 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses from "~/findClasses"
+import findClasses, { TokenKind } from "~/findClasses"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
@@ -15,6 +15,7 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 		const twin = kind === PatternKind.Twin
 		const a = document.positionAt(start)
 		const b = document.positionAt(end)
+
 		if (kind === PatternKind.TwinTheme) {
 			const color = getThemeDecoration(value, state)
 			if (color) {
@@ -26,6 +27,10 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 					backgroundColor: color,
 				})
 			}
+			continue
+		}
+
+		if (kind === PatternKind.TwinCssProperty) {
 			continue
 		}
 
@@ -41,6 +46,9 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 		const { classList } = cachedResult[value]
 
 		for (const c of classList) {
+			if (c.kind !== TokenKind.Classname) {
+				continue
+			}
 			if (
 				!state.classnames.isClassName(
 					c.variants.map(v => v[2]),

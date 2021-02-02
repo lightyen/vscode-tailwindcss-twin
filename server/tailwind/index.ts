@@ -3,7 +3,6 @@ import path from "path"
 import { TModule } from "./module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
-import { readFileSync } from "fs"
 
 interface InitParams {
 	workspaceFolder: string

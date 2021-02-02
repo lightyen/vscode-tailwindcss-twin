@@ -72,11 +72,7 @@ function classesCompletion(
 		return { isIncomplete: false, items: [] }
 	}
 
-	if (selection.cssProperty) {
-		return { isIncomplete: false, items: [] }
-	}
-
-	const twin = kind === PatternKind.Twin
+	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const variants = selection.variants.map(([, , v]) => v)
 	if (!variants.every(v => state.classnames.isVariant(v, twin))) {
 		return { isIncomplete: false, items: [] }
@@ -116,6 +112,13 @@ function classesCompletion(
 		.map(item => ({ ...item, label: item.label + state.separator }))
 
 	// --------------------------------- //
+
+	if (kind === PatternKind.TwinCssProperty) {
+		return {
+			isIncomplete: false,
+			items: [...variantItems],
+		}
+	}
 
 	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
 	const classesItems = Object.entries(state.classnames.getClassNames(variants, twin))

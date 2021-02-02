@@ -1,11 +1,19 @@
 import { Token } from "./typings"
 
 export enum EmptyKind {
-	Class,
+	Classname,
 	Group,
 }
+
+export enum TokenKind {
+	Unknown,
+	Variant,
+	Classname,
+	CssProperty,
+}
+
 export interface EmptyClass {
-	kind: EmptyKind.Class
+	kind: EmptyKind.Classname
 	variants: Token[]
 	start: number
 }
@@ -16,18 +24,47 @@ export interface EmptyGroup {
 	start: number
 	end: number
 }
-export interface Selection {
-	selected?: Token
-	variants: Token[]
-	important: boolean
-	cssProperty: boolean
-}
 
-export interface TwClassName {
+export interface TwUnknown {
+	kind: TokenKind.Unknown
 	token: Token
 	variants: Token[]
 	important: boolean
 }
+
+export interface TwClassName {
+	kind: TokenKind.Classname
+	token: Token
+	variants: Token[]
+	important: boolean
+}
+
+export interface TwCssProperty {
+	kind: TokenKind.CssProperty
+	token: Token
+	key: Token
+	value: Token
+	variants: Token[]
+	important: boolean
+}
+
+interface SelectionBase {
+	selected?: Token
+	variants: Token[]
+	important: boolean
+}
+
+interface SelectionNormal extends SelectionBase {
+	kind: TokenKind.Unknown | TokenKind.Variant | TokenKind.Classname
+}
+
+interface SelectionCssProperty extends SelectionBase {
+	kind: TokenKind.CssProperty
+	key: Token
+	value: Token
+}
+
+export type Selection = SelectionNormal | SelectionCssProperty
 
 export interface Error {
 	message: string
@@ -36,7 +73,7 @@ export interface Error {
 }
 
 export type ClassesTokenResult = {
-	classList: TwClassName[]
+	classList: Array<TwUnknown | TwClassName | TwCssProperty>
 	selection: Selection
 	empty: Array<EmptyClass | EmptyGroup>
 	error?: Error
@@ -84,7 +121,7 @@ function zero(): ClassesTokenResult {
 	return {
 		classList: [],
 		empty: [],
-		selection: { selected: null, important: false, variants: [], cssProperty: false },
+		selection: { selected: null, important: false, variants: [], kind: TokenKind.Unknown },
 	}
 }
 
@@ -104,7 +141,7 @@ function merge(a: ClassesTokenResult, b: ClassesTokenResult): ClassesTokenResult
 			important: false,
 			selected: null,
 			variants: [...a.selection.variants, ...b.selection.variants],
-			cssProperty: false,
+			kind: TokenKind.Unknown,
 		}
 	}
 	return returnValue
@@ -154,6 +191,7 @@ export default function findClasses({
 		if (variant) {
 			const variantToken: Token = [match.index, reg.lastIndex - 1, variant]
 			if (position >= variantToken[0] && position < variantToken[1]) {
+				result.selection.kind = TokenKind.Variant
 				result.selection.selected = variantToken
 				result.selection.variants = [...context]
 			} else if (!hover && position === reg.lastIndex) {
@@ -174,7 +212,7 @@ export default function findClasses({
 			if (isEmpty) {
 				const index = match.index + value.length
 				result.empty.push({
-					kind: EmptyKind.Class,
+					kind: EmptyKind.Classname,
 					start: index,
 					variants: [...context],
 				})
@@ -232,11 +270,27 @@ export default function findClasses({
 			} else {
 				const important = input[closedBracket + 1] === "!"
 				const token: Token = [match.index, closedBracket + 1, value]
+				result.classList.push({
+					kind: TokenKind.CssProperty,
+					variants: [...context],
+					token,
+					key: [match.index, match.index + cssProperty.length, cssProperty],
+					value: [reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)],
+					important: important || importantContext,
+				})
 				if (position >= match.index && position < closedBracket + 1) {
-					result.selection.cssProperty = true
+					result.selection.kind = TokenKind.CssProperty
 					result.selection.important = important || importantContext
 					result.selection.variants = [...context]
 					result.selection.selected = token
+					if (result.selection.kind === TokenKind.CssProperty) {
+						result.selection.key = [match.index, match.index + cssProperty.length, cssProperty]
+						result.selection.value = [
+							reg.lastIndex,
+							closedBracket,
+							input.slice(reg.lastIndex, closedBracket),
+						]
+					}
 				}
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
 				context = baseContext
@@ -250,11 +304,13 @@ export default function findClasses({
 			}
 			important ||= importantContext
 			if (position >= token[0] && (hover ? position < token[1] : position <= token[1])) {
+				result.selection.kind = TokenKind.Classname
 				result.selection.important = important
 				result.selection.variants = [...context]
 				result.selection.selected = token
 			}
 			result.classList.push({
+				kind: TokenKind.Classname,
 				variants: [...context],
 				token,
 				important,
@@ -263,6 +319,7 @@ export default function findClasses({
 		} else if (weird) {
 			const token: Token = [match.index, reg.lastIndex, value]
 			result.classList.push({
+				kind: TokenKind.Unknown,
 				variants: [...context],
 				token,
 				important: false,
@@ -315,10 +372,11 @@ export function toClassNames(result: ClassesTokenResult, separator = ":"): strin
 	const results: string[] = []
 	for (let i = 0; i < classList.length; i++) {
 		let str = ""
-		for (let j = 0; j < classList[i].variants.length; j++) {
+		const item = classList[i]
+		for (let j = 0; j < item.variants.length; j++) {
 			str += classList[i].variants[j][2] + separator
 		}
-		results.push(str + classList[i].token[2] + (classList[i].important ? "!" : ""))
+		results.push(str + item.token[2] + (item.important ? "!" : ""))
 	}
 	return results
 }
