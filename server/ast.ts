@@ -20,21 +20,24 @@ interface Features {
 
 export type TokenResult = { token: Token; kind: PatternKind }
 
-function transfromToken(result: { kind: PatternKind; token: ts.Node }, source: ts.SourceFile): TokenResult {
-	const t = result.token.getText(source)
+function transfromToken(
+	result: { kind: PatternKind; token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral },
+	source: ts.SourceFile,
+): TokenResult {
+	const text = result.token.getText(source)
 	const start = result.token.getStart(source) + 1
 	let end = result.token.getEnd()
-	if (t.endsWith("'") || t.endsWith('"') || t.endsWith("`")) {
+	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText : result.token.text
+	if (text.endsWith("'") || text.endsWith('"') || text.endsWith("`")) {
 		end -= 1
-		return { kind: result.kind, token: [start, end, result.token["text"]] }
+		return { kind: result.kind, token: [start, end, value] }
 	} else {
-		const text = result.token["text"] as string
 		const m = text.match(/[ \r\t\n]/)
 		if (m) {
 			end = start + m.index
-			return { kind: result.kind, token: [start, end, text.substring(0, m.index)] }
+			return { kind: result.kind, token: [start, end, value.slice(0, m.index)] }
 		}
-		return { kind: result.kind, token: [start, end, text] }
+		return { kind: result.kind, token: [start, end, value] }
 	}
 }
 
@@ -60,7 +63,7 @@ function findNode(
 	node: ts.Node,
 	position: number,
 	features: Features,
-): { token: ts.Node; kind: PatternKind } {
+): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind } {
 	if (position < node.getStart(source) || position >= node.getEnd()) {
 		return undefined
 	}
@@ -129,7 +132,7 @@ function findAllNode(
 	source: ts.SourceFile,
 	node: ts.Node,
 	features: Features,
-): Array<{ token: ts.Node; kind: PatternKind }> {
+): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> {
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
 		if (features.twProp && id === "tw") {
