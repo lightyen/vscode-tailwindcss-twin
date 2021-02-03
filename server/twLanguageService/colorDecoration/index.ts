@@ -1,10 +1,11 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses, { TokenKind } from "~/findClasses"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
 import { InitOptions, Cache } from "~/twLanguageService"
-import { findAllMatch, PatternKind } from "~/ast"
+import { findAllMatch, PatternKind } from "~/common/ast"
+import { TokenKind } from "~/common/types"
+import findAllClasses from "~/common/findAllClasses"
 
 export function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
 	const colors: ColorInformation[] = []
@@ -36,7 +37,7 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 
 		const c = cachedResult[value]
 		if (!c) {
-			const result = findClasses({
+			const result = findAllClasses({
 				input: value,
 				separator: state.separator,
 			})
@@ -46,7 +47,7 @@ export function provideColor(document: TextDocument, state: Tailwind, _: InitOpt
 		const { classList } = cachedResult[value]
 
 		for (const c of classList) {
-			if (c.kind !== TokenKind.Classname) {
+			if (c.kind !== TokenKind.ClassName) {
 				continue
 			}
 			if (

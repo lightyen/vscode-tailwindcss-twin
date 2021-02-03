@@ -1,6 +1,6 @@
 import type { Postcss, Plugin } from "postcss"
 import path from "path"
-import { TModule } from "~/module"
+import { TModule } from "~/common/module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
 

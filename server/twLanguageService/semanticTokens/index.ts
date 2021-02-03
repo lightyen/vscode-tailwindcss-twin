@@ -3,8 +3,8 @@ import parseClasses, { TwElementKind, Block } from "./parseClasses"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from "~/twLanguageService"
 import * as lsp from "vscode-languageserver"
-import { findAllMatch, PatternKind } from "~/ast"
-import { Token } from "~/typings"
+import { Token } from "~/common/types"
+import { findAllMatch, PatternKind } from "~/common/ast"
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
 

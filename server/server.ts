@@ -7,7 +7,7 @@ import { FileChangeType } from "vscode-languageserver/node"
 import path from "path"
 import { deepStrictEqual } from "assert"
 import { Settings } from "./LanguageService"
-import { TModule } from "~/module"
+import { TModule } from "~/common/module"
 
 interface InitializationOptions extends Settings {
 	/** uri */

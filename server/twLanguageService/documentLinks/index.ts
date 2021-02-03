@@ -1,10 +1,11 @@
 import type { DocumentLink } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses, { TokenKind } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
 import { Cache, InitOptions } from "~/twLanguageService"
 import docs from "./docs.yaml"
-import { findAllMatch, PatternKind } from "~/ast"
+import { findAllMatch, PatternKind } from "~/common/ast"
+import { TokenKind } from "~/common/types"
+import findAllClasses from "~/common/findAllClasses"
 
 function lastUrlToken(url: string) {
 	if (url.includes("twin")) {
@@ -30,7 +31,7 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 
 		const c = cachedResult[value]
 		if (!c) {
-			const result = findClasses({
+			const result = findAllClasses({
 				input: value,
 				separator: state.separator,
 			})
@@ -57,7 +58,7 @@ export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOp
 					s.add(start + a)
 				}
 			}
-			if (c.kind !== TokenKind.Classname) {
+			if (c.kind !== TokenKind.ClassName) {
 				continue
 			}
 			if (kind === PatternKind.TwinCssProperty) {

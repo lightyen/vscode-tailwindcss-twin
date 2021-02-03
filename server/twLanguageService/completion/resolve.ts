@@ -1,6 +1,6 @@
 import * as lsp from "vscode-languageserver"
 import type { CSSRuleItem } from "~/tailwind/classnames"
-import { PatternKind } from "~/ast"
+import { PatternKind } from "~/common/ast"
 import { Tailwind } from "~/tailwind"
 
 export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem => {
@@ -20,7 +20,7 @@ export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): ls
 				item.detail = "content"
 				item.documentation = {
 					kind: lsp.MarkupKind.Markdown,
-					value: ["```scss", ".content {", '\tcontent:"";', "}", "```"].join("\n"),
+					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
 				}
 				return item
 			case "container":

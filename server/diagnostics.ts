@@ -1,12 +1,12 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findClasses, { TwClassName, EmptyKind, TokenKind } from "~/findClasses"
 import type { InitOptions } from "./twLanguageService"
 import type { Tailwind } from "./tailwind"
-import type { Token } from "./typings"
-import { findAllMatch, PatternKind } from "~/ast"
 import { Cache } from "./twLanguageService"
-import camel2kebab from "~/camel2kebab"
+import { findAllMatch, PatternKind } from "~/common/ast"
+import camel2kebab from "~/common/camel2kebab"
+import { TokenKind, Token, EmptyKind, ClassName } from "~/common/types"
+import findAllClasses from "~/common/findAllClasses"
 
 const source = "tailwindcss"
 
@@ -29,7 +29,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
 			const c = cache[uri][value]
 			if (!c) {
-				const result = findClasses({ input: value, separator: state.separator })
+				const result = findAllClasses({ input: value, separator: state.separator })
 				cache[uri][value] = result
 			}
 			diagnostics.push(
@@ -62,7 +62,7 @@ function validateTwin({
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
-} & ReturnType<typeof findClasses>): Diagnostic[] {
+} & ReturnType<typeof findAllClasses>): Diagnostic[] {
 	const result: Diagnostic[] = []
 
 	if (error) {
@@ -79,7 +79,7 @@ function validateTwin({
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
-			if (c.kind === TokenKind.Classname) {
+			if (c.kind === TokenKind.ClassName) {
 				result.push(...checkTwinClassName(c, document, offset, state))
 			}
 		})
@@ -186,7 +186,7 @@ function validateTwin({
 		} else if (kind === PatternKind.TwinCssProperty) {
 			for (let i = 0; i < classList.length; i++) {
 				const item = classList[i]
-				if (item.kind === TokenKind.Unknown || item.kind === TokenKind.Classname) {
+				if (item.kind === TokenKind.Unknown || item.kind === TokenKind.ClassName) {
 					result.push({
 						source,
 						message: `Invalid token '${item.token[2]}'`,
@@ -272,7 +272,7 @@ function validateTwin({
 	return result
 }
 
-function checkTwinClassName(info: TwClassName, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(info: ClassName, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	const variants = info.variants.map(v => v[2])
 	for (const [a, b, variant] of info.variants) {

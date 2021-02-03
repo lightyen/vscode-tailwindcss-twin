@@ -1,7 +1,7 @@
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import ts from "typescript"
-import { Token } from "./typings"
+import { Token } from "./types"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"

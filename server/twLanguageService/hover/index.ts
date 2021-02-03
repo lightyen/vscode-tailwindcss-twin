@@ -3,11 +3,12 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
-import findClasses, { Selection, TokenKind } from "~/findClasses"
 import { Tailwind } from "~/tailwind"
-import { canMatch, PatternKind } from "~/ast"
 import { InitOptions } from "~/twLanguageService"
-import camel2kebab from "~/camel2kebab"
+import { canMatch, PatternKind } from "~/common/ast"
+import camel2kebab from "~/common/camel2kebab"
+import { TokenKind } from "~/common/types"
+import findClasses from "~/common/findClasses"
 
 export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions): lsp.Hover => {
 	try {
@@ -16,24 +17,24 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			return null
 		}
 		const { token, kind } = result
-		const classes = findClasses({
+		const selection = findClasses({
 			input: token[2],
 			position: document.offsetAt(position) - token[0],
 			separator: state.separator,
-			greedy: false,
 			hover: true,
 		})
-		if (!classes.selection.selected) {
+		if (!selection.token) {
 			return null
 		}
-		if (classes.selection.kind === TokenKind.CssProperty) {
-			const key = classes.selection.key[2]
-			const value = classes.selection.value[2]
-			const important = classes.selection.important
+		if (selection.token.kind === TokenKind.CssProperty) {
+			const [start, end] = selection.token.token
+			const key = selection.token.key[2]
+			const value = selection.token.value[2]
+			const important = selection.important
 			return {
 				range: {
-					start: document.positionAt(token[0] + classes.selection.selected[0]),
-					end: document.positionAt(token[0] + classes.selection.selected[1]),
+					start: document.positionAt(token[0] + start),
+					end: document.positionAt(token[0] + end),
 				},
 				contents: {
 					kind: lsp.MarkupKind.Markdown,
@@ -93,18 +94,19 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			return null
 		} else {
 			if (kind === PatternKind.TwinCssProperty) {
-				if (classes.selection.kind === TokenKind.Unknown || classes.selection.kind === TokenKind.Classname) {
+				if (selection.token.kind === TokenKind.Unknown || selection.token.kind === TokenKind.ClassName) {
 					return null
 				}
 			}
+			const [start, end] = selection.token.token
 			return {
 				range: {
-					start: document.positionAt(token[0] + classes.selection.selected[0]),
-					end: document.positionAt(token[0] + classes.selection.selected[1]),
+					start: document.positionAt(token[0] + start),
+					end: document.positionAt(token[0] + end),
 				},
 				contents: getHoverContents({
 					kind,
-					selection: classes.selection,
+					selection,
 					state,
 				}),
 			}
@@ -123,11 +125,11 @@ function getHoverContents({
 	state,
 }: {
 	kind: PatternKind
-	selection: Selection
+	selection: ReturnType<typeof findClasses>
 	state: Tailwind
 }): lsp.MarkupContent {
-	const { selected, important, variants } = selection
-	const [, , value] = selected
+	const { important, variants } = selection
+	const [, , value] = selection.token.token
 
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const inputVariants = variants.map(([, , v]) => v)

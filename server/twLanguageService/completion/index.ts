@@ -4,12 +4,12 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
-import findClasses, { TokenKind } from "~/findClasses"
-import type { Token } from "~/typings"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
-import { canMatch, PatternKind } from "~/ast"
+import { canMatch, PatternKind } from "~/common/ast"
+import { TokenKind, Token } from "~/common/types"
+import findClasses from "~/common/findClasses"
 
 export { completionResolve } from "./resolve"
 
@@ -62,18 +62,18 @@ function classesCompletion(
 	state: Tailwind,
 ): lsp.CompletionList {
 	const [start, , input] = match
-	const { selection } = findClasses({
+	const selection = findClasses({
 		input,
 		position: index - start,
 		separator: state.separator,
 	})
 
-	if (selection.selected?.[2] === state.separator) {
+	if (selection.token?.[2] === state.separator) {
 		return { isIncomplete: false, items: [] }
 	}
 
-	if (selection.kind === TokenKind.CssProperty) {
-		return { isIncomplete: false, items: [] }
+	if (selection.token?.kind === TokenKind.CssProperty) {
+		if (index - start > selection.token?.token[0]) return { isIncomplete: false, items: [] }
 	}
 
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty

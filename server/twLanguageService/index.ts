@@ -8,7 +8,7 @@ import { documentLinks } from "./documentLinks"
 import { validate } from "~/diagnostics"
 import { provideColor } from "./colorDecoration"
 import { provideSemanticTokens } from "./semanticTokens"
-import findClasses from "~/findClasses"
+import findAllClasses from "~/common/findAllClasses"
 
 export interface InitOptions {
 	workspaceFolder: string
@@ -24,7 +24,7 @@ export interface InitOptions {
 	}
 }
 
-export type Cache = Record<string, Record<string, ReturnType<typeof findClasses>>>
+export type Cache = Record<string, Record<string, ReturnType<typeof findAllClasses>>>
 
 export class TailwindLanguageService implements LanguageService {
 	public state: Tailwind
