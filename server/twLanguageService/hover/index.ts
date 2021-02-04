@@ -21,7 +21,6 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 			input: token[2],
 			position: document.offsetAt(position) - token[0],
 			separator: state.separator,
-			hover: true,
 		})
 		if (!selection.token) {
 			return null

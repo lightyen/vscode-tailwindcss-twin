@@ -2,11 +2,12 @@ import * as tw from "./types"
 import findClasses from "./findClasses"
 
 test("completion", async () => {
-	const input = `lg:before:(content)  `
+	const input = `lg:before:(content)  hover:(before:)`
 	expect(
 		findClasses({
 			input,
 			position: 18,
+			completion: true,
 		}),
 	).toEqual({
 		important: false,
@@ -23,15 +24,30 @@ test("completion", async () => {
 		findClasses({
 			input,
 			position: 20,
+			completion: true,
 		}),
 	).toEqual({
 		important: false,
 		variants: [],
 		token: undefined,
 	})
+	expect(
+		findClasses({
+			input,
+			position: 35,
+			completion: true,
+		}),
+	).toEqual({
+		important: false,
+		variants: [
+			[21, 26, "hover"],
+			[28, 34, "before"],
+		],
+		token: undefined,
+	})
 })
 
-test("findClasses Selected", async () => {
+test("hover", async () => {
 	const input = `md:text-gray-100!  md:dark:(hover:(text-gray-500 bg-white)!) lg:(light:bg-black) before:()!`
 	expect(
 		findClasses({
@@ -57,8 +73,8 @@ test("findClasses Selected", async () => {
 		}),
 	).toEqual({
 		token: undefined,
-		important: true,
-		variants: [[81, 87, "before"]],
+		important: false,
+		variants: [],
 	})
 })
 
@@ -80,12 +96,14 @@ test("findClasses Important", async () => {
 	}
 })
 
-test("find on invalid input", async () => {
+test("completion on invalid input", async () => {
 	let input = "   dark    bg-black  "
 	let position = 8
+	const completion = true
 	let result = findClasses({
 		input,
 		position,
+		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual(undefined)
@@ -94,6 +112,7 @@ test("find on invalid input", async () => {
 	result = findClasses({
 		input,
 		position,
+		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual({
@@ -106,6 +125,7 @@ test("find on invalid input", async () => {
 	result = findClasses({
 		input,
 		position,
+		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual(undefined)
@@ -114,6 +134,7 @@ test("find on invalid input", async () => {
 	result = findClasses({
 		input,
 		position,
+		completion,
 	})
 	expect(result.variants).toEqual([[3, 7, "dark"]])
 	expect(result.token).toEqual(undefined)

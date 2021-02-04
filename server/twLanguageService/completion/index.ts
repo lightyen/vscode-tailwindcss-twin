@@ -66,6 +66,7 @@ function classesCompletion(
 		input,
 		position: index - start,
 		separator: state.separator,
+		completion: true,
 	})
 
 	if (selection.token?.[2] === state.separator) {
@@ -130,6 +131,7 @@ function classesCompletion(
 		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
 
 	if (twin) {
+		console.log(variants)
 		if (variants.some(v => v === "before" || v === "after")) {
 			classesItems.push({
 				label: "content",

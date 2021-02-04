@@ -41,13 +41,6 @@ interface Result extends tw.Context {
 	important: boolean
 }
 
-function zero(): Result {
-	return {
-		variants: [],
-		important: false,
-	}
-}
-
 export default function findClasses({
 	input,
 	start = 0,
@@ -55,8 +48,8 @@ export default function findClasses({
 	position,
 	context = [],
 	importantContext = false,
-	hover = false,
 	separator = ":",
+	completion = false,
 }: {
 	/** user input */
 	input: string
@@ -67,18 +60,20 @@ export default function findClasses({
 	/** variants */
 	context?: tw.Token[]
 	importantContext?: boolean
-	hover?: boolean
 	separator?: string
+	completion?: boolean
 }): Result {
 	if (start === end) {
-		return zero()
+		return {
+			important: importantContext,
+			variants: context,
+		}
 	}
 
 	;[start, end] = trimLeft(input, start, end)
 
 	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-]+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
 
-	const result = zero()
 	let match: RegExpExecArray
 
 	reg.lastIndex = start
@@ -88,19 +83,21 @@ export default function findClasses({
 	while ((match = reg.exec(input))) {
 		const [value, variant, cssProperty, className, notHandled] = match
 		if (variant) {
-			const token: tw.Token = [match.index, reg.lastIndex - 1, variant]
-			if (position >= token[0] && position < token[1]) {
-				result.token = {
-					kind: tw.TokenKind.Variant,
-					token,
-				}
-				result.variants = [...context]
-				break
-			} else if (!hover && position === reg.lastIndex) {
-				result.variants = [...context, token]
-			}
-
+			const token: tw.Token = [match.index, reg.lastIndex - separator.length, variant]
 			context.push(token)
+
+			if (position >= token[0] && position < token[1]) {
+				return {
+					token: {
+						kind: tw.TokenKind.Variant,
+						token,
+					},
+					variants: context,
+					important: importantContext,
+				}
+			} else if (position === reg.lastIndex) {
+				break
+			}
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
@@ -118,38 +115,44 @@ export default function findClasses({
 			}
 
 			if (input[reg.lastIndex] === "(") {
-				if (!hover && position > reg.lastIndex) {
-					result.variants = [...context]
-				}
-
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
-				if (typeof closedBracket !== "number") {
-					return result
-				}
+				const hasRightBracket = typeof closedBracket === "number"
+				const important = hasRightBracket && input[closedBracket + 1] === "!"
 
-				if (!hover && position > closedBracket) {
-					result.variants.length = 0
-				}
-
-				const important = input[closedBracket + 1] === "!"
-				result.important = important
-
-				const children = findClasses({
-					input: input,
-					context: [...context],
-					importantContext: important || importantContext,
-					start: reg.lastIndex + 1,
-					end: closedBracket,
-					position,
-					hover,
-					separator,
-				})
-
-				if (children.token) {
-					result.token = children.token
-					result.important = result.important || importantContext || children.important
-					result.variants = [...children.variants]
-					break
+				if (hasRightBracket) {
+					if (position > reg.lastIndex && position < closedBracket) {
+						return findClasses({
+							input,
+							context: [...context],
+							importantContext: important || importantContext,
+							start: reg.lastIndex + 1,
+							end: closedBracket,
+							position,
+							separator,
+							completion,
+						})
+					} else if (completion && position === closedBracket) {
+						return findClasses({
+							input,
+							context: [...context],
+							importantContext: important || importantContext,
+							start: reg.lastIndex + 1,
+							end: closedBracket,
+							position,
+							separator,
+							completion,
+						})
+					}
+				} else {
+					return findClasses({
+						input,
+						context: [...context],
+						importantContext: important || importantContext,
+						start: reg.lastIndex + 1,
+						position,
+						separator,
+						completion,
+					})
 				}
 
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
@@ -158,21 +161,29 @@ export default function findClasses({
 		} else if (cssProperty) {
 			const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
 			if (typeof closedBracket !== "number") {
-				return result
+				return {
+					token: {
+						kind: tw.TokenKind.Unknown,
+						token: [match.index, reg.lastIndex, input.slice(match.index, reg.lastIndex)],
+					},
+					important: importantContext,
+					variants: context,
+				}
 			}
 			const important = input[closedBracket + 1] === "!"
 			const token: tw.Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
 
-			if (position >= match.index && position < closedBracket + 1) {
-				result.token = {
-					kind: tw.TokenKind.CssProperty,
-					token,
-					key: [match.index, match.index + cssProperty.length, cssProperty],
-					value: [reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)],
+			if (position >= token[0] && (completion ? position <= token[1] : position < token[1])) {
+				return {
+					token: {
+						kind: tw.TokenKind.CssProperty,
+						token,
+						key: [match.index, match.index + cssProperty.length, cssProperty],
+						value: [reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)],
+					},
+					variants: context,
+					important: important || importantContext,
 				}
-				result.variants = [...context]
-				result.important = important || importantContext
-				break
 			}
 
 			reg.lastIndex = closedBracket + (important ? 2 : 1)
@@ -180,58 +191,82 @@ export default function findClasses({
 		} else if (className) {
 			const token: tw.Token = [match.index, reg.lastIndex, value]
 			const important = value.endsWith("!")
-			if (important) {
-				token[1] -= 1
-				token[2] = token[2].slice(0, token[2].length - 1)
-			}
-
-			if (position >= token[0] && (hover ? position < token[1] : position <= token[1])) {
-				result.token = {
-					kind: tw.TokenKind.ClassName,
-					token,
+			if (position >= token[0] && (completion ? position <= token[1] : position < token[1])) {
+				if (important) {
+					token[1] -= 1
+					token[2] = token[2].slice(0, -1)
 				}
-				result.important = important || importantContext
-				result.variants = [...context]
-				break
+
+				return {
+					token: {
+						kind: tw.TokenKind.ClassName,
+						token,
+					},
+					variants: context,
+					important: important || importantContext,
+				}
 			}
 
 			context = [...baseContext]
 		} else if (notHandled) {
 			const token: tw.Token = [match.index, reg.lastIndex, value]
-			if (position >= token[0] && (hover ? position < token[1] : position <= token[1])) {
-				result.important = importantContext
-				result.variants = [...context]
+			if (position >= token[0] && (completion ? position <= token[1] : position < token[1])) {
+				return {
+					token: {
+						token,
+						kind: tw.TokenKind.Unknown,
+					},
+					important: importantContext,
+					variants: context,
+				}
 			}
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
-			if (typeof closedBracket !== "number") {
-				return result
-			}
+			const hasRightBracket = typeof closedBracket === "number"
+			const important = hasRightBracket && input[closedBracket + 1] === "!"
 
-			const important = input[closedBracket + 1] === "!"
-			result.important = important
-
-			const children = findClasses({
-				input: input,
-				context: [...context],
-				importantContext: important || importantContext,
-				start: match.index + 1,
-				end: closedBracket,
-				position,
-				hover,
-				separator,
-			})
-
-			if (children.token) {
-				result.token = children.token
-				result.important = result.important || importantContext || children.important
-				result.variants = [...children.variants]
-				break
+			if (hasRightBracket) {
+				if (position > reg.lastIndex && position < closedBracket) {
+					return findClasses({
+						input,
+						context: [...context],
+						importantContext: important || importantContext,
+						start: reg.lastIndex + 1,
+						end: closedBracket,
+						position,
+						separator,
+						completion,
+					})
+				} else if (completion && position === closedBracket) {
+					return findClasses({
+						input,
+						context: [...context],
+						importantContext: important || importantContext,
+						start: reg.lastIndex + 1,
+						end: closedBracket,
+						position,
+						separator,
+						completion,
+					})
+				}
+			} else {
+				return findClasses({
+					input,
+					context: [...context],
+					importantContext: important || importantContext,
+					start: reg.lastIndex + 1,
+					position,
+					separator,
+					completion,
+				})
 			}
 
 			reg.lastIndex = closedBracket + (important ? 2 : 1)
 		}
 	}
 
-	return result
+	return {
+		important: importantContext,
+		variants: context,
+	}
 }
