@@ -86,11 +86,7 @@ class Server {
 					},
 					textDocumentSync: {
 						openClose: true,
-						change: lsp.TextDocumentSyncKind.Full, // trigger validate
-						willSaveWaitUntil: false,
-						save: {
-							includeText: false,
-						},
+						change: lsp.TextDocumentSyncKind.Incremental, // trigger validate
 					},
 					colorProvider: true,
 					completionProvider: {
@@ -103,7 +99,12 @@ class Server {
 					},
 					codeActionProvider: true,
 					semanticTokensProvider: {
-						documentSelector: [{ language: "typescriptreact", scheme: "file" }],
+						documentSelector: [
+							{ language: "typescriptreact", scheme: "file" },
+							{ language: "javascriptreact", scheme: "file" },
+							{ language: "typescript", scheme: "file" },
+							{ language: "javascript", scheme: "file" },
+						],
 						legend: {
 							tokenModifiers: ["documentation"],
 							tokenTypes: ["keyword", "number", "interface", "variable", "function", "enumMember"],
