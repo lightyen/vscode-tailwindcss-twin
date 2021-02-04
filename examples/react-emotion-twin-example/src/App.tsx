@@ -11,7 +11,7 @@ const globalStyle = css`
 		src: local("Fira Code"), url(${FiraCodeFont}) format("woff2");
 	}
 	body {
-		${tw`m-0 leading-normal overflow-hidden bg-gray-900`}
+		${tw`m-0 leading-normal overflow-hidden fill-current bg-gray-900`}
 		font-family: Roboto, 微軟正黑體, Microsoft JhengHei, Helvetica Neue,
 		Helvetica, Arial, PingFang TC, 黑體-繁, Heiti TC, 蘋果儷中黑,
 		Apple LiGothic Medium, sans-serif;
