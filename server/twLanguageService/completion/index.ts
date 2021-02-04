@@ -131,7 +131,6 @@ function classesCompletion(
 		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
 
 	if (twin) {
-		console.log(variants)
 		if (variants.some(v => v === "before" || v === "after")) {
 			classesItems.push({
 				label: "content",

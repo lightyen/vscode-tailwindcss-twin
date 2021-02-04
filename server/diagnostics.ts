@@ -136,15 +136,20 @@ function validateTwin({
 
 				const data = state.classnames.getClassNameRule(variants, true, item.token[2])
 				if (!(data instanceof Array)) {
-					result.push({
-						source,
-						message: `Invalid token '${item.token[2]}'`,
-						range: {
-							start: document.positionAt(offset + item.token[0]),
-							end: document.positionAt(offset + item.token[1]),
-						},
-						severity: DiagnosticSeverity.Error,
-					})
+					if (
+						item.token[2] !== "container" &&
+						!(item.token[2] === "content" && variants.some(v => v === "before" || v === "after"))
+					) {
+						result.push({
+							source,
+							message: `Invalid token '${item.token[2]}'`,
+							range: {
+								start: document.positionAt(offset + item.token[0]),
+								end: document.positionAt(offset + item.token[1]),
+							},
+							severity: DiagnosticSeverity.Error,
+						})
+					}
 					continue
 				}
 
