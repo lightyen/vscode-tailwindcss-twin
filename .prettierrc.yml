@@ -3,4 +3,4 @@ singleQuote: false
 jsxSingleQuote: false
 arrowParens: avoid
 trailingComma: all
-endOfLine: auto
+endOfLine: lf

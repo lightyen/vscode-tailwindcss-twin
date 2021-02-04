@@ -49,6 +49,8 @@
     "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=tsconfig.webpack.json webpack --config webpack.config.ts",
     "watch": "cross-env NODE_ENV=development TS_NODE_PROJECT=tsconfig.webpack.json webpack --config webpack.config.ts --watch",
     "vscode:prepublish": "yarn build",
+    "format": "prettier --write \"**/*.{ts,json,yml}\"",
+    "check-format": "prettier --check \"**/*.{ts,json,yml}\"",
     "package": "vsce package --yarn"
   },
   "devDependencies": {

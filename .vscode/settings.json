@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "formatFiles.excludePattern": "node_modules,out,.gitignore,.editorconfig,yarn.lock",
   "search.exclude": {
     "**/dist": true,
@@ -10,6 +11,6 @@
   "typescript.tsc.autoDetect": "off",
   "eslint.validate": ["javascript", "typescript"],
   "files.watcherExclude": {
-    "**/out": true
+    "**/dist": true
   }
 }
