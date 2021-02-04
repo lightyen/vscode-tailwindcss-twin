@@ -46,10 +46,17 @@ export function provideSemanticTokens(
 			if (!colorDecorators) return true
 			if (node.kind === TwElementKind.Class) {
 				const color = state.classnames.getColorInfo(node.value[2])
-				if (!color) return true
-				if (!color.backgroundColor && !color.color) return true
+				if (!color || Object.keys(color).length === 0) {
+					return true
+				}
+				if (
+					(!!color.backgroundColor && color.backgroundColor !== "currentColor") ||
+					(!!color.color && color.color !== "currentColor")
+				) {
+					return false
+				}
 			}
-			return false
+			return true
 		}
 
 		renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, parseClasses(value))
