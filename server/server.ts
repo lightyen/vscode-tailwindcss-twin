@@ -91,7 +91,7 @@ class Server {
 					colorProvider: true,
 					completionProvider: {
 						resolveProvider: true,
-						triggerCharacters: ['"', "'", "`", " ", "(", ":"],
+						triggerCharacters: ['"', "'", "`", " ", "(", ":", "-"],
 					},
 					hoverProvider: true,
 					documentLinkProvider: {

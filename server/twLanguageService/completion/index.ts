@@ -141,11 +141,11 @@ function classesCompletion(
 	const preferVariantWithParentheses = options.preferVariantWithParentheses
 
 	if (selection.token) {
-		const [a, b] = selection.token.token
+		const [a, b, value] = selection.token.token
 		const pos = index - start
 		if (selection.token.kind === TokenKind.ClassName) {
-			// at first char
-			if (pos === a) {
+			// at first char or negative
+			if (pos === a || (pos === a + 1 && pos < b && value[0] === "-")) {
 				for (let i = 0; i < classesItems.length; i++) {
 					const item = classesItems[i]
 					item.textEdit = {
