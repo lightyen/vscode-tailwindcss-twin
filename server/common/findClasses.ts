@@ -35,10 +35,6 @@ export interface SelectedCssProperty {
 
 interface Result extends tw.Context {
 	token?: SelectedUnknown | SelectedClassName | SelectedVariant | SelectedCssProperty
-	/** context variants */
-	variants: tw.Token[]
-	/** context important */
-	important: boolean
 }
 
 export default function findClasses({
@@ -56,7 +52,7 @@ export default function findClasses({
 	start?: number
 	end?: number
 	/** cursor position */
-	position?: number
+	position: number
 	/** variants */
 	context?: tw.Token[]
 	importantContext?: boolean
@@ -84,7 +80,6 @@ export default function findClasses({
 		const [value, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			const token: tw.Token = [match.index, reg.lastIndex - separator.length, variant]
-			context.push(token)
 
 			if (position >= token[0] && position < token[1]) {
 				return {
@@ -95,13 +90,34 @@ export default function findClasses({
 					variants: context,
 					important: importantContext,
 				}
-			} else if (position === reg.lastIndex) {
+			}
+
+			if (completion && position === reg.lastIndex - separator.length && position < reg.lastIndex) {
+				return {
+					token: {
+						kind: tw.TokenKind.Variant,
+						token,
+					},
+					important: importantContext,
+					variants: context,
+				}
+			}
+
+			context.push(token)
+
+			if (!completion && position === reg.lastIndex - separator.length && position < reg.lastIndex) {
 				break
 			}
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
 				while (/\s/.test(input[reg.lastIndex])) {
+					if (!isEmpty && completion && position === reg.lastIndex) {
+						return {
+							important: importantContext,
+							variants: context,
+						}
+					}
 					isEmpty = true
 					reg.lastIndex++
 				}
@@ -117,25 +133,22 @@ export default function findClasses({
 			if (input[reg.lastIndex] === "(") {
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
 				const hasRightBracket = typeof closedBracket === "number"
-				const important = hasRightBracket && input[closedBracket + 1] === "!"
+				const important = (hasRightBracket && input[closedBracket + 1] === "!") || importantContext
+
+				if (position === reg.lastIndex || (!completion && position === closedBracket)) {
+					importantContext = important
+					break
+				}
 
 				if (hasRightBracket) {
-					if (position > reg.lastIndex && position < closedBracket) {
+					if (
+						position > reg.lastIndex &&
+						(completion ? position <= closedBracket : position < closedBracket)
+					) {
 						return findClasses({
 							input,
 							context: [...context],
-							importantContext: important || importantContext,
-							start: reg.lastIndex + 1,
-							end: closedBracket,
-							position,
-							separator,
-							completion,
-						})
-					} else if (completion && position === closedBracket) {
-						return findClasses({
-							input,
-							context: [...context],
-							importantContext: important || importantContext,
+							importantContext: important,
 							start: reg.lastIndex + 1,
 							end: closedBracket,
 							position,
@@ -147,7 +160,7 @@ export default function findClasses({
 					return findClasses({
 						input,
 						context: [...context],
-						importantContext: important || importantContext,
+						importantContext: important,
 						start: reg.lastIndex + 1,
 						position,
 						separator,
@@ -225,19 +238,13 @@ export default function findClasses({
 			const hasRightBracket = typeof closedBracket === "number"
 			const important = hasRightBracket && input[closedBracket + 1] === "!"
 
+			if (position === reg.lastIndex || (!completion && position === closedBracket)) {
+				importantContext = important
+				break
+			}
+
 			if (hasRightBracket) {
-				if (position > reg.lastIndex && position < closedBracket) {
-					return findClasses({
-						input,
-						context: [...context],
-						importantContext: important || importantContext,
-						start: reg.lastIndex + 1,
-						end: closedBracket,
-						position,
-						separator,
-						completion,
-					})
-				} else if (completion && position === closedBracket) {
+				if (position > reg.lastIndex && (completion ? position <= closedBracket : position < closedBracket)) {
 					return findClasses({
 						input,
 						context: [...context],
