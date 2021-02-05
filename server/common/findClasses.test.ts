@@ -917,3 +917,17 @@ test("completion on invalid input", async () => {
 	expect(result.variants).toEqual([[3, 7, "dark"]])
 	expect(result.token).toEqual(undefined)
 })
+
+test("completion2", async () => {
+	expect(findClasses({ completion: true, input: `lg:var:`, position: 7 })).toEqual({
+		variants: [
+			[0, 2, "lg"],
+			[3, 6, "var"],
+		],
+		important: false,
+	})
+	expect(findClasses({ completion: true, input: `(var:)`, position: 5 })).toEqual({
+		variants: [[1, 4, "var"]],
+		important: false,
+	})
+})

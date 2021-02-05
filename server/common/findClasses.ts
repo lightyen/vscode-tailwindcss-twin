@@ -122,6 +122,12 @@ export default function findClasses({
 					reg.lastIndex++
 				}
 			} else {
+				if (completion && position === reg.lastIndex) {
+					return {
+						important: importantContext,
+						variants: context,
+					}
+				}
 				isEmpty = true
 			}
 
@@ -249,7 +255,7 @@ export default function findClasses({
 						input,
 						context: [...context],
 						importantContext: important || importantContext,
-						start: reg.lastIndex + 1,
+						start: reg.lastIndex,
 						end: closedBracket,
 						position,
 						separator,
@@ -261,7 +267,7 @@ export default function findClasses({
 					input,
 					context: [...context],
 					importantContext: important || importantContext,
-					start: reg.lastIndex + 1,
+					start: reg.lastIndex,
 					position,
 					separator,
 					completion,
