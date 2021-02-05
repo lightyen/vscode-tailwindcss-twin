@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind Twin IntelliSense",
   "description": "Tailwind VSCode Extension for twin.macro",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
@@ -44,7 +44,6 @@
   "main": "./dist/extension",
   "scripts": {
     "test": "jest",
-    "generate": "cross-env TS_NODE_PROJECT=./generate/tsconfig.json ts-node ./generate/index.ts",
     "doit": "yarn upgrade-interactive --latest",
     "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=tsconfig.webpack.json webpack --config webpack.config.ts",
     "watch": "cross-env NODE_ENV=development TS_NODE_PROJECT=tsconfig.webpack.json webpack --config webpack.config.ts --watch",
