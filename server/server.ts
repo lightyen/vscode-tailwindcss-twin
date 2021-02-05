@@ -91,7 +91,7 @@ class Server {
 					colorProvider: true,
 					completionProvider: {
 						resolveProvider: true,
-						triggerCharacters: ['"', "'", "`", " ", "("],
+						triggerCharacters: ['"', "'", "`", " ", "(", ":"],
 					},
 					hoverProvider: true,
 					documentLinkProvider: {
@@ -145,12 +145,13 @@ class Server {
 		})
 
 		connection.onDidChangeConfiguration(async params => {
-			console.log(`some changes were detected`)
+			console.log(`[setting changes were detected]`)
 			if (this.hasConfigurationCapability) {
 				type Config = {
 					colorDecorators?: boolean
 					links?: boolean
 					validate: boolean
+					preferVariantWithParentheses: boolean
 					fallbackDefaultConfig: boolean
 					diagnostics: {
 						conflict: "none" | "loose" | "strict"
@@ -168,6 +169,18 @@ class Server {
 				])
 				const tailwindcss: Config = configs[0]
 				const editor: EditorConfig = configs[1]
+
+				const preferVariantWithParentheses = tailwindcss?.preferVariantWithParentheses || false
+				if (this.settings.preferVariantWithParentheses !== preferVariantWithParentheses) {
+					this.settings.preferVariantWithParentheses = preferVariantWithParentheses
+					for (const document of documents.all()) {
+						const service = matchService(document.uri, this.services)
+						if (service) {
+							service.updateSettings(this.settings)
+						}
+					}
+					console.log(`preferVariantWithParentheses = ${this.settings.preferVariantWithParentheses}`)
+				}
 
 				if (this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig) {
 					this.settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig

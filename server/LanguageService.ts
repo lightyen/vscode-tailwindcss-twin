@@ -5,6 +5,7 @@ export interface Settings {
 	colorDecorators: boolean
 	links: boolean
 	validate: boolean
+	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
 		conflict: "none" | "loose" | "strict"

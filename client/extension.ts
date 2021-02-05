@@ -27,6 +27,7 @@ interface InitializationOptions {
 	colorDecorators: boolean
 	links: boolean
 	validate: boolean
+	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
 	diagnostics: {
 		conflict: "none" | "loose" | "strict"
@@ -65,6 +66,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		initOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
 	}
 	initOptions.validate = tailwindcss.get("validate")
+	initOptions.preferVariantWithParentheses = tailwindcss.get("preferVariantWithParentheses")
 	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
 	initOptions.diagnostics = tailwindcss.get("diagnostics")
 

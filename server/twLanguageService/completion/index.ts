@@ -25,7 +25,7 @@ export const completion = (
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
-	_: InitOptions,
+	options: InitOptions,
 ): lsp.CompletionList => {
 	try {
 		const result = canMatch(document, position)
@@ -42,7 +42,7 @@ export const completion = (
 			}
 			return list
 		} else {
-			const list = classesCompletion(index, character, token, kind, state)
+			const list = classesCompletion(document, index, token, kind, state, options)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
@@ -55,11 +55,12 @@ export const completion = (
 }
 
 function classesCompletion(
+	document: TextDocument,
 	index: number,
-	character: string,
 	match: Token,
 	kind: PatternKind,
 	state: Tailwind,
+	options: InitOptions,
 ): lsp.CompletionList {
 	const [start, , input] = match
 	const selection = findClasses({
@@ -68,10 +69,6 @@ function classesCompletion(
 		separator: state.separator,
 		completion: true,
 	})
-
-	if (selection.token?.[2] === state.separator) {
-		return { isIncomplete: false, items: [] }
-	}
 
 	if (selection.token?.kind === TokenKind.CssProperty) {
 		if (index - start > selection.token?.token[0]) return { isIncomplete: false, items: [] }
@@ -138,6 +135,94 @@ function classesCompletion(
 				sortText: "~~content",
 				data: { type: "utilities", data: null, variants, kind },
 			})
+		}
+	}
+
+	const preferVariantWithParentheses = options.preferVariantWithParentheses
+
+	if (selection.token) {
+		const [a, b] = selection.token.token
+		const pos = index - start
+		if (selection.token.kind === TokenKind.ClassName) {
+			// at first char
+			if (pos === a) {
+				for (let i = 0; i < classesItems.length; i++) {
+					const item = classesItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + a),
+						},
+						newText: item.label + " ",
+					}
+				}
+			} else if (pos <= b) {
+				for (let i = 0; i < classesItems.length; i++) {
+					const item = classesItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + b),
+						},
+						newText: item.label,
+					}
+				}
+				if (preferVariantWithParentheses && pos === b) {
+					for (let i = 0; i < variantItems.length; i++) {
+						const item = variantItems[i]
+						item.insertTextFormat = lsp.InsertTextFormat.Snippet
+						item.insertText = item.label + "($0)"
+					}
+				} else {
+					for (let i = 0; i < variantItems.length; i++) {
+						const item = variantItems[i]
+						item.textEdit = {
+							range: {
+								start: document.positionAt(start + a),
+								end: document.positionAt(start + b),
+							},
+							newText: item.label,
+						}
+					}
+				}
+			}
+		} else if (selection.token.kind === TokenKind.Variant) {
+			classesItems.length = 0
+
+			if (index - start > a) {
+				for (let i = 0; i < variantItems.length; i++) {
+					const item = variantItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + b + state.separator.length),
+						},
+						newText: item.label,
+					}
+				}
+			}
+		} else if (selection.token.kind === TokenKind.Unknown) {
+			classesItems.length = 0
+			if (index - start === a) {
+				for (let i = 0; i < variantItems.length; i++) {
+					const item = variantItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + a + state.separator.length),
+						},
+						newText: item.label,
+					}
+				}
+			} else {
+				variantItems.length = 0
+			}
+		}
+	} else if (preferVariantWithParentheses) {
+		for (let i = 0; i < variantItems.length; i++) {
+			const item = variantItems[i]
+			item.insertTextFormat = lsp.InsertTextFormat.Snippet
+			item.insertText = item.label + "($0)"
 		}
 	}
 
