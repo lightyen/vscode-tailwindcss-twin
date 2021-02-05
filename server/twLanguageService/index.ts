@@ -9,6 +9,7 @@ import { validate } from "~/diagnostics"
 import { provideColor } from "./colorDecoration"
 import { provideSemanticTokens } from "./semanticTokens"
 import findAllClasses from "~/common/findAllClasses"
+import idebounce from "~/common/idebounce"
 
 export interface InitOptions {
 	workspaceFolder: string
@@ -65,29 +66,27 @@ export class TailwindLanguageService implements LanguageService {
 		const document = this.documents.get(params.textDocument.uri)
 		return hover(document, params.position, this.state, this.initOptions)
 	}
-	validate(document: TextDocument) {
+	async validate(document: TextDocument) {
 		const uri = document.uri.toString()
-		this.cache[uri] = null
 		this.cache[uri] = {}
 		if (!this.initOptions.validate) return []
 		if (!this.isReady()) return []
-		return validate(document, this.state, this.initOptions, this.cache)
+		return await idebounce("validate", validate, document, this.state, this.initOptions, this.cache)
 	}
-	onDocumentLinks(params: lsp.DocumentLinkParams) {
+	async onDocumentLinks(document: TextDocument) {
 		if (!this.initOptions.links) return []
 		if (!this.isReady()) return []
-		const document = this.documents.get(params.textDocument.uri)
-		return documentLinks(document, this.state, this.initOptions, this.cache)
+		return await idebounce("documentLinks", documentLinks, document, this.state, this.initOptions, this.cache)
 	}
-	provideColor(document: TextDocument) {
+	async provideColor(document: TextDocument) {
 		if (!this.initOptions.colorDecorators) return []
 		if (!this.isReady()) return []
-		return provideColor(document, this.state, this.initOptions, this.cache)
+		return await idebounce("provideColor", provideColor, document, this.state, this.initOptions, this.cache)
 	}
-	provideSemanticTokens(params: lsp.SemanticTokensParams) {
+	async provideSemanticTokens(params: lsp.SemanticTokensParams) {
 		if (!this.isReady()) return null
 		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
-		return provideSemanticTokens(document, this.state, this.initOptions)
+		return await idebounce("provideSemanticTokens", provideSemanticTokens, document, this.state, this.initOptions)
 	}
 }

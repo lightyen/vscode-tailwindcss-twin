@@ -10,6 +10,7 @@ import findAllClasses from "~/common/findAllClasses"
 
 const source = "tailwindcss"
 
+// TODO: Enhance performance
 export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
 	const uri = document.uri.toString()

@@ -27,8 +27,8 @@ export interface LanguageService {
 	onCompletion: Parameters<lsp.Connection["onCompletion"]>[0]
 	onCompletionResolve: Parameters<lsp.Connection["onCompletionResolve"]>[0]
 	onHover: Parameters<lsp.Connection["onHover"]>[0]
-	onDocumentLinks: Parameters<lsp.Connection["onDocumentLinks"]>[0]
-	validate: (document: TextDocument) => lsp.Diagnostic[]
-	provideColor: (document: TextDocument) => ColorInformation[]
+	onDocumentLinks: (document: TextDocument) => Promise<lsp.DocumentLink[]>
+	validate: (document: TextDocument) => Promise<lsp.Diagnostic[]>
+	provideColor: (document: TextDocument) => Promise<ColorInformation[]>
 	provideSemanticTokens: Parameters<lsp.Connection["languages"]["semanticTokens"]["on"]>[0]
 }

@@ -197,7 +197,7 @@ class Server {
 						if (service) {
 							service.updateSettings(this.settings)
 							connection.sendNotification("tailwindcss/documentColors", {
-								colors: service.provideColor(document),
+								colors: await service.provideColor(document),
 								uri: document.uri,
 							})
 						}
@@ -223,11 +223,11 @@ class Server {
 				} catch {
 					this.settings.validate = tailwindcss?.validate
 					this.settings.diagnostics = tailwindcss?.diagnostics
-					documents.all().forEach(document => {
+					documents.all().forEach(async document => {
 						const service = matchService(document.uri, this.services)
 						if (service) {
 							service.updateSettings(this.settings)
-							const diagnostics = service.validate(document)
+							const diagnostics = await service.validate(document)
 							this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
 						}
 					})
@@ -307,12 +307,12 @@ class Server {
 				return
 			}
 			if (service) {
-				const diagnostics = service.validate(params.document)
+				const diagnostics = await service.validate(params.document)
 				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
 			}
 		})
 
-		documents.onDidChangeContent(params => {
+		documents.onDidChangeContent(async params => {
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}
@@ -321,7 +321,7 @@ class Server {
 			}
 			const service = matchService(params.document.uri, this.services)
 			if (service) {
-				const diagnostics = service.validate(params.document)
+				const diagnostics = await service.validate(params.document)
 				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
 			}
 		})
@@ -336,13 +336,18 @@ class Server {
 		connection.onHover((...params) => {
 			return matchService(params[0].textDocument.uri, this.services)?.onHover(...params)
 		})
-		connection.onDocumentLinks((...params) => {
+		connection.onDocumentLinks(async params => {
 			if (!this.settings.links) {
 				return []
 			}
-			return matchService(params[0].textDocument.uri, this.services)?.onDocumentLinks(...params) ?? []
+			const service = matchService(params.textDocument.uri, this.services)
+			if (service) {
+				const document = documents.get(params.textDocument.uri)
+				return await service.onDocumentLinks(document)
+			}
+			return []
 		})
-		connection.onDocumentColor(params => {
+		connection.onDocumentColor(async params => {
 			if (!this.settings.colorDecorators) {
 				return []
 			}
@@ -350,7 +355,7 @@ class Server {
 			const service = matchService(params.textDocument.uri, this.services)
 			if (service) {
 				connection.sendNotification("tailwindcss/documentColors", {
-					colors: service.provideColor(document),
+					colors: await service.provideColor(document),
 					uri: document.uri,
 				})
 			}
@@ -385,7 +390,7 @@ class Server {
 			})
 		})
 		connection.languages.semanticTokens.onRange(async (...params) => {
-			return matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
+			return await matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
 		})
 	}
 }
