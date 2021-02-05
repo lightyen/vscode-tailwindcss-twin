@@ -4,7 +4,7 @@ This is a custom Tailwind CSS IntelliSense VSCode Extension which supports [twin
 
 ## Support
 
-ONLY for React and `twin.macro v2.2.0`
+ONLY for React and `twin.macro`
 
 ## VS Code Settings
 
