@@ -212,12 +212,11 @@ export default function findClasses({
 		} else if (className) {
 			const token: tw.Token = [match.index, reg.lastIndex, value]
 			const important = value.endsWith("!")
+			if (important) {
+				token[1] -= 1
+				token[2] = token[2].slice(0, -1)
+			}
 			if (position >= token[0] && (completion ? position <= token[1] : position < token[1])) {
-				if (important) {
-					token[1] -= 1
-					token[2] = token[2].slice(0, -1)
-				}
-
 				return {
 					token: {
 						kind: tw.TokenKind.ClassName,

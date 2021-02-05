@@ -154,14 +154,7 @@ test("hover", async () => {
 				})
 				break
 			case 17:
-				expect(hover).toEqual({
-					token: { kind: tw.TokenKind.ClassName, token: [7, 17, "class-name"] },
-					variants: [
-						[0, 2, "lg"],
-						[3, 6, "var"],
-					],
-					important: true,
-				})
+				expect(hover).toEqual({ important: false, variants: [] })
 				break
 			case 19:
 				expect(hover).toEqual({
@@ -583,14 +576,7 @@ test("completion", async () => {
 				})
 				break
 			case 18:
-				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.ClassName, token: [7, 17, "class-name"] },
-					variants: [
-						[0, 2, "lg"],
-						[3, 6, "var"],
-					],
-					important: true,
-				})
+				expect(completion).toEqual({ important: false, variants: [] })
 				break
 			case 19:
 				expect(completion).toEqual({
