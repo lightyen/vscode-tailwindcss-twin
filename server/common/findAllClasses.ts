@@ -94,7 +94,6 @@ export default function findAllClasses({
 			}
 
 			if (input[reg.lastIndex] === "(") {
-				// case: variant group
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
 				if (typeof closedBracket !== "number") {
 					result.error = {
@@ -102,6 +101,15 @@ export default function findAllClasses({
 						start: reg.lastIndex,
 						end,
 					}
+					const children = findAllClasses({
+						input: input,
+						context: [...context],
+						importantContext: false,
+						start: reg.lastIndex + 1,
+						end,
+						separator,
+					})
+					result = merge(result, children)
 					return result
 				}
 				const important = input[closedBracket + 1] === "!"
@@ -136,6 +144,14 @@ export default function findAllClasses({
 					start: reg.lastIndex - 1,
 					end,
 				}
+				result.classList.push({
+					kind: tw.TokenKind.CssProperty,
+					variants: [...context],
+					token: [match.index, end, input.slice(match.index, end)],
+					key: [match.index, match.index + cssProperty.length, cssProperty],
+					value: [reg.lastIndex, end, input.slice(reg.lastIndex, end)],
+					important: importantContext,
+				})
 				return result
 			}
 
@@ -181,14 +197,22 @@ export default function findAllClasses({
 
 			context = [...baseContext]
 		} else {
-			// case: normal group
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			if (typeof closedBracket !== "number") {
 				result.error = {
-					message: `"${input.slice(start, end)}" except to find a ')' to match the '('`,
+					message: `except to find a ')' to match the '('`,
 					start: match.index,
 					end,
 				}
+				const children = findAllClasses({
+					input: input,
+					context: [...context],
+					importantContext: false,
+					start: reg.lastIndex + 1,
+					end,
+					separator,
+				})
+				result = merge(result, children)
 				return result
 			}
 

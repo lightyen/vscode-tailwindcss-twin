@@ -108,11 +108,10 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 	input = input.slice(0, end)
 	let context: Token[] = []
 	while ((match = reg.exec(input))) {
-		const [value, variant, cssProperty, className, weird] = match
+		const [value, variant, cssProperty, className, notHandled] = match
 		if (variant) {
-			const variantToken: Token = [match.index, reg.lastIndex - 1, variant]
-
-			context.push(variantToken)
+			const token: Token = [match.index, reg.lastIndex - 1, variant]
+			context.push(token)
 
 			if (reg.lastIndex < end) {
 				while (/\s/.test(input[reg.lastIndex])) {
@@ -141,22 +140,23 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				node.lbrace = reg.lastIndex
 				node.variants = context
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
+
 				if (typeof closedBracket !== "number") {
+					node.children = parseClasses(input, reg.lastIndex + 1, end)
 					result.push(node)
 					return result
-				} else {
-					node.rbrace = closedBracket
-
-					const importantGroup = input[closedBracket + 1] === "!"
-					if (importantGroup) {
-						node.important = closedBracket + 1
-					}
-
-					node.children = parseClasses(input, reg.lastIndex + 1, closedBracket)
-					result.push(node)
-					node = createBlock()
-					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
 				}
+
+				const important = input[closedBracket + 1] === "!"
+				node.rbrace = closedBracket
+				if (important) {
+					node.important = closedBracket + 1
+				}
+				node.children = parseClasses(input, reg.lastIndex + 1, closedBracket)
+
+				result.push(node)
+				node = createBlock()
+				reg.lastIndex = closedBracket + (important ? 2 : 1)
 				context = []
 			}
 		} else if (cssProperty) {
@@ -164,6 +164,9 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 			if (node.kind === TwElementKind.CssProperty) {
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
 				if (typeof closedBracket !== "number") {
+					node.variants = context
+					node.value = [match.index, end, input.slice(match.index, end)]
+					result.push(node)
 					return result
 				}
 				const token: Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
@@ -194,7 +197,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				node = createBlock()
 				context = []
 			}
-		} else if (weird) {
+		} else if (notHandled) {
 			node.kind = TwElementKind.Unknown
 			if (node.kind === TwElementKind.Unknown) {
 				const weirdToken: Token = [match.index, reg.lastIndex, value]
@@ -209,21 +212,23 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 			if (node.kind === TwElementKind.Group) {
 				node.lbrace = match.index
 				const closedBracket = findRightBracket({ input, start: match.index, end })
+
 				if (typeof closedBracket !== "number") {
-					return result
-				} else {
-					node.rbrace = closedBracket
-					const importantGroup = input[closedBracket + 1] === "!"
-					if (importantGroup) {
-						node.important = closedBracket + 1
-					}
-
-					node.children = parseClasses(input, match.index + 1, closedBracket)
-
+					node.children = parseClasses(input, match.index + 1, end)
 					result.push(node)
-					node = createBlock()
-					reg.lastIndex = closedBracket + (importantGroup ? 2 : 1)
+					return result
 				}
+
+				const important = input[closedBracket + 1] === "!"
+				node.rbrace = closedBracket
+				if (important) {
+					node.important = closedBracket + 1
+				}
+				node.children = parseClasses(input, match.index + 1, closedBracket)
+
+				result.push(node)
+				node = createBlock()
+				reg.lastIndex = closedBracket + (important ? 2 : 1)
 			}
 		}
 	}

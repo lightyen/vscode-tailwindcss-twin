@@ -124,7 +124,7 @@ function validateTwin({
 				if (item.kind === TokenKind.CssProperty) {
 					const twinKeys = item.variants.map(v => v[2]).sort()
 					const property = camel2kebab(item.key[2])
-					const key = [...twinKeys, property].join(".")
+					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
 						target.push(classList[i].token)
@@ -157,6 +157,7 @@ function validateTwin({
 					for (const d of data) {
 						const twinKeys = variants.sort()
 						for (const property of Object.keys(d.decls)) {
+							// skip css variable
 							if (property.startsWith("--tw")) {
 								continue
 							}

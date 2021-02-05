@@ -182,8 +182,10 @@ export default function findClasses({
 			if (typeof closedBracket !== "number") {
 				return {
 					token: {
-						kind: tw.TokenKind.Unknown,
-						token: [match.index, reg.lastIndex, input.slice(match.index, reg.lastIndex)],
+						kind: tw.TokenKind.CssProperty,
+						token: [match.index, end, input.slice(match.index, end)],
+						key: [match.index, match.index + cssProperty.length, cssProperty],
+						value: [reg.lastIndex, end, input.slice(reg.lastIndex, end)],
 					},
 					important: importantContext,
 					variants: context,

@@ -69,7 +69,7 @@ test("findAllClasses", async () => {
 	])
 })
 
-test("findClasses Empty", async () => {
+test("findAllClasses Empty", async () => {
 	const input = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( ) lg:(light:bg-black)`
 	expect(findAllClasses({ input }).empty).toEqual([
 		{
@@ -101,7 +101,7 @@ test("findClasses Empty", async () => {
 	])
 })
 
-test("findClasses Important", async () => {
+test("findAllClasses Important", async () => {
 	const input = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
 	const result = findAllClasses({ input })
 	expect(result.classList).toEqual([
@@ -144,4 +144,12 @@ test("seprate", async () => {
 		"md:dark:hover:bg-white!",
 		"lg:light:bg-black",
 	])
+})
+
+test("broken input", async () => {
+	const input = `bg-gradient-to-b from-electric to-ribbon (
+		scale-0
+		bg-blue-300  color[red] `
+	const output = toClassNames(findAllClasses({ input }))
+	expect(output).toEqual(["bg-gradient-to-b", "from-electric", "to-ribbon", "scale-0", "bg-blue-300", "color[red]"])
 })
