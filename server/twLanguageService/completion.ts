@@ -61,133 +61,78 @@ function classesCompletion(
 	options: InitOptions,
 ): lsp.CompletionList {
 	const [start, , input] = match
-	const selection = findClasses({
-		input,
-		position: index - start,
-		separator: state.separator,
-		completion: true,
-	})
-
-	if (selection.token?.kind === TokenKind.CssProperty) {
-		if (index - start > selection.token?.token[0]) return { isIncomplete: false, items: [] }
-	}
-
+	const position = index - start
+	const selection = findClasses({ input, position, separator: state.separator, completion: true })
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
-	const variants = selection.variants.map(([, , v]) => v)
-	if (!variants.every(v => state.classnames.isVariant(v, twin))) {
+	const preferVariantWithParentheses = options.preferVariantWithParentheses
+	const inputCharacter = input.slice(position - 1, position)
+	const nextCharacter = input.slice(position, position + 1)
+
+	if (inputCharacter === state.separator && (!nextCharacter || nextCharacter.match(/\s/))) {
 		return { isIncomplete: false, items: [] }
 	}
 
+	if (selection.token?.kind === TokenKind.CssProperty) {
+		const [a, b] = selection.token.token
+		if (position > a && position < b) {
+			return { isIncomplete: false, items: [] }
+		}
+	}
+
+	// list variants
+	const variants = selection.variants.map(([, , value]) => value)
 	const variantFilter = state.classnames.getVariantFilter(variants, twin)
-	const variantItems = Object.entries(state.classnames.getVariants(twin))
-		.filter(([label]) => variantFilter(label))
-		.map<lsp.CompletionItem>(([label, data]) => {
-			const bp = state.classnames.getBreakingPoint(label)
-			if (bp) {
-				return {
-					label,
-					sortText: bp.toString().padStart(5, " "),
-					kind: lsp.CompletionItemKind.Module,
-					data: { type: "screen", data, variants, kind },
-					command: {
-						title: "",
-						command: "editor.action.triggerSuggest",
-					},
-				}
-			} else {
-				const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
-				return {
-					label,
-					// insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
-					sortText: f ? "*" + label : "~~~:" + label,
-					kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
-					data: { type: "variant", data, variants, kind },
-					command: {
-						title: "",
-						command: "editor.action.triggerSuggest",
-					},
-				}
-			}
-		})
-		.map(item => ({ ...item, label: item.label + state.separator }))
+	let variantItems: lsp.CompletionItem[] = []
 
-	// --------------------------------- //
-
-	if (kind === PatternKind.TwinCssProperty) {
-		return {
-			isIncomplete: false,
-			items: [...variantItems],
-		}
-	}
-
-	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
-	const classesItems = Object.entries(state.classnames.getClassNames(variants, twin))
-		.filter(classesFilter)
-		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
-
-	if (twin) {
-		if (variants.some(v => v === "before" || v === "after")) {
-			classesItems.push({
-				label: "content",
-				kind: lsp.CompletionItemKind.Constant,
-				sortText: "~~content",
-				data: { type: "utilities", data: null, variants, kind },
-			})
-		}
-	}
-
-	const preferVariantWithParentheses = options.preferVariantWithParentheses
-
-	if (selection.token) {
-		const [a, b, value] = selection.token.token
-		const pos = index - start
-		if (selection.token.kind === TokenKind.ClassName) {
-			// at first char or negative
-			if (pos === a || (pos === a + 1 && pos < b && value[0] === "-")) {
-				for (let i = 0; i < classesItems.length; i++) {
-					const item = classesItems[i]
-					item.textEdit = {
-						range: {
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + a),
+	if (!["-", ".", "/"].some(a => a === inputCharacter)) {
+		variantItems = Object.entries(state.classnames.getVariants(twin))
+			.filter(([label]) => variantFilter(label))
+			.map<lsp.CompletionItem>(([label, data]) => {
+				const bp = state.classnames.getBreakingPoint(label)
+				if (bp) {
+					return {
+						label,
+						sortText: bp.toString().padStart(5, " "),
+						kind: lsp.CompletionItemKind.Module,
+						data: { type: "screen", data, variants, kind },
+						command: {
+							title: "",
+							command: "editor.action.triggerSuggest",
 						},
-						newText: item.label + " ",
-					}
-				}
-			} else if (pos <= b) {
-				for (let i = 0; i < classesItems.length; i++) {
-					const item = classesItems[i]
-					item.textEdit = {
-						range: {
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + b),
-						},
-						newText: item.label,
-					}
-				}
-				if (preferVariantWithParentheses && pos === b) {
-					for (let i = 0; i < variantItems.length; i++) {
-						const item = variantItems[i]
-						item.insertTextFormat = lsp.InsertTextFormat.Snippet
-						item.insertText = item.label + "($0)"
 					}
 				} else {
-					for (let i = 0; i < variantItems.length; i++) {
-						const item = variantItems[i]
-						item.textEdit = {
-							range: {
-								start: document.positionAt(start + a),
-								end: document.positionAt(start + b),
-							},
-							newText: item.label,
-						}
+					const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
+					return {
+						label,
+						// insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
+						sortText: f ? "*" + label : "~~~:" + label,
+						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
+						data: { type: "variant", data, variants, kind },
+						command: {
+							title: "",
+							command: "editor.action.triggerSuggest",
+						},
 					}
 				}
-			}
-		} else if (selection.token.kind === TokenKind.Variant) {
-			classesItems.length = 0
+			})
+			.map(item => ({ ...item, label: item.label + state.separator }))
+	}
 
-			if (index - start > a) {
+	if (preferVariantWithParentheses) {
+		if ((!selection.token && nextCharacter !== "(") || selection.token?.token[1] === position) {
+			for (let i = 0; i < variantItems.length; i++) {
+				const item = variantItems[i]
+				item.insertTextFormat = lsp.InsertTextFormat.Snippet
+				item.insertText = item.label + "($0)"
+			}
+		}
+	}
+
+	if (selection.token) {
+		const [a, b] = selection.token.token
+		if (selection.token.kind === TokenKind.Variant) {
+			if (position > a) {
+				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
 					item.textEdit = {
@@ -200,8 +145,8 @@ function classesCompletion(
 				}
 			}
 		} else if (selection.token.kind === TokenKind.Unknown) {
-			classesItems.length = 0
-			if (index - start === a) {
+			if (position === a) {
+				// insert variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
 					item.textEdit = {
@@ -216,17 +161,65 @@ function classesCompletion(
 				variantItems.length = 0
 			}
 		}
-	} else if (preferVariantWithParentheses) {
-		for (let i = 0; i < variantItems.length; i++) {
-			const item = variantItems[i]
-			item.insertTextFormat = lsp.InsertTextFormat.Snippet
-			item.insertText = item.label + "($0)"
+	}
+
+	if (kind === PatternKind.TwinCssProperty) {
+		return {
+			isIncomplete: false,
+			items: [...variantItems],
+		}
+	}
+
+	// list className
+	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
+	const classNameItems = Object.entries(state.classnames.getClassNames(variants, twin))
+		.filter(classesFilter)
+		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
+	if (twin) {
+		if (variants.some(v => v === "before" || v === "after")) {
+			classNameItems.push({
+				label: "content",
+				kind: lsp.CompletionItemKind.Constant,
+				sortText: "~~content",
+				data: { type: "utilities", data: null, variants, kind },
+			})
+		}
+	}
+
+	if (selection.token) {
+		const [a, b, value] = selection.token.token
+		if (selection.token.kind === TokenKind.ClassName) {
+			if (position === a || (value.slice(0, 1) === "-" && position === a + 1 && position < b)) {
+				// insert token
+				for (let i = 0; i < classNameItems.length; i++) {
+					const item = classNameItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + a),
+						},
+						newText: item.label + " ",
+					}
+				}
+			} else if (position <= b) {
+				// replace token
+				for (let i = 0; i < classNameItems.length; i++) {
+					const item = classNameItems[i]
+					item.textEdit = {
+						range: {
+							start: document.positionAt(start + a),
+							end: document.positionAt(start + b),
+						},
+						newText: item.label,
+					}
+				}
+			}
 		}
 	}
 
 	return {
 		isIncomplete: false,
-		items: [...variantItems, ...classesItems],
+		items: [...variantItems, ...classNameItems],
 	}
 }
 
