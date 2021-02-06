@@ -1,7 +1,7 @@
 import type { DocumentLink } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Tailwind } from "~/tailwind"
-import { Cache, InitOptions } from "~/twLanguageService"
+import { Cache, InitOptions } from "."
 import docs from "./docs.yaml"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import { TokenKind } from "~/common/types"
@@ -19,7 +19,7 @@ function lastUrlToken(url: string) {
 	return token
 }
 
-export const documentLinks = (document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) => {
+export default function documentLinks(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
 	const links: DocumentLink[] = []
 	const cachedResult = cache[document.uri.toString()]
 	const s = new Set<number>()

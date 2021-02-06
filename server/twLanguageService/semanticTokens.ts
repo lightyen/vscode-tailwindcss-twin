@@ -1,10 +1,10 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
-import parseClasses, { TwElementKind, Block } from "./parseClasses"
-import { Tailwind } from "~/tailwind"
-import { InitOptions } from "~/twLanguageService"
 import * as lsp from "vscode-languageserver"
+import { Tailwind } from "~/tailwind"
+import { InitOptions } from "."
 import { Token } from "~/common/types"
 import { findAllMatch, PatternKind } from "~/common/ast"
+import parseSemanticTokens, { TwElementKind, Block } from "~/common/parseSemanticTokens"
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
 
@@ -17,7 +17,7 @@ enum SemanticKind {
 	enumMember,
 }
 
-export function provideSemanticTokens(
+export default function provideSemanticTokens(
 	document: TextDocument,
 	state: Tailwind,
 	{ colorDecorators }: InitOptions,
@@ -59,7 +59,7 @@ export function provideSemanticTokens(
 			return true
 		}
 
-		renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, parseClasses(value))
+		renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, parseSemanticTokens(value))
 	}
 	return builder.build()
 }
@@ -71,7 +71,7 @@ function renderClasses(
 	canRender: (node: Block) => boolean,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
-	blocks: ReturnType<typeof parseClasses>,
+	blocks: ReturnType<typeof parseSemanticTokens>,
 	context: Token[] = [],
 ) {
 	for (const node of blocks) {

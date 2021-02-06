@@ -1,9 +1,9 @@
 import * as lsp from "vscode-languageserver"
 import type { CSSRuleItem } from "~/tailwind/classnames"
-import { PatternKind } from "~/common/ast"
 import { Tailwind } from "~/tailwind"
+import { PatternKind } from "~/common/ast"
 
-export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem => {
+export default function completionResolve(item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem {
 	const { type, variants, kind } = item.data as {
 		type: string
 		variants: string[]
@@ -138,5 +138,3 @@ export const completionResolve = (item: lsp.CompletionItem, state: Tailwind): ls
 	}
 	return item
 }
-
-export default completionResolve

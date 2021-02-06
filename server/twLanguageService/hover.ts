@@ -10,7 +10,12 @@ import camel2kebab from "~/common/camel2kebab"
 import { TokenKind } from "~/common/types"
 import findClasses from "~/common/findClasses"
 
-export const hover = (document: TextDocument, position: lsp.Position, state: Tailwind, _: InitOptions): lsp.Hover => {
+export default function hover(
+	document: TextDocument,
+	position: lsp.Position,
+	state: Tailwind,
+	_: InitOptions,
+): lsp.Hover {
 	try {
 		const result = canMatch(document, position, true)
 		if (!result) {
@@ -115,8 +120,6 @@ export const hover = (document: TextDocument, position: lsp.Position, state: Tai
 	}
 	return null
 }
-
-export default hover
 
 function getHoverContents({
 	kind,

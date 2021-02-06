@@ -11,8 +11,6 @@ import { canMatch, PatternKind } from "~/common/ast"
 import { TokenKind, Token } from "~/common/types"
 import findClasses from "~/common/findClasses"
 
-export { completionResolve } from "./resolve"
-
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
 	kind: PatternKind
@@ -21,12 +19,12 @@ export interface InnerData {
 	data?: CSSRuleItem | CSSRuleItem[]
 }
 
-export const completion = (
+export default function completion(
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
 	options: InitOptions,
-): lsp.CompletionList => {
+): lsp.CompletionList {
 	try {
 		const result = canMatch(document, position)
 		if (!result) {

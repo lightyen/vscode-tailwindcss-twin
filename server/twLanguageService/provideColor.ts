@@ -2,12 +2,12 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
-import { InitOptions, Cache } from "~/twLanguageService"
+import { InitOptions, Cache } from "."
 import { findAllMatch, PatternKind } from "~/common/ast"
 import { TokenKind } from "~/common/types"
 import findAllClasses from "~/common/findAllClasses"
 
-export function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
+export default function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
 	const colors: ColorInformation[] = []
 	const cachedResult = cache[document.uri.toString()]
 	const tokens = findAllMatch(document)

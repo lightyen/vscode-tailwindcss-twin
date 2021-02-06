@@ -1,4 +1,4 @@
-import { Token } from "~/common/types"
+import { Token } from "./types"
 
 export enum TwElementKind {
 	Unknown,
