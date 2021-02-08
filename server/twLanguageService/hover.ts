@@ -9,6 +9,7 @@ import { canMatch, PatternKind } from "~/common/ast"
 import camel2kebab from "~/common/camel2kebab"
 import { TokenKind } from "~/common/types"
 import findClasses from "~/common/findClasses"
+import parseObjectKeys from "~/common/parseObjectKeys"
 
 export default function hover(
 	document: TextDocument,
@@ -23,9 +24,12 @@ export default function hover(
 		}
 		const { token, kind } = result
 		if (kind === PatternKind.TwinTheme) {
-			// TODO: parse theme key
+			const [keys, errors] = parseObjectKeys(token[2])
+			if (errors.length > 0) {
+				return null
+			}
 
-			const value = state.getTheme(token[2].split("."))
+			const value = state.getTheme(keys.map(k => k[2]))
 			const range = {
 				start: document.positionAt(token[0]),
 				end: document.positionAt(token[1]),

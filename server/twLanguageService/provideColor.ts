@@ -6,6 +6,7 @@ import { InitOptions, Cache } from "."
 import { findAllMatch, PatternKind } from "~/common/ast"
 import { TokenKind } from "~/common/types"
 import findAllClasses from "~/common/findAllClasses"
+import parseObjectKeys from "~/common/parseObjectKeys"
 
 export default function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
 	const colors: ColorInformation[] = []
@@ -76,7 +77,11 @@ export default function provideColor(document: TextDocument, state: Tailwind, _:
 }
 
 function getThemeDecoration(text: string, state: Tailwind): string {
-	const value = state.getTheme(text.split("."))
+	const [keys, errors] = parseObjectKeys(text)
+	if (errors.length > 0) {
+		return undefined
+	}
+	const value = state.getTheme(keys.map(k => k[2]))
 	if (typeof value === "string") {
 		if (value === "transparent") {
 			return value
@@ -85,8 +90,8 @@ function getThemeDecoration(text: string, state: Tailwind): string {
 			const c = chroma(value)
 			return c.css()
 		} catch {
-			return null
+			return undefined
 		}
 	}
-	return null
+	return undefined
 }

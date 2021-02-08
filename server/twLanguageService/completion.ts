@@ -10,6 +10,7 @@ import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
 import { TokenKind, Token } from "~/common/types"
 import findClasses from "~/common/findClasses"
+import parseObjectKeys from "~/common/parseObjectKeys"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
@@ -31,12 +32,22 @@ export default function completion(
 			return null
 		}
 		const index = document.offsetAt(position)
-		const character = document.getText({ start: position, end: position })
 		const { kind, token } = result
 		if (kind === PatternKind.TwinTheme) {
-			const list = twinThemeCompletion(index, character, token, state)
+			const list = twinThemeCompletion(index, token, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
+				if (/[-.]/.test(list.items[i].label)) {
+					const offset = token[2].length - token[2].lastIndexOf(".")
+					list.items[i].filterText = "." + list.items[i].label
+					list.items[i].textEdit = {
+						range: {
+							start: document.positionAt(index - offset),
+							end: document.positionAt(index),
+						},
+						newText: `[${list.items[i].label}]`,
+					}
+				}
 			}
 			return list
 		} else {
@@ -223,29 +234,23 @@ function classesCompletion(
 	}
 }
 
-function twinThemeCompletion(index: number, character: string, match: Token, state: Tailwind): lsp.CompletionList {
-	const [offset, , text] = match
-	if (text.indexOf("..") !== -1) {
-		return { isIncomplete: false, items: [] }
+function twinThemeCompletion(index: number, token: Token, state: Tailwind): lsp.CompletionList {
+	const [offset, , text] = token
+	const position = index - offset
+	const [results] = parseObjectKeys(text)
+	const keys: string[] = []
+	for (const [, b, val] of results) {
+		if (position > b) {
+			keys.push(val)
+		}
 	}
 
-	const reg = /([^.]+)\./g
-	const keys: string[] = []
-	let m: RegExpExecArray
-	while ((m = reg.exec(text))) {
-		const [, key, space] = m
-		if (space) {
-			return { isIncomplete: false, items: [] }
-		}
-		if (index >= offset + m.index && index < offset + reg.lastIndex) {
-			break
-		}
-		keys.push(key)
-	}
 	const value = state.getTheme(keys)
+
 	if (typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
+
 	return {
 		isIncomplete: true,
 		items: Object.keys(value).map(label => {
@@ -257,11 +262,10 @@ function twinThemeCompletion(index: number, character: string, match: Token, sta
 			const isObject = typeof value === "object"
 			if (isObject) {
 				item.kind = lsp.CompletionItemKind.Module
-				item.insertText = label + "."
-				item.command = {
-					title: "",
-					command: "editor.action.triggerSuggest",
-				}
+				// item.command = {
+				// 	title: "",
+				// 	command: "editor.action.triggerSuggest",
+				// }
 				item.data = {
 					kind: "twinTheme",
 					type: "other",
