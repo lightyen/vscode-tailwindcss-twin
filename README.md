@@ -46,15 +46,15 @@ ONLY for React and `twin.macro`
 
 ```json5
 {
-	"workbench.colorCustomizations": {
-		"[Atom One Dark]": {
-			"editorHoverWidget.background": "#17202ee5",
-			"editorHoverWidget.border": "#6a7473",
-			"editorSuggestWidget.background": "#17202ee5",
-			"editorSuggestWidget.border": "#6a7473",
-			"editorSuggestWidget.selectedBackground": "#009c70d0",
-			"editor.wordHighlightBackground": "#0000"
-		}
-	},
+  "workbench.colorCustomizations": {
+    "[Atom One Dark]": {
+      "editorHoverWidget.background": "#17202ee5",
+      "editorHoverWidget.border": "#6a7473",
+      "editorSuggestWidget.background": "#17202ee5",
+      "editorSuggestWidget.border": "#6a7473",
+      "editorSuggestWidget.selectedBackground": "#009c70d0",
+      "editor.wordHighlightBackground": "#0000"
+    }
+  }
 }
 ```
