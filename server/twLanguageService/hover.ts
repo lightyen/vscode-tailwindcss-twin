@@ -22,37 +22,9 @@ export default function hover(
 			return null
 		}
 		const { token, kind } = result
-		const selection = findClasses({
-			input: token[2],
-			position: document.offsetAt(position) - token[0],
-			separator: state.separator,
-		})
-		if (!selection.token) {
-			return null
-		}
-		if (selection.token.kind === TokenKind.CssProperty) {
-			const [start, end] = selection.token.token
-			const key = selection.token.key[2]
-			const value = selection.token.value[2]
-			const important = selection.important
-			return {
-				range: {
-					start: document.positionAt(token[0] + start),
-					end: document.positionAt(token[0] + end),
-				},
-				contents: {
-					kind: lsp.MarkupKind.Markdown,
-					value: [
-						"```scss",
-						"& {",
-						`\t${camel2kebab(key)}: ${value}${important ? " !important" : ""};`,
-						"}",
-						"```",
-					].join("\n"),
-				},
-			}
-		}
 		if (kind === PatternKind.TwinTheme) {
+			// TODO: parse theme key
+
 			const value = state.getTheme(token[2].split("."))
 			const range = {
 				start: document.positionAt(token[0]),
@@ -97,6 +69,36 @@ export default function hover(
 			}
 			return null
 		} else {
+			const selection = findClasses({
+				input: token[2],
+				position: document.offsetAt(position) - token[0],
+				separator: state.separator,
+			})
+			if (!selection.token) {
+				return null
+			}
+			if (selection.token.kind === TokenKind.CssProperty) {
+				const [start, end] = selection.token.token
+				const key = selection.token.key[2]
+				const value = selection.token.value[2]
+				const important = selection.important
+				return {
+					range: {
+						start: document.positionAt(token[0] + start),
+						end: document.positionAt(token[0] + end),
+					},
+					contents: {
+						kind: lsp.MarkupKind.Markdown,
+						value: [
+							"```scss",
+							"& {",
+							`\t${camel2kebab(key)}: ${value}${important ? " !important" : ""};`,
+							"}",
+							"```",
+						].join("\n"),
+					},
+				}
+			}
 			if (kind === PatternKind.TwinCssProperty) {
 				if (selection.token.kind === TokenKind.Unknown || selection.token.kind === TokenKind.ClassName) {
 					return null
