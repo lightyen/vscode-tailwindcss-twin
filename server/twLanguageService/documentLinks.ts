@@ -25,6 +25,10 @@ export default function documentLinks(document: TextDocument, state: Tailwind, _
 	const s = new Set<number>()
 	const tokens = findAllMatch(document)
 	for (const { token, kind } of tokens) {
+		if (kind === PatternKind.TwinTheme) {
+			continue
+		}
+
 		const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 		const prefix = twin ? "tw." : ""
 		const [start, , value] = token
