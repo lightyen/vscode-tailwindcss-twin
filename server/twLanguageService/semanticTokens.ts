@@ -168,7 +168,7 @@ function renderThemeValue(
 	for (const node of result.blocks) {
 		const [a, b] = node.token
 		const pos = getPosition(a)
-		if (node.kind === TwThemeElementKind.Identifier) {
+		if (node.kind === TwThemeElementKind.Identifier || node.kind === TwThemeElementKind.BracketIdentifier) {
 			builder.push(pos.line, pos.character, b - a, SemanticKind.number, 0)
 		} else {
 			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)

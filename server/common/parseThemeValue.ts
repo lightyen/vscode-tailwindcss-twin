@@ -3,6 +3,7 @@ import * as tw from "./types"
 export enum TwThemeElementKind {
 	Unknown,
 	Identifier,
+	BracketIdentifier,
 	Dot,
 	Bracket,
 }
@@ -17,6 +18,11 @@ interface TwThemeIdentifierElement {
 	token: tw.Token
 }
 
+interface TwThemeBracketIdentifierElement {
+	kind: TwThemeElementKind.BracketIdentifier
+	token: tw.Token
+}
+
 interface TwThemeDotElement {
 	kind: TwThemeElementKind.Dot
 	token: tw.Token
@@ -27,13 +33,18 @@ interface TwThemeBracketElement {
 	token: tw.Token
 }
 
-type Block = TwThemeUnknownElement | TwThemeIdentifierElement | TwThemeDotElement | TwThemeBracketElement
+type Block =
+	| TwThemeUnknownElement
+	| TwThemeIdentifierElement
+	| TwThemeBracketIdentifierElement
+	| TwThemeDotElement
+	| TwThemeBracketElement
 
 interface Result {
 	blocks: Block[]
 	errors: tw.Error[]
 	keys(): string[]
-	hit(index: number): tw.Token
+	hit(index: number): Block
 }
 
 export default function parseThemeValue(str: string, start = 0, end = str.length): Result {
@@ -47,11 +58,21 @@ export default function parseThemeValue(str: string, start = 0, end = str.length
 	let state: State = State.ExpectIdentifier
 	const blocks: Block[] = []
 	const errors: tw.Error[] = []
+	const spaceReg = /\s/
 	let flag = -1
 	let b = start
 	let i = start
 
 	for (; i < end; i++) {
+		if (spaceReg.test(str[i])) {
+			errors.push({
+				message: "Syntax Error",
+				start: i,
+				end: i + 1,
+			})
+			break
+		}
+
 		if (str[i] === ".") {
 			if (state === State.ExpectDotOrLeftBracket || state === State.ExpectNotRightBracket) {
 				if (b < i) {
@@ -111,7 +132,7 @@ export default function parseThemeValue(str: string, start = 0, end = str.length
 			if (state === State.ExpectIdentifierOrRightBracket) {
 				if (b < i) {
 					blocks.push({
-						kind: TwThemeElementKind.Identifier,
+						kind: TwThemeElementKind.BracketIdentifier,
 						token: [b, i, str.slice(b, i)],
 					})
 				} else {
@@ -169,15 +190,24 @@ export default function parseThemeValue(str: string, start = 0, end = str.length
 		blocks,
 		errors,
 		keys() {
-			return this.blocks.filter(b => b.kind === TwThemeElementKind.Identifier).map(v => v.token[2])
+			return this.blocks
+				.filter(
+					block =>
+						block.kind === TwThemeElementKind.Identifier ||
+						block.kind === TwThemeElementKind.BracketIdentifier,
+				)
+				.map(v => v.token[2])
 		},
 		hit(index: number) {
 			for (const block of this.blocks) {
-				if (block.kind !== TwThemeElementKind.Identifier) {
+				if (
+					block.kind !== TwThemeElementKind.Identifier &&
+					block.kind !== TwThemeElementKind.BracketIdentifier
+				) {
 					continue
 				}
 				if (index >= block.token[0] && index <= block.token[1]) {
-					return block.token
+					return block
 				}
 			}
 			return undefined

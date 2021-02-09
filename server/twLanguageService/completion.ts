@@ -224,7 +224,9 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 	const position = index - offset
 	const result = parseThemeValue(text)
 	const keys: string[] = []
-	for (const { token } of result.blocks.filter(b => b.kind === TwThemeElementKind.Identifier)) {
+	for (const { token } of result.blocks.filter(
+		b => b.kind === TwThemeElementKind.Identifier || b.kind === TwThemeElementKind.BracketIdentifier,
+	)) {
 		const [, b, val] = token
 		if (position > b) {
 			keys.push(val)
@@ -237,10 +239,11 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 		return { isIncomplete: false, items: [] }
 	}
 
-	const match = result.hit(position)
+	const hit = result.hit(position)
+	const inputChar = text[position - 1]
 
 	return {
-		isIncomplete: true,
+		isIncomplete: false,
 		items: Object.keys(value).map(label => {
 			const item: lsp.CompletionItem = {
 				label,
@@ -284,25 +287,36 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 				}
 			}
 
-			if (/[-.]/.test(label)) {
-				const offset = token[2].length - token[2].lastIndexOf(".")
-				item.filterText = "." + label
-				item.textEdit = {
-					range: {
-						start: document.positionAt(index - offset),
-						end: document.positionAt(index),
-					},
-					newText: `[${label}]`,
+			let newText = label
+			let brace = false
+			if (label.match(/[-.]/g)) {
+				item.filterText = inputChar + label
+				if (inputChar !== "[") {
+					brace = true
 				}
 			}
 
-			if (match) {
+			if (brace) {
+				newText = `[${label}]`
+			}
+
+			if (hit) {
+				const a = hit.token[0] - (brace ? 1 : 0)
+				const b = hit.token[1]
 				item.textEdit = lsp.TextEdit.replace(
 					{
-						start: document.positionAt(offset + match[0]),
-						end: document.positionAt(offset + match[1]),
+						start: document.positionAt(offset + a),
+						end: document.positionAt(offset + b),
 					},
-					label,
+					newText,
+				)
+			} else {
+				item.textEdit = lsp.TextEdit.replace(
+					{
+						start: document.positionAt(index - (brace ? 1 : 0)),
+						end: document.positionAt(index),
+					},
+					newText,
 				)
 			}
 
