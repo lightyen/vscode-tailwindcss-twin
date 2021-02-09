@@ -68,10 +68,6 @@ function classesCompletion(
 	const inputCharacter = input.slice(position - 1, position)
 	const nextCharacter = input.slice(position, position + 1)
 
-	if (inputCharacter === state.separator && (!nextCharacter || nextCharacter.match(/\s/))) {
-		return { isIncomplete: false, items: [] }
-	}
-
 	if (selection.token?.kind === TokenKind.CssProperty) {
 		const [a, b] = selection.token.token
 		if (position > a && position < b) {
