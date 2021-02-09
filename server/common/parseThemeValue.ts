@@ -1,4 +1,5 @@
 import * as tw from "./types"
+import findRightBracket from "./findRightBracket"
 
 export enum TwThemeElementKind {
 	Unknown,
@@ -47,143 +48,125 @@ interface Result {
 	hit(index: number): Block
 }
 
-export default function parseThemeValue(str: string, start = 0, end = str.length): Result {
-	enum State {
-		ExpectIdentifier = 1,
-		ExpectDotOrLeftBracket = 2,
-		ExpectIdentifierOrRightBracket = 4,
-		ExpectNotRightBracket = 8,
-	}
+export default function parseThemeValue(input: string): Result {
+	let init = false
 
-	let state: State = State.ExpectIdentifier
 	const blocks: Block[] = []
 	const errors: tw.Error[] = []
-	const spaceReg = /\s/
-	let flag = -1
-	let b = start
-	let i = start
 
-	for (; i < end; i++) {
-		if (spaceReg.test(str[i])) {
+	const reg = /(\.[\w-/]*)|(\[[\w-./]*)|([\w-/]+)/g
+	const start = 0
+	const end = input.length
+	reg.lastIndex = start
+	input = input.slice(0, end)
+	let match: RegExpExecArray
+	let x = 0
+
+	while ((match = reg.exec(input))) {
+		const [value, dotId, bracId, Id] = match
+		if (match.index !== x) {
 			errors.push({
-				message: "Syntax Error",
-				start: i,
-				end: i + 1,
+				message: "Syntax Error (invalid space)",
+				start: x,
+				end: match.index,
+			})
+		} else {
+			x = x + value.length
+		}
+
+		if (!init) {
+			if (!Id) {
+				errors.push({
+					message: "Syntax Error (not an identifier)",
+					start: match.index,
+					end: match.index + 1,
+				})
+				break
+			}
+			blocks.push({
+				kind: TwThemeElementKind.Identifier,
+				token: [match.index, reg.lastIndex, Id],
+			})
+			init = true
+			continue
+		} else if (Id) {
+			errors.push({
+				message: "Syntax Error (access expression)",
+				start: match.index,
+				end: match.index + 1,
 			})
 			break
 		}
 
-		if (str[i] === ".") {
-			if (state === State.ExpectDotOrLeftBracket || state === State.ExpectNotRightBracket) {
-				if (b < i) {
-					blocks.push({
-						kind: TwThemeElementKind.Identifier,
-						token: [b, i, str.slice(b, i)],
-					})
-				}
-				b = i + 1
-			}
+		if (dotId) {
+			blocks.push({
+				kind: TwThemeElementKind.Dot,
+				token: [match.index, match.index + 1, input.slice(match.index, match.index + 1)],
+			})
 
-			if (state === State.ExpectDotOrLeftBracket || state === State.ExpectNotRightBracket) {
+			let hasId = false
+			if (match.index + 1 < reg.lastIndex) {
 				blocks.push({
-					kind: TwThemeElementKind.Dot,
-					token: [i, i + 1, str.slice(i, i + 1)],
+					kind: TwThemeElementKind.Identifier,
+					token: [match.index + 1, reg.lastIndex, input.slice(match.index + 1, reg.lastIndex)],
 				})
-				state = State.ExpectIdentifier
-			} else if (state === State.ExpectIdentifierOrRightBracket) {
-				// nothing
-			} else if (state === State.ExpectIdentifier) {
-				errors.push({
-					message: "An element access expression should take an argument (1)",
-					start: i,
-					end: i + 1,
-				})
-				break
-			}
-		} else if (str[i] === "[") {
-			flag = i
-			if (state === State.ExpectDotOrLeftBracket || state === State.ExpectNotRightBracket) {
-				if (b < i) {
-					blocks.push({
-						kind: TwThemeElementKind.Identifier,
-						token: [b, i, str.slice(b, i)],
-					})
-				}
-				b = i + 1
+				hasId = true
 			}
 
-			if (state === State.ExpectDotOrLeftBracket || state === State.ExpectNotRightBracket) {
-				blocks.push({
-					kind: TwThemeElementKind.Bracket,
-					token: [i, i + 1, str.slice(i, i + 1)],
-				})
-				state = State.ExpectIdentifier
-			} else {
-				errors.push({
-					message: "Syntax Error",
-					start: i,
-					end: i + 1,
-				})
-				break
-			}
-		} else if (str[i] === "]") {
-			flag = -1
-
-			if (state === State.ExpectIdentifierOrRightBracket) {
-				if (b < i) {
-					blocks.push({
-						kind: TwThemeElementKind.BracketIdentifier,
-						token: [b, i, str.slice(b, i)],
-					})
-				} else {
+			if (hasId) {
+				if (input[reg.lastIndex] && input[reg.lastIndex] !== "." && input[reg.lastIndex] !== "[") {
 					errors.push({
-						message: "An element access expression should take an argument (2)",
-						start: flag,
-						end: i,
+						message: "Syntax Error (access expression)",
+						start: reg.lastIndex,
+						end: reg.lastIndex + 1,
 					})
+					break
 				}
-				b = i + 1
-			}
-
-			if (state === State.ExpectIdentifierOrRightBracket) {
-				blocks.push({
-					kind: TwThemeElementKind.Bracket,
-					token: [i, i + 1, str.slice(i, i + 1)],
-				})
-				state = State.ExpectDotOrLeftBracket
 			} else {
 				errors.push({
-					message: "An element access expression should take an argument (3)",
-					start: b,
-					end: i + 1,
+					message: "Syntax Error (access expression)",
+					start: reg.lastIndex,
+					end: reg.lastIndex + 1,
 				})
 				break
 			}
-		} else {
-			if (flag > 0) {
-				state = State.ExpectIdentifierOrRightBracket
-			} else if (state === State.ExpectIdentifier) {
-				state = State.ExpectNotRightBracket
-			} else if (state === State.ExpectDotOrLeftBracket) {
+		} else if (bracId) {
+			blocks.push({
+				kind: TwThemeElementKind.Bracket,
+				token: [match.index, match.index + 1, input.slice(match.index, match.index + 1)],
+			})
+
+			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
+			if (typeof closedBracket !== "number") {
 				errors.push({
-					message: "Syntax Error",
-					start: i,
-					end: i + 1,
+					message: "except to find a ']' to match the '['",
+					start: match.index,
+					end,
 				})
 				break
 			}
+
+			if (match.index + 1 < closedBracket) {
+				blocks.push({
+					kind: TwThemeElementKind.Identifier,
+					token: [match.index + 1, closedBracket, input.slice(match.index + 1, closedBracket)],
+				})
+			} else {
+				errors.push({
+					message: "Syntax Error (empty)",
+					start: match.index,
+					end: closedBracket + 1,
+				})
+			}
+
+			blocks.push({
+				kind: TwThemeElementKind.Bracket,
+				token: [closedBracket, closedBracket + 1, input.slice(closedBracket, closedBracket + 1)],
+			})
+
+			reg.lastIndex = closedBracket + 1
+			x = reg.lastIndex
 		}
-	}
-
-	if (b < i) {
-		blocks.push({
-			kind: TwThemeElementKind.Identifier,
-			token: [b, i, str.slice(b, i)],
-		})
-	}
-
-	if (state !== State.ExpectNotRightBracket && state !== State.ExpectDotOrLeftBracket) {
-		errors.push({ message: "An element access expression should take an argument (4)", start: i, end: i + 1 })
 	}
 
 	return {
@@ -213,4 +196,94 @@ export default function parseThemeValue(str: string, start = 0, end = str.length
 			return undefined
 		},
 	}
+}
+
+export function findThemeValueKeys(
+	input: string,
+	position: number,
+): {
+	keys: string[]
+	hit: tw.Token
+} {
+	const keys: string[] = []
+	let hit: tw.Token
+
+	let init = false
+	const reg = /(\.[\w-/]*)|(\[[\w-./]*)|([\w-/]+)/g
+	const start = 0
+	const end = input.length
+	reg.lastIndex = start
+	input = input.slice(0, end)
+	let match: RegExpExecArray
+
+	while ((match = reg.exec(input))) {
+		const [, dotId, bracId, Id] = match
+		if (!init) {
+			if (!Id) {
+				break
+			}
+			if (position >= match.index && position <= reg.lastIndex) {
+				hit = [match.index, reg.lastIndex, Id]
+				break
+			}
+			if (position > reg.lastIndex) {
+				keys.push(Id)
+			}
+			init = true
+			continue
+		} else if (Id) {
+			if (position >= match.index && position <= reg.lastIndex) {
+				hit = [match.index, reg.lastIndex, Id]
+			}
+			break
+		}
+
+		if (dotId) {
+			let hasId = false
+			if (position >= match.index && position <= reg.lastIndex) {
+				hit = [match.index, reg.lastIndex, input.slice(match.index, reg.lastIndex)]
+				break
+			}
+			if (match.index + 1 < reg.lastIndex) {
+				if (position > reg.lastIndex) {
+					keys.push(input.slice(match.index + 1, reg.lastIndex))
+				}
+				hasId = true
+			}
+
+			if (hasId) {
+				if (input[reg.lastIndex] && input[reg.lastIndex] !== "." && input[reg.lastIndex] !== "[") {
+					break
+				}
+			} else {
+				break
+			}
+		} else if (bracId) {
+			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
+			if (typeof closedBracket !== "number") {
+				if (position === match.index + 1) {
+					hit = [match.index, match.index + 1, input.slice(match.index, match.index + 1)]
+				}
+				break
+			}
+
+			if (position >= match.index && position <= closedBracket) {
+				hit = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
+				break
+			}
+
+			if (match.index + 1 < closedBracket) {
+				if (position > closedBracket) {
+					keys.push(input.slice(match.index + 1, closedBracket))
+				}
+			} else {
+				// empty
+				break
+			}
+
+			reg.lastIndex = closedBracket + 1
+		}
+	}
+
+	return { keys, hit }
 }

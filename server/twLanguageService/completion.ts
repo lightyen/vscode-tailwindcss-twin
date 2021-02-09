@@ -10,7 +10,7 @@ import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
 import { TokenKind, Token } from "~/common/types"
 import findClasses from "~/common/findClasses"
-import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
+import { findThemeValueKeys } from "~/common/parseThemeValue"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
@@ -131,27 +131,20 @@ function classesCompletion(
 				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
-					item.textEdit = {
-						range: {
+					item.textEdit = lsp.TextEdit.replace(
+						{
 							start: document.positionAt(start + a),
 							end: document.positionAt(start + b + state.separator.length),
 						},
-						newText: item.label,
-					}
+						item.label,
+					)
 				}
 			}
 		} else if (selection.token.kind === TokenKind.Unknown) {
 			if (position === a) {
-				// insert variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
-					item.textEdit = {
-						range: {
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + a + state.separator.length),
-						},
-						newText: item.label,
-					}
+					item.textEdit = lsp.TextEdit.insert(document.positionAt(start + a), item.label)
 				}
 			} else {
 				variantItems.length = 0
@@ -184,31 +177,24 @@ function classesCompletion(
 
 	if (selection.token) {
 		const [a, b, value] = selection.token.token
-		if (selection.token.kind === TokenKind.ClassName) {
-			if (position === a || (value.slice(0, 1) === "-" && position === a + 1 && position < b)) {
-				// insert token
-				for (let i = 0; i < classNameItems.length; i++) {
-					const item = classNameItems[i]
-					item.textEdit = {
-						range: {
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + a),
-						},
-						newText: item.label + " ",
-					}
-				}
-			} else if (position <= b) {
-				// replace token
-				for (let i = 0; i < classNameItems.length; i++) {
-					const item = classNameItems[i]
-					item.textEdit = {
-						range: {
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + b),
-						},
-						newText: item.label,
-					}
-				}
+		if (selection.token.kind === TokenKind.Variant && position > a) {
+			classNameItems.length = 0
+		}
+		if (position === a || (value.slice(0, 1) === "-" && position === a + 1 && position < b)) {
+			for (let i = 0; i < classNameItems.length; i++) {
+				const item = classNameItems[i]
+				item.textEdit = lsp.TextEdit.insert(document.positionAt(start + a), item.label + " ")
+			}
+		} else if (position <= b && selection.token.kind === TokenKind.ClassName) {
+			for (let i = 0; i < classNameItems.length; i++) {
+				const item = classNameItems[i]
+				item.textEdit = lsp.TextEdit.replace(
+					{
+						start: document.positionAt(start + a),
+						end: document.positionAt(start + b),
+					},
+					item.label,
+				)
 			}
 		}
 	}
@@ -222,32 +208,42 @@ function classesCompletion(
 function twinThemeCompletion(document: TextDocument, index: number, token: Token, state: Tailwind): lsp.CompletionList {
 	const [offset, , text] = token
 	const position = index - offset
-	const result = parseThemeValue(text)
-	const keys: string[] = []
-	for (const { token } of result.blocks.filter(
-		b => b.kind === TwThemeElementKind.Identifier || b.kind === TwThemeElementKind.BracketIdentifier,
-	)) {
-		const [, b, val] = token
-		if (position > b) {
-			keys.push(val)
-		}
+	const { keys, hit } = findThemeValueKeys(text, position)
+
+	if (!hit && keys.length > 0) {
+		return { isIncomplete: false, items: [] }
 	}
 
 	const value = state.getTheme(keys)
-
 	if (typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
 
-	const hit = result.hit(position)
-	const inputChar = text[position - 1]
+	const candidates = Object.keys(value)
+
+	function formatCandidates(label: string) {
+		let prefix = ""
+		if (label.slice(0, 1) === "-") {
+			prefix = "~~~"
+			label = label.slice(1)
+		}
+		try {
+			const val = eval(label)
+			if (typeof val !== "number") {
+				return prefix + label
+			}
+			return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
+		} catch {
+			return prefix + label
+		}
+	}
 
 	return {
 		isIncomplete: false,
-		items: Object.keys(value).map(label => {
+		items: candidates.map(label => {
 			const item: lsp.CompletionItem = {
 				label,
-				sortText: Number.isNaN(Number(label)) ? label : formatDigital(label),
+				sortText: formatCandidates(label),
 			}
 			const value = state.getTheme([...keys, label])
 			const isObject = typeof value === "object"
@@ -257,10 +253,6 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 			}
 			if (isObject) {
 				item.kind = lsp.CompletionItemKind.Module
-				// item.command = {
-				// 	title: "",
-				// 	command: "editor.action.triggerSuggest",
-				// }
 			} else {
 				if (typeof value === "string") {
 					try {
@@ -288,21 +280,19 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 			}
 
 			let newText = label
-			let brace = false
-			if (label.match(/[-.]/g)) {
-				item.filterText = inputChar + label
-				if (inputChar !== "[") {
-					brace = true
-				}
+			if (label.match(/[-./]/)) {
+				newText = `[${label}]`
+			} else if (keys.length > 0) {
+				newText = `.${label}`
 			}
 
-			if (brace) {
-				newText = `[${label}]`
+			item.filterText = newText
+			if (keys.length > 0) {
+				item.filterText = hit?.[2][0] + item.filterText
 			}
 
 			if (hit) {
-				const a = hit.token[0] - (brace ? 1 : 0)
-				const b = hit.token[1]
+				const [a, b] = hit
 				item.textEdit = lsp.TextEdit.replace(
 					{
 						start: document.positionAt(offset + a),
@@ -311,13 +301,7 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 					newText,
 				)
 			} else {
-				item.textEdit = lsp.TextEdit.replace(
-					{
-						start: document.positionAt(index - (brace ? 1 : 0)),
-						end: document.positionAt(index),
-					},
-					newText,
-				)
+				item.textEdit = lsp.TextEdit.insert(document.positionAt(index), newText)
 			}
 
 			return item
@@ -342,7 +326,7 @@ function createCompletionItem({
 		label,
 		data: { type: "utilities", data, variants, kind },
 		kind: lsp.CompletionItemKind.Constant,
-		sortText: (label[0] === "-" ? "~~~" : "~~") + formatLabel(label),
+		sortText: (label.slice(0, 1) === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
 	const info = state.classnames.colors[label]
@@ -394,18 +378,5 @@ function formatLabel(label: string) {
 		return prefix + val.toFixed(3).padStart(7, "0")
 	} catch {
 		return label
-	}
-}
-
-function formatDigital(value: string) {
-	const prefix = `${value.startsWith("-") ? "~" : ""}`
-	try {
-		const val = eval(value)
-		if (typeof val !== "number") {
-			return prefix + value
-		}
-		return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
-	} catch {
-		return prefix + value
 	}
 }

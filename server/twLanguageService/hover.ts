@@ -58,7 +58,7 @@ export default function hover(
 						range,
 						contents: {
 							kind: lsp.MarkupKind.Markdown,
-							value: `"${value}"`,
+							value,
 						},
 					}
 				}
@@ -67,7 +67,7 @@ export default function hover(
 					range,
 					contents: {
 						kind: lsp.MarkupKind.Markdown,
-						value: value.join(),
+						value: value.join(", "),
 					},
 				}
 			} else if (value) {

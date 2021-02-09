@@ -19,26 +19,24 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 		const [start, end, value] = token
 		if (kind === PatternKind.TwinTheme) {
 			const result = parseThemeValue(value)
-			if (result.errors.length > 0) {
-				const [err] = result.errors
+			for (const err of result.errors) {
 				diagnostics.push({
 					range: {
 						start: document.positionAt(start + err.start),
-						end: document.positionAt(start + err.start),
+						end: document.positionAt(start + err.end),
 					},
 					source,
 					message: err.message,
 					severity: DiagnosticSeverity.Error,
 				})
-			} else {
-				if (!state.getTheme(result.keys())) {
-					diagnostics.push({
-						range: { start: document.positionAt(start), end: document.positionAt(end) },
-						source,
-						message: "value is undefined",
-						severity: DiagnosticSeverity.Error,
-					})
-				}
+			}
+			if (!state.getTheme(result.keys())) {
+				diagnostics.push({
+					range: { start: document.positionAt(start), end: document.positionAt(end) },
+					source,
+					message: "value is undefined",
+					severity: DiagnosticSeverity.Error,
+				})
 			}
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
 			const c = cache[uri][value]
