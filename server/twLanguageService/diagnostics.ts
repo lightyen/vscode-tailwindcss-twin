@@ -6,7 +6,7 @@ import type { InitOptions, Cache } from "."
 import { TokenKind, Token, EmptyKind, ClassName } from "~/common/types"
 import camel2kebab from "~/common/camel2kebab"
 import findAllClasses from "~/common/findAllClasses"
-import parseObjectKeys from "~/common/parseObjectKeys"
+import parseThemeValue from "~/common/parseThemeValue"
 
 const source = "tailwindcss"
 
@@ -18,9 +18,9 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
 		if (kind === PatternKind.TwinTheme) {
-			const [keys, errors] = parseObjectKeys(value)
-			if (errors.length > 0) {
-				const [err] = errors
+			const result = parseThemeValue(value)
+			if (result.errors.length > 0) {
+				const [err] = result.errors
 				diagnostics.push({
 					range: {
 						start: document.positionAt(start + err.start),
@@ -31,11 +31,11 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 					severity: DiagnosticSeverity.Error,
 				})
 			} else {
-				if (!state.getTheme(keys.map(k => k[2]))) {
+				if (!state.getTheme(result.keys())) {
 					diagnostics.push({
 						range: { start: document.positionAt(start), end: document.positionAt(end) },
 						source,
-						message: `Can't find ${value}`,
+						message: "value is undefined",
 						severity: DiagnosticSeverity.Error,
 					})
 				}

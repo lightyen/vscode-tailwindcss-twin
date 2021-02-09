@@ -111,6 +111,7 @@ class Server {
 							"7",
 							"8",
 							"9",
+							"[",
 						],
 					},
 					hoverProvider: true,

@@ -160,7 +160,7 @@ export class Tailwind {
 	/**
 	 * get theme value.
 	 *
-	 * example: ```getTheme("colors.blue.500")```
+	 * example: ```getTheme(["colors", "blue", "500"])```
 	 * @param keys
 	 */
 	getTheme(keys: string[]) {

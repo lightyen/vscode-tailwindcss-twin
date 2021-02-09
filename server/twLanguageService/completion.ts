@@ -10,7 +10,7 @@ import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
 import { TokenKind, Token } from "~/common/types"
 import findClasses from "~/common/findClasses"
-import parseObjectKeys from "~/common/parseObjectKeys"
+import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
@@ -34,20 +34,9 @@ export default function completion(
 		const index = document.offsetAt(position)
 		const { kind, token } = result
 		if (kind === PatternKind.TwinTheme) {
-			const list = twinThemeCompletion(index, token, state)
+			const list = twinThemeCompletion(document, index, token, state)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
-				if (/[-.]/.test(list.items[i].label)) {
-					const offset = token[2].length - token[2].lastIndexOf(".")
-					list.items[i].filterText = "." + list.items[i].label
-					list.items[i].textEdit = {
-						range: {
-							start: document.positionAt(index - offset),
-							end: document.positionAt(index),
-						},
-						newText: `[${list.items[i].label}]`,
-					}
-				}
 			}
 			return list
 		} else {
@@ -234,12 +223,13 @@ function classesCompletion(
 	}
 }
 
-function twinThemeCompletion(index: number, token: Token, state: Tailwind): lsp.CompletionList {
+function twinThemeCompletion(document: TextDocument, index: number, token: Token, state: Tailwind): lsp.CompletionList {
 	const [offset, , text] = token
 	const position = index - offset
-	const [results] = parseObjectKeys(text)
+	const result = parseThemeValue(text)
 	const keys: string[] = []
-	for (const [, b, val] of results) {
+	for (const { token } of result.blocks.filter(b => b.kind === TwThemeElementKind.Identifier)) {
+		const [, b, val] = token
 		if (position > b) {
 			keys.push(val)
 		}
@@ -251,6 +241,8 @@ function twinThemeCompletion(index: number, token: Token, state: Tailwind): lsp.
 		return { isIncomplete: false, items: [] }
 	}
 
+	const match = result.hit(position)
+
 	return {
 		isIncomplete: true,
 		items: Object.keys(value).map(label => {
@@ -260,21 +252,17 @@ function twinThemeCompletion(index: number, token: Token, state: Tailwind): lsp.
 			}
 			const value = state.getTheme([...keys, label])
 			const isObject = typeof value === "object"
+			item.data = {
+				kind: PatternKind.TwinTheme,
+				type: "other",
+			}
 			if (isObject) {
 				item.kind = lsp.CompletionItemKind.Module
 				// item.command = {
 				// 	title: "",
 				// 	command: "editor.action.triggerSuggest",
 				// }
-				item.data = {
-					kind: "twinTheme",
-					type: "other",
-				}
 			} else {
-				item.data = {
-					kind: "twinTheme",
-					type: "other",
-				}
 				if (typeof value === "string") {
 					try {
 						if (value === "transparent") {
@@ -299,6 +287,29 @@ function twinThemeCompletion(index: number, token: Token, state: Tailwind): lsp.
 					item.detail = value.join("\n")
 				}
 			}
+
+			if (/[-.]/.test(label)) {
+				const offset = token[2].length - token[2].lastIndexOf(".")
+				item.filterText = "." + label
+				item.textEdit = {
+					range: {
+						start: document.positionAt(index - offset),
+						end: document.positionAt(index),
+					},
+					newText: `[${label}]`,
+				}
+			}
+
+			if (match) {
+				item.textEdit = lsp.TextEdit.replace(
+					{
+						start: document.positionAt(offset + match[0]),
+						end: document.positionAt(offset + match[1]),
+					},
+					label,
+				)
+			}
+
 			return item
 		}),
 	}
