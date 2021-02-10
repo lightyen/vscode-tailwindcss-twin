@@ -3,8 +3,8 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import type { Tailwind } from "~/tailwind"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import type { InitOptions, Cache } from "."
-import { TokenKind, Token, EmptyKind, ClassName } from "~/common/types"
-import camel2kebab from "~/common/camel2kebab"
+import * as tw from "~/common/twin"
+import toKebab from "~/common/toKebab"
 import findAllClasses from "~/common/findAllClasses"
 import parseThemeValue from "~/common/parseThemeValue"
 
@@ -66,7 +66,7 @@ function validateTwin({
 	state,
 	diagnostics,
 	classList,
-	empty,
+	emptyList,
 	error,
 }: {
 	document: TextDocument
@@ -91,13 +91,13 @@ function validateTwin({
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
-			if (c.kind === TokenKind.ClassName) {
+			if (c.kind === tw.TokenKind.ClassName) {
 				result.push(...checkTwinClassName(c, document, offset, state))
 			}
 		})
 	}
 
-	function travel(obj: Record<string, Token[]>) {
+	function travel(obj: Record<string, tw.TokenList>) {
 		for (const k in obj) {
 			const t = obj[k]
 			const parts = k.split(".")
@@ -106,14 +106,14 @@ function validateTwin({
 				for (const token of t) {
 					const message =
 						diagnostics.conflict === "strict"
-							? `${token[2]} is conflicted on property: ${prop}`
-							: `${token[2]} is conflicted`
+							? `${token.text} is conflicted on property: ${prop}`
+							: `${token.text} is conflicted`
 					result.push({
 						source,
 						message,
 						range: {
-							start: document.positionAt(offset + token[0]),
-							end: document.positionAt(offset + token[1]),
+							start: document.positionAt(offset + token.start),
+							end: document.positionAt(offset + token.end),
 						},
 						severity: DiagnosticSeverity.Warning,
 					})
@@ -123,41 +123,41 @@ function validateTwin({
 	}
 
 	if (diagnostics.conflict !== "none") {
-		const map: Record<string, Token[]> = {}
+		const map: Record<string, tw.TokenList> = {}
 
 		if (kind === PatternKind.Twin) {
 			for (let i = 0; i < classList.length; i++) {
 				const item = classList[i]
-				const variants = item.variants.map(v => v[2])
+				const variants = item.variants.texts
 				if (item.important) {
 					continue
 				}
 
-				if (item.kind === TokenKind.CssProperty) {
-					const twinKeys = item.variants.map(v => v[2]).sort()
-					const property = camel2kebab(item.key[2])
+				if (item.kind === tw.TokenKind.CssProperty) {
+					const twinKeys = variants.sort()
+					const property = toKebab(item.key.text)
 					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
 						target.push(classList[i].token)
 					} else {
-						map[key] = [classList[i].token]
+						map[key] = tw.createTokenList([classList[i].token])
 					}
 					continue
 				}
 
-				const data = state.classnames.getClassNameRule(variants, true, item.token[2])
+				const data = state.classnames.getClassNameRule(variants, true, item.token.text)
 				if (!(data instanceof Array)) {
 					if (
-						item.token[2] !== "container" &&
-						!(item.token[2] === "content" && variants.some(v => v === "before" || v === "after"))
+						item.token.text !== "container" &&
+						!(item.token.text === "content" && variants.some(v => v === "before" || v === "after"))
 					) {
 						result.push({
 							source,
-							message: `Invalid token '${item.token[2]}'`,
+							message: `Invalid token '${item.token.text}'`,
 							range: {
-								start: document.positionAt(offset + item.token[0]),
-								end: document.positionAt(offset + item.token[1]),
+								start: document.positionAt(offset + item.token.start),
+								end: document.positionAt(offset + item.token.end),
 							},
 							severity: DiagnosticSeverity.Error,
 						})
@@ -178,7 +178,7 @@ function validateTwin({
 							if (target instanceof Array) {
 								target.push(item.token)
 							} else {
-								map[key] = [item.token]
+								map[key] = tw.createTokenList([item.token])
 							}
 						}
 						if (d.__source === "components") {
@@ -197,34 +197,34 @@ function validateTwin({
 					if (target instanceof Array) {
 						target.push(classList[i].token)
 					} else {
-						map[key] = [classList[i].token]
+						map[key] = tw.createTokenList([classList[i].token])
 					}
 				}
 			}
 		} else if (kind === PatternKind.TwinCssProperty) {
 			for (let i = 0; i < classList.length; i++) {
 				const item = classList[i]
-				if (item.kind === TokenKind.Unknown || item.kind === TokenKind.ClassName) {
+				if (item.kind === tw.TokenKind.Unknown || item.kind === tw.TokenKind.ClassName) {
 					result.push({
 						source,
-						message: `Invalid token '${item.token[2]}'`,
+						message: `Invalid token '${item.token.text}'`,
 						range: {
-							start: document.positionAt(offset + item.token[0]),
-							end: document.positionAt(offset + item.token[1]),
+							start: document.positionAt(offset + item.token.start),
+							end: document.positionAt(offset + item.token.end),
 						},
 						severity: DiagnosticSeverity.Error,
 					})
 					continue
 				}
 
-				const twinKeys = item.variants.map(v => v[2]).sort()
-				const property = camel2kebab(item.key[2])
+				const twinKeys = item.variants.texts.sort()
+				const property = toKebab(item.key.text)
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
 					target.push(classList[i].token)
 				} else {
-					map[key] = [classList[i].token]
+					map[key] = tw.createTokenList([classList[i].token])
 				}
 			}
 		}
@@ -232,12 +232,17 @@ function validateTwin({
 		travel(map)
 	}
 
-	for (let i = 0; i < empty.length; i++) {
-		const item = empty[i]
-		const variants = item.variants.map(v => v[2])
-		const searcher = state.classnames.getSearcher(variants, kind === PatternKind.Twin)
+	for (let i = 0; i < emptyList.length; i++) {
+		const item = emptyList[i]
+		const variants = item.variants.texts
+		const searcher = state.classnames.getSearcher(
+			variants,
+			kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty,
+		)
 		for (const [a, b, variant] of item.variants) {
-			if (!state.classnames.isVariant(variant, kind === PatternKind.Twin)) {
+			if (
+				!state.classnames.isVariant(variant, kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty)
+			) {
 				const ans = searcher.variants.search(variant)
 				if (ans?.length > 0) {
 					result.push({
@@ -264,7 +269,7 @@ function validateTwin({
 			}
 		}
 
-		if (item.kind === EmptyKind.Group && diagnostics.emptyGroup) {
+		if (item.kind === tw.EmptyKind.Group && diagnostics.emptyGroup) {
 			result.push({
 				source,
 				message: `forgot something?`,
@@ -274,7 +279,7 @@ function validateTwin({
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
-		} else if (item.kind === EmptyKind.Classname && diagnostics.emptyClass) {
+		} else if (item.kind === tw.EmptyKind.Classname && diagnostics.emptyClass) {
 			result.push({
 				source,
 				message: `forgot something?`,
@@ -290,9 +295,9 @@ function validateTwin({
 	return result
 }
 
-function checkTwinClassName(info: ClassName, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(info: tw.ClassName, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
-	const variants = info.variants.map(v => v[2])
+	const variants = info.variants.texts
 	for (const [a, b, variant] of info.variants) {
 		if (state.classnames.isVariant(variant, true)) {
 			continue
@@ -322,9 +327,10 @@ function checkTwinClassName(info: ClassName, document: TextDocument, offset: num
 			})
 		}
 	}
-	if (info.token[2]) {
-		const variants = info.variants.map(v => v[2])
-		const value = info.token[2]
+
+	if (info.token.text) {
+		const variants = info.variants.texts
+		const value = info.token.text
 		if (!state.classnames.isClassName(variants, true, value)) {
 			const ans = state.classnames.getSearcher(variants, true).classes.search(value)
 			if (ans?.length > 0) {
@@ -332,8 +338,8 @@ function checkTwinClassName(info: ClassName, document: TextDocument, offset: num
 					source,
 					message: `Can't find '${value}', did you mean '${ans[0].item}'?`,
 					range: {
-						start: document.positionAt(offset + info.token[0]),
-						end: document.positionAt(offset + info.token[1]),
+						start: document.positionAt(offset + info.token.start),
+						end: document.positionAt(offset + info.token.end),
 					},
 					data: { text: value, newText: ans[0].item },
 					severity: DiagnosticSeverity.Error,

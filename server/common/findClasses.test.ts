@@ -1,10 +1,10 @@
-import * as tw from "./types"
-import findClasses from "./findClasses"
+import * as tw from "./twin"
+import { hoverClasses, completeClasses } from "./findClasses"
 
 test("hover", async () => {
 	const input = `lg:var:class-name! lg:(var:(prop[value])!) !`
 	for (let position = 0; position < input.length; position++) {
-		const hover = findClasses({ input, position })
+		const hover = hoverClasses({ input, position })
 		switch (position) {
 			case 0:
 				expect(hover).toEqual({
@@ -412,55 +412,55 @@ test("hover", async () => {
 })
 
 test("completion", async () => {
-	const input = `lg:var:class-name! lg:(var:(prop[value])!) !`
-	for (let position = 0; position < input.length; position++) {
-		const completion = findClasses({ completion: true, input, position })
+	const input = `lg:var:class-name! lg:(var:(prop[value])!) ! (t)`
+	for (let position = 0; position <= input.length; position++) {
+		const completion = completeClasses({ input, position })
 		switch (position) {
 			case 0:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [0, 2, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [0, 3, "lg:"] },
 					variants: [],
 					important: false,
 				})
 				break
 			case 1:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [0, 2, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [0, 3, "lg:"] },
 					variants: [],
 					important: false,
 				})
 				break
 			case 2:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [0, 2, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [0, 3, "lg:"] },
 					important: false,
 					variants: [],
 				})
 				break
 			case 3:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [3, 6, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
 					variants: [[0, 2, "lg"]],
 					important: false,
 				})
 				break
 			case 4:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [3, 6, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
 					variants: [[0, 2, "lg"]],
 					important: false,
 				})
 				break
 			case 5:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [3, 6, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
 					variants: [[0, 2, "lg"]],
 					important: false,
 				})
 				break
 			case 6:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [3, 6, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
 					important: false,
 					variants: [[0, 2, "lg"]],
 				})
@@ -580,21 +580,21 @@ test("completion", async () => {
 				break
 			case 19:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [19, 21, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [19, 22, "lg:"] },
 					variants: [],
 					important: false,
 				})
 				break
 			case 20:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [19, 21, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [19, 22, "lg:"] },
 					variants: [],
 					important: false,
 				})
 				break
 			case 21:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [19, 21, "lg"] },
+					token: { kind: tw.TokenKind.Variant, token: [19, 22, "lg:"] },
 					important: false,
 					variants: [],
 				})
@@ -604,28 +604,28 @@ test("completion", async () => {
 				break
 			case 23:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [23, 26, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [23, 27, "var:"] },
 					variants: [[19, 21, "lg"]],
 					important: false,
 				})
 				break
 			case 24:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [23, 26, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [23, 27, "var:"] },
 					variants: [[19, 21, "lg"]],
 					important: false,
 				})
 				break
 			case 25:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [23, 26, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [23, 27, "var:"] },
 					variants: [[19, 21, "lg"]],
 					important: false,
 				})
 				break
 			case 26:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [23, 26, "var"] },
+					token: { kind: tw.TokenKind.Variant, token: [23, 27, "var:"] },
 					important: false,
 					variants: [[19, 21, "lg"]],
 				})
@@ -832,6 +832,34 @@ test("completion", async () => {
 					variants: [],
 				})
 				break
+			case 44:
+				expect(completion).toEqual({
+					token: { token: [43, 44, "!"], kind: tw.TokenKind.Unknown },
+					important: false,
+					variants: [],
+				})
+				break
+			case 45:
+				expect(completion).toEqual({
+					token: { token: [45, 48, "(t)"], kind: tw.TokenKind.VariantsGroup },
+					important: false,
+					variants: [],
+				})
+				break
+			case 46:
+				expect(completion).toEqual({
+					token: { token: [46, 47, "t"], kind: tw.TokenKind.ClassName },
+					important: false,
+					variants: [],
+				})
+				break
+			case 47:
+				expect(completion).toEqual({
+					token: { token: [46, 47, "t"], kind: tw.TokenKind.ClassName },
+					important: false,
+					variants: [],
+				})
+				break
 			default:
 				expect(completion).toEqual({ important: false, variants: [] })
 				break
@@ -839,10 +867,10 @@ test("completion", async () => {
 	}
 })
 
-test("findClasses Important", async () => {
+test("hover Important", async () => {
 	const input = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
 	for (let index = 0; index < input.length; index += 1) {
-		const result = findClasses({
+		const result = hoverClasses({
 			input,
 			position: 37,
 		})
@@ -860,20 +888,17 @@ test("findClasses Important", async () => {
 test("completion on invalid input", async () => {
 	let input = "   dark    bg-black  "
 	let position = 8
-	const completion = true
-	let result = findClasses({
+	let result = completeClasses({
 		input,
 		position,
-		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual(undefined)
 
 	position = 7
-	result = findClasses({
+	result = completeClasses({
 		input,
 		position,
-		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual({
@@ -883,36 +908,34 @@ test("completion on invalid input", async () => {
 
 	input = "   dark:    bg-black  "
 	position = 7
-	result = findClasses({
+	result = completeClasses({
 		input,
 		position,
-		completion,
 	})
 	expect(result.variants).toEqual([])
 	expect(result.token).toEqual({
 		kind: tw.TokenKind.Variant,
-		token: [3, 7, "dark"],
+		token: [3, 8, "dark:"],
 	})
 
 	position = 8
-	result = findClasses({
+	result = completeClasses({
 		input,
 		position,
-		completion,
 	})
 	expect(result.variants).toEqual([[3, 7, "dark"]])
 	expect(result.token).toEqual(undefined)
 })
 
 test("completion2", async () => {
-	expect(findClasses({ completion: true, input: `lg:var:`, position: 7 })).toEqual({
+	expect(completeClasses({ input: `lg:var:`, position: 7 })).toEqual({
 		variants: [
 			[0, 2, "lg"],
 			[3, 6, "var"],
 		],
 		important: false,
 	})
-	expect(findClasses({ completion: true, input: `(var:)`, position: 5 })).toEqual({
+	expect(completeClasses({ input: `(var:)`, position: 5 })).toEqual({
 		variants: [[1, 4, "var"]],
 		important: false,
 	})

@@ -1,4 +1,5 @@
-import { Token } from "./types"
+import * as tw from "./twin"
+import findRightBracket from "./findRightBracket"
 
 export enum TwElementKind {
 	Unknown,
@@ -14,18 +15,18 @@ type Index = number
 
 interface TwUnknownElement {
 	kind: TwElementKind.Unknown
-	variants: Token[]
-	value?: Token
+	variants: tw.TokenList
+	value?: tw.Token
 }
 
 interface TwEmptyElement {
 	kind: TwElementKind.Empty
-	variants: Token[]
+	variants: tw.TokenList
 }
 
 interface TwGroupElement {
 	kind: TwElementKind.Group
-	variants: Token[]
+	variants: tw.TokenList
 	children: Block[]
 	lbrace: Index
 	rbrace?: Index
@@ -34,22 +35,22 @@ interface TwGroupElement {
 
 interface TwClassElement {
 	kind: TwElementKind.Class
-	variants: Token[]
-	value: Token
+	variants: tw.TokenList
+	value: tw.Token
 	important?: Index
 }
 
 interface TwCssPropertyElement {
 	kind: TwElementKind.CssProperty
-	variants: Token[]
-	value: Token
+	variants: tw.TokenList
+	value: tw.Token
 	important?: Index
 }
 
 function createBlock(): Block {
 	return {
 		kind: TwElementKind.Unknown,
-		variants: [],
+		variants: tw.createTokenList(),
 	}
 }
 
@@ -61,34 +62,6 @@ function trimLeft(str: string, start = 0, end = str.length) {
 		start = end
 	}
 	return [start, end]
-}
-
-function findRightBracket({
-	input,
-	start,
-	end,
-	brackets = ["(", ")"],
-}: {
-	input: string
-	start: number
-	end: number
-	brackets?: [string, string]
-}): number {
-	let stack = 0
-	for (let i = start; i < end; i++) {
-		if (input[i] === brackets[0]) {
-			stack += 1
-		} else if (input[i] === brackets[1]) {
-			if (stack === 0) {
-				return undefined
-			}
-			if (stack === 1) {
-				return i
-			}
-			stack -= 1
-		}
-	}
-	return undefined
 }
 
 export default function parseClasses(input: string, start = 0, end = input.length): Block[] {
@@ -106,11 +79,11 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 
 	reg.lastIndex = start
 	input = input.slice(0, end)
-	let context: Token[] = []
+	let context = tw.createTokenList()
 	while ((match = reg.exec(input))) {
 		const [value, variant, cssProperty, className, notHandled] = match
 		if (variant) {
-			const token: Token = [match.index, reg.lastIndex - 1, variant]
+			const token = tw.createToken(match.index, reg.lastIndex - 1, variant)
 			context.push(token)
 
 			if (reg.lastIndex < end) {
@@ -127,7 +100,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				node.variants = context
 				result.push(node)
 				node = createBlock()
-				context = []
+				context = tw.createTokenList()
 				continue
 			}
 
@@ -157,7 +130,7 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				result.push(node)
 				node = createBlock()
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
-				context = []
+				context = tw.createTokenList()
 			}
 		} else if (cssProperty) {
 			node.kind = TwElementKind.CssProperty
@@ -165,11 +138,15 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
 				if (typeof closedBracket !== "number") {
 					node.variants = context
-					node.value = [match.index, end, input.slice(match.index, end)]
+					node.value = tw.createToken(match.index, end, input.slice(match.index, end))
 					result.push(node)
 					return result
 				}
-				const token: Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
+				const token = tw.createToken(
+					match.index,
+					closedBracket + 1,
+					input.slice(match.index, closedBracket + 1),
+				)
 				const important = input[closedBracket + 1] === "!"
 				if (important) {
 					node.important = closedBracket + 1
@@ -178,34 +155,34 @@ export default function parseClasses(input: string, start = 0, end = input.lengt
 				node.value = token
 				result.push(node)
 				node = createBlock()
-				context = []
+				context = tw.createTokenList()
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
 			}
 		} else if (className) {
 			node.kind = TwElementKind.Class
 			if (node.kind === TwElementKind.Class) {
-				const token: Token = [match.index, reg.lastIndex, value]
-				const important = value.indexOf("!")
-				if (important !== -1) {
-					token[1] -= 1
-					node.important = token[1]
-					token[2] = token[2].slice(0, token[2].length - 1)
+				const token = tw.createToken(match.index, reg.lastIndex, value)
+				const important = value.endsWith("!")
+				if (important) {
+					token.end -= 1
+					node.important = token.end
+					token.text = token.text.slice(0, -1)
 				}
 				node.variants = context
 				node.value = token
 				result.push(node)
 				node = createBlock()
-				context = []
+				context = tw.createTokenList()
 			}
 		} else if (notHandled) {
 			node.kind = TwElementKind.Unknown
 			if (node.kind === TwElementKind.Unknown) {
-				const weirdToken: Token = [match.index, reg.lastIndex, value]
-				node.variants = [...context]
+				const weirdToken = tw.createToken(match.index, reg.lastIndex, value)
+				node.variants = context.slice()
 				node.value = weirdToken
 				result.push(node)
 				node = createBlock()
-				context = []
+				context = tw.createTokenList()
 			}
 		} else {
 			node.kind = TwElementKind.Group
@@ -240,17 +217,17 @@ export function format(blocks: ReturnType<typeof parseClasses>): string {
 	for (const block of blocks) {
 		let out = ""
 		for (const v of block.variants) {
-			out += v[2] + ":"
+			out += v.text + ":"
 		}
 		switch (block.kind) {
 			case TwElementKind.Group:
 				out += `(${format(block.children)})` + (typeof block.important === "number" ? "!" : "")
 				break
 			case TwElementKind.Class:
-				out += block.value[2] + (typeof block.important === "number" ? "!" : "")
+				out += block.value.text + (typeof block.important === "number" ? "!" : "")
 				break
 			case TwElementKind.Unknown:
-				out += block.value[2]
+				out += block.value.text
 				break
 		}
 		out && results.push(out)

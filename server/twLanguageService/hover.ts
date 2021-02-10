@@ -6,9 +6,9 @@ import produce from "immer"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from "~/twLanguageService"
 import { canMatch, PatternKind } from "~/common/ast"
-import camel2kebab from "~/common/camel2kebab"
-import { TokenKind } from "~/common/types"
-import findClasses from "~/common/findClasses"
+import toKebab from "~/common/toKebab"
+import * as tw from "~/common/twin"
+import { hoverClasses } from "~/common/findClasses"
 import parseThemeValue from "~/common/parseThemeValue"
 
 export default function hover(
@@ -24,15 +24,15 @@ export default function hover(
 		}
 		const { token, kind } = result
 		if (kind === PatternKind.TwinTheme) {
-			const result = parseThemeValue(token[2])
+			const result = parseThemeValue(token.text)
 			if (result.errors.length > 0) {
 				return null
 			}
 
 			const value = state.getTheme(result.keys())
 			const range = {
-				start: document.positionAt(token[0]),
-				end: document.positionAt(token[1]),
+				start: document.positionAt(token.start),
+				end: document.positionAt(token.end),
 			}
 			if (typeof value === "string") {
 				if (value === "transparent") {
@@ -81,30 +81,30 @@ export default function hover(
 			}
 			return null
 		} else {
-			const selection = findClasses({
-				input: token[2],
-				position: document.offsetAt(position) - token[0],
+			const selection = hoverClasses({
+				input: token.text,
+				position: document.offsetAt(position) - token.start,
 				separator: state.separator,
 			})
 			if (!selection.token) {
 				return null
 			}
-			if (selection.token.kind === TokenKind.CssProperty) {
+			if (selection.token.kind === tw.TokenKind.CssProperty) {
 				const [start, end] = selection.token.token
-				const key = selection.token.key[2]
-				const value = selection.token.value[2]
+				const key = selection.token.key.text
+				const value = selection.token.value.text
 				const important = selection.important
 				return {
 					range: {
-						start: document.positionAt(token[0] + start),
-						end: document.positionAt(token[0] + end),
+						start: document.positionAt(token.start + start),
+						end: document.positionAt(token.start + end),
 					},
 					contents: {
 						kind: lsp.MarkupKind.Markdown,
 						value: [
 							"```scss",
 							"& {",
-							`\t${camel2kebab(key)}: ${value}${important ? " !important" : ""};`,
+							`\t${toKebab(key)}: ${value}${important ? " !important" : ""};`,
 							"}",
 							"```",
 						].join("\n"),
@@ -112,15 +112,15 @@ export default function hover(
 				}
 			}
 			if (kind === PatternKind.TwinCssProperty) {
-				if (selection.token.kind === TokenKind.Unknown || selection.token.kind === TokenKind.ClassName) {
+				if (selection.token.kind === tw.TokenKind.Unknown || selection.token.kind === tw.TokenKind.ClassName) {
 					return null
 				}
 			}
-			const [start, end] = selection.token.token
+			const { start, end } = selection.token.token
 			return {
 				range: {
-					start: document.positionAt(token[0] + start),
-					end: document.positionAt(token[0] + end),
+					start: document.positionAt(token.start + start),
+					end: document.positionAt(token.start + end),
 				},
 				contents: getHoverContents({
 					kind,
@@ -141,7 +141,7 @@ function getHoverContents({
 	state,
 }: {
 	kind: PatternKind
-	selection: ReturnType<typeof findClasses>
+	selection: ReturnType<typeof hoverClasses>
 	state: Tailwind
 }): lsp.MarkupContent {
 	const { important, variants } = selection
@@ -184,9 +184,14 @@ function getHoverContents({
 			} else {
 				text.push(`${data.join(", ")}`)
 			}
+
+			const contents = ["```scss", ...text, "```"]
+			// if (docs[value]) {
+			// 	contents.push(`[${lastUrlToken(docs[value])}](${docs[value]})`)
+			// }
 			return {
 				kind: lsp.MarkupKind.Markdown,
-				value: ["```scss", ...text, "```"].join("\n"),
+				value: contents.join("\n"),
 			}
 		}
 		return null

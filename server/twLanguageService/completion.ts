@@ -8,8 +8,8 @@ import type { CSSRuleItem } from "~/tailwind/classnames"
 import type { InitOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
-import { TokenKind, Token } from "~/common/types"
-import findClasses from "~/common/findClasses"
+import * as tw from "~/common/twin"
+import { completeClasses } from "~/common/findClasses"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 
 export interface InnerData {
@@ -55,32 +55,44 @@ export default function completion(
 function classesCompletion(
 	document: TextDocument,
 	index: number,
-	match: Token,
+	match: tw.Token,
 	kind: PatternKind,
 	state: Tailwind,
 	options: InitOptions,
 ): lsp.CompletionList {
-	const [start, , input] = match
-	const position = index - start
-	const selection = findClasses({ input, position, separator: state.separator, completion: true })
+	const [offset, , input] = match
+	const position = index - offset
+	const suggestion = completeClasses({ input, position, separator: state.separator })
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const preferVariantWithParentheses = options.preferVariantWithParentheses
 	const inputCharacter = input.slice(position - 1, position)
 	const nextCharacter = input.slice(position, position + 1)
+	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
+	const isIncomplete = false
 
-	if (selection.token?.kind === TokenKind.CssProperty) {
-		const [a, b] = selection.token.token
+	if (suggestion.token?.kind === tw.TokenKind.CssProperty) {
 		if (position > a && position < b) {
-			return { isIncomplete: false, items: [] }
+			return lsp.CompletionList.create()
 		}
 	}
 
 	// list variants
-	const variants = selection.variants.map(([, , value]) => value)
-	const variantFilter = state.classnames.getVariantFilter(variants, twin)
+	const userVariants = suggestion.variants.texts
 	let variantItems: lsp.CompletionItem[] = []
+	let variantEnabled = true
 
-	if (!["-", ".", "/"].some(a => a === inputCharacter)) {
+	if (inputCharacter === "." || inputCharacter === "/") {
+		variantEnabled = false
+	}
+
+	if (suggestion.token?.kind === tw.TokenKind.ClassName) {
+		if (position > a && position < b) {
+			variantEnabled = false
+		}
+	}
+
+	if (variantEnabled) {
+		const variantFilter = state.classnames.getVariantFilter(userVariants, twin)
 		variantItems = Object.entries(state.classnames.getVariants(twin))
 			.filter(([label]) => variantFilter(label))
 			.map<lsp.CompletionItem>(([label, data]) => {
@@ -90,7 +102,7 @@ function classesCompletion(
 						label,
 						sortText: bp.toString().padStart(5, " "),
 						kind: lsp.CompletionItemKind.Module,
-						data: { type: "screen", data, variants, kind },
+						data: { type: "screen", data, variants: userVariants, kind },
 						command: {
 							title: "",
 							command: "editor.action.triggerSuggest",
@@ -100,10 +112,9 @@ function classesCompletion(
 					const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 					return {
 						label,
-						// insertText: character !== state.separator ? label : label.slice(0, label.length - 1),
 						sortText: f ? "*" + label : "~~~:" + label,
 						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
-						data: { type: "variant", data, variants, kind },
+						data: { type: "variant", data, variants: userVariants, kind },
 						command: {
 							title: "",
 							command: "editor.action.triggerSuggest",
@@ -111,11 +122,11 @@ function classesCompletion(
 					}
 				}
 			})
-			.map(item => ({ ...item, label: item.label + state.separator }))
+			.map(item => ({ ...item, filterText: item.label, label: item.label + ":", commitCharacters: [":"] }))
 	}
 
 	if (preferVariantWithParentheses) {
-		if ((!selection.token && nextCharacter !== "(") || selection.token?.token[1] === position) {
+		if ((!suggestion.token && nextCharacter !== "(") || suggestion.token?.token.end === position) {
 			for (let i = 0; i < variantItems.length; i++) {
 				const item = variantItems[i]
 				item.insertTextFormat = lsp.InsertTextFormat.Snippet
@@ -124,27 +135,39 @@ function classesCompletion(
 		}
 	}
 
-	if (selection.token) {
-		const [a, b] = selection.token.token
-		if (selection.token.kind === TokenKind.Variant) {
+	if (suggestion.token) {
+		if (suggestion.token.kind === tw.TokenKind.Variant) {
 			if (position > a) {
 				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
 					item.textEdit = lsp.TextEdit.replace(
 						{
-							start: document.positionAt(start + a),
-							end: document.positionAt(start + b + state.separator.length),
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
 						},
 						item.label,
 					)
 				}
 			}
-		} else if (selection.token.kind === TokenKind.Unknown) {
+		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
 			if (position === a) {
-				for (let i = 0; i < variantItems.length; i++) {
-					const item = variantItems[i]
-					item.textEdit = lsp.TextEdit.insert(document.positionAt(start + a), item.label)
+				if (nextCharacter === state.separator) {
+					for (let i = 0; i < variantItems.length; i++) {
+						const item = variantItems[i]
+						item.textEdit = lsp.TextEdit.replace(
+							{
+								start: document.positionAt(offset + a),
+								end: document.positionAt(offset + a + 1),
+							},
+							item.label,
+						)
+					}
+				} else {
+					for (let i = 0; i < variantItems.length; i++) {
+						const item = variantItems[i]
+						item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label)
+					}
 				}
 			} else {
 				variantItems.length = 0
@@ -153,59 +176,69 @@ function classesCompletion(
 	}
 
 	if (kind === PatternKind.TwinCssProperty) {
-		return {
-			isIncomplete: false,
-			items: [...variantItems],
-		}
+		return lsp.CompletionList.create(variantItems, isIncomplete)
 	}
 
 	// list className
-	const classesFilter = state.classnames.getClassNameFilter(variants, twin)
-	const classNameItems = Object.entries(state.classnames.getClassNames(variants, twin))
-		.filter(classesFilter)
-		.map(([label, data]) => createCompletionItem({ label, data, variants, kind, state }))
-	if (twin) {
-		if (variants.some(v => v === "before" || v === "after")) {
-			classNameItems.push({
-				label: "content",
-				kind: lsp.CompletionItemKind.Constant,
-				sortText: "~~content",
-				data: { type: "utilities", data: null, variants, kind },
-			})
+	let classNameItems: lsp.CompletionItem[] = []
+	let classNameEnabled = true
+
+	if (suggestion.token) {
+		if (suggestion.token.kind === tw.TokenKind.Variant && position > a) {
+			classNameEnabled = false
+		} else if (suggestion.token.kind === tw.TokenKind.Unknown && position > a) {
+			classNameEnabled = false
 		}
 	}
 
-	if (selection.token) {
-		const [a, b, value] = selection.token.token
-		if (selection.token.kind === TokenKind.Variant && position > a) {
-			classNameItems.length = 0
+	if (classNameEnabled) {
+		const classesFilter = state.classnames.getClassNameFilter(userVariants, twin)
+		classNameItems = Object.entries(state.classnames.getClassNames(userVariants, twin))
+			.filter(classesFilter)
+			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
+		if (twin) {
+			if (userVariants.some(v => v === "before" || v === "after")) {
+				classNameItems.push({
+					label: "content",
+					kind: lsp.CompletionItemKind.Constant,
+					sortText: "~~content",
+					data: { type: "utilities", data: null, variants: userVariants, kind },
+				})
+			}
 		}
+	}
+
+	if (suggestion.token) {
 		if (position === a || (value.slice(0, 1) === "-" && position === a + 1 && position < b)) {
 			for (let i = 0; i < classNameItems.length; i++) {
 				const item = classNameItems[i]
-				item.textEdit = lsp.TextEdit.insert(document.positionAt(start + a), item.label + " ")
+				item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + " ")
 			}
-		} else if (position <= b && selection.token.kind === TokenKind.ClassName) {
-			for (let i = 0; i < classNameItems.length; i++) {
-				const item = classNameItems[i]
-				item.textEdit = lsp.TextEdit.replace(
-					{
-						start: document.positionAt(start + a),
-						end: document.positionAt(start + b),
-					},
-					item.label,
-				)
+		} else if (suggestion.token.kind === tw.TokenKind.ClassName) {
+			if (position <= b) {
+				for (let i = 0; i < classNameItems.length; i++) {
+					const item = classNameItems[i]
+					item.textEdit = lsp.TextEdit.replace(
+						{
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
+						},
+						item.label,
+					)
+				}
 			}
 		}
 	}
 
-	return {
-		isIncomplete: false,
-		items: [...variantItems, ...classNameItems],
-	}
+	return lsp.CompletionList.create([...variantItems, ...classNameItems], isIncomplete)
 }
 
-function twinThemeCompletion(document: TextDocument, index: number, token: Token, state: Tailwind): lsp.CompletionList {
+function twinThemeCompletion(
+	document: TextDocument,
+	index: number,
+	token: tw.Token,
+	state: Tailwind,
+): lsp.CompletionList {
 	const [offset, , text] = token
 	const position = index - offset
 	const { keys, hit } = findThemeValueKeys(text, position)
@@ -288,7 +321,7 @@ function twinThemeCompletion(document: TextDocument, index: number, token: Token
 
 			item.filterText = newText
 			if (keys.length > 0) {
-				item.filterText = hit?.[2][0] + item.filterText
+				item.filterText = hit?.text.slice(0, 1) + item.filterText
 			}
 
 			if (hit) {

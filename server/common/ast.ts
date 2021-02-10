@@ -1,7 +1,7 @@
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import ts from "typescript"
-import { Token } from "./types"
+import * as tw from "./twin"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"
@@ -18,7 +18,7 @@ interface Features {
 	themeTemplate: string
 }
 
-export type TokenResult = { token: Token; kind: PatternKind }
+export type TokenResult = { token: tw.Token; kind: PatternKind }
 
 function transfromToken(
 	result: { kind: PatternKind; token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral },
@@ -30,14 +30,14 @@ function transfromToken(
 	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText : result.token.text
 	if (text.endsWith("'") || text.endsWith('"') || text.endsWith("`")) {
 		end -= 1
-		return { kind: result.kind, token: [start, end, value] }
+		return { kind: result.kind, token: tw.createToken(start, end, value) }
 	} else {
 		const m = text.match(/[ \r\t\n]/)
 		if (m) {
 			end = start + m.index
-			return { kind: result.kind, token: [start, end, value.slice(0, m.index)] }
+			return { kind: result.kind, token: tw.createToken(start, end, value.slice(0, m.index)) }
 		}
-		return { kind: result.kind, token: [start, end, value] }
+		return { kind: result.kind, token: tw.createToken(start, end, value) }
 	}
 }
 

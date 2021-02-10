@@ -1,4 +1,4 @@
-import * as tw from "./types"
+import * as tw from "./twin"
 import findRightBracket from "./findRightBracket"
 
 function trimLeft(str: string, start = 0, end = str.length): [number, number] {
@@ -12,22 +12,22 @@ function trimLeft(str: string, start = 0, end = str.length): [number, number] {
 }
 
 interface Result {
-	classList: Array<tw.Unknown | tw.ClassName | tw.CssProperty>
-	empty: Array<tw.EmptyClass | tw.EmptyGroup>
+	classList: tw.ClassList
+	emptyList: tw.EmptyList
 	error?: tw.Error
 }
 
 function zero(): Result {
 	return {
-		classList: [],
-		empty: [],
+		classList: tw.createClassList(),
+		emptyList: tw.createEmptyList(),
 	}
 }
 
 function merge(a: Result, b: Result): Result {
 	return {
-		classList: [...a.classList, ...b.classList],
-		empty: [...a.empty, ...b.empty],
+		classList: tw.createClassList([...a.classList, ...b.classList]),
+		emptyList: tw.createEmptyList([...a.emptyList, ...b.emptyList]),
 		error: a.error ?? b.error,
 	}
 }
@@ -36,7 +36,7 @@ export default function findAllClasses({
 	input,
 	start = 0,
 	end = input.length,
-	context = [],
+	context = tw.createTokenList(),
 	importantContext = false,
 	separator = ":",
 }: {
@@ -45,7 +45,7 @@ export default function findAllClasses({
 	start?: number
 	end?: number
 	/** variants */
-	context?: tw.Token[]
+	context?: tw.TokenList
 	/** is important group? */
 	importantContext?: boolean
 	/** separator.
@@ -66,11 +66,11 @@ export default function findAllClasses({
 
 	reg.lastIndex = start
 	input = input.slice(0, end)
-	const baseContext = [...context]
+	const baseContext = context.slice()
 	while ((match = reg.exec(input))) {
 		const [value, variant, cssProperty, className, notHandled] = match
 		if (variant) {
-			const variantToken: tw.Token = [match.index, reg.lastIndex - 1, variant]
+			const variantToken = tw.createToken(match.index, reg.lastIndex - 1, variant)
 			context.push(variantToken)
 
 			let isEmpty = false
@@ -84,12 +84,12 @@ export default function findAllClasses({
 			}
 			if (isEmpty) {
 				const index = match.index + value.length
-				result.empty.push({
+				result.emptyList.push({
 					kind: tw.EmptyKind.Classname,
 					start: index,
-					variants: [...context],
+					variants: context.slice(),
 				})
-				context = [...baseContext]
+				context = baseContext.slice()
 				continue
 			}
 
@@ -103,7 +103,7 @@ export default function findAllClasses({
 					}
 					const children = findAllClasses({
 						input: input,
-						context: [...context],
+						context: context.slice(),
 						importantContext: false,
 						start: reg.lastIndex + 1,
 						end,
@@ -115,7 +115,7 @@ export default function findAllClasses({
 				const important = input[closedBracket + 1] === "!"
 				const children = findAllClasses({
 					input: input,
-					context: [...context],
+					context: context.slice(),
 					importantContext: importantContext || important,
 					start: reg.lastIndex + 1,
 					end: closedBracket,
@@ -123,18 +123,19 @@ export default function findAllClasses({
 				})
 
 				if (children.classList.length === 0) {
-					result.empty.push({
+					result.emptyList.push({
 						kind: tw.EmptyKind.Group,
 						start: reg.lastIndex,
 						end: closedBracket + 1,
-						variants: [...context],
+						variants: context.slice(),
+						important,
 					})
 				}
 
 				result = merge(result, children)
 
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
-				context = [...baseContext]
+				context = baseContext.slice()
 			}
 		} else if (cssProperty) {
 			const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
@@ -146,56 +147,56 @@ export default function findAllClasses({
 				}
 				result.classList.push({
 					kind: tw.TokenKind.CssProperty,
-					variants: [...context],
-					token: [match.index, end, input.slice(match.index, end)],
-					key: [match.index, match.index + cssProperty.length, cssProperty],
-					value: [reg.lastIndex, end, input.slice(reg.lastIndex, end)],
+					variants: context.slice(),
+					token: tw.createToken(match.index, end, input.slice(match.index, end)),
+					key: tw.createToken(match.index, match.index + cssProperty.length, cssProperty),
+					value: tw.createToken(reg.lastIndex, end, input.slice(reg.lastIndex, end)),
 					important: importantContext,
 				})
 				return result
 			}
 
 			const important = input[closedBracket + 1] === "!"
-			const token: tw.Token = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
+			const token = tw.createToken(match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1))
 
 			result.classList.push({
 				kind: tw.TokenKind.CssProperty,
-				variants: [...context],
+				variants: context.slice(),
 				token,
-				key: [match.index, match.index + cssProperty.length, cssProperty],
-				value: [reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)],
+				key: tw.createToken(match.index, match.index + cssProperty.length, cssProperty),
+				value: tw.createToken(reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)),
 				important: important || importantContext,
 			})
 
 			reg.lastIndex = closedBracket + (important ? 2 : 1)
-			context = [...baseContext]
+			context = baseContext.slice()
 		} else if (className) {
-			const token: tw.Token = [match.index, reg.lastIndex, value]
+			const token = tw.createToken(match.index, reg.lastIndex, value)
 			const important = value.endsWith("!")
 			if (important) {
-				token[1] -= 1
-				token[2] = token[2].slice(0, -1)
+				token.end -= 1
+				token.text = token.text.slice(0, -1)
 			}
 
 			result.classList.push({
 				kind: tw.TokenKind.ClassName,
-				variants: [...context],
+				variants: context.slice(),
 				token,
 				important: important || importantContext,
 			})
 
-			context = [...baseContext]
+			context = baseContext.slice()
 		} else if (notHandled) {
-			const token: tw.Token = [match.index, reg.lastIndex, value]
+			const token = tw.createToken(match.index, reg.lastIndex, value)
 
 			result.classList.push({
 				kind: tw.TokenKind.Unknown,
-				variants: [...context],
+				variants: context.slice(),
 				token,
 				important: false, // always false
 			})
 
-			context = [...baseContext]
+			context = baseContext.slice()
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			if (typeof closedBracket !== "number") {
@@ -206,7 +207,7 @@ export default function findAllClasses({
 				}
 				const children = findAllClasses({
 					input: input,
-					context: [...context],
+					context: context.slice(),
 					importantContext: false,
 					start: reg.lastIndex + 1,
 					end,
@@ -219,18 +220,19 @@ export default function findAllClasses({
 			const important = input[closedBracket + 1] === "!"
 			const innerResult = findAllClasses({
 				input: input,
-				context: [...context],
+				context: context.slice(),
 				importantContext: importantContext || important,
 				start: match.index + 1,
 				end: closedBracket,
 				separator,
 			})
 			if (innerResult.classList.length === 0) {
-				result.empty.push({
+				result.emptyList.push({
 					kind: tw.EmptyKind.Group,
 					start: match.index,
 					end: closedBracket + 1,
-					variants: [...context],
+					variants: context.slice(),
+					important,
 				})
 			}
 			result = merge(result, innerResult)
@@ -240,18 +242,4 @@ export default function findAllClasses({
 	}
 
 	return result
-}
-
-export function toClassNames(result: Result, separator = ":"): string[] {
-	const { classList } = result
-	const results: string[] = []
-	for (let i = 0; i < classList.length; i++) {
-		let str = ""
-		const item = classList[i]
-		for (let j = 0; j < item.variants.length; j++) {
-			str += classList[i].variants[j][2] + separator
-		}
-		results.push(str + item.token[2] + (item.important ? "!" : ""))
-	}
-	return results
 }

@@ -3,7 +3,7 @@ import * as lsp from "vscode-languageserver"
 import chroma from "chroma-js"
 import { Tailwind } from "~/tailwind"
 import { InitOptions } from "."
-import { Token } from "~/common/types"
+import * as tw from "~/common/twin"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import parseSemanticTokens, { TwElementKind, Block } from "~/common/parseSemanticTokens"
 import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
@@ -49,7 +49,7 @@ export default function provideSemanticTokens(
 			}
 			if (!colorDecorators) return true
 			if (node.kind === TwElementKind.Class) {
-				const color = state.classnames.getColorInfo(node.value[2])
+				const color = state.classnames.getColorInfo(node.value.text)
 				if (!color || Object.keys(color).length === 0) {
 					return true
 				}
@@ -76,15 +76,15 @@ function renderClasses(
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
 	blocks: ReturnType<typeof parseSemanticTokens>,
-	context: Token[] = [],
+	context = tw.createTokenList(),
 ) {
 	for (const node of blocks) {
 		for (const variant of node.variants) {
-			if (!isValidVariant(variant[2])) {
+			if (!isValidVariant(variant.text)) {
 				continue
 			}
-			const pos = getPosition(variant[0])
-			const len = variant[1] - variant[0]
+			const pos = getPosition(variant.start)
+			const len = variant.end - variant.start
 			builder.push(pos.line, pos.character, len + 1, SemanticKind.keyword, 0)
 		}
 
@@ -96,24 +96,27 @@ function renderClasses(
 		if (node.kind === TwElementKind.Class) {
 			if (
 				kind === PatternKind.Twin &&
-				isValidClass(
-					[...context, ...node.variants].map(v => v[2]),
-					node.value[2],
-				)
+				isValidClass(tw.createTokenList([...context, ...node.variants]).texts, node.value.text)
 			) {
 				if (canRender(node)) {
-					const pos = getPosition(node.value[0])
-					builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
+					const pos = getPosition(node.value.start)
+					builder.push(pos.line, pos.character, node.value.end - node.value.start, SemanticKind.number, 0)
 				}
 			}
 		} else if (node.kind === TwElementKind.CssProperty) {
-			const pos = getPosition(node.value[0])
-			builder.push(pos.line, pos.character, node.value[1] - node.value[0], SemanticKind.number, 0)
+			const pos = getPosition(node.value.start)
+			builder.push(pos.line, pos.character, node.value.end - node.value.start, SemanticKind.number, 0)
 		} else if (node.kind === TwElementKind.Group && node.children.length > 0) {
-			renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, node.children, [
-				...context,
-				...node.variants,
-			])
+			renderClasses(
+				kind,
+				isValidClass,
+				isValidVariant,
+				canRender,
+				getPosition,
+				builder,
+				node.children,
+				tw.createTokenList([...context, ...node.variants]),
+			)
 		}
 
 		if (node.kind === TwElementKind.Group && typeof node.rbrace === "number") {
@@ -150,13 +153,13 @@ function parseColor(value: unknown): string | undefined {
 }
 
 function renderThemeValue(
-	token: Token,
+	token: tw.Token,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
 	state: Tailwind,
 	colorDecorators: boolean,
 ) {
-	const result = parseThemeValue(token[2])
+	const result = parseThemeValue(token.text)
 
 	const value = state.getTheme(result.keys())
 	const c = parseColor(value)

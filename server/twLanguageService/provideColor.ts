@@ -4,7 +4,7 @@ import { ColorInformation } from "~/LanguageService"
 import { Tailwind } from "~/tailwind"
 import { InitOptions, Cache } from "."
 import { findAllMatch, PatternKind } from "~/common/ast"
-import { TokenKind } from "~/common/types"
+import * as tw from "~/common/twin"
 import findAllClasses from "~/common/findAllClasses"
 import parseThemeValue from "~/common/parseThemeValue"
 
@@ -48,24 +48,18 @@ export default function provideColor(document: TextDocument, state: Tailwind, _:
 		const { classList } = cachedResult[value]
 
 		for (const c of classList) {
-			if (c.kind !== TokenKind.ClassName) {
+			if (c.kind !== tw.TokenKind.ClassName) {
 				continue
 			}
-			if (
-				!state.classnames.isClassName(
-					c.variants.map(v => v[2]),
-					twin,
-					c.token[2],
-				)
-			) {
+			if (!state.classnames.isClassName(c.variants.texts, twin, c.token.text)) {
 				continue
 			}
-			const color = state.classnames.getColorInfo(c.token[2])
+			const color = state.classnames.getColorInfo(c.token.text)
 			if (color) {
 				colors.push({
 					range: {
-						start: document.positionAt(start + c.token[0]),
-						end: document.positionAt(start + c.token[1]),
+						start: document.positionAt(start + c.token.start),
+						end: document.positionAt(start + c.token.end),
 					},
 					...color,
 				})

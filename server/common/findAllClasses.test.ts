@@ -1,5 +1,5 @@
-import * as tw from "./types"
-import findAllClasses, { toClassNames } from "./findAllClasses"
+import * as tw from "./twin"
+import findAllClasses from "./findAllClasses"
 
 test("findAllClasses", async () => {
 	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)))))! hover:(maxWidth[100%]!)`
@@ -69,14 +69,15 @@ test("findAllClasses", async () => {
 	])
 })
 
-test("findAllClasses Empty", async () => {
-	const input = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( ) lg:(light:bg-black)`
-	expect(findAllClasses({ input }).empty).toEqual([
+test("findAllClasses EmptyList", async () => {
+	const input = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( )! lg:(light:bg-black)`
+	expect(findAllClasses({ input }).emptyList).toEqual([
 		{
 			kind: tw.EmptyKind.Group,
 			start: 18,
 			end: 20,
 			variants: [[15, 17, "lg"]],
+			important: false,
 		},
 		{
 			kind: tw.EmptyKind.Classname,
@@ -88,11 +89,12 @@ test("findAllClasses Empty", async () => {
 			start: 72,
 			end: 75,
 			variants: [[66, 71, "focus"]],
+			important: true,
 		},
 	])
 
 	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:`
-	expect(findAllClasses({ input: text2 }).empty).toEqual([
+	expect(findAllClasses({ input: text2 }).emptyList).toEqual([
 		{
 			kind: tw.EmptyKind.Classname,
 			start: 55,
@@ -137,7 +139,7 @@ test("findAllClasses Important", async () => {
 
 test("seprate", async () => {
 	const input = "  text-gray-100! md:dark:(hover:(text-gray-500 bg-white!)) lg:(light:bg-black) "
-	const output = toClassNames(findAllClasses({ input }))
+	const output = findAllClasses({ input }).classList.texts
 	expect(output).toEqual([
 		"text-gray-100!",
 		"md:dark:hover:text-gray-500",
@@ -150,6 +152,6 @@ test("broken input", async () => {
 	const input = `bg-gradient-to-b from-electric to-ribbon (
 		scale-0
 		bg-blue-300  color[red] `
-	const output = toClassNames(findAllClasses({ input }))
+	const output = findAllClasses({ input }).classList.texts
 	expect(output).toEqual(["bg-gradient-to-b", "from-electric", "to-ribbon", "scale-0", "bg-blue-300", "color[red]"])
 })

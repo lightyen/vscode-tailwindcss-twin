@@ -4,7 +4,7 @@ import { Tailwind } from "~/tailwind"
 import { Cache, InitOptions } from "."
 import docs from "./docs.yaml"
 import { findAllMatch, PatternKind } from "~/common/ast"
-import { TokenKind } from "~/common/types"
+import * as tw from "~/common/twin"
 import findAllClasses from "~/common/findAllClasses"
 
 function lastUrlToken(url: string) {
@@ -42,7 +42,7 @@ export default function documentLinks(document: TextDocument, state: Tailwind, _
 			cachedResult[value] = result
 		}
 
-		const { classList, empty } = cachedResult[value]
+		const { classList, emptyList } = cachedResult[value]
 
 		for (const c of classList) {
 			for (const [a, b, value] of c.variants) {
@@ -62,23 +62,20 @@ export default function documentLinks(document: TextDocument, state: Tailwind, _
 					s.add(start + a)
 				}
 			}
-			if (c.kind !== TokenKind.ClassName) {
+
+			if (c.kind !== tw.TokenKind.ClassName) {
 				continue
 			}
+
 			if (kind === PatternKind.TwinCssProperty) {
 				continue
 			}
-			const value = c.token[2]
-			if (
-				!state.classnames.isClassName(
-					c.variants.map(v => v[2]),
-					twin,
-					value,
-				)
-			) {
+
+			const value = c.token.text
+			if (!state.classnames.isClassName(c.variants.texts, twin, value)) {
 				continue
 			}
-			if (value === "content" && c.variants.every(v => v[2] !== "before" && v[2] !== "after")) {
+			if (value === "content" && c.variants.every(v => v.text !== "before" && v.text !== "after")) {
 				continue
 			}
 			const target = docs[prefix + value] || docs[value]
@@ -87,13 +84,13 @@ export default function documentLinks(document: TextDocument, state: Tailwind, _
 					target,
 					tooltip: lastUrlToken(target),
 					range: {
-						start: document.positionAt(start + c.token[0]),
-						end: document.positionAt(start + c.token[1]),
+						start: document.positionAt(start + c.token.start),
+						end: document.positionAt(start + c.token.end),
 					},
 				})
 			}
 		}
-		for (const { variants } of empty) {
+		for (const { variants } of emptyList) {
 			for (const [a, b, value] of variants) {
 				const bg = state.classnames.getBreakingPoint(value)
 				const iv = state.classnames.isVariant(value, twin)

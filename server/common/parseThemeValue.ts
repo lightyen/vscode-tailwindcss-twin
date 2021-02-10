@@ -1,4 +1,4 @@
-import * as tw from "./types"
+import * as tw from "./twin"
 import findRightBracket from "./findRightBracket"
 
 export enum TwThemeElementKind {
@@ -85,7 +85,7 @@ export default function parseThemeValue(input: string): Result {
 			}
 			blocks.push({
 				kind: TwThemeElementKind.Identifier,
-				token: [match.index, reg.lastIndex, Id],
+				token: tw.createToken(match.index, reg.lastIndex, Id),
 			})
 			init = true
 			continue
@@ -101,14 +101,14 @@ export default function parseThemeValue(input: string): Result {
 		if (dotId) {
 			blocks.push({
 				kind: TwThemeElementKind.Dot,
-				token: [match.index, match.index + 1, input.slice(match.index, match.index + 1)],
+				token: tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1)),
 			})
 
 			let hasId = false
 			if (match.index + 1 < reg.lastIndex) {
 				blocks.push({
 					kind: TwThemeElementKind.Identifier,
-					token: [match.index + 1, reg.lastIndex, input.slice(match.index + 1, reg.lastIndex)],
+					token: tw.createToken(match.index + 1, reg.lastIndex, input.slice(match.index + 1, reg.lastIndex)),
 				})
 				hasId = true
 			}
@@ -133,7 +133,7 @@ export default function parseThemeValue(input: string): Result {
 		} else if (bracId) {
 			blocks.push({
 				kind: TwThemeElementKind.Bracket,
-				token: [match.index, match.index + 1, input.slice(match.index, match.index + 1)],
+				token: tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1)),
 			})
 
 			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
@@ -149,7 +149,7 @@ export default function parseThemeValue(input: string): Result {
 			if (match.index + 1 < closedBracket) {
 				blocks.push({
 					kind: TwThemeElementKind.Identifier,
-					token: [match.index + 1, closedBracket, input.slice(match.index + 1, closedBracket)],
+					token: tw.createToken(match.index + 1, closedBracket, input.slice(match.index + 1, closedBracket)),
 				})
 			} else {
 				errors.push({
@@ -161,7 +161,7 @@ export default function parseThemeValue(input: string): Result {
 
 			blocks.push({
 				kind: TwThemeElementKind.Bracket,
-				token: [closedBracket, closedBracket + 1, input.slice(closedBracket, closedBracket + 1)],
+				token: tw.createToken(closedBracket, closedBracket + 1, input.slice(closedBracket, closedBracket + 1)),
 			})
 
 			reg.lastIndex = closedBracket + 1
@@ -189,7 +189,7 @@ export default function parseThemeValue(input: string): Result {
 				) {
 					continue
 				}
-				if (index >= block.token[0] && index <= block.token[1]) {
+				if (index >= block.token.start && index <= block.token.end) {
 					return block
 				}
 			}
@@ -223,7 +223,7 @@ export function findThemeValueKeys(
 				break
 			}
 			if (position >= match.index && position <= reg.lastIndex) {
-				hit = [match.index, reg.lastIndex, Id]
+				hit = tw.createToken(match.index, reg.lastIndex, Id)
 				break
 			}
 			if (position > reg.lastIndex) {
@@ -233,7 +233,7 @@ export function findThemeValueKeys(
 			continue
 		} else if (Id) {
 			if (position >= match.index && position <= reg.lastIndex) {
-				hit = [match.index, reg.lastIndex, Id]
+				hit = tw.createToken(match.index, reg.lastIndex, Id)
 			}
 			break
 		}
@@ -241,7 +241,7 @@ export function findThemeValueKeys(
 		if (dotId) {
 			let hasId = false
 			if (position >= match.index && position <= reg.lastIndex) {
-				hit = [match.index, reg.lastIndex, input.slice(match.index, reg.lastIndex)]
+				hit = tw.createToken(match.index, reg.lastIndex, input.slice(match.index, reg.lastIndex))
 				break
 			}
 			if (match.index + 1 < reg.lastIndex) {
@@ -262,13 +262,13 @@ export function findThemeValueKeys(
 			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
 			if (typeof closedBracket !== "number") {
 				if (position === match.index + 1) {
-					hit = [match.index, match.index + 1, input.slice(match.index, match.index + 1)]
+					hit = tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1))
 				}
 				break
 			}
 
 			if (position >= match.index && position <= closedBracket) {
-				hit = [match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1)]
+				hit = tw.createToken(match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1))
 				break
 			}
 
