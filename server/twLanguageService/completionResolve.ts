@@ -2,15 +2,24 @@ import * as lsp from "vscode-languageserver"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import { Tailwind } from "~/tailwind"
 import { PatternKind } from "~/common/ast"
+import { IPropertyData, IValueData } from "vscode-css-languageservice"
+import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
 export default function completionResolve(item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem {
-	const { type, variants, kind } = item.data as {
+	const { type, variants, kind, entry } = item.data as {
 		type: string
 		variants: string[]
 		kind: PatternKind
+		entry?: IPropertyData | IValueData
 	}
 
 	if (kind === PatternKind.TwinTheme) {
+		return item
+	}
+
+	if (type === "cssProp" || type === "cssValue") {
+		const markdownContent: lsp.MarkupContent = getEntryDescription(entry, true)
+		item.documentation = markdownContent
 		return item
 	}
 

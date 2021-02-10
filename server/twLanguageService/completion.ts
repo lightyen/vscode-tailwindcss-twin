@@ -11,6 +11,7 @@ import { canMatch, PatternKind } from "~/common/ast"
 import * as tw from "~/common/twin"
 import { completeClasses } from "~/common/findClasses"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
+import cssProps from "./cssProps"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
@@ -70,12 +71,6 @@ function classesCompletion(
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const isIncomplete = false
 
-	if (suggestion.token?.kind === tw.TokenKind.CssProperty) {
-		if (position > a && position < b) {
-			return lsp.CompletionList.create()
-		}
-	}
-
 	// list variants
 	const userVariants = suggestion.variants.texts
 	let variantItems: lsp.CompletionItem[] = []
@@ -85,9 +80,15 @@ function classesCompletion(
 		variantEnabled = false
 	}
 
-	if (suggestion.token?.kind === tw.TokenKind.ClassName) {
-		if (position > a && position < b) {
-			variantEnabled = false
+	if (suggestion.token) {
+		switch (suggestion.token.kind) {
+			case tw.TokenKind.ClassName:
+				if (position > a && position < b) variantEnabled = false
+				break
+			case tw.TokenKind.CssProperty:
+				if (position > suggestion.token.token.start && position < suggestion.token.token.end)
+					variantEnabled = false
+				break
 		}
 	}
 
@@ -175,19 +176,25 @@ function classesCompletion(
 		}
 	}
 
-	if (kind === PatternKind.TwinCssProperty) {
-		return lsp.CompletionList.create(variantItems, isIncomplete)
-	}
-
 	// list className
 	let classNameItems: lsp.CompletionItem[] = []
 	let classNameEnabled = true
 
+	if (kind === PatternKind.TwinCssProperty) {
+		classNameEnabled = false
+	}
 	if (suggestion.token) {
-		if (suggestion.token.kind === tw.TokenKind.Variant && position > a) {
-			classNameEnabled = false
-		} else if (suggestion.token.kind === tw.TokenKind.Unknown && position > a) {
-			classNameEnabled = false
+		switch (suggestion.token.kind) {
+			case tw.TokenKind.Variant:
+				if (position > a) classNameEnabled = false
+				break
+			case tw.TokenKind.CssProperty:
+				if (position > suggestion.token.token.start && position < suggestion.token.token.end)
+					classNameEnabled = false
+				break
+			case tw.TokenKind.Unknown:
+				if (position > a) classNameEnabled = false
+				break
 		}
 	}
 
@@ -230,7 +237,66 @@ function classesCompletion(
 		}
 	}
 
-	return lsp.CompletionList.create([...variantItems, ...classNameItems], isIncomplete)
+	let cssItems: lsp.CompletionItem[] = []
+	if (kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty) {
+		if (
+			suggestion.token &&
+			suggestion.token.kind === tw.TokenKind.CssProperty &&
+			position >= suggestion.token.value.start &&
+			position <= suggestion.token.value.end
+		) {
+			const prop = suggestion.token.key.text
+			const entry = cssProps.find(c => c.name === prop)
+			if (entry?.values) {
+				cssItems = entry.values.map(entry => {
+					return {
+						label: entry.name,
+						sortText: "~~~~" + entry.name,
+						kind: lsp.CompletionItemKind.Enum,
+						detail: "css value",
+						data: {
+							type: "cssValue",
+							entry,
+						},
+					}
+				})
+			}
+		} else {
+			cssItems = cssProps.map<lsp.CompletionItem>(entry => {
+				return {
+					label: entry.name,
+					sortText: "~~~~" + entry.name,
+					kind: lsp.CompletionItemKind.Property,
+					insertTextFormat: lsp.InsertTextFormat.Snippet,
+					insertText: entry.name + "[$0]",
+					textEdit:
+						suggestion.token &&
+						suggestion.token.kind === tw.TokenKind.CssProperty &&
+						position > suggestion.token.key.start &&
+						position <= suggestion.token.key.end
+							? lsp.TextEdit.replace(
+									{
+										start: document.positionAt(offset + suggestion.token.key.start),
+										end: document.positionAt(offset + suggestion.token.key.end),
+									},
+									entry.name,
+							  )
+							: undefined,
+					detail: "css property",
+					command: {
+						title: "",
+						command: "editor.action.triggerSuggest",
+					},
+					data: {
+						type: "cssProp",
+						entry,
+					},
+				}
+			})
+		}
+	}
+
+	return lsp.CompletionList.create([...variantItems, ...classNameItems, ...cssItems], isIncomplete)
 }
 
 function twinThemeCompletion(

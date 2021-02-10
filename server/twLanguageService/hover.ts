@@ -10,6 +10,8 @@ import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
 import { hoverClasses } from "~/common/findClasses"
 import parseThemeValue from "~/common/parseThemeValue"
+import cssProps from "./cssProps"
+import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
 export default function hover(
 	document: TextDocument,
@@ -91,9 +93,20 @@ export default function hover(
 			}
 			if (selection.token.kind === tw.TokenKind.CssProperty) {
 				const [start, end] = selection.token.token
-				const key = selection.token.key.text
+				const key = toKebab(selection.token.key.text)
 				const value = selection.token.value.text
 				const important = selection.important
+				const entry = cssProps.find(c => c.name === key)
+				if (entry) {
+					return {
+						range: {
+							start: document.positionAt(token.start + start),
+							end: document.positionAt(token.start + end),
+						},
+						contents: getEntryDescription(entry, true),
+					}
+				}
+
 				return {
 					range: {
 						start: document.positionAt(token.start + start),
@@ -104,7 +117,7 @@ export default function hover(
 						value: [
 							"```scss",
 							"& {",
-							`\t${toKebab(key)}: ${value}${important ? " !important" : ""};`,
+							`\t${key}: ${value}${important ? " !important" : ""};`,
 							"}",
 							"```",
 						].join("\n"),
