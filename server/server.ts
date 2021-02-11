@@ -389,7 +389,7 @@ class Server {
 					kind: lsp.CodeActionKind.QuickFix,
 					edit: {
 						changes: {
-							[params.textDocument.uri.toString()]: [{ newText, range }],
+							[params.textDocument.uri.toString()]: [lsp.TextEdit.replace(range, newText)],
 						},
 					},
 				}

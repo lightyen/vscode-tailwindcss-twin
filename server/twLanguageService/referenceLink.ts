@@ -10,12 +10,18 @@ export function getReferenceLinks(keyword: string) {
 	const originUrl = docs[value]
 	const twinUrl = docs["tw." + value]
 	const links: Reference[] = []
-	if (originUrl) {
-		const match = /[\w-]+$/.exec(originUrl)
+	const last = /[\w-.]+$/
+	if (typeof originUrl === "string") {
+		const match = originUrl.match(last)
 		links.push({ name: match?.[0] || "", url: originUrl })
 	}
-	if (twinUrl) {
-		links.push({ name: "twin.macro", url: twinUrl })
+	if (typeof twinUrl === "string") {
+		const match = twinUrl.match(last)
+		if (match) {
+			if (match[0] !== "variantConfig.js") {
+				links.push({ name: "twin.macro", url: twinUrl })
+			}
+		}
 	}
 	return links
 }

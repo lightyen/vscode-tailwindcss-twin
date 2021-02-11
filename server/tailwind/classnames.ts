@@ -558,14 +558,19 @@ export function parseResults(
 		/**
 		 * get approximate string matching searcher
 		 */
-		getSearcher(variants: string[], twinPattern: boolean): { variants: Fuse<string>; classes: Fuse<string> } {
+		getSearcher(
+			variants: string[],
+			twinPattern: boolean,
+			others: string[] = [],
+		): { variants: Fuse<string>; keywords: Fuse<string> } {
 			const target = dlv(this.searchers, [...variants, twinPattern.toString()])
 			if (target) {
-				return target as { variants: Fuse<string>; classes: Fuse<string> }
+				return target as { variants: Fuse<string>; keywords: Fuse<string> }
 			}
+			const vs = this.getVariantList(variants, twinPattern)
 			return {
-				variants: new Fuse(this.getVariantList(variants, twinPattern)),
-				classes: new Fuse(this.getClassNameList(variants, twinPattern)),
+				variants: new Fuse(vs),
+				keywords: new Fuse([...vs, ...this.getClassNameList(variants, twinPattern), ...others]),
 			}
 		},
 		getColorInfo(label: string) {

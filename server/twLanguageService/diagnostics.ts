@@ -7,8 +7,10 @@ import * as tw from "~/common/twin"
 import toKebab from "~/common/toKebab"
 import findAllClasses from "~/common/findAllClasses"
 import parseThemeValue from "~/common/parseThemeValue"
+import cssProps from "./cssProps"
 
 const source = "tailwindcss"
+const cssProperties = cssProps.map(c => c.name)
 
 // TODO: Enhance performance
 export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions, cache: Cache) {
@@ -152,15 +154,15 @@ function validateTwin({
 						item.token.text !== "container" &&
 						!(item.token.text === "content" && variants.some(v => v === "before" || v === "after"))
 					) {
-						result.push({
-							source,
-							message: `Invalid token '${item.token.text}'`,
-							range: {
-								start: document.positionAt(offset + item.token.start),
-								end: document.positionAt(offset + item.token.end),
-							},
-							severity: DiagnosticSeverity.Error,
-						})
+						// result.push({
+						// 	source,
+						// 	message: `Invalid token '${item.token.text}'`,
+						// 	range: {
+						// 		start: document.positionAt(offset + item.token.start),
+						// 		end: document.positionAt(offset + item.token.end),
+						// 	},
+						// 	severity: DiagnosticSeverity.Error,
+						// })
 					}
 					continue
 				}
@@ -169,10 +171,10 @@ function validateTwin({
 					for (const d of data) {
 						const twinKeys = variants.sort()
 						for (const property of Object.keys(d.decls)) {
-							// skip css variable
-							if (property.startsWith("--tw")) {
-								continue
-							}
+							// // skip css variable
+							// if (property.startsWith("--tw")) {
+							// 	continue
+							// }
 							const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
 							const target = map[key]
 							if (target instanceof Array) {
@@ -295,24 +297,25 @@ function validateTwin({
 	return result
 }
 
-function checkTwinClassName(info: tw.ClassName, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(item: tw.ClassName, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
-	const variants = info.variants.texts
-	for (const [a, b, variant] of info.variants) {
+	const variants = item.variants.texts
+	for (const [a, b, variant] of item.variants) {
 		if (state.classnames.isVariant(variant, true)) {
 			continue
 		}
 		// TODO: use another approximate string matching method?
-		const ans = state.classnames.getSearcher(variants, true).variants.search(variant)
-		if (ans?.length > 0) {
+		const ret = state.classnames.getSearcher(variants, true).variants.search(variant)
+		const ans = ret?.[0]?.item
+		if (ans) {
 			result.push({
 				source,
-				message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
+				message: `Can't find '${variant}', did you mean '${ans}'?`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
 				},
-				data: { text: variant, newText: ans[0].item },
+				data: { text: variant, newText: ans },
 				severity: DiagnosticSeverity.Error,
 			})
 		} else {
@@ -328,20 +331,43 @@ function checkTwinClassName(info: tw.ClassName, document: TextDocument, offset: 
 		}
 	}
 
-	if (info.token.text) {
-		const variants = info.variants.texts
-		const value = info.token.text
-		if (!state.classnames.isClassName(variants, true, value)) {
-			const ans = state.classnames.getSearcher(variants, true).classes.search(value)
-			if (ans?.length > 0) {
+	if (item.token.text) {
+		const variants = item.variants.texts
+		const { start, end, text } = item.token
+		if (!state.classnames.isClassName(variants, true, text)) {
+			const ret = state.classnames.getSearcher(variants, true, cssProperties).keywords.search(text)
+			const ans = ret?.[0]?.item
+			if (text !== ans) {
+				if (ans) {
+					result.push({
+						source,
+						message: `Can't find '${text}', did you mean '${ans}'?`,
+						range: {
+							start: document.positionAt(offset + start),
+							end: document.positionAt(offset + end),
+						},
+						data: { text, newText: ans },
+						severity: DiagnosticSeverity.Error,
+					})
+				} else {
+					result.push({
+						source,
+						message: `Can't find '${text}'`,
+						range: {
+							start: document.positionAt(offset + start),
+							end: document.positionAt(offset + end),
+						},
+						severity: DiagnosticSeverity.Error,
+					})
+				}
+			} else if (cssProperties.some(k => k === text)) {
 				result.push({
 					source,
-					message: `Can't find '${value}', did you mean '${ans[0].item}'?`,
+					message: `Invalid token '${text}', missing square brackets?`,
 					range: {
-						start: document.positionAt(offset + info.token.start),
-						end: document.positionAt(offset + info.token.end),
+						start: document.positionAt(offset + start),
+						end: document.positionAt(offset + end),
 					},
-					data: { text: value, newText: ans[0].item },
 					severity: DiagnosticSeverity.Error,
 				})
 			}
