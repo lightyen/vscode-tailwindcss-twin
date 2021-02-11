@@ -96,15 +96,12 @@ export default function hover(
 				const key = toKebab(selection.token.key.text)
 				const value = selection.token.value.text
 				const important = selection.important
+
+				const values = ["```scss", "& {", `\t${key}: ${value}${important ? " !important" : ""};`, "}", "```\n"]
+
 				const entry = cssProps.find(c => c.name === key)
 				if (entry) {
-					return {
-						range: {
-							start: document.positionAt(token.start + start),
-							end: document.positionAt(token.start + end),
-						},
-						contents: getEntryDescription(entry, true),
-					}
+					values.unshift(getEntryDescription(entry, true).value + "\n\n---\n")
 				}
 
 				return {
@@ -114,13 +111,7 @@ export default function hover(
 					},
 					contents: {
 						kind: lsp.MarkupKind.Markdown,
-						value: [
-							"```scss",
-							"& {",
-							`\t${key}: ${value}${important ? " !important" : ""};`,
-							"}",
-							"```",
-						].join("\n"),
+						value: values.join("\n"),
 					},
 				}
 			}
