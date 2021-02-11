@@ -2,10 +2,34 @@ import * as lsp from "vscode-languageserver"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import { Tailwind } from "~/tailwind"
 import { PatternKind } from "~/common/ast"
+import { InitOptions } from "~/twLanguageService"
+import { getReferenceLinks, getClassification } from "./referenceLink"
 import { IPropertyData, IValueData } from "vscode-css-languageservice"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
-export default function completionResolve(item: lsp.CompletionItem, state: Tailwind): lsp.CompletionItem {
+export default function completionResolve(
+	item: lsp.CompletionItem,
+	state: Tailwind,
+	options: InitOptions,
+): lsp.CompletionItem {
+	item = resolve(item, state, options)
+	if (options.references && typeof item.documentation === "object") {
+		const refs = getReferenceLinks(item.label)
+		if (refs.length > 0) {
+			const refs = getReferenceLinks(item.label)
+			if (refs.length > 0) {
+				item.documentation.value +=
+					"\n" +
+					refs
+						.map(ref => `[${ref.name === "twin.macro" ? "[twin.macro]" : "Reference"}](${ref.url}) `)
+						.join("\n")
+			}
+		}
+	}
+	return item
+}
+
+function resolve(item: lsp.CompletionItem, state: Tailwind, options: InitOptions): lsp.CompletionItem {
 	const { type, variants, kind, entry } = item.data as {
 		type: string
 		variants: string[]
@@ -18,6 +42,7 @@ export default function completionResolve(item: lsp.CompletionItem, state: Tailw
 	}
 
 	if (type === "cssProp" || type === "cssValue") {
+		entry.references
 		const markdownContent: lsp.MarkupContent = getEntryDescription(entry, true)
 		item.documentation = markdownContent
 		return item
@@ -26,14 +51,14 @@ export default function completionResolve(item: lsp.CompletionItem, state: Tailw
 	if (kind === PatternKind.Twin) {
 		switch (item.label) {
 			case "content":
-				item.detail = "content"
+				item.detail = getClassification("content")
 				item.documentation = {
 					kind: lsp.MarkupKind.Markdown,
 					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
 				}
 				return item
 			case "container":
-				item.detail = "container"
+				item.detail = getClassification("container")
 				item.documentation = {
 					kind: lsp.MarkupKind.Markdown,
 					value: "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md",
@@ -42,13 +67,13 @@ export default function completionResolve(item: lsp.CompletionItem, state: Tailw
 		}
 	}
 
+	item.detail = getClassification(item.label)
 	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
 	if (!data) {
 		return item
 	}
 
 	if (!(data instanceof Array)) {
-		item.detail = item.label
 		if (data.__pseudo) {
 			item.documentation = {
 				kind: lsp.MarkupKind.Markdown,
@@ -106,7 +131,6 @@ export default function completionResolve(item: lsp.CompletionItem, state: Tailw
 		}
 	} else if (type === "variant" || type === "screen") {
 		if (data instanceof Array) {
-			item.detail = type === "screen" ? "responsive design" : "variant"
 			const text: string[] = []
 			if (data.length === 0) {
 				text.push(item.label)

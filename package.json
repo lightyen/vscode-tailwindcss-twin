@@ -92,12 +92,10 @@
           ],
           "default": null
         },
-        "tailwindcss.links": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": null
+        "tailwindcss.references": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show references when auto-completion/hover."
         },
         "tailwindcss.preferVariantWithParentheses": {
           "type": "boolean",

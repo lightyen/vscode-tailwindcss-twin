@@ -115,9 +115,6 @@ class Server {
 						],
 					},
 					hoverProvider: true,
-					documentLinkProvider: {
-						resolveProvider: false,
-					},
 					codeActionProvider: true,
 					semanticTokensProvider: {
 						documentSelector: [
@@ -170,7 +167,7 @@ class Server {
 			if (this.hasConfigurationCapability) {
 				type Config = {
 					colorDecorators?: boolean
-					links?: boolean
+					references: boolean
 					validate: boolean
 					preferVariantWithParentheses: boolean
 					fallbackDefaultConfig: boolean
@@ -182,7 +179,6 @@ class Server {
 				}
 				type EditorConfig = {
 					colorDecorators: boolean
-					links: boolean
 				}
 				const configs = await connection.workspace.getConfiguration([
 					{ section: "tailwindcss" },
@@ -201,6 +197,18 @@ class Server {
 						}
 					}
 					console.log(`preferVariantWithParentheses = ${this.settings.preferVariantWithParentheses}`)
+				}
+
+				const references = tailwindcss?.references || false
+				if (this.settings.references !== references) {
+					this.settings.references = references
+					for (const document of documents.all()) {
+						const service = matchService(document.uri, this.services)
+						if (service) {
+							service.updateSettings(this.settings)
+						}
+					}
+					console.log(`references = ${this.settings.references}`)
 				}
 
 				if (this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig) {
@@ -224,18 +232,6 @@ class Server {
 						}
 					}
 					console.log(`codeDecorators = ${this.settings.colorDecorators}`)
-				}
-
-				const links = tailwindcss?.links ?? editor.links
-				if (this.settings.links !== links) {
-					this.settings.links = links
-					for (const document of documents.all()) {
-						const service = matchService(document.uri, this.services)
-						if (service) {
-							service.updateSettings(this.settings)
-						}
-					}
-					console.log(`documentLinks = ${this.settings.links}`)
 				}
 
 				try {
@@ -356,17 +352,6 @@ class Server {
 		})
 		connection.onHover((...params) => {
 			return matchService(params[0].textDocument.uri, this.services)?.onHover(...params)
-		})
-		connection.onDocumentLinks(async params => {
-			if (!this.settings.links) {
-				return []
-			}
-			const service = matchService(params.textDocument.uri, this.services)
-			if (service) {
-				const document = documents.get(params.textDocument.uri)
-				return await service.onDocumentLinks(document)
-			}
-			return []
 		})
 		connection.onDocumentColor(async params => {
 			if (!this.settings.colorDecorators) {

@@ -11,13 +11,14 @@ import * as tw from "~/common/twin"
 import { hoverClasses } from "~/common/findClasses"
 import parseThemeValue from "~/common/parseThemeValue"
 import cssProps from "./cssProps"
+import { getClassification, getReferenceLinks } from "./referenceLink"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
 export default function hover(
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
-	_: InitOptions,
+	options: InitOptions,
 ): lsp.Hover {
 	try {
 		const result = canMatch(document, position, true)
@@ -91,46 +92,67 @@ export default function hover(
 			if (!selection.token) {
 				return null
 			}
+
+			const { start, end, text } = selection.token.token
+			const range = lsp.Range.create(
+				document.positionAt(token.start + start),
+				document.positionAt(token.start + end),
+			)
+
 			if (selection.token.kind === tw.TokenKind.CssProperty) {
-				const [start, end] = selection.token.token
 				const key = toKebab(selection.token.key.text)
 				const value = selection.token.value.text
 				const important = selection.important
 
 				const values = ["```scss", "& {", `\t${key}: ${value}${important ? " !important" : ""};`, "}", "```\n"]
 
-				const entry = cssProps.find(c => c.name === key)
-				if (entry) {
-					values.unshift(getEntryDescription(entry, true).value + "\n\n---\n")
+				if (options.references) {
+					const entry = cssProps.find(c => c.name === key)
+					if (entry) {
+						values.unshift(getEntryDescription(entry, true).value + "\n\n---\n")
+					}
 				}
 
 				return {
-					range: {
-						start: document.positionAt(token.start + start),
-						end: document.positionAt(token.start + end),
-					},
+					range,
 					contents: {
 						kind: lsp.MarkupKind.Markdown,
 						value: values.join("\n"),
 					},
 				}
 			}
-			if (kind === PatternKind.TwinCssProperty) {
-				if (selection.token.kind === tw.TokenKind.Unknown || selection.token.kind === tw.TokenKind.ClassName) {
-					return null
+
+			const contents = getHoverContents({
+				kind,
+				selection,
+				state,
+			})
+
+			let title = ""
+			if (options.references) {
+				const type = getClassification(text)
+				if (type) {
+					title = type + "\n"
+				}
+
+				const refs = getReferenceLinks(text)
+				if (refs.length > 0) {
+					title +=
+						"\n" +
+						refs
+							.map(ref => `[${ref.name === "twin.macro" ? "[twin.macro]" : "Reference"}](${ref.url}) `)
+							.join("\n") +
+						"\n"
 				}
 			}
-			const { start, end } = selection.token.token
+
+			if (title) {
+				contents.value = `${title}\n---\n\n` + contents.value
+			}
+
 			return {
-				range: {
-					start: document.positionAt(token.start + start),
-					end: document.positionAt(token.start + end),
-				},
-				contents: getHoverContents({
-					kind,
-					selection,
-					state,
-				}),
+				range,
+				contents,
 			}
 		}
 	} catch (err) {
@@ -190,9 +212,6 @@ function getHoverContents({
 			}
 
 			const contents = ["```scss", ...text, "```"]
-			// if (docs[value]) {
-			// 	contents.push(`[${lastUrlToken(docs[value])}](${docs[value]})`)
-			// }
 			return {
 				kind: lsp.MarkupKind.Markdown,
 				value: contents.join("\n"),

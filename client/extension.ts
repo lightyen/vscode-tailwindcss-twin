@@ -25,7 +25,7 @@ interface InitializationOptions {
 	/** uri */
 	configs: string[]
 	colorDecorators: boolean
-	links: boolean
+	references: boolean
 	validate: boolean
 	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
@@ -61,11 +61,8 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	if (typeof initOptions.colorDecorators !== "boolean") {
 		initOptions.colorDecorators = vscode.workspace.getConfiguration("editor", ws).get("colorDecorators")
 	}
-	initOptions.links = tailwindcss.get("links")
-	if (typeof initOptions.links !== "boolean") {
-		initOptions.links = vscode.workspace.getConfiguration("editor", ws).get("links")
-	}
 	initOptions.validate = tailwindcss.get("validate")
+	initOptions.references = tailwindcss.get("references")
 	initOptions.preferVariantWithParentheses = tailwindcss.get("preferVariantWithParentheses")
 	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
 	initOptions.diagnostics = tailwindcss.get("diagnostics")

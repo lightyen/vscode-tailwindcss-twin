@@ -22,7 +22,7 @@ ONLY for React and `twin.macro`
 ```json5
 {
   "tailwindcss.colorDecorators": null, // inherit from "editor.colorDecorators"
-  "tailwindcss.links": null, // inherit from "editor.links"
+  "tailwindcss.references": true,
   "tailwindcss.validate": true,
   "tailwindcss.diagnostics.emptyClass": true,
   "tailwindcss.diagnostics.emptyGroup": true,

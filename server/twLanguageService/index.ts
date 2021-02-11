@@ -5,7 +5,6 @@ import { LanguageService } from "~/LanguageService"
 import completion from "./completion"
 import completionResolve from "./completionResolve"
 import hover from "./hover"
-import documentLinks from "./documentLinks"
 import { validate } from "./diagnostics"
 import provideColor from "./provideColor"
 import provideSemanticTokens from "./semanticTokens"
@@ -16,7 +15,7 @@ export interface InitOptions {
 	workspaceFolder: string
 	configPath: string
 	colorDecorators: boolean
-	links: boolean
+	references: boolean
 	validate: boolean
 	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
@@ -60,7 +59,7 @@ export class TailwindLanguageService implements LanguageService {
 	}
 	onCompletionResolve(item: lsp.CompletionItem) {
 		if (!this.isReady()) return null
-		return completionResolve(item, this.state)
+		return completionResolve(item, this.state, this.initOptions)
 	}
 	onHover(params: lsp.HoverParams) {
 		if (!this.isReady()) return null
@@ -73,11 +72,6 @@ export class TailwindLanguageService implements LanguageService {
 		if (!this.initOptions.validate) return []
 		if (!this.isReady()) return []
 		return await idebounce("validate", validate, document, this.state, this.initOptions, this.cache)
-	}
-	async onDocumentLinks(document: TextDocument) {
-		if (!this.initOptions.links) return []
-		if (!this.isReady()) return []
-		return await idebounce("documentLinks", documentLinks, document, this.state, this.initOptions, this.cache)
 	}
 	async provideColor(document: TextDocument) {
 		if (!this.initOptions.colorDecorators) return []

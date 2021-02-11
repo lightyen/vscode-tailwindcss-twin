@@ -3,7 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 export interface Settings {
 	colorDecorators: boolean
-	links: boolean
+	references: boolean
 	validate: boolean
 	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
@@ -27,7 +27,6 @@ export interface LanguageService {
 	onCompletion: Parameters<lsp.Connection["onCompletion"]>[0]
 	onCompletionResolve: Parameters<lsp.Connection["onCompletionResolve"]>[0]
 	onHover: Parameters<lsp.Connection["onHover"]>[0]
-	onDocumentLinks: (document: TextDocument) => Promise<lsp.DocumentLink[]>
 	validate: (document: TextDocument) => Promise<lsp.Diagnostic[]>
 	provideColor: (document: TextDocument) => Promise<ColorInformation[]>
 	provideSemanticTokens: Parameters<lsp.Connection["languages"]["semanticTokens"]["on"]>[0]
