@@ -93,8 +93,13 @@ function validateTwin({
 
 	if (kind === PatternKind.Twin) {
 		classList.forEach(c => {
-			if (c.kind === tw.TokenKind.ClassName) {
-				result.push(...checkTwinClassName(c, document, offset, state))
+			switch (c.kind) {
+				case tw.TokenKind.ClassName:
+					result.push(...checkTwinClassName(c, document, offset, state))
+					break
+				case tw.TokenKind.Unknown:
+					result.push(...checkTwinClassName(c, document, offset, state))
+					break
 			}
 		})
 	}
@@ -297,7 +302,7 @@ function validateTwin({
 	return result
 }
 
-function checkTwinClassName(item: tw.ClassName, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	const variants = item.variants.texts
 	for (const [a, b, variant] of item.variants) {

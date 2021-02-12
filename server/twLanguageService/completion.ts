@@ -123,7 +123,12 @@ function classesCompletion(
 					}
 				}
 			})
-			.map(item => ({ ...item, filterText: item.label, label: item.label + ":", commitCharacters: [":"] }))
+			.map(item => ({
+				...item,
+				filterText: item.label,
+				label: item.label + ":",
+				commitCharacters: [""],
+			}))
 	}
 
 	if (preferVariantWithParentheses) {
