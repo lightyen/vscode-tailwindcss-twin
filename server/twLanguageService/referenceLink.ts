@@ -1,3 +1,4 @@
+import references from "./references.yaml"
 import docs from "./docs.yaml"
 
 export interface Reference {
@@ -7,8 +8,8 @@ export interface Reference {
 
 export function getReferenceLinks(keyword: string) {
 	const value = keyword.replace(":", "")
-	const originUrl = docs[value]
-	const twinUrl = docs["tw." + value]
+	const originUrl = references[value]
+	const twinUrl = references["tw." + value]
 	const links: Reference[] = []
 	const last = /[\w-.]+$/
 	if (typeof originUrl === "string") {
@@ -26,12 +27,41 @@ export function getReferenceLinks(keyword: string) {
 	return links
 }
 
-export function getClassification(keyword: string) {
+export function getName(keyword: string) {
 	const value = keyword.replace(":", "")
-	const originUrl = docs[value]
-	const twinUrl = docs["tw." + value]
+	const originUrl = references[value]
+	const twinUrl = references["tw." + value]
 	const url = originUrl || twinUrl
 	if (url) {
+		if (docs[twinUrl]) {
+			return docs[twinUrl].name
+		}
+		if (docs[originUrl]) {
+			return docs[originUrl].name
+		}
+
+		const match = /[\w-]+$/.exec(originUrl)
+		const text = match?.[0] || ""
+		if (!originUrl || text) {
+			return originUrl ? `${text}` : "twin.macro"
+		}
+	}
+	return undefined
+}
+
+export function getDescription(keyword: string) {
+	const value = keyword.replace(":", "")
+	const originUrl = references[value]
+	const twinUrl = references["tw." + value]
+	const url = originUrl || twinUrl
+	if (url) {
+		if (docs[twinUrl]) {
+			return docs[twinUrl].desc
+		}
+		if (docs[originUrl]) {
+			return docs[originUrl].desc
+		}
+
 		const match = /[\w-]+$/.exec(originUrl)
 		const text = match?.[0] || ""
 		if (!originUrl || text) {

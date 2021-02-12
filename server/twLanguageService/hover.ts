@@ -11,7 +11,7 @@ import * as tw from "~/common/twin"
 import { hoverClasses } from "~/common/findClasses"
 import parseThemeValue from "~/common/parseThemeValue"
 import cssProps from "./cssProps"
-import { getClassification, getReferenceLinks } from "./referenceLink"
+import { getReferenceLinks, getDescription } from "./referenceLink"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
 export default function hover(
@@ -128,9 +128,13 @@ export default function hover(
 				state,
 			})
 
+			if (!contents) {
+				return null
+			}
+
 			let title = ""
 			if (options.references) {
-				const type = getClassification(text)
+				const type = getDescription(text)
 				if (type) {
 					title = type + "\n"
 				}
@@ -140,7 +144,7 @@ export default function hover(
 					title +=
 						"\n" +
 						refs
-							.map(ref => `[${ref.name === "twin.macro" ? "[twin.macro]" : "Reference"}](${ref.url}) `)
+							.map(ref => `[Reference](${ref.url}) `)
 							.join("\n") +
 						"\n"
 				}
@@ -186,8 +190,14 @@ function getHoverContents({
 	}
 
 	if (twin) {
-		if (value === "group" || value === "container") {
+		if (value === "group") {
 			return null
+		}
+		if (value === "container") {
+			return {
+				kind: lsp.MarkupKind.Markdown,
+				value: "",
+			}
 		}
 		if (value === "content") {
 			const i = common.findIndex(v => v === "before" || v === "after")

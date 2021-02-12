@@ -3,7 +3,7 @@ import type { CSSRuleItem } from "~/tailwind/classnames"
 import { Tailwind } from "~/tailwind"
 import { PatternKind } from "~/common/ast"
 import { InitOptions } from "~/twLanguageService"
-import { getReferenceLinks, getClassification } from "./referenceLink"
+import { getReferenceLinks, getName, getDescription } from "./referenceLink"
 import { IPropertyData, IValueData } from "vscode-css-languageservice"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
@@ -15,15 +15,10 @@ export default function completionResolve(
 	item = resolve(item, state, options)
 	if (options.references && typeof item.documentation === "object") {
 		const refs = getReferenceLinks(item.label)
-		if (refs.length > 0) {
-			const refs = getReferenceLinks(item.label)
-			if (refs.length > 0) {
-				item.documentation.value +=
-					"\n" +
-					refs
-						.map(ref => `[${ref.name === "twin.macro" ? "[twin.macro]" : "Reference"}](${ref.url}) `)
-						.join("\n")
-			}
+		if (refs.length == 1) {
+			item.documentation.value += "\n" + `[Reference](${refs[0].url})`
+		} else if (refs.length > 0) {
+			item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
 		}
 	}
 	return item
@@ -48,26 +43,24 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: InitOptions
 		return item
 	}
 
+	item.detail = getName(item.label)
 	if (kind === PatternKind.Twin) {
 		switch (item.label) {
 			case "content":
-				item.detail = getClassification("content")
 				item.documentation = {
 					kind: lsp.MarkupKind.Markdown,
 					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
 				}
 				return item
 			case "container":
-				item.detail = getClassification("container")
 				item.documentation = {
 					kind: lsp.MarkupKind.Markdown,
-					value: "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md",
+					value: getDescription("container"),
 				}
 				return item
 		}
 	}
 
-	item.detail = getClassification(item.label)
 	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
 	if (!data) {
 		return item

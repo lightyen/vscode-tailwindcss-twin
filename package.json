@@ -86,26 +86,22 @@
       "[javascript]": {
         "editor.quickSuggestions": {
           "strings": true
-        },
-        "editor.wordBasedSuggestions": false
+        }
       },
       "[typescript]": {
         "editor.quickSuggestions": {
           "strings": true
-        },
-        "editor.wordBasedSuggestions": false
+        }
       },
       "[javascriptreact]": {
         "editor.quickSuggestions": {
           "strings": true
-        },
-        "editor.wordBasedSuggestions": false
+        }
       },
       "[typescriptreact]": {
         "editor.quickSuggestions": {
           "strings": true
-        },
-        "editor.wordBasedSuggestions": false
+        }
       }
     },
     "configuration": {
