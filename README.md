@@ -2,7 +2,7 @@
 
 This is a custom Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro) features.
 
-## Support
+## Supported
 
 ONLY for React and `twin.macro`
 
@@ -12,12 +12,11 @@ ONLY for React and `twin.macro`
 
 ```json5
 {
-  "editor.quickSuggestions": { "strings": true },
-  "editor.autoClosingQuotes": "always"
+  // none
 }
 ```
 
-### Default
+### Defaults
 
 ```json5
 {
@@ -37,12 +36,14 @@ ONLY for React and `twin.macro`
 ```json5
 {
   "editor.semanticTokenColorCustomizations": {
-    "enabled": true
+    "[Atom One Dark]": {
+      "enabled": true
+    }
   }
 }
 ```
 
-### Custom Theme
+### Custom CompletionList Panel
 
 ```json5
 {
