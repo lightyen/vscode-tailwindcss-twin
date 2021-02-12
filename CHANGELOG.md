@@ -18,6 +18,20 @@
 
 </details>
 
+Remove Recommanded Settings, add `editor.quickSuggestions.strings = true` to configurationDefaults
+
+## 0.5.1
+
+### Changes
+
+- revert: conflict check between "--tw" css variables
+
+### Enhances
+
+- add CHANGELOG
+- add more references
+- css prop completion
+
 ## 0.5.0
 
 Add intellisense on [`short css syntax`](https://github.com/ben-rogerson/twin.macro/pull/305)
