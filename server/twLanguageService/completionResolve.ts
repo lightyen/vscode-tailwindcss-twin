@@ -42,7 +42,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: InitOptions
 	}
 
 	if (type === "cssProp" || type === "cssValue") {
-		entry.references
+		item.detail = type === "cssProp" ? "css property" : "css value"
 		const markdownContent: lsp.MarkupContent = getEntryDescription(entry, true)
 		item.documentation = markdownContent
 		return item

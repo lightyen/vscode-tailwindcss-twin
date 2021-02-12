@@ -114,7 +114,7 @@ function classesCompletion(
 					return {
 						label,
 						sortText: f ? "*" + label : "~~~:" + label,
-						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Field,
+						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Method,
 						data: { type: "variant", data, variants: userVariants, kind },
 						command: {
 							title: "",
@@ -189,8 +189,7 @@ function classesCompletion(
 				if (position > a) classNameEnabled = false
 				break
 			case tw.TokenKind.CssProperty:
-				if (position > suggestion.token.token.start && position < suggestion.token.token.end)
-					classNameEnabled = false
+				if (position > a && position < b) classNameEnabled = false
 				break
 			case tw.TokenKind.Unknown:
 				if (position > a) classNameEnabled = false
@@ -237,58 +236,59 @@ function classesCompletion(
 		}
 	}
 
-	let cssItems: lsp.CompletionItem[] = []
-	if (kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty) {
-		if (
-			suggestion.token &&
-			suggestion.token.kind === tw.TokenKind.CssProperty &&
-			position >= suggestion.token.value.start &&
-			position <= suggestion.token.value.end
-		) {
-			const prop = suggestion.token.key.text
-			const entry = cssProps.find(c => c.name === prop)
-			if (entry?.values) {
-				cssItems = entry.values.map(entry => {
-					return {
-						label: entry.name,
-						sortText: "~~~~" + entry.name,
-						kind: lsp.CompletionItemKind.Enum,
-						detail: "css value",
-						data: {
-							type: "cssValue",
-							entry,
-						},
-					}
-				})
+	let cssPropItems: lsp.CompletionItem[] = []
+	let cssValueItems: lsp.CompletionItem[] = []
+	let cssPropEnabled = true
+	let cssValueEnabled = false
+
+	if (suggestion.token) {
+		if (suggestion.token.kind === tw.TokenKind.CssProperty) {
+			const { start, end } = suggestion.token.value
+			if (position >= start && position <= end) {
+				cssPropEnabled = false
+				cssValueEnabled = true
 			}
-		} else {
-			cssItems = cssProps.map<lsp.CompletionItem>(entry => {
+		}
+	}
+
+	if (cssPropEnabled) {
+		cssPropItems = cssProps.map(entry => ({
+			label: entry.name,
+			sortText: "~~~~" + entry.name,
+			kind: lsp.CompletionItemKind.Field,
+			insertTextFormat: lsp.InsertTextFormat.Snippet,
+			insertText: entry.name + "[$0]",
+			textEdit: suggestion.token
+				? lsp.TextEdit.replace(
+						{
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
+						},
+						entry.name + "[$0]",
+				  )
+				: undefined,
+			command: {
+				title: "",
+				command: "editor.action.triggerSuggest",
+			},
+			data: {
+				type: "cssProp",
+				entry,
+			},
+		}))
+	}
+
+	if (cssValueEnabled && suggestion.token.kind === tw.TokenKind.CssProperty) {
+		const prop = suggestion.token.key.text
+		const entry = cssProps.find(c => c.name === prop)
+		if (entry.values instanceof Array) {
+			cssValueItems = entry.values.map(entry => {
 				return {
 					label: entry.name,
-					sortText: "~~~~" + entry.name,
-					kind: lsp.CompletionItemKind.Property,
-					insertTextFormat: lsp.InsertTextFormat.Snippet,
-					insertText: entry.name + "[$0]",
-					textEdit:
-						suggestion.token &&
-						suggestion.token.kind === tw.TokenKind.CssProperty &&
-						position > suggestion.token.key.start &&
-						position <= suggestion.token.key.end
-							? lsp.TextEdit.replace(
-									{
-										start: document.positionAt(offset + suggestion.token.key.start),
-										end: document.positionAt(offset + suggestion.token.key.end),
-									},
-									entry.name,
-							  )
-							: undefined,
-					detail: "css property",
-					command: {
-						title: "",
-						command: "editor.action.triggerSuggest",
-					},
+					sortText: "~~~~" + formatLabel(entry.name),
+					kind: lsp.CompletionItemKind.Enum,
 					data: {
-						type: "cssProp",
+						type: "cssValue",
 						entry,
 					},
 				}
@@ -296,7 +296,10 @@ function classesCompletion(
 		}
 	}
 
-	return lsp.CompletionList.create([...variantItems, ...classNameItems, ...cssItems], isIncomplete)
+	return lsp.CompletionList.create(
+		[...variantItems, ...classNameItems, ...cssPropItems, ...cssValueItems],
+		isIncomplete,
+	)
 }
 
 function twinThemeCompletion(
