@@ -176,10 +176,10 @@ function validateTwin({
 					for (const d of data) {
 						const twinKeys = variants.sort()
 						for (const property of Object.keys(d.decls)) {
-							// // skip css variable
-							// if (property.startsWith("--tw")) {
-							// 	continue
-							// }
+							// NOTE: skip tailwind css variable, because of duplicated by tailwindcss itself
+							if (property.startsWith("--tw")) {
+								continue
+							}
 							const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
 							const target = map[key]
 							if (target instanceof Array) {
