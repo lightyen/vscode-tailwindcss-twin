@@ -25,6 +25,7 @@ ONLY for React and `twin.macro`
   "tailwindcss.validate": true,
   "tailwindcss.diagnostics.emptyClass": true,
   "tailwindcss.diagnostics.emptyGroup": true,
+  "tailwindcss.diagnostics.emptyCssProperty": true,
   "tailwindcss.diagnostics.conflict": "strict",
   "tailwindcss.preferVariantWithParentheses": false,
   "tailwindcss.fallbackDefaultConfig": true

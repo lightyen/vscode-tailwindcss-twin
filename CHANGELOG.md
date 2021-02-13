@@ -1,24 +1,12 @@
 # CHANGELOG.md
 
-## [Unreleased]
+## 0.5.2
 
-<details>
-  <summary>
-    Changes that have landed in master but are not yet released.
-    Click to see more.
-  </summary>
-
-### News
-
-### Fixes
-
-### Changes
+Add settings: `tailwindcss.diagnostics.emptyCssProperty`
 
 ### Enhances
 
-</details>
-
-Remove Recommanded Settings, add `editor.quickSuggestions.strings = true` to configurationDefaults
+- enhance short css value intellisense
 
 ## 0.5.1
 
