@@ -5,7 +5,7 @@ import { Tailwind } from "~/tailwind"
 import { InitOptions, Cache } from "."
 import { findAllMatch, PatternKind } from "~/common/ast"
 import * as tw from "~/common/twin"
-import findAllClasses from "~/common/findAllClasses"
+import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
 
 export default function provideColor(document: TextDocument, state: Tailwind, _: InitOptions, cache: Cache) {
@@ -38,16 +38,16 @@ export default function provideColor(document: TextDocument, state: Tailwind, _:
 
 		const c = cachedResult[value]
 		if (!c) {
-			const result = findAllClasses({
+			const result = findAllElements({
 				input: value,
 				separator: state.separator,
 			})
 			cachedResult[value] = result
 		}
 
-		const { classList } = cachedResult[value]
+		const { elementList } = cachedResult[value]
 
-		for (const c of classList) {
+		for (const c of elementList) {
 			if (c.kind !== tw.TokenKind.ClassName) {
 				continue
 			}

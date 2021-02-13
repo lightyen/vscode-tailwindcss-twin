@@ -8,7 +8,7 @@ import { InitOptions } from "~/twLanguageService"
 import { canMatch, PatternKind } from "~/common/ast"
 import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
-import { hoverClasses } from "~/common/findClasses"
+import { hoverElement } from "~/common/findElement"
 import parseThemeValue from "~/common/parseThemeValue"
 import { cssDataManager, getEntryDescription } from "./cssData"
 import { getReferenceLinks, getDescription } from "./referenceLink"
@@ -83,7 +83,7 @@ export default function hover(
 			}
 			return null
 		} else {
-			const selection = hoverClasses({
+			const selection = hoverElement({
 				input: token.text,
 				position: document.offsetAt(position) - token.start,
 				separator: state.separator,
@@ -165,7 +165,7 @@ function getHoverContents({
 	state,
 }: {
 	kind: PatternKind
-	selection: ReturnType<typeof hoverClasses>
+	selection: ReturnType<typeof hoverElement>
 	state: Tailwind
 }): lsp.MarkupContent {
 	const { important, variants } = selection

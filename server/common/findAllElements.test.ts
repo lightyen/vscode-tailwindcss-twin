@@ -1,10 +1,10 @@
 import * as tw from "./twin"
-import findAllClasses from "./findAllClasses"
+import findAllElements from "./findAllElements"
 
-test("findAllClasses", async () => {
+test("findAllElements", async () => {
 	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)))))! hover:(maxWidth[100%]!)`
-	const result = findAllClasses({ input })
-	expect(result.classList).toEqual([
+	const result = findAllElements({ input })
+	expect(result.elementList).toEqual([
 		{
 			token: [0, 13, "text-gray-100"],
 			variants: [],
@@ -61,7 +61,7 @@ test("findAllClasses", async () => {
 		{
 			token: [108, 122, "maxWidth[100%]"],
 			variants: [[101, 106, "hover"]],
-			key: [108, 116, "maxWidth"],
+			prop: [108, 116, "maxWidth"],
 			value: [117, 121, "100%"],
 			important: true,
 			kind: tw.TokenKind.CssProperty,
@@ -69,9 +69,9 @@ test("findAllClasses", async () => {
 	])
 })
 
-test("findAllClasses EmptyList", async () => {
+test("findAllElements EmptyList", async () => {
 	const input = `text-gray-100! lg:() md: md:dark:(hover:(text-gray-500 bg-white)) focus:( )! lg:(light:bg-black)`
-	expect(findAllClasses({ input }).emptyList).toEqual([
+	expect(findAllElements({ input }).emptyList).toEqual([
 		{
 			kind: tw.EmptyKind.Group,
 			start: 18,
@@ -94,7 +94,7 @@ test("findAllClasses EmptyList", async () => {
 	])
 
 	const text2 = `bg-gradient-to-b before:content before:text-blue-50 md:`
-	expect(findAllClasses({ input: text2 }).emptyList).toEqual([
+	expect(findAllElements({ input: text2 }).emptyList).toEqual([
 		{
 			kind: tw.EmptyKind.Classname,
 			start: 55,
@@ -103,10 +103,10 @@ test("findAllClasses EmptyList", async () => {
 	])
 })
 
-test("findAllClasses Important", async () => {
+test("findAllElements Important", async () => {
 	const input = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
-	const result = findAllClasses({ input })
-	expect(result.classList).toEqual([
+	const result = findAllElements({ input })
+	expect(result.elementList).toEqual([
 		{
 			token: [0, 13, "text-gray-100"],
 			important: true,
@@ -137,9 +137,9 @@ test("findAllClasses Important", async () => {
 	])
 })
 
-test("seprate", async () => {
+test("spread", async () => {
 	const input = "  text-gray-100! md:dark:(hover:(text-gray-500 bg-white!)) lg:(light:bg-black) "
-	const output = findAllClasses({ input }).classList.texts
+	const output = findAllElements({ input }).elementList.texts
 	expect(output).toEqual([
 		"text-gray-100!",
 		"md:dark:hover:text-gray-500",
@@ -148,10 +148,19 @@ test("seprate", async () => {
 	])
 })
 
-test("broken input", async () => {
+test("texts", async () => {
 	const input = `bg-gradient-to-b from-electric to-ribbon (
 		scale-0
-		bg-blue-300  color[red] `
-	const output = findAllClasses({ input }).classList.texts
-	expect(output).toEqual(["bg-gradient-to-b", "from-electric", "to-ribbon", "scale-0", "bg-blue-300", "color[red]"])
+		bg-blue-300  color[red] clip-path[ ] lg:()`
+	const output = findAllElements({ input })
+	expect(output.elementList.texts).toEqual([
+		"bg-gradient-to-b",
+		"from-electric",
+		"to-ribbon",
+		"scale-0",
+		"bg-blue-300",
+		"color[red]",
+		"clip-path[ ]",
+	])
+	expect(output.emptyList.texts).toEqual(["clip-path[]", "lg:()"])
 })

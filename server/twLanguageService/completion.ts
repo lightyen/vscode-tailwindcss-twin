@@ -9,7 +9,7 @@ import type { InitOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
 import * as tw from "~/common/twin"
-import { completeClasses } from "~/common/findClasses"
+import { completeElement } from "~/common/findElement"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 import { cssDataManager } from "./cssData"
 import toKebab from "~/common/toKebab"
@@ -65,7 +65,7 @@ function classesCompletion(
 ): lsp.CompletionList {
 	const [offset, , input] = match
 	const position = index - offset
-	const suggestion = completeClasses({ input, position, separator: state.separator })
+	const suggestion = completeElement({ input, position, separator: state.separator })
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const preferVariantWithParentheses = options.preferVariantWithParentheses
 	const inputCharacter = input.slice(position - 1, position)

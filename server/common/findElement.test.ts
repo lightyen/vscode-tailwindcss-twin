@@ -1,10 +1,10 @@
 import * as tw from "./twin"
-import { hoverClasses, completeClasses } from "./findClasses"
+import { hoverElement, completeElement } from "./findElement"
 
 test("hover", async () => {
 	const input = `lg:var:class-name! lg:(var:(prop[value])!) !`
 	for (let position = 0; position < input.length; position++) {
-		const hover = hoverClasses({ input, position })
+		const hover = hoverElement({ input, position })
 		switch (position) {
 			case 0:
 				expect(hover).toEqual({
@@ -414,7 +414,7 @@ test("hover", async () => {
 test("completion", async () => {
 	const input = `lg:var:class-name! lg:(var:(prop[value])!) ! (t)`
 	for (let position = 0; position <= input.length; position++) {
-		const completion = completeClasses({ input, position })
+		const completion = completeElement({ input, position })
 		switch (position) {
 			case 0:
 				expect(completion).toEqual({
@@ -870,7 +870,7 @@ test("completion", async () => {
 test("hover Important", async () => {
 	const input = `text-gray-100! md:dark:bg-black! lg:(bg-purple-500!) before:(content)`
 	for (let index = 0; index < input.length; index += 1) {
-		const result = hoverClasses({
+		const result = hoverElement({
 			input,
 			position: 37,
 		})
@@ -888,7 +888,7 @@ test("hover Important", async () => {
 test("completion on invalid input", async () => {
 	let input = "   dark    bg-black  "
 	let position = 8
-	let result = completeClasses({
+	let result = completeElement({
 		input,
 		position,
 	})
@@ -896,7 +896,7 @@ test("completion on invalid input", async () => {
 	expect(result.token).toEqual(undefined)
 
 	position = 7
-	result = completeClasses({
+	result = completeElement({
 		input,
 		position,
 	})
@@ -908,7 +908,7 @@ test("completion on invalid input", async () => {
 
 	input = "   dark:    bg-black  "
 	position = 7
-	result = completeClasses({
+	result = completeElement({
 		input,
 		position,
 	})
@@ -919,7 +919,7 @@ test("completion on invalid input", async () => {
 	})
 
 	position = 8
-	result = completeClasses({
+	result = completeElement({
 		input,
 		position,
 	})
@@ -928,14 +928,14 @@ test("completion on invalid input", async () => {
 })
 
 test("completion2", async () => {
-	expect(completeClasses({ input: `lg:var:`, position: 7 })).toEqual({
+	expect(completeElement({ input: `lg:var:`, position: 7 })).toEqual({
 		variants: [
 			[0, 2, "lg"],
 			[3, 6, "var"],
 		],
 		important: false,
 	})
-	expect(completeClasses({ input: `(var:)`, position: 5 })).toEqual({
+	expect(completeElement({ input: `(var:)`, position: 5 })).toEqual({
 		variants: [[1, 4, "var"]],
 		important: false,
 	})

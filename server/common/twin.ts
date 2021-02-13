@@ -42,7 +42,7 @@ export interface Variant {
 export interface CssProperty extends Context {
 	kind: TokenKind.CssProperty
 	token: Token
-	key: Token
+	prop: Token
 	value: Token
 }
 
@@ -75,6 +75,7 @@ export interface EmptyGroup {
 export interface EmptyCssProperty {
 	kind: EmptyKind.CssProperty
 	variants: TokenList
+	prop: Token
 	important: boolean
 	start: number
 	end: number
@@ -148,12 +149,12 @@ export function createTwinElementList(arr?: TwinElement[]) {
 				case "texts": {
 					const results: string[] = []
 					for (let i = 0; i < target.length; i++) {
-						let str = ""
+						let context = ""
 						const item = target[i]
 						for (let j = 0; j < item.variants.length; j++) {
-							str += target[i].variants[j].text + ":"
+							context += target[i].variants[j].text + ":"
 						}
-						results.push(str + item.token.text + (item.important ? "!" : ""))
+						results.push(context + item.token.text + (item.important ? "!" : ""))
 					}
 					return results
 				}
@@ -175,19 +176,20 @@ export function createEmptyList(arr?: EmptyElement[]) {
 				case "texts": {
 					const results: string[] = []
 					for (let i = 0; i < target.length; i++) {
-						let str = ""
+						let context = ""
 						const item = target[i]
 						for (let j = 0; j < item.variants.length; j++) {
-							str += target[i].variants[j].text + ":"
+							context += target[i].variants[j].text + ":"
 						}
 						switch (item.kind) {
 							case EmptyKind.Group:
-								results.push(str + "()" + (item.important ? "!" : ""))
+								results.push(context + "()" + (item.important ? "!" : ""))
 								break
 							case EmptyKind.CssProperty:
+								results.push(context + item.prop.text + "[]" + (item.important ? "!" : ""))
 								break
 							case EmptyKind.Classname:
-								results.push(str)
+								results.push(context)
 								break
 						}
 					}

@@ -20,7 +20,7 @@ interface Result extends tw.Context {
 		| tw.SelectedVariantsGroup
 }
 
-export function completeClasses({
+export function completeElement({
 	input,
 	start = 0,
 	end = input.length,
@@ -113,7 +113,7 @@ export function completeClasses({
 
 				if (hasRightBracket) {
 					if (position > reg.lastIndex && position <= closedBracket) {
-						return completeClasses({
+						return completeElement({
 							input,
 							context: context.slice(),
 							importantContext: important,
@@ -124,7 +124,7 @@ export function completeClasses({
 						})
 					}
 				} else {
-					return completeClasses({
+					return completeElement({
 						input,
 						context: context.slice(),
 						importantContext: important,
@@ -221,7 +221,7 @@ export function completeClasses({
 
 			if (hasRightBracket) {
 				if (position >= reg.lastIndex && position <= closedBracket) {
-					return completeClasses({
+					return completeElement({
 						input,
 						context: context.slice(),
 						importantContext: important || importantContext,
@@ -232,7 +232,7 @@ export function completeClasses({
 					})
 				}
 			} else {
-				return completeClasses({
+				return completeElement({
 					input,
 					context: context.slice(),
 					importantContext: important || importantContext,
@@ -252,7 +252,7 @@ export function completeClasses({
 	}
 }
 
-export function hoverClasses({
+export function hoverElement({
 	input,
 	start = 0,
 	end = input.length,
@@ -338,7 +338,7 @@ export function hoverClasses({
 
 				if (hasRightBracket) {
 					if (position > reg.lastIndex && position < closedBracket) {
-						return hoverClasses({
+						return hoverElement({
 							input,
 							context: context.slice(),
 							importantContext: important,
@@ -349,7 +349,7 @@ export function hoverClasses({
 						})
 					}
 				} else {
-					return hoverClasses({
+					return hoverElement({
 						input,
 						context: context.slice(),
 						importantContext: important,
@@ -437,7 +437,7 @@ export function hoverClasses({
 
 			if (hasRightBracket) {
 				if (position > reg.lastIndex && position < closedBracket) {
-					return hoverClasses({
+					return hoverElement({
 						input,
 						context: context.slice(),
 						importantContext: important || importantContext,
@@ -448,7 +448,7 @@ export function hoverClasses({
 					})
 				}
 			} else {
-				return hoverClasses({
+				return hoverElement({
 					input,
 					context: context.slice(),
 					importantContext: important || importantContext,

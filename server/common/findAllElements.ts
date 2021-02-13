@@ -12,27 +12,27 @@ function trimLeft(str: string, start = 0, end = str.length): [number, number] {
 }
 
 interface Result {
-	classList: tw.TwinElementList
+	elementList: tw.TwinElementList
 	emptyList: tw.EmptyList
 	error?: tw.Error
 }
 
 function zero(): Result {
 	return {
-		classList: tw.createTwinElementList(),
+		elementList: tw.createTwinElementList(),
 		emptyList: tw.createEmptyList(),
 	}
 }
 
 function merge(a: Result, b: Result): Result {
 	return {
-		classList: tw.createTwinElementList([...a.classList, ...b.classList]),
+		elementList: tw.createTwinElementList([...a.elementList, ...b.elementList]),
 		emptyList: tw.createEmptyList([...a.emptyList, ...b.emptyList]),
 		error: a.error ?? b.error,
 	}
 }
 
-export default function findAllClasses({
+export default function findAllElements({
 	input,
 	start = 0,
 	end = input.length,
@@ -101,7 +101,7 @@ export default function findAllClasses({
 						start: reg.lastIndex,
 						end,
 					}
-					const children = findAllClasses({
+					const children = findAllElements({
 						input: input,
 						context: context.slice(),
 						importantContext: false,
@@ -113,7 +113,7 @@ export default function findAllClasses({
 					return result
 				}
 				const important = input[closedBracket + 1] === "!"
-				const children = findAllClasses({
+				const children = findAllElements({
 					input: input,
 					context: context.slice(),
 					importantContext: importantContext || important,
@@ -122,7 +122,7 @@ export default function findAllClasses({
 					separator,
 				})
 
-				if (children.classList.length === 0) {
+				if (children.elementList.length === 0) {
 					result.emptyList.push({
 						kind: tw.EmptyKind.Group,
 						start: reg.lastIndex,
@@ -145,11 +145,11 @@ export default function findAllClasses({
 					start: reg.lastIndex - 1,
 					end,
 				}
-				result.classList.push({
+				result.elementList.push({
 					kind: tw.TokenKind.CssProperty,
 					variants: context.slice(),
 					token: tw.createToken(match.index, end, input.slice(match.index, end)),
-					key: tw.createToken(match.index, match.index + cssProperty.length, cssProperty),
+					prop: tw.createToken(match.index, match.index + cssProperty.length, cssProperty),
 					value: tw.createToken(reg.lastIndex, end, input.slice(reg.lastIndex, end)),
 					important: importantContext,
 				})
@@ -159,18 +159,21 @@ export default function findAllClasses({
 			const important = input[closedBracket + 1] === "!"
 			const token = tw.createToken(match.index, closedBracket + 1, input.slice(match.index, closedBracket + 1))
 
-			result.classList.push({
+			const prop = tw.createToken(match.index, match.index + cssProperty.length, cssProperty)
+			const value = tw.createToken(reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket))
+			result.elementList.push({
 				kind: tw.TokenKind.CssProperty,
 				variants: context.slice(),
 				token,
-				key: tw.createToken(match.index, match.index + cssProperty.length, cssProperty),
-				value: tw.createToken(reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)),
+				prop,
+				value,
 				important: important || importantContext,
 			})
 
-			if (reg.lastIndex === closedBracket) {
+			if (value.text.trim() === "") {
 				result.emptyList.push({
 					kind: tw.EmptyKind.CssProperty,
+					prop,
 					start: reg.lastIndex - 1,
 					end: closedBracket + 1,
 					variants: context.slice(),
@@ -188,7 +191,7 @@ export default function findAllClasses({
 				token.text = token.text.slice(0, -1)
 			}
 
-			result.classList.push({
+			result.elementList.push({
 				kind: tw.TokenKind.ClassName,
 				variants: context.slice(),
 				token,
@@ -199,7 +202,7 @@ export default function findAllClasses({
 		} else if (notHandled) {
 			const token = tw.createToken(match.index, reg.lastIndex, value)
 
-			result.classList.push({
+			result.elementList.push({
 				kind: tw.TokenKind.Unknown,
 				variants: context.slice(),
 				token,
@@ -215,7 +218,7 @@ export default function findAllClasses({
 					start: match.index,
 					end,
 				}
-				const children = findAllClasses({
+				const children = findAllElements({
 					input: input,
 					context: context.slice(),
 					importantContext: false,
@@ -228,7 +231,7 @@ export default function findAllClasses({
 			}
 
 			const important = input[closedBracket + 1] === "!"
-			const innerResult = findAllClasses({
+			const innerResult = findAllElements({
 				input: input,
 				context: context.slice(),
 				importantContext: importantContext || important,
@@ -236,7 +239,7 @@ export default function findAllClasses({
 				end: closedBracket,
 				separator,
 			})
-			if (innerResult.classList.length === 0) {
+			if (innerResult.elementList.length === 0) {
 				result.emptyList.push({
 					kind: tw.EmptyKind.Group,
 					start: match.index,

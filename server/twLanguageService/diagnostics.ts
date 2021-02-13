@@ -5,7 +5,7 @@ import { findAllMatch, PatternKind } from "~/common/ast"
 import type { InitOptions, Cache } from "."
 import * as tw from "~/common/twin"
 import toKebab from "~/common/toKebab"
-import findAllClasses from "~/common/findAllClasses"
+import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
 import { cssDataManager } from "./cssData"
 
@@ -43,7 +43,7 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
 			const c = cache[uri][value]
 			if (!c) {
-				const result = findAllClasses({ input: value, separator: state.separator })
+				const result = findAllElements({ input: value, separator: state.separator })
 				cache[uri][value] = result
 			}
 			diagnostics.push(
@@ -67,7 +67,7 @@ function validateTwin({
 	kind,
 	state,
 	diagnostics,
-	classList,
+	elementList,
 	emptyList,
 	error,
 }: {
@@ -76,7 +76,7 @@ function validateTwin({
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: InitOptions["diagnostics"]
-} & ReturnType<typeof findAllClasses>): Diagnostic[] {
+} & ReturnType<typeof findAllElements>): Diagnostic[] {
 	const result: Diagnostic[] = []
 
 	if (error) {
@@ -92,7 +92,7 @@ function validateTwin({
 	}
 
 	if (kind === PatternKind.Twin) {
-		classList.forEach(c => {
+		elementList.forEach(c => {
 			switch (c.kind) {
 				case tw.TokenKind.ClassName:
 					result.push(...checkTwinClassName(c, document, offset, state))
@@ -133,8 +133,8 @@ function validateTwin({
 		const map: Record<string, tw.TokenList> = {}
 
 		if (kind === PatternKind.Twin) {
-			for (let i = 0; i < classList.length; i++) {
-				const item = classList[i]
+			for (let i = 0; i < elementList.length; i++) {
+				const item = elementList[i]
 				const variants = item.variants.texts
 				if (item.important) {
 					continue
@@ -142,13 +142,13 @@ function validateTwin({
 
 				if (item.kind === tw.TokenKind.CssProperty) {
 					const twinKeys = variants.sort()
-					const property = toKebab(item.key.text)
+					const property = toKebab(item.prop.text)
 					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(classList[i].token)
+						target.push(elementList[i].token)
 					} else {
-						map[key] = tw.createTokenList([classList[i].token])
+						map[key] = tw.createTokenList([elementList[i].token])
 					}
 					continue
 				}
@@ -202,15 +202,15 @@ function validateTwin({
 					const key = [...variants, Array.from(s).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(classList[i].token)
+						target.push(elementList[i].token)
 					} else {
-						map[key] = tw.createTokenList([classList[i].token])
+						map[key] = tw.createTokenList([elementList[i].token])
 					}
 				}
 			}
 		} else if (kind === PatternKind.TwinCssProperty) {
-			for (let i = 0; i < classList.length; i++) {
-				const item = classList[i]
+			for (let i = 0; i < elementList.length; i++) {
+				const item = elementList[i]
 				if (item.kind === tw.TokenKind.Unknown || item.kind === tw.TokenKind.ClassName) {
 					result.push({
 						source,
@@ -225,13 +225,13 @@ function validateTwin({
 				}
 
 				const twinKeys = item.variants.texts.sort()
-				const property = toKebab(item.key.text)
+				const property = toKebab(item.prop.text)
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
-					target.push(classList[i].token)
+					target.push(elementList[i].token)
 				} else {
-					map[key] = tw.createTokenList([classList[i].token])
+					map[key] = tw.createTokenList([elementList[i].token])
 				}
 			}
 		}

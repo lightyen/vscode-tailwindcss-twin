@@ -8,7 +8,7 @@ import hover from "./hover"
 import { validate } from "./diagnostics"
 import provideColor from "./provideColor"
 import provideSemanticTokens from "./semanticTokens"
-import findAllClasses from "~/common/findAllClasses"
+import findAllElements from "~/common/findAllElements"
 import idebounce from "~/common/idebounce"
 
 export interface InitOptions {
@@ -27,7 +27,7 @@ export interface InitOptions {
 	}
 }
 
-export type Cache = Record<string, Record<string, ReturnType<typeof findAllClasses>>>
+export type Cache = Record<string, Record<string, ReturnType<typeof findAllElements>>>
 
 export class TailwindLanguageService implements LanguageService {
 	public state: Tailwind
