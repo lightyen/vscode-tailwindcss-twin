@@ -11,7 +11,9 @@ import { canMatch, PatternKind } from "~/common/ast"
 import * as tw from "~/common/twin"
 import { completeClasses } from "~/common/findClasses"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
-import cssProps from "./cssProps"
+import { cssDataManager } from "./cssData"
+import toKebab from "~/common/toKebab"
+import { getCompletionsForDeclarationValue } from "./completionCssPropertyValue"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"
@@ -86,8 +88,15 @@ function classesCompletion(
 				if (position > a && position < b) variantEnabled = false
 				break
 			case tw.TokenKind.CssProperty:
-				if (position > suggestion.token.token.start && position < suggestion.token.token.end)
-					variantEnabled = false
+				if (position > suggestion.token.token.start) {
+					if (suggestion.token.token.text.slice(-1) === "]") {
+						if (position < suggestion.token.token.end) {
+							variantEnabled = false
+						}
+					} else if (position <= suggestion.token.token.end) {
+						variantEnabled = false
+					}
+				}
 				break
 		}
 	}
@@ -100,35 +109,29 @@ function classesCompletion(
 				const bp = state.classnames.getBreakingPoint(label)
 				if (bp) {
 					return {
-						label,
+						label: label + ":",
 						sortText: bp.toString().padStart(5, " "),
 						kind: lsp.CompletionItemKind.Module,
 						data: { type: "screen", data, variants: userVariants, kind },
 						command: {
-							title: "",
+							title: "Suggest",
 							command: "editor.action.triggerSuggest",
 						},
 					}
 				} else {
 					const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 					return {
-						label,
+						label: label + ":",
 						sortText: f ? "*" + label : "~~~:" + label,
 						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Method,
 						data: { type: "variant", data, variants: userVariants, kind },
 						command: {
-							title: "",
+							title: "Suggest",
 							command: "editor.action.triggerSuggest",
 						},
 					}
 				}
 			})
-			.map(item => ({
-				...item,
-				filterText: item.label,
-				label: item.label + ":",
-				commitCharacters: [""],
-			}))
 	}
 
 	if (preferVariantWithParentheses) {
@@ -242,7 +245,7 @@ function classesCompletion(
 	}
 
 	let cssPropItems: lsp.CompletionItem[] = []
-	let cssValueItems: lsp.CompletionItem[] = []
+	const cssValueItems: lsp.CompletionItem[] = []
 	let cssPropEnabled = true
 	let cssValueEnabled = false
 
@@ -257,7 +260,7 @@ function classesCompletion(
 	}
 
 	if (cssPropEnabled) {
-		cssPropItems = cssProps.map(entry => ({
+		cssPropItems = cssDataManager.getProperties().map(entry => ({
 			label: entry.name,
 			sortText: "~~~~" + entry.name,
 			kind: lsp.CompletionItemKind.Field,
@@ -273,32 +276,27 @@ function classesCompletion(
 				  )
 				: undefined,
 			command: {
-				title: "",
+				title: "Suggest",
 				command: "editor.action.triggerSuggest",
 			},
 			data: {
-				type: "cssProp",
+				type: "cssPropertyName",
 				entry,
 			},
 		}))
 	}
 
 	if (cssValueEnabled && suggestion.token.kind === tw.TokenKind.CssProperty) {
-		const prop = suggestion.token.key.text
-		const entry = cssProps.find(c => c.name === prop)
-		if (entry.values instanceof Array) {
-			cssValueItems = entry.values.map(entry => {
-				return {
-					label: entry.name,
-					sortText: "~~~~" + formatLabel(entry.name),
-					kind: lsp.CompletionItemKind.Enum,
-					data: {
-						type: "cssValue",
-						entry,
-					},
-				}
-			})
-		}
+		cssValueItems.push(
+			...getCompletionsForDeclarationValue(
+				toKebab(suggestion.token.key.text),
+				suggestion.token.value.text.trim(),
+				lsp.Range.create(
+					document.positionAt(offset + suggestion.token.value.start),
+					document.positionAt(offset + suggestion.token.value.end),
+				),
+			),
+		)
 	}
 
 	return lsp.CompletionList.create(

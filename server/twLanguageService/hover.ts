@@ -10,9 +10,8 @@ import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
 import { hoverClasses } from "~/common/findClasses"
 import parseThemeValue from "~/common/parseThemeValue"
-import cssProps from "./cssProps"
+import { cssDataManager, getEntryDescription } from "./cssData"
 import { getReferenceLinks, getDescription } from "./referenceLink"
-import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 
 export default function hover(
 	document: TextDocument,
@@ -107,7 +106,7 @@ export default function hover(
 				const values = ["```scss", "& {", `\t${key}: ${value}${important ? " !important" : ""};`, "}", "```\n"]
 
 				if (options.references) {
-					const entry = cssProps.find(c => c.name === key)
+					const entry = cssDataManager.getProperty(key)
 					if (entry) {
 						values.unshift(getEntryDescription(entry, true).value + "\n\n---\n")
 					}
@@ -141,12 +140,7 @@ export default function hover(
 
 				const refs = getReferenceLinks(text)
 				if (refs.length > 0) {
-					title +=
-						"\n" +
-						refs
-							.map(ref => `[Reference](${ref.url}) `)
-							.join("\n") +
-						"\n"
+					title += "\n" + refs.map(ref => `[Reference](${ref.url}) `).join("\n") + "\n"
 				}
 			}
 

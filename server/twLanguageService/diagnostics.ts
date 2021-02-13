@@ -7,10 +7,10 @@ import * as tw from "~/common/twin"
 import toKebab from "~/common/toKebab"
 import findAllClasses from "~/common/findAllClasses"
 import parseThemeValue from "~/common/parseThemeValue"
-import cssProps from "./cssProps"
+import { cssDataManager } from "./cssData"
 
 const source = "tailwindcss"
-const cssProperties = cssProps.map(c => c.name)
+const cssProperties = cssDataManager.getProperties().map(c => c.name)
 
 // TODO: Enhance performance
 export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions, cache: Cache) {
@@ -293,6 +293,16 @@ function validateTwin({
 				range: {
 					start: document.positionAt(offset + item.start),
 					end: document.positionAt(offset + item.start + 1),
+				},
+				severity: DiagnosticSeverity.Warning,
+			})
+		} else if (item.kind === tw.EmptyKind.CssProperty && diagnostics.emptyCssProperty) {
+			result.push({
+				source,
+				message: `forgot something?`,
+				range: {
+					start: document.positionAt(offset + item.start),
+					end: document.positionAt(offset + item.end),
 				},
 				severity: DiagnosticSeverity.Warning,
 			})

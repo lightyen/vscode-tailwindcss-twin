@@ -12,21 +12,21 @@ function trimLeft(str: string, start = 0, end = str.length): [number, number] {
 }
 
 interface Result {
-	classList: tw.ClassList
+	classList: tw.TwinElementList
 	emptyList: tw.EmptyList
 	error?: tw.Error
 }
 
 function zero(): Result {
 	return {
-		classList: tw.createClassList(),
+		classList: tw.createTwinElementList(),
 		emptyList: tw.createEmptyList(),
 	}
 }
 
 function merge(a: Result, b: Result): Result {
 	return {
-		classList: tw.createClassList([...a.classList, ...b.classList]),
+		classList: tw.createTwinElementList([...a.classList, ...b.classList]),
 		emptyList: tw.createEmptyList([...a.emptyList, ...b.emptyList]),
 		error: a.error ?? b.error,
 	}
@@ -167,6 +167,16 @@ export default function findAllClasses({
 				value: tw.createToken(reg.lastIndex, closedBracket, input.slice(reg.lastIndex, closedBracket)),
 				important: important || importantContext,
 			})
+
+			if (reg.lastIndex === closedBracket) {
+				result.emptyList.push({
+					kind: tw.EmptyKind.CssProperty,
+					start: reg.lastIndex - 1,
+					end: closedBracket + 1,
+					variants: context.slice(),
+					important,
+				})
+			}
 
 			reg.lastIndex = closedBracket + (important ? 2 : 1)
 			context = baseContext.slice()

@@ -33,6 +33,7 @@ interface InitializationOptions {
 		conflict: "none" | "loose" | "strict"
 		emptyClass: boolean
 		emptyGroup: boolean
+		emptyCssProperty: boolean
 	}
 }
 

@@ -139,6 +139,10 @@
           "type": "boolean",
           "default": true
         },
+        "tailwindcss.diagnostics.emptyCssProperty": {
+          "type": "boolean",
+          "default": true
+        },
         "tailwindcss.diagnostics.conflict": {
           "type": "string",
           "enum": [

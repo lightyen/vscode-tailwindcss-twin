@@ -55,6 +55,7 @@ export interface Error {
 export enum EmptyKind {
 	Classname,
 	Group,
+	CssProperty,
 }
 
 export interface EmptyClass {
@@ -70,6 +71,17 @@ export interface EmptyGroup {
 	start: number
 	end: number
 }
+
+export interface EmptyCssProperty {
+	kind: EmptyKind.CssProperty
+	variants: TokenList
+	important: boolean
+	start: number
+	end: number
+}
+
+export type TwinElement = Unknown | ClassName | CssProperty
+export type EmptyElement = EmptyClass | EmptyGroup | EmptyCssProperty
 
 export function createToken(start: number, end: number, value: string) {
 	const token: _Token = [start, end, value]
@@ -121,15 +133,15 @@ export function createTokenList(arr?: Token[]) {
 	}) as TokenList
 }
 
-export interface ClassList extends Array<Unknown | ClassName | CssProperty> {
+export interface TwinElementList extends Array<TwinElement> {
 	texts: string[]
 }
 
-export interface EmptyList extends Array<EmptyClass | EmptyGroup> {
+export interface EmptyList extends Array<EmptyElement> {
 	texts: string[]
 }
 
-export function createClassList(arr?: Array<Unknown | ClassName | CssProperty>) {
+export function createTwinElementList(arr?: TwinElement[]) {
 	return new Proxy(arr ?? [], {
 		get: function (target, prop) {
 			switch (prop) {
@@ -147,16 +159,16 @@ export function createClassList(arr?: Array<Unknown | ClassName | CssProperty>) 
 				}
 				case "slice":
 					return function (start?: number, end?: number) {
-						return createClassList(target.slice(start, end))
+						return createTwinElementList(target.slice(start, end))
 					}
 				default:
 					return target[prop]
 			}
 		},
-	}) as ClassList
+	}) as TwinElementList
 }
 
-export function createEmptyList(arr?: Array<EmptyClass | EmptyGroup>) {
+export function createEmptyList(arr?: EmptyElement[]) {
 	return new Proxy(arr ?? [], {
 		get: function (target, prop) {
 			switch (prop) {
@@ -168,10 +180,15 @@ export function createEmptyList(arr?: Array<EmptyClass | EmptyGroup>) {
 						for (let j = 0; j < item.variants.length; j++) {
 							str += target[i].variants[j].text + ":"
 						}
-						if (item.kind === EmptyKind.Group) {
-							results.push(str + "()" + (item.important ? "!" : ""))
-						} else {
-							results.push(str)
+						switch (item.kind) {
+							case EmptyKind.Group:
+								results.push(str + "()" + (item.important ? "!" : ""))
+								break
+							case EmptyKind.CssProperty:
+								break
+							case EmptyKind.Classname:
+								results.push(str)
+								break
 						}
 					}
 					return results

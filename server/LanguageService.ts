@@ -11,6 +11,7 @@ export interface Settings {
 		conflict: "none" | "loose" | "strict"
 		emptyClass: boolean
 		emptyGroup: boolean
+		emptyCssProperty: boolean
 	}
 }
 

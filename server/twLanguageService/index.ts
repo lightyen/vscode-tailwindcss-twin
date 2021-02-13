@@ -23,6 +23,7 @@ export interface InitOptions {
 		conflict: "none" | "loose" | "strict"
 		emptyClass: boolean
 		emptyGroup: boolean
+		emptyCssProperty: boolean
 	}
 }
 

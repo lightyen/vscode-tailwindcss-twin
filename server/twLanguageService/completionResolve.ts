@@ -4,8 +4,8 @@ import { Tailwind } from "~/tailwind"
 import { PatternKind } from "~/common/ast"
 import { InitOptions } from "~/twLanguageService"
 import { getReferenceLinks, getName, getDescription } from "./referenceLink"
-import { IPropertyData, IValueData } from "vscode-css-languageservice"
-import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
+import { IPropertyData } from "vscode-css-languageservice"
+import { getEntryDescription } from "./cssData"
 
 export default function completionResolve(
 	item: lsp.CompletionItem,
@@ -29,17 +29,17 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: InitOptions
 		type: string
 		variants: string[]
 		kind: PatternKind
-		entry?: IPropertyData | IValueData
+		entry?: IPropertyData
 	}
 
 	if (kind === PatternKind.TwinTheme) {
 		return item
 	}
 
-	if (type === "cssProp" || type === "cssValue") {
-		item.detail = type === "cssProp" ? "css property" : "css value"
-		const markdownContent: lsp.MarkupContent = getEntryDescription(entry, true)
-		item.documentation = markdownContent
+	if (type === "cssPropertyName" || type === "cssPropertyValue") {
+		if (type === "cssPropertyName") {
+			item.documentation = getEntryDescription(entry, true)
+		}
 		return item
 	}
 
