@@ -1,19 +1,6 @@
 import * as lsp from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
-
-export interface Settings {
-	colorDecorators: boolean
-	references: boolean
-	validate: boolean
-	preferVariantWithParentheses: boolean
-	fallbackDefaultConfig: boolean
-	diagnostics: {
-		conflict: "none" | "loose" | "strict"
-		emptyClass: boolean
-		emptyGroup: boolean
-		emptyCssProperty: boolean
-	}
-}
+import { Settings } from "settings"
 
 export interface ColorInformation {
 	range: lsp.Range
@@ -23,6 +10,7 @@ export interface ColorInformation {
 }
 export interface LanguageService {
 	init(): Promise<void>
+	reload(settings?: Settings): Promise<void>
 	isReady(): boolean
 	updateSettings(options: Partial<Settings>): void
 	onCompletion: Parameters<lsp.Connection["onCompletion"]>[0]

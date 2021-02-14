@@ -5,7 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import type { CSSRuleItem } from "~/tailwind/classnames"
-import type { InitOptions } from "~/twLanguageService"
+import type { ServiceOptions } from "~/twLanguageService"
 import type { Tailwind } from "~/tailwind"
 import { canMatch, PatternKind } from "~/common/ast"
 import * as tw from "~/common/twin"
@@ -27,7 +27,7 @@ export default function completion(
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
-	options: InitOptions,
+	options: ServiceOptions,
 ): lsp.CompletionList {
 	try {
 		const result = canMatch(document, position)
@@ -61,7 +61,7 @@ function classesCompletion(
 	match: tw.Token,
 	kind: PatternKind,
 	state: Tailwind,
-	options: InitOptions,
+	options: ServiceOptions,
 ): lsp.CompletionList {
 	const [offset, , input] = match
 	const position = index - offset

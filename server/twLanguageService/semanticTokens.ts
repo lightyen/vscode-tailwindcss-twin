@@ -2,7 +2,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver"
 import chroma from "chroma-js"
 import { Tailwind } from "~/tailwind"
-import { InitOptions } from "."
+import type { ServiceOptions } from "~/twLanguageService"
 import * as tw from "~/common/twin"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import parseSemanticTokens, { TwElementKind, Block } from "~/common/parseSemanticTokens"
@@ -22,7 +22,7 @@ enum SemanticKind {
 export default function provideSemanticTokens(
 	document: TextDocument,
 	state: Tailwind,
-	{ colorDecorators }: InitOptions,
+	{ colorDecorators }: ServiceOptions,
 ): lsp.SemanticTokens {
 	const builder = new lsp.SemanticTokensBuilder()
 	const tokens = findAllMatch(document)

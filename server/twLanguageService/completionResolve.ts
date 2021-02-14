@@ -2,7 +2,7 @@ import * as lsp from "vscode-languageserver"
 import type { CSSRuleItem } from "~/tailwind/classnames"
 import { Tailwind } from "~/tailwind"
 import { PatternKind } from "~/common/ast"
-import { InitOptions } from "~/twLanguageService"
+import type { ServiceOptions } from "~/twLanguageService"
 import { getReferenceLinks, getName, getDescription } from "./referenceLink"
 import { IPropertyData } from "vscode-css-languageservice"
 import { getEntryDescription } from "./cssData"
@@ -10,7 +10,7 @@ import { getEntryDescription } from "./cssData"
 export default function completionResolve(
 	item: lsp.CompletionItem,
 	state: Tailwind,
-	options: InitOptions,
+	options: ServiceOptions,
 ): lsp.CompletionItem {
 	item = resolve(item, state, options)
 	if (options.references && typeof item.documentation === "object") {
@@ -24,7 +24,7 @@ export default function completionResolve(
 	return item
 }
 
-function resolve(item: lsp.CompletionItem, state: Tailwind, options: InitOptions): lsp.CompletionItem {
+function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions): lsp.CompletionItem {
 	const { type, variants, kind, entry } = item.data as {
 		type: string
 		variants: string[]

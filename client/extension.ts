@@ -4,6 +4,7 @@ import path from "path"
 
 import colorDecoration from "./colorDecoration"
 import debug from "./debug"
+import { Settings } from "settings"
 
 const CLIENT_ID = "Tailwind Twin IntelliSense"
 
@@ -19,22 +20,11 @@ interface NLSConfig {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG) as NLSConfig
 
-interface InitializationOptions {
+interface InitializationOptions extends Settings {
 	/** uri */
 	workspaceFolder: string
 	/** uri */
 	configs: string[]
-	colorDecorators: boolean
-	references: boolean
-	validate: boolean
-	preferVariantWithParentheses: boolean
-	fallbackDefaultConfig: boolean
-	diagnostics: {
-		conflict: "none" | "loose" | "strict"
-		emptyClass: boolean
-		emptyGroup: boolean
-		emptyCssProperty: boolean
-	}
 }
 
 async function addClient(serverModule: string, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
@@ -50,23 +40,19 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 			options: { execArgv: ["--nolazy", "--inspect=6009"] },
 		},
 	}
-	const initOptions: Partial<InitializationOptions> = {}
+
+	const userSettings = vscode.workspace.getConfiguration("", ws)
+	const initOptions: Partial<InitializationOptions> = userSettings.get("tailwindcss")
+	if (typeof initOptions.colorDecorators !== "boolean") {
+		initOptions.colorDecorators = userSettings.get("editor.colorDecorators")
+	}
+
 	const configs = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 		new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),
 	)
-	initOptions.configs = configs.map(c => c.toString())
 	initOptions.workspaceFolder = ws.uri.toString()
-	const tailwindcss = vscode.workspace.getConfiguration("tailwindcss", ws)
-	initOptions.colorDecorators = tailwindcss.get("colorDecorators")
-	if (typeof initOptions.colorDecorators !== "boolean") {
-		initOptions.colorDecorators = vscode.workspace.getConfiguration("editor", ws).get("colorDecorators")
-	}
-	initOptions.validate = tailwindcss.get("validate")
-	initOptions.references = tailwindcss.get("references")
-	initOptions.preferVariantWithParentheses = tailwindcss.get("preferVariantWithParentheses")
-	initOptions.fallbackDefaultConfig = tailwindcss.get("fallbackDefaultConfig")
-	initOptions.diagnostics = tailwindcss.get("diagnostics")
+	initOptions.configs = configs.map(c => c.toString())
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: DEFAULT_SUPPORT_LANGUAGES.map(language => ({

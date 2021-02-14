@@ -22,11 +22,13 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "sourceMap": true,
+    "rootDir": "..",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "~/*": ["./*"],
+      "settings": ["../settings.ts"]
     }
   },
-  "include": ["**/*.ts", "**/*.json"],
+  "include": ["**/*.ts", "**/*.json", "../settings.ts"],
   "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

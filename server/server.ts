@@ -6,7 +6,7 @@ import { LanguageService } from "./LanguageService"
 import { FileChangeType } from "vscode-languageserver/node"
 import path from "path"
 import { deepStrictEqual } from "assert"
-import { Settings } from "./LanguageService"
+import { Settings } from "settings"
 import { TModule } from "~/common/module"
 
 interface InitializationOptions extends Settings {
@@ -59,7 +59,7 @@ class Server {
 			this.workspaceFolder = workspaceFolder
 			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
 			this.settings = settings
-			progress.begin("Initializing Tailwind CSS features")
+			progress.begin("Initializing Tailwind Twin Intellisence")
 
 			console.log("tailwindcss version:", TModule.require({ moduleId: "tailwindcss/package.json" }).version)
 			console.log("postcss version:", TModule.require({ moduleId: "postcss/package.json" }).version)
@@ -157,27 +157,16 @@ class Server {
 			}
 			this.configs = Array.from(this.services).map(([cfg]) => cfg)
 
-			documents.all().forEach(document => {
-				matchService(document.uri, this.services)?.validate(document)
-			})
+			await Promise.all(
+				documents.all().map(async document => {
+					await matchService(document.uri, this.services)?.validate(document)
+				}),
+			)
 		})
 
 		connection.onDidChangeConfiguration(async params => {
 			console.log(`[setting changes were detected]`)
 			if (this.hasConfigurationCapability) {
-				type Config = {
-					colorDecorators?: boolean
-					references: boolean
-					validate: boolean
-					preferVariantWithParentheses: boolean
-					fallbackDefaultConfig: boolean
-					diagnostics: {
-						conflict: "none" | "loose" | "strict"
-						emptyClass: boolean
-						emptyGroup: boolean
-						emptyCssProperty: boolean
-					}
-				}
 				type EditorConfig = {
 					colorDecorators: boolean
 				}
@@ -185,72 +174,87 @@ class Server {
 					{ section: "tailwindcss" },
 					{ section: "editor" },
 				])
-				const tailwindcss: Config = configs[0]
+				const extSettings: Settings = configs[0]
 				const editor: EditorConfig = configs[1]
 
-				const preferVariantWithParentheses = tailwindcss?.preferVariantWithParentheses || false
-				if (this.settings.preferVariantWithParentheses !== preferVariantWithParentheses) {
-					this.settings.preferVariantWithParentheses = preferVariantWithParentheses
-					for (const document of documents.all()) {
-						const service = matchService(document.uri, this.services)
-						if (service) {
-							service.updateSettings(this.settings)
-						}
-					}
+				let needToUpdate = false
+				let needToReload = false
+				let needToRenderColors = false
+				let needToDiagnostics = false
+
+				if (this.settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
+					this.settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
+					needToUpdate = true
 					console.log(`preferVariantWithParentheses = ${this.settings.preferVariantWithParentheses}`)
 				}
 
-				const references = tailwindcss?.references || false
-				if (this.settings.references !== references) {
-					this.settings.references = references
-					for (const document of documents.all()) {
-						const service = matchService(document.uri, this.services)
-						if (service) {
-							service.updateSettings(this.settings)
-						}
-					}
+				if (this.settings.references !== extSettings.references) {
+					this.settings.references = extSettings.references
+					needToUpdate = true
 					console.log(`references = ${this.settings.references}`)
 				}
 
-				if (this.settings.fallbackDefaultConfig !== tailwindcss.fallbackDefaultConfig) {
-					this.settings.fallbackDefaultConfig = tailwindcss.fallbackDefaultConfig
-					for (const [, service] of this.services) {
-						;(service as TailwindLanguageService).reload(this.settings)
-					}
-				}
-
-				const colorDecorators = tailwindcss?.colorDecorators ?? editor.colorDecorators
+				const colorDecorators = extSettings.colorDecorators ?? editor.colorDecorators
 				if (this.settings.colorDecorators !== colorDecorators) {
 					this.settings.colorDecorators = colorDecorators
+					needToUpdate = true
+					needToRenderColors = true
+					console.log(`codeDecorators = ${this.settings.colorDecorators}`)
+				}
+
+				if (this.settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
+					this.settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
+					needToReload = true
+					console.log(`fallbackDefaultConfig = ${this.settings.fallbackDefaultConfig}`)
+				}
+
+				try {
+					deepStrictEqual(this.settings.diagnostics, extSettings.diagnostics)
+				} catch {
+					this.settings.diagnostics = extSettings.diagnostics
+					needToUpdate = true
+					needToDiagnostics = true
+					console.log(`diagnostics = ${JSON.stringify(this.settings.diagnostics)}`)
+				}
+
+				if (needToReload) {
+					for (const [, service] of this.services) {
+						service.reload(this.settings)
+					}
+				} else if (needToUpdate) {
 					for (const document of documents.all()) {
 						const service = matchService(document.uri, this.services)
 						if (service) {
 							service.updateSettings(this.settings)
-							connection.sendNotification("tailwindcss/documentColors", {
-								colors: await service.provideColor(document),
-								uri: document.uri,
-							})
 						}
 					}
-					console.log(`codeDecorators = ${this.settings.colorDecorators}`)
 				}
 
-				try {
-					deepStrictEqual(this.settings.validate, tailwindcss?.validate)
-					deepStrictEqual(this.settings.diagnostics, tailwindcss?.diagnostics)
-				} catch {
-					this.settings.validate = tailwindcss?.validate
-					this.settings.diagnostics = tailwindcss?.diagnostics
-					documents.all().forEach(async document => {
-						const service = matchService(document.uri, this.services)
-						if (service) {
-							service.updateSettings(this.settings)
-							const diagnostics = await service.validate(document)
-							this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
-						}
-					})
-					console.log(`validate = ${this.settings.validate}`)
-					console.log(`diagnostics = ${JSON.stringify(this.settings.diagnostics)}`)
+				if (needToRenderColors) {
+					await Promise.all(
+						documents.all().map(async document => {
+							const service = matchService(document.uri, this.services)
+							if (service) {
+								connection.sendNotification("tailwindcss/documentColors", {
+									colors: await service.provideColor(document),
+									uri: document.uri,
+								})
+							}
+						}),
+					)
+				}
+
+				if (needToDiagnostics) {
+					await Promise.all(
+						documents.all().map(async document => {
+							const service = matchService(document.uri, this.services)
+							if (service) {
+								service.updateSettings(this.settings)
+								const diagnostics = await service.validate(document)
+								this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
+							}
+						}),
+					)
 				}
 			}
 		})
@@ -334,7 +338,7 @@ class Server {
 			if (!this.hasDiagnosticRelatedInformationCapability) {
 				return
 			}
-			if (!this.settings.validate) {
+			if (!this.settings.diagnostics.enabled) {
 				return
 			}
 			const service = matchService(params.document.uri, this.services)
@@ -347,13 +351,16 @@ class Server {
 		connection.onCompletion((...params) => {
 			return matchService(params[0].textDocument.uri, this.services)?.onCompletion(...params)
 		})
+
 		connection.onCompletionResolve((...params) => {
 			const uri = params[0].data.uri
 			return matchService(uri, this.services)?.onCompletionResolve(...params)
 		})
+
 		connection.onHover((...params) => {
 			return matchService(params[0].textDocument.uri, this.services)?.onHover(...params)
 		})
+
 		connection.onDocumentColor(async params => {
 			if (!this.settings.colorDecorators) {
 				return []
@@ -368,6 +375,7 @@ class Server {
 			}
 			return []
 		})
+
 		connection.onCodeAction(params => {
 			type Data = { text: string; newText: string }
 			const diagnostics = params.context.diagnostics.filter(dia => {
@@ -396,6 +404,7 @@ class Server {
 				}
 			})
 		})
+
 		connection.languages.semanticTokens.onRange(async (...params) => {
 			return await matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
 		})

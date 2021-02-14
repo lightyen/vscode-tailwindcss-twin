@@ -4,12 +4,9 @@ import { TModule } from "~/common/module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
 
-interface InitParams {
+export interface TailwindOptions {
 	workspaceFolder: string
 	configPath: string
-}
-
-interface Settings {
 	fallbackDefaultConfig: boolean
 }
 
@@ -36,11 +33,11 @@ interface TailwindConfigJS {
 }
 
 export class Tailwind {
-	constructor(options: Partial<InitParams & Settings>) {
+	constructor(options: Partial<TailwindOptions>) {
 		this.load(options)
 	}
 
-	private load({ configPath, workspaceFolder, fallbackDefaultConfig = false }: Partial<InitParams & Settings>) {
+	private load({ configPath, workspaceFolder, fallbackDefaultConfig = false }: Partial<TailwindOptions>) {
 		this.configPath = configPath
 		this.workspaceFolder = workspaceFolder
 		configPath = configPath || ""
@@ -79,7 +76,7 @@ export class Tailwind {
 		this.config.important = undefined
 	}
 
-	async reload(params?: Partial<InitParams & Settings>) {
+	async reload(params?: Partial<TailwindOptions>) {
 		const {
 			workspaceFolder = this.workspaceFolder,
 			configPath = this.configPath,

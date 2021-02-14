@@ -4,7 +4,7 @@ import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import produce from "immer"
 import { Tailwind } from "~/tailwind"
-import { InitOptions } from "~/twLanguageService"
+import type { ServiceOptions } from "~/twLanguageService"
 import { canMatch, PatternKind } from "~/common/ast"
 import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
@@ -17,7 +17,7 @@ export default function hover(
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
-	options: InitOptions,
+	options: ServiceOptions,
 ): lsp.Hover {
 	try {
 		const result = canMatch(document, position, true)

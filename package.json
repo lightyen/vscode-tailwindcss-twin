@@ -108,6 +108,7 @@
       "title": "Tailwind Twin IntelliSense",
       "properties": {
         "tailwindcss.colorDecorators": {
+          "description": "Controls whether the extension should render the inline color decorators.",
           "type": [
             "boolean",
             "null"
@@ -115,9 +116,51 @@
           "default": null
         },
         "tailwindcss.references": {
+          "description": "Controls whether the extension should show references when completion/hover.",
           "type": "boolean",
-          "default": true,
-          "description": "Show references when auto-completion/hover."
+          "default": true
+        },
+        "tailwindcss.diagnostics": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "conflict": {
+              "type": "string",
+              "enum": [
+                "none",
+                "loose",
+                "strict"
+              ],
+              "default": "strict",
+              "enumDescriptions": [
+                "Silent when conflict",
+                "Show warning when all css property were conflicted",
+                "Show warning when any css property was conflicted"
+              ]
+            },
+            "emptyClass": {
+              "type": "boolean",
+              "default": true
+            },
+            "emptyGroup": {
+              "type": "boolean",
+              "default": true
+            },
+            "emptyCssProperty": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "default": {
+            "enabled": true,
+            "conflict": "strict",
+            "emptyClass": true,
+            "emptyGroup": true,
+            "emptyCssProperty": true
+          }
         },
         "tailwindcss.preferVariantWithParentheses": {
           "type": "boolean",
@@ -126,36 +169,6 @@
         "tailwindcss.fallbackDefaultConfig": {
           "type": "boolean",
           "default": true
-        },
-        "tailwindcss.validate": {
-          "type": "boolean",
-          "default": true
-        },
-        "tailwindcss.diagnostics.emptyClass": {
-          "type": "boolean",
-          "default": true
-        },
-        "tailwindcss.diagnostics.emptyGroup": {
-          "type": "boolean",
-          "default": true
-        },
-        "tailwindcss.diagnostics.emptyCssProperty": {
-          "type": "boolean",
-          "default": true
-        },
-        "tailwindcss.diagnostics.conflict": {
-          "type": "string",
-          "enum": [
-            "none",
-            "loose",
-            "strict"
-          ],
-          "default": "strict",
-          "enumDescriptions": [
-            "Silent when conflict",
-            "Show warning when all css property were conflicted",
-            "Show warning when one css property was conflicted"
-          ]
         }
       }
     },

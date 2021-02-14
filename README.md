@@ -22,11 +22,13 @@ ONLY for React and `twin.macro`
 {
   "tailwindcss.colorDecorators": null, // inherit from "editor.colorDecorators"
   "tailwindcss.references": true,
-  "tailwindcss.validate": true,
-  "tailwindcss.diagnostics.emptyClass": true,
-  "tailwindcss.diagnostics.emptyGroup": true,
-  "tailwindcss.diagnostics.emptyCssProperty": true,
-  "tailwindcss.diagnostics.conflict": "strict",
+  "tailwindcss.diagnostics": {
+	"enabled": true,
+    "conflict": "strict",
+    "emptyClass": true,
+    "emptyGroup": true,
+    "emptyCssProperty": true
+  },
   "tailwindcss.preferVariantWithParentheses": false,
   "tailwindcss.fallbackDefaultConfig": true
 }

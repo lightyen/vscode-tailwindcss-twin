@@ -2,7 +2,7 @@ import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import type { Tailwind } from "~/tailwind"
 import { findAllMatch, PatternKind } from "~/common/ast"
-import type { InitOptions, Cache } from "."
+import type { ServiceOptions, Cache } from "~/twLanguageService"
 import * as tw from "~/common/twin"
 import toKebab from "~/common/toKebab"
 import findAllElements from "~/common/findAllElements"
@@ -13,7 +13,7 @@ const source = "tailwindcss"
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
 
 // TODO: Enhance performance
-export function validate(document: TextDocument, state: Tailwind, initOptions: InitOptions, cache: Cache) {
+export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
 	const uri = document.uri.toString()
 	const tokens = findAllMatch(document)
@@ -51,13 +51,14 @@ export function validate(document: TextDocument, state: Tailwind, initOptions: I
 					document,
 					offset: start,
 					kind,
-					diagnostics: initOptions.diagnostics,
+					diagnostics: options.diagnostics,
 					state,
 					...cache[uri][value],
 				}),
 			)
 		}
 	}
+
 	return diagnostics
 }
 
@@ -75,7 +76,7 @@ function validateTwin({
 	offset: number
 	kind: PatternKind
 	state: Tailwind
-	diagnostics: InitOptions["diagnostics"]
+	diagnostics: ServiceOptions["diagnostics"]
 } & ReturnType<typeof findAllElements>): Diagnostic[] {
 	const result: Diagnostic[] = []
 
