@@ -12,7 +12,13 @@ export default function completionResolve(
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
+	if (item.kind === lsp.CompletionItemKind.Constant && item.label === "container") {
+		resolveContainer(item, state, options)
+		return item
+	}
+
 	item = resolve(item, state, options)
+
 	if (options.references && typeof item.documentation === "object") {
 		const refs = getReferenceLinks(item.label)
 		if (refs.length == 1) {
@@ -43,20 +49,13 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		return item
 	}
 
-	item.detail = getName(item.label)
+	if (options.references) {
+		item.detail = getName(item.label)
+	}
+
 	if (kind === PatternKind.Twin) {
 		switch (item.label) {
 			case "content":
-				item.documentation = {
-					kind: lsp.MarkupKind.Markdown,
-					value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
-				}
-				return item
-			case "container":
-				item.documentation = {
-					kind: lsp.MarkupKind.Markdown,
-					value: getDescription("container"),
-				}
 				return item
 		}
 	}
@@ -162,5 +161,45 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			].join("\n"),
 		}
 	}
+	return item
+}
+
+function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions) {
+	item.documentation = {
+		kind: lsp.MarkupKind.Markdown,
+		value: "",
+	}
+
+	if (options.references) {
+		item.documentation.value = getDescription("container")
+		const refs = getReferenceLinks(item.label)
+		if (refs.length == 1) {
+			item.documentation.value += "\n" + `[Reference](${refs[0].url})`
+		} else if (refs.length > 0) {
+			item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
+		}
+	}
+
+	const rules = state.classnames.getClassNameRule([], false, "container")
+	const lines = []
+	if (rules instanceof Array) {
+		lines.push("\n```scss")
+		for (const r of rules) {
+			const hasContext = r.__context.length > 0
+			lines.push(hasContext ? `${r.__context.join(" ")} {\n` + "\t.container {" : ".container {")
+			for (const key in r.decls) {
+				for (const value of r.decls[key]) {
+					lines.push(hasContext ? `\t\t${key}: ${value};` : `\t${key}: ${value};`)
+				}
+			}
+			if (hasContext) {
+				lines.push(`\t}`)
+			}
+			lines.push(`}\n`)
+		}
+		lines.push("```\n")
+	}
+	item.documentation.value += lines.join("\n")
+
 	return item
 }

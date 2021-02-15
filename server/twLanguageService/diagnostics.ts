@@ -213,9 +213,13 @@ function validateTwin({
 			for (let i = 0; i < elementList.length; i++) {
 				const item = elementList[i]
 				if (item.kind === tw.TokenKind.Unknown || item.kind === tw.TokenKind.ClassName) {
+					let message = `Invalid token '${item.token.text}'`
+					if (cssDataManager.getProperty(item.token.text)) {
+						message += ", missing square brackets?"
+					}
 					result.push({
 						source,
-						message: `Invalid token '${item.token.text}'`,
+						message,
 						range: {
 							start: document.positionAt(offset + item.token.start),
 							end: document.positionAt(offset + item.token.end),
@@ -376,7 +380,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 						severity: DiagnosticSeverity.Error,
 					})
 				}
-			} else if (cssProperties.some(k => k === text)) {
+			} else if (cssDataManager.getProperty(text)) {
 				result.push({
 					source,
 					message: `Invalid token '${text}', missing square brackets?`,

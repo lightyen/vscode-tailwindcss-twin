@@ -210,12 +210,17 @@ function classesCompletion(
 		classNameItems = Object.entries(state.classnames.getClassNames(userVariants, twin))
 			.filter(classesFilter)
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
+
 		if (twin) {
 			if (userVariants.some(v => v === "before" || v === "after")) {
 				classNameItems.push({
 					label: "content",
 					kind: lsp.CompletionItemKind.Constant,
 					sortText: "~~content",
+					documentation: {
+						kind: lsp.MarkupKind.Markdown,
+						value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
+					},
 					data: { type: "utilities", data: null, variants: userVariants, kind },
 				})
 			}
@@ -432,6 +437,11 @@ function createCompletionItem({
 		data: { type: "utilities", data, variants, kind },
 		kind: lsp.CompletionItemKind.Constant,
 		sortText: (label.slice(0, 1) === "-" ? "~~~" : "~~") + formatLabel(label),
+	}
+
+	if (item.label === "container") {
+		item.detail = "container"
+		return item
 	}
 
 	const info = state.classnames.colors[label]
