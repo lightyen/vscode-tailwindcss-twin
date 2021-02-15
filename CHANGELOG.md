@@ -1,5 +1,18 @@
 # CHANGELOG.md
 
+## 0.6.0
+
+Change user settings json structure.
+
+### Change
+
+refactor user settings type system
+
+### Enhance
+
+enhance diagnostics
+enhance completion/hover
+
 ## 0.5.2
 
 Add settings: `tailwindcss.diagnostics.emptyCssProperty`
