@@ -11,6 +11,9 @@ export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 const selectorProcessor = parser()
 
 const TWIN_CONTAINER: CSSRuleItem = { __source: "utilities", __pseudo: [], __context: [] }
+const TWIN_CONTENT = {
+	content: [{ __source: "utilities", __pseudo: [], __context: [], decls: { content: ['""'] } }],
+}
 
 interface ClassName {
 	scope?: string
@@ -405,9 +408,6 @@ export function parseResults(
 				if (label === "container") {
 					return !this.hasBreakingPoint(variants)
 				}
-				if (label === "content" && variants.some(v => v === "before" || v === "after")) {
-					return true
-				}
 			}
 			if (!(this.getClassNames(variants, twinPattern)?.[label] instanceof Array)) {
 				return false
@@ -438,7 +438,7 @@ export function parseResults(
 				dictionary = this.dictionary
 			}
 			if (twinPattern) {
-				dictionary = { ...dictionary, container: TWIN_CONTAINER }
+				dictionary = { ...dictionary, container: TWIN_CONTAINER, ...TWIN_CONTENT }
 			}
 			return dictionary
 		},
@@ -542,9 +542,6 @@ export function parseResults(
 			const classes = Object.entries(this.getClassNames(variants, twinPattern))
 				.filter(this.getClassNameFilter(variants, twinPattern))
 				.map(([label]) => label)
-			if (twinPattern && variants.some(v => v === "before" || v === "after")) {
-				classes.push("content")
-			}
 			return classes
 		},
 		// fuzzy searching

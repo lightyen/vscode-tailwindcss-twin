@@ -53,13 +53,6 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		item.detail = getName(item.label)
 	}
 
-	if (kind === PatternKind.Twin) {
-		switch (item.label) {
-			case "content":
-				return item
-		}
-	}
-
 	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
 	if (!data) {
 		return item

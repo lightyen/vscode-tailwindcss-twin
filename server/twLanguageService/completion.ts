@@ -224,21 +224,6 @@ function classesCompletion(
 		classNameItems = Object.entries(state.classnames.getClassNames(userVariants, twin))
 			.filter(classesFilter)
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
-
-		if (twin) {
-			if (userVariants.some(v => v === "before" || v === "after")) {
-				classNameItems.push({
-					label: "content",
-					kind: lsp.CompletionItemKind.Constant,
-					sortText: "~~content",
-					documentation: {
-						kind: lsp.MarkupKind.Markdown,
-						value: ["```scss", ".content {", '\tcontent: "";', "}", "```"].join("\n"),
-					},
-					data: { type: "utilities", data: null, variants: userVariants, kind },
-				})
-			}
-		}
 	}
 
 	if (suggestion.token) {

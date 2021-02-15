@@ -147,18 +147,6 @@ function getHoverMarkdown({
 		if (value === "group") {
 			return undefined
 		}
-
-		if (value === "content") {
-			const i = common.findIndex(v => v === "before" || v === "after")
-			if (i !== -1 && kind === PatternKind.Twin) {
-				return {
-					kind: lsp.MarkupKind.Markdown,
-					value: ["```scss", `::${common[i]} {`, '\tcontent: "";', "}", "```"].join("\n"),
-				}
-			}
-
-			return undefined
-		}
 	}
 
 	if (selection.token.kind === tw.TokenKind.Variant && state.classnames.isVariant(value, twin)) {
