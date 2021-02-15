@@ -23,7 +23,7 @@ ONLY for React and `twin.macro`
   "tailwindcss.colorDecorators": null, // inherit from "editor.colorDecorators"
   "tailwindcss.references": true,
   "tailwindcss.diagnostics": {
-	"enabled": true,
+    "enabled": true,
     "conflict": "strict",
     "emptyClass": true,
     "emptyGroup": true,
