@@ -159,6 +159,20 @@ function classesCompletion(
 					)
 				}
 			}
+		} else if (suggestion.token.kind === tw.TokenKind.ClassName) {
+			if (position > a) {
+				// replace variant
+				for (let i = 0; i < variantItems.length; i++) {
+					const item = variantItems[i]
+					item.textEdit = lsp.TextEdit.replace(
+						{
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + b),
+						},
+						item.insertText,
+					)
+				}
+			}
 		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
 			if (position === a) {
 				if (nextCharacter === state.separator) {

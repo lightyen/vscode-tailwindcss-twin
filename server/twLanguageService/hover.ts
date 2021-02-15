@@ -181,6 +181,10 @@ function getHoverMarkdown({
 		return undefined
 	}
 
+	if (selection.token.kind !== tw.TokenKind.ClassName) {
+		return undefined
+	}
+
 	const data = state.classnames.getClassNameRule(inputVariants, twin, value)
 	if (!data) {
 		return undefined
