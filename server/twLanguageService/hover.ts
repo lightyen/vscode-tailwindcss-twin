@@ -71,6 +71,10 @@ export default function hover(
 				if (kind !== PatternKind.Twin) {
 					return undefined
 				}
+				if (!state.classnames.isClassName(selection.variants.texts, true, selection.token.token.text)) {
+					return undefined
+				}
+
 				return resolveContainer({ kind, range, selection, state, options })
 			}
 
@@ -143,6 +147,7 @@ function getHoverMarkdown({
 		if (value === "group") {
 			return undefined
 		}
+
 		if (value === "content") {
 			const i = common.findIndex(v => v === "before" || v === "after")
 			if (i !== -1 && kind === PatternKind.Twin) {
@@ -156,7 +161,7 @@ function getHoverMarkdown({
 		}
 	}
 
-	if (state.classnames.isVariant(value, twin)) {
+	if (selection.token.kind === tw.TokenKind.Variant && state.classnames.isVariant(value, twin)) {
 		const data = state.classnames.getVariants(twin)[value]
 		if (data) {
 			const text: string[] = []

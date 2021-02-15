@@ -8,9 +8,11 @@ import toKebab from "~/common/toKebab"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
 import { cssDataManager } from "./cssData"
+import Fuse from "fuse.js"
 
 const source = "tailwindcss"
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
+const csspropSearcher = new Fuse(cssProperties, { includeScore: true })
 
 // TODO: Enhance performance
 export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
@@ -156,20 +158,6 @@ function validateTwin({
 
 				const data = state.classnames.getClassNameRule(variants, true, item.token.text)
 				if (!(data instanceof Array)) {
-					if (
-						item.token.text !== "container" &&
-						!(item.token.text === "content" && variants.some(v => v === "before" || v === "after"))
-					) {
-						// result.push({
-						// 	source,
-						// 	message: `Invalid token '${item.token.text}'`,
-						// 	range: {
-						// 		start: document.positionAt(offset + item.token.start),
-						// 		end: document.positionAt(offset + item.token.end),
-						// 	},
-						// 	severity: DiagnosticSeverity.Error,
-						// })
-					}
 					continue
 				}
 
@@ -355,43 +343,99 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
 		if (!state.classnames.isClassName(variants, true, text)) {
-			const ret = state.classnames.getSearcher(variants, true, cssProperties).keywords.search(text)
-			const ans = ret?.[0]?.item
-			if (text !== ans) {
-				if (ans) {
-					result.push({
-						source,
-						message: `Can't find '${text}', did you mean '${ans}'?`,
-						range: {
-							start: document.positionAt(offset + start),
-							end: document.positionAt(offset + end),
-						},
-						data: { text, newText: ans },
-						severity: DiagnosticSeverity.Error,
-					})
-				} else {
-					result.push({
-						source,
-						message: `Can't find '${text}'`,
-						range: {
-							start: document.positionAt(offset + start),
-							end: document.positionAt(offset + end),
-						},
-						severity: DiagnosticSeverity.Error,
-					})
+			const ret = guess(state, variants, text)
+			if (ret.score === 0) {
+				switch (ret.kind) {
+					case PredictionKind.CssProperty:
+						result.push({
+							source,
+							message: `Invalid token '${text}', missing square brackets?`,
+							range: {
+								start: document.positionAt(offset + start),
+								end: document.positionAt(offset + end),
+							},
+							severity: DiagnosticSeverity.Error,
+						})
+						break
+					case PredictionKind.Variant:
+						result.push({
+							source,
+							message: `Invalid token '${text}', missing separator?`,
+							range: {
+								start: document.positionAt(offset + start),
+								end: document.positionAt(offset + end),
+							},
+							severity: DiagnosticSeverity.Error,
+						})
+						break
+					default:
+						result.push({
+							source,
+							message: `Can't find '${text}'`,
+							range: {
+								start: document.positionAt(offset + start),
+								end: document.positionAt(offset + end),
+							},
+							severity: DiagnosticSeverity.Error,
+						})
 				}
-			} else if (cssDataManager.getProperty(text)) {
+			} else {
 				result.push({
 					source,
-					message: `Invalid token '${text}', missing square brackets?`,
+					message: `Can't find '${text}', did you mean '${ret.value}'?`,
 					range: {
 						start: document.positionAt(offset + start),
 						end: document.positionAt(offset + end),
 					},
+					data: { text, newText: ret.value },
 					severity: DiagnosticSeverity.Error,
 				})
 			}
 		}
 	}
 	return result
+}
+
+enum PredictionKind {
+	Unknown,
+	Classname,
+	CssProperty,
+	Variant,
+}
+
+function guess(
+	state: Tailwind,
+	variants: string[],
+	text: string,
+): { kind: PredictionKind; value: string; score: number } {
+	const a = state.classnames.getSearcher(variants, true).classnames.search(text)
+	const b = state.classnames.getSearcher(variants, true).variants.search(text)
+	const c = csspropSearcher.search(text)
+	let kind = PredictionKind.Unknown
+	let value = ""
+	let score = +Infinity
+
+	if (a?.[0]?.score < score) {
+		kind = PredictionKind.Classname
+		value = a[0].item
+		score = a[0].score
+	}
+
+	if (b?.[0]?.score < score) {
+		kind = PredictionKind.Variant
+		value = b[0].item
+		score = b[0].score
+	}
+
+	if (c?.[0]?.score < score) {
+		kind = PredictionKind.CssProperty
+		value = c[0].item
+		score = c[0].score
+	}
+
+	return {
+		kind,
+		value,
+		score,
+	}
 }

@@ -402,17 +402,14 @@ export function parseResults(
 				if (label === "group") {
 					return false
 				}
-				if (variants.length > 0 && label === "container") {
-					return false
+				if (label === "container") {
+					return !this.hasBreakingPoint(variants)
 				}
 				if (label === "content" && variants.some(v => v === "before" || v === "after")) {
 					return true
 				}
 			}
-			if (!this.getClassNames(variants, twinPattern)?.[label]) {
-				return false
-			}
-			if (this.isDarkLightMode(twinPattern, label)) {
+			if (!(this.getClassNames(variants, twinPattern)?.[label] instanceof Array)) {
 				return false
 			}
 			return true
@@ -558,19 +555,15 @@ export function parseResults(
 		/**
 		 * get approximate string matching searcher
 		 */
-		getSearcher(
-			variants: string[],
-			twinPattern: boolean,
-			others: string[] = [],
-		): { variants: Fuse<string>; keywords: Fuse<string> } {
+		getSearcher(variants: string[], twinPattern: boolean): { variants: Fuse<string>; classnames: Fuse<string> } {
 			const target = dlv(this.searchers, [...variants, twinPattern.toString()])
 			if (target) {
-				return target as { variants: Fuse<string>; keywords: Fuse<string> }
+				return target as { variants: Fuse<string>; classnames: Fuse<string> }
 			}
 			const vs = this.getVariantList(variants, twinPattern)
 			return {
-				variants: new Fuse(vs),
-				keywords: new Fuse([...vs, ...this.getClassNameList(variants, twinPattern), ...others]),
+				variants: new Fuse(vs, { includeScore: true }),
+				classnames: new Fuse(this.getClassNameList(variants, twinPattern), { includeScore: true }),
 			}
 		},
 		getColorInfo(label: string) {
