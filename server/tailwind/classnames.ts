@@ -10,7 +10,6 @@ export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
 const selectorProcessor = parser()
 
-const TWIN_CONTAINER: CSSRuleItem = { __source: "utilities", __pseudo: [], __context: [] }
 const TWIN_CONTENT = {
 	content: [{ __source: "utilities", __pseudo: [], __context: [], decls: { content: ['""'] } }],
 }
@@ -438,7 +437,7 @@ export function parseResults(
 				dictionary = this.dictionary
 			}
 			if (twinPattern) {
-				dictionary = { ...dictionary, container: TWIN_CONTAINER, ...TWIN_CONTENT }
+				dictionary = { ...dictionary, ...TWIN_CONTENT }
 			}
 			return dictionary
 		},

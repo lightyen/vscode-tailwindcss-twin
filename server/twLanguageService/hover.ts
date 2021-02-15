@@ -71,7 +71,7 @@ export default function hover(
 				if (kind !== PatternKind.Twin) {
 					return undefined
 				}
-				if (!state.classnames.isClassName(selection.variants.texts, true, selection.token.token.text)) {
+				if (!state.classnames.isClassName(selection.variants.texts, true, "container")) {
 					return undefined
 				}
 
@@ -339,7 +339,7 @@ function resolveContainer({
 		contents.value += "\n\n---\n\n"
 	}
 
-	const rules = state.classnames.getClassNameRule([], false, "container")
+	const rules = state.classnames.getClassNameRule([], kind === PatternKind.Twin, "container")
 	const lines = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
