@@ -18,12 +18,7 @@ const Button = styled.button(({ isPrimary, isSecondary, isSmall }: Props) => [
 	isPrimary && tw`bg-black text-white border-black`,
 
 	// Combine regular css with tailwind classes within backticks
-	isSecondary && [
-		css`
-			box-shadow: 0 0.1em 0 0 rgba(0, 0, 0, 0.25);
-		`,
-		tw`border-2 border-yellow-600`,
-	],
+	isSecondary && tw`border-2 border-yellow-600 box-shadow[0 0.1em 0 0 rgba(0, 0, 0, 0.25)]`,
 
 	// Conditional props can be added
 	isSmall ? tw`text-sm` : tw`text-lg`,
