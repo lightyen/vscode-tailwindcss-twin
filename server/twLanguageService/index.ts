@@ -61,7 +61,7 @@ export class TailwindLanguageService implements LanguageService {
 		if (!this.isReady()) return []
 		return await idebounce("validate" + document.uri, validate, document, this.state, this.options, this.cache)
 	}
-	async provideColor(document: TextDocument) {
+	async provideColor(document: TextDocument, colors: lsp.ColorInformation[]) {
 		if (!this.options.colorDecorators) return []
 		if (!this.isReady()) return []
 		return await idebounce(
@@ -71,6 +71,7 @@ export class TailwindLanguageService implements LanguageService {
 			this.state,
 			this.options,
 			this.cache,
+			colors,
 		)
 	}
 	async provideSemanticTokens(params: lsp.SemanticTokensParams) {

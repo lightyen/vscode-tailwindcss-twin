@@ -1,3 +1,4 @@
+import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { ColorInformation } from "~/LanguageService"
@@ -8,7 +9,13 @@ import * as tw from "~/common/twin"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
 
-export default function provideColor(document: TextDocument, state: Tailwind, _: ServiceOptions, cache: Cache) {
+export default function provideColor(
+	document: TextDocument,
+	state: Tailwind,
+	_: ServiceOptions,
+	cache: Cache,
+	result: lsp.ColorInformation[],
+) {
 	const colors: ColorInformation[] = []
 	const cachedResult = cache[document.uri.toString()]
 	const tokens = findAllMatch(document)
@@ -32,9 +39,11 @@ export default function provideColor(document: TextDocument, state: Tailwind, _:
 			continue
 		}
 
-		if (kind === PatternKind.TwinCssProperty) {
-			continue
-		}
+		// if (kind === PatternKind.TwinCssProperty) {
+
+		// 	getColor()
+		// 	continue
+		// }
 
 		const c = cachedResult[value]
 		if (!c) {
@@ -48,21 +57,61 @@ export default function provideColor(document: TextDocument, state: Tailwind, _:
 		const { elementList } = cachedResult[value]
 
 		for (const c of elementList) {
-			if (c.kind !== tw.TokenKind.ClassName) {
-				continue
-			}
-			if (!state.classnames.isClassName(c.variants.texts, twin, c.token.text)) {
-				continue
-			}
-			const color = state.classnames.getColorInfo(c.token.text)
-			if (color) {
-				colors.push({
-					range: {
-						start: document.positionAt(start + c.token.start),
-						end: document.positionAt(start + c.token.end),
-					},
-					...color,
-				})
+			switch (c.kind) {
+				case tw.TokenKind.CssProperty:
+					{
+						// XXX: Experimental
+						// function getColor(value: string): string | undefined {
+						// 	if (value === "transparent") {
+						// 		return value
+						// 	}
+						// 	try {
+						// 		const c = chroma(value)
+						// 		return c.css()
+						// 	} catch {
+						// 		return undefined
+						// 	}
+						// }
+						// const color = getColor(c.value.trim().text)
+						// if (color) {
+						// 	if (color === "transparent") {
+						// 		result.push({
+						// 			range: {
+						// 				start: document.positionAt(start + c.value.start),
+						// 				end: document.positionAt(start + c.value.end),
+						// 			},
+						// 			color: lsp.Color.create(0, 0, 0, 0),
+						// 		})
+						// 	} else {
+						// 		const [red, green, blue, alpha] = chroma(color).rgba()
+						// 		result.push({
+						// 			range: {
+						// 				start: document.positionAt(start + c.value.start),
+						// 				end: document.positionAt(start + c.value.end),
+						// 			},
+						// 			color: lsp.Color.create(red / 255, green / 255, blue / 255, alpha),
+						// 		})
+						// 	}
+						// }
+					}
+					break
+				case tw.TokenKind.ClassName:
+					{
+						if (!state.classnames.isClassName(c.variants.texts, twin, c.token.text)) {
+							continue
+						}
+						const color = state.classnames.getColorInfo(c.token.text)
+						if (color) {
+							colors.push({
+								range: {
+									start: document.positionAt(start + c.token.start),
+									end: document.positionAt(start + c.token.end),
+								},
+								...color,
+							})
+						}
+					}
+					break
 			}
 		}
 	}

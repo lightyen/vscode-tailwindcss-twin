@@ -8,6 +8,7 @@ import path from "path"
 import { deepStrictEqual } from "assert"
 import { Settings } from "settings"
 import { TModule } from "~/common/module"
+import chroma from "chroma-js"
 
 interface InitializationOptions extends Settings {
 	/** uri */
@@ -236,7 +237,7 @@ class Server {
 							const service = matchService(document.uri, this.services)
 							if (service) {
 								connection.sendNotification("tailwindcss/documentColors", {
-									colors: await service.provideColor(document),
+									colors: await service.provideColor(document, []),
 									uri: document.uri,
 								})
 							}
@@ -362,18 +363,28 @@ class Server {
 		})
 
 		connection.onDocumentColor(async params => {
+			const result: lsp.ColorInformation[] = []
 			if (!this.settings.colorDecorators) {
-				return []
+				return result
 			}
 			const document = documents.get(params.textDocument.uri)
 			const service = matchService(params.textDocument.uri, this.services)
 			if (service) {
 				connection.sendNotification("tailwindcss/documentColors", {
-					colors: await service.provideColor(document),
+					colors: await service.provideColor(document, result),
 					uri: document.uri,
 				})
 			}
-			return []
+			return result
+		})
+
+		connection.onColorPresentation(({ range, color }) => {
+			const c = chroma(color.red * 255, color.green * 255, color.blue * 255, color.alpha)
+			return [
+				lsp.ColorPresentation.create(c.css(), lsp.TextEdit.replace(range, c.css())),
+				lsp.ColorPresentation.create(c.hex(), lsp.TextEdit.replace(range, c.hex())),
+				lsp.ColorPresentation.create(c.css("hsl"), lsp.TextEdit.replace(range, c.css("hsl"))),
+			]
 		})
 
 		connection.onCodeAction(params => {

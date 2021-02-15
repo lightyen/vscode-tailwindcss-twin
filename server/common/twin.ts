@@ -4,6 +4,7 @@ export interface Token extends _Token {
 	start: number
 	end: number
 	text: string
+	trim(): Token
 }
 
 export interface TokenList extends Array<Token> {
@@ -95,6 +96,23 @@ export function createToken(start: number, end: number, value: string) {
 					return target[1]
 				case "text":
 					return target[2]
+				case "trim":
+					return function () {
+						const [a, b, text] = target
+						const len = text.length
+						let i: number, j: number
+						for (i = 0; i < len; i++) {
+							if (!/\s/.test(text[i])) {
+								break
+							}
+						}
+						for (j = 0; j < len; j++) {
+							if (!/\s/.test(text[len - j - 1])) {
+								break
+							}
+						}
+						return createToken(a + i, b - j, text.slice(i, len - j))
+					}
 				default:
 					return target[prop]
 			}
