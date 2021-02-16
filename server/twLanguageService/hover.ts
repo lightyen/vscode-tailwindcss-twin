@@ -67,14 +67,17 @@ export default function hover(
 				}
 			}
 
-			if (selection.token.token.text === "container") {
-				if (kind !== PatternKind.Twin) {
-					return undefined
-				}
-				if (!state.classnames.isClassName(selection.variants.texts, true, "container")) {
-					return undefined
-				}
+			if (
+				!state.classnames.isClassName(
+					selection.variants.texts,
+					kind === PatternKind.Twin,
+					selection.token.token.text,
+				)
+			) {
+				return undefined
+			}
 
+			if (selection.token.token.text === "container") {
 				return resolveContainer({ kind, range, selection, state, options })
 			}
 

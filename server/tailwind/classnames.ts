@@ -400,15 +400,11 @@ export function parseResults(
 		 * @param twinPattern is current pattern twin?
 		 */
 		isClassName(variants: string[], twinPattern: boolean, label: string) {
-			if (twinPattern) {
-				if (label === "group") {
-					return false
-				}
-				if (label === "container") {
-					return !this.hasBreakingPoint(variants)
-				}
+			const obj = this.getClassNames(variants, twinPattern)
+			if (!(obj?.[label] instanceof Array)) {
+				return false
 			}
-			if (!(this.getClassNames(variants, twinPattern)?.[label] instanceof Array)) {
+			if (!this.getClassNameFilter(variants, twinPattern)([label, obj[label]])) {
 				return false
 			}
 			return true
@@ -513,23 +509,14 @@ export function parseResults(
 			variants: string[],
 			twinPattern: boolean,
 		): (v: [string, CSSRuleItem | CSSRuleItem[]]) => boolean {
-			const flags: Flag =
-				(this.hasBreakingPoint(variants) && Flag.Responsive) |
-				(this.hasDarkLightMode(variants, twinPattern) && Flag.DarkLightMode) |
-				(this.hasMotionControl(variants) && Flag.MotionControl) |
-				(variants.some(v => this.isCommonVariant(twinPattern, v)) && Flag.CommonVariant)
 			return ([label, info]) => {
-				if (label === "group") {
-					if (twinPattern) {
-						return false
+				if (twinPattern) {
+					switch (label) {
+						case "group":
+							return false
+						case "container":
+							return variants?.length === 0
 					}
-					return true
-				}
-				if (label === "container") {
-					if (twinPattern && flags & Flag.Responsive) {
-						return false
-					}
-					return true
 				}
 				if (!(info instanceof Array)) {
 					return false
