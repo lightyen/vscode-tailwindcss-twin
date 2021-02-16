@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.6.1
+
+### Fixes
+
+- color decoration
+- hover 'container' when trailing with '!'
+
+### Changes
+
+- change semantic tokens kind
+
 ## 0.6.0
 
 Change user settings json structure.

@@ -68,7 +68,7 @@ Support ONLY react and `twin.macro` now.
 #### Mapping Table (Experimental)
 
 | Type        | target     |
-| :---------- | :--------- |
+| ----------- | ---------- |
 | Variant     | interface  |
 | Classname   | enumMember |
 | CssProperty | function   |
