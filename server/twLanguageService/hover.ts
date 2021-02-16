@@ -68,6 +68,7 @@ export default function hover(
 			}
 
 			if (
+				selection.token.kind === tw.TokenKind.ClassName &&
 				!state.classnames.isClassName(
 					selection.variants.texts,
 					kind === PatternKind.Twin,
