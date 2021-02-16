@@ -1,12 +1,20 @@
 # Tailwind Twin IntelliSense
 
-This is a custom Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro) features.
+This is a Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro) features.
+
+## Features
+
+- auto completion
+- hover
+- color decoration
+- document references
+- diagnostics
 
 ## Supported
 
-ONLY for React and `twin.macro`
+Support ONLY react and `twin.macro` now.
 
-## VS Code Settings
+## VSCode Settings
 
 ### Recommended
 
@@ -37,22 +45,40 @@ ONLY for React and `twin.macro`
 ### Semantic Highlight (Experimental)
 
 ```json5
+// example
 {
-  "editor.semanticHighlighting.enabled": "configuredByTheme",
   "editor.semanticTokenColorCustomizations": {
-    "enabled": true,
     "[Atom One Dark]": {
+      "enabled": true,
       "rules": {
-        "operator": "#5177f5"
+        "operator": "#6e90ff"
+      }
+    },
+    "[Dracula]": {
+      "enabled": true,
+      "rules": {
+        "interface": "#77f13e"
       }
     }
-  },
+  }
 }
+
 ```
+
+#### Mapping Table (Experimental)
+
+| Type        | target     |
+| :---------- | :--------- |
+| Variant     | interface  |
+| Classname   | enumMember |
+| CssProperty | function   |
+| Brackets    | variable   |
+| Important   | operator   |
 
 ### Custom CompletionList Panel
 
 ```json5
+// example
 {
   "workbench.colorCustomizations": {
     "[Atom One Dark]": {
