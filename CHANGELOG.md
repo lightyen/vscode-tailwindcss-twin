@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.6.2
+
+### Fixes
+
+- bug: hover on variants
+
 ## 0.6.1
 
 ### Fixes
