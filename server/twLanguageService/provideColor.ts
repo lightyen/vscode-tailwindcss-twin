@@ -12,9 +12,9 @@ import parseThemeValue from "~/common/parseThemeValue"
 export default function provideColor(
 	document: TextDocument,
 	state: Tailwind,
-	_: ServiceOptions,
+	_options: ServiceOptions,
 	cache: Cache,
-	result: lsp.ColorInformation[],
+	_result: lsp.ColorInformation[],
 ) {
 	const colors: ColorInformation[] = []
 	const cachedResult = cache[document.uri.toString()]
@@ -39,11 +39,9 @@ export default function provideColor(
 			continue
 		}
 
-		// if (kind === PatternKind.TwinCssProperty) {
-
-		// 	getColor()
-		// 	continue
-		// }
+		if (kind === PatternKind.TwinCssProperty) {
+			continue
+		}
 
 		const c = cachedResult[value]
 		if (!c) {
