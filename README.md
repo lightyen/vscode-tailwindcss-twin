@@ -38,11 +38,15 @@ ONLY for React and `twin.macro`
 
 ```json5
 {
+  "editor.semanticHighlighting.enabled": "configuredByTheme",
   "editor.semanticTokenColorCustomizations": {
+    "enabled": true,
     "[Atom One Dark]": {
-      "enabled": true
+      "rules": {
+        "operator": "#5177f5"
+      }
     }
-  }
+  },
 }
 ```
 

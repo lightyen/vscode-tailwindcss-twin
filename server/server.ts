@@ -126,9 +126,18 @@ class Server {
 						],
 						legend: {
 							tokenModifiers: ["documentation"],
-							tokenTypes: ["keyword", "number", "interface", "variable", "function", "enumMember"],
+							tokenTypes: [
+								"keyword",
+								"number",
+								"interface",
+								"variable",
+								"function",
+								"enumMember",
+								"operator",
+							],
 						},
 						range: true,
+						full: false,
 					},
 				},
 			}
