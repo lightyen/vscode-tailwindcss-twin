@@ -348,7 +348,11 @@ function resolveContainer({
 			lines.push(hasContext ? `${r.__context.join(" ")} {\n` + "\t.container {" : ".container {")
 			for (const key in r.decls) {
 				for (const value of r.decls[key]) {
-					lines.push(hasContext ? `\t\t${key}: ${value};` : `\t${key}: ${value};`)
+					lines.push(
+						hasContext
+							? `\t\t${key}: ${value}${selection.important ? " !important" : ""};`
+							: `\t${key}: ${value}${selection.important ? " !important" : ""};`,
+					)
 				}
 			}
 			if (hasContext) {
