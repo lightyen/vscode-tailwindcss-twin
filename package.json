@@ -39,7 +39,7 @@
   },
   "icon": "media/icon.png",
   "activationEvents": [
-    "*"
+    "workspaceContains:**/{*.js,*.jsx,*.ts,*.tsx}"
   ],
   "main": "./dist/extension",
   "scripts": {
