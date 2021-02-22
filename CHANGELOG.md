@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.6.4
+
+### Fixes
+
+- bug: completion item content with 'transparent'
+
 ## 0.6.3
 
 Change requirement of vscode to lower
