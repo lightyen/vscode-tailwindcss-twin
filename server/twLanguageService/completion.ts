@@ -466,7 +466,7 @@ function createCompletionItem({
 	}
 
 	if (label.includes("transparent")) {
-		item.documentation = { kind: lsp.MarkupKind.PlainText, value: "rgba(0, 0, 0, 0.0)" }
+		item.documentation = "rgba(0, 0, 0, 0.0)"
 		item.data.type = "color"
 		item.data.data = "transparent"
 		return item
