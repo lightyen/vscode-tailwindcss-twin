@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind Twin IntelliSense",
   "description": "Tailwind VSCode Extension for twin.macro",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
@@ -35,7 +35,8 @@
     "vscode": "^1.52.1"
   },
   "galleryBanner": {
-    "color": "#ebeff5"
+    "color": "#ebeff5",
+    "theme": "light"
   },
   "icon": "media/icon.png",
   "activationEvents": [
