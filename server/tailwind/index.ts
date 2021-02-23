@@ -1,6 +1,6 @@
 import type { Postcss, Plugin } from "postcss"
 import path from "path"
-import { TModule } from "~/common/module"
+import { requireModule, resolveModule } from "~/common/module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
 
@@ -44,7 +44,7 @@ export class Tailwind {
 		const isAbs = configPath && path.isAbsolute(configPath)
 		configPath = isAbs ? configPath : path.resolve(workspaceFolder, configPath)
 
-		this.lookup(path.dirname(configPath))
+		this.prepare()
 
 		this.fallbackDefaultConfig = fallbackDefaultConfig
 		this.hasConfig = false
@@ -94,7 +94,6 @@ export class Tailwind {
 
 	// tailwindcss
 	tailwindcss: (config: string | TailwindConfigJS) => Plugin
-	tailwindcssPath: string
 	tailwindcssVersion: string
 	resolveConfig: (config: TailwindConfigJS) => TailwindConfigJS
 	defaultConfig: TailwindConfigJS
@@ -103,19 +102,16 @@ export class Tailwind {
 
 	// postcss
 	postcss: Postcss
-	postcssPath: string
 	postcssVersion: string
 
-	private lookup(base: string) {
-		this.tailwindcssPath = TModule.resolve({ moduleId: "tailwindcss/package.json" })
-		this.tailwindcss = TModule.require({ moduleId: "tailwindcss", removeCache: false })
-		this.resolveConfig = TModule.require({ moduleId: "tailwindcss/resolveConfig", removeCache: false })
-		this.tailwindcssVersion = TModule.require({ moduleId: "tailwindcss/package.json", removeCache: false }).version
-		this.defaultConfigPath = TModule.resolve({ moduleId: "tailwindcss/defaultConfig" })
-		this.defaultConfig = TModule.require({ moduleId: "tailwindcss/defaultConfig", removeCache: false })
-		this.postcssPath = TModule.resolve({ moduleId: "postcss/package.json" })
-		this.postcss = TModule.require({ moduleId: "postcss", removeCache: false })
-		this.postcssVersion = TModule.require({ moduleId: "postcss/package.json", removeCache: false }).version
+	private prepare() {
+		this.tailwindcss = requireModule("tailwindcss", false)
+		this.resolveConfig = requireModule("tailwindcss/resolveConfig", false)
+		this.tailwindcssVersion = requireModule("tailwindcss/package.json", false).version
+		this.defaultConfigPath = resolveModule("tailwindcss/defaultConfig")
+		this.defaultConfig = requireModule("tailwindcss/defaultConfig", false)
+		this.postcss = requireModule("postcss", false)
+		this.postcssVersion = requireModule("postcss/package.json", false).version
 	}
 
 	// user config
@@ -128,16 +124,12 @@ export class Tailwind {
 
 	private findConfig(configPath: string) {
 		const result: { configPath?: string; config?: TailwindConfigJS } = {}
-		let err: Error
 		try {
-			// FIXME: clear cache failed at their deps, need to reload
-			delete __non_webpack_require__.cache[__non_webpack_require__.resolve(configPath)]
-			result.config = __non_webpack_require__(configPath)
+			result.config = requireModule(configPath)
 			result.configPath = configPath
-		} catch (error) {
-			err = error
+		} catch (err) {
+			console.log(err)
 		}
-		if (err instanceof Error) console.log(err)
 		return result
 	}
 
