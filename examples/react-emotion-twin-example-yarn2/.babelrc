@@ -1,0 +1,15 @@
+{
+  "presets": [
+    ["@babel/preset-env"],
+    [
+      "@babel/preset-react",
+      { "runtime": "automatic", "importSource": "@emotion/react" }
+    ]
+  ],
+  "plugins": ["@babel/plugin-transform-runtime", "@emotion", "macros"],
+  "env": {
+    "development": {
+      "plugins": ["react-refresh/babel"]
+    }
+  }
+}

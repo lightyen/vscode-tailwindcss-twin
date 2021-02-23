@@ -12,7 +12,7 @@
   ],
   "license": "UNLICENSED",
   "scripts": {
-    "doit": "yarn upgrade-interactive --latest",
+    "doit": "yarn upgrade-interactive",
     "start": "cross-env TS_NODE_PROJECT=\"tsconfig.json\" NODE_ENV=\"development\" webpack serve --config .webpack/webpack.dev.ts",
     "build": "cross-env TS_NODE_PROJECT=\"tsconfig.json\" NODE_ENV=\"production\" webpack --config .webpack/webpack.prod.ts"
   },
