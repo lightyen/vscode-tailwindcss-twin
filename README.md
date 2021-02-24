@@ -12,7 +12,7 @@ This is a Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro]
 
 ## Supported
 
-Support ONLY react and `twin.macro` now.
+Support ONLY `react` and `twin.macro`
 
 ## VSCode Settings
 
@@ -67,13 +67,13 @@ Support ONLY react and `twin.macro` now.
 
 #### Mapping Table (Experimental)
 
-| Type        | target     |
+| type        | target     |
 | ----------- | ---------- |
-| Variant     | interface  |
-| Classname   | enumMember |
-| CssProperty | function   |
-| Brackets    | variable   |
-| Important   | operator   |
+| variant     | interface  |
+| classname   | enumMember |
+| cssProperty | function   |
+| brackets    | variable   |
+| important   | operator   |
 
 ### Custom CompletionList Panel
 

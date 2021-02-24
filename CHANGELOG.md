@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.6.5
+
+Change gallery banner color
+
+### Fixes
+
+- fix resolving config at project which using yarn2
+
 ## 0.6.4
 
 ### Fixes

@@ -1,7 +1,7 @@
 {
   "name": "client",
-  "description": "Tailwind CSS Extension",
-  "version": "0.6.4",
+  "description": "Tailwind Twin Extension",
+  "version": "0.6.5",
   "author": "lightyen",
   "license": "MIT",
   "engines": {
