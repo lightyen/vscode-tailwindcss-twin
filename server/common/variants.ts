@@ -27,11 +27,12 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	const results: string[] = []
 	classes = classes.slice(start, end).trim()
 
-	const reg = /([\w-]+:)|(\w+)\[|([\w-./]+!?)|\(|(\S+)/g
+	const reg = /(\/\/.*?\n)|(\/\*.*?\*\/)|([\w-]+:)|(\w+)\[|([\w-./]+!?)|\(|(\S+)/gs
 	let match: RegExpExecArray
 	const baseContext = context
 	while ((match = reg.exec(classes))) {
-		const [, variant, cssProperty, className, weird] = match
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const [, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			context += variant
 
@@ -73,8 +74,12 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 			const tail = !className.endsWith("!") && importantContext ? "!" : ""
 			results.push(context + className + tail)
 			context = baseContext
-		} else if (weird) {
-			throw `${weird} unexpected token`
+		} else if (notHandled) {
+			throw `${notHandled} unexpected token`
+		} else if (lineComment) {
+			//
+		} else if (blockComment) {
+			//
 		} else {
 			const closeBracket = findRightBracket(classes, match.index)
 			if (typeof closeBracket !== "number") {
