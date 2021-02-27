@@ -203,7 +203,16 @@ export function completeElement({
 				}
 			}
 		} else if (lineComment) {
-			//
+			if (position > match.index && position < reg.lastIndex) {
+				return {
+					token: {
+						kind: tw.TokenKind.Comment,
+						token: tw.createToken(match.index, reg.lastIndex, value),
+					},
+					variants: context,
+					important: importantContext,
+				}
+			}
 		} else if (blockComment) {
 			const closeComment = findRightBlockComment(input, match.index)
 			if (typeof closeComment !== "number") {
