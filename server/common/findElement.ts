@@ -51,7 +51,7 @@ export function completeElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?):|([\w-.]+(?:\/\d+)?)\[|([\w-.]+(?:\/\d+)?!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-]+(?!\/\/|\/\*)(?:[./])?[\w-]*!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -216,6 +216,16 @@ export function completeElement({
 		} else if (blockComment) {
 			const closeComment = findRightBlockComment(input, match.index)
 			if (typeof closeComment !== "number") {
+				if (position > match.index) {
+					return {
+						token: {
+							kind: tw.TokenKind.Comment,
+							token: tw.createToken(match.index, end, value),
+						},
+						variants: context,
+						important: importantContext,
+					}
+				}
 				break
 			}
 			if (position > match.index && position < closeComment) {
@@ -311,7 +321,7 @@ export function hoverElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?):|([\w-.]+(?:\/\d+)?)\[|([\w-.]+(?:\/\d+)?!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-]+(?!\/\/|\/\*)(?:[./])?[\w-]*!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -456,13 +466,17 @@ export function hoverElement({
 				}
 			}
 		} else if (lineComment) {
-			//
+			if (position > match.index && position < reg.lastIndex) {
+				break
+			}
 		} else if (blockComment) {
 			const closeComment = findRightBlockComment(input, match.index)
 			if (typeof closeComment !== "number") {
 				break
 			}
-
+			if (position > match.index && position < reg.lastIndex) {
+				break
+			}
 			const tokenEnd = closeComment + 1
 			reg.lastIndex = tokenEnd
 		} else {

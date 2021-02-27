@@ -31,12 +31,12 @@ test("spreadVariantGroups 2", async () => {
 	flex
 	md:( text-xl /* border-yellow-500 */ )
 	lg:(
-		// test
-		w-1/5
+		w-1/5// test
+		text-3xl/*comm*/
 	)
 	justify-center
 	`
-	expect(spreadVariantGroups(input)).toEqual(["flex", "md:text-xl", "lg:w-1/5", "justify-center"])
+	expect(spreadVariantGroups(input)).toEqual(["flex", "md:text-xl", "lg:w-1/5", "lg:text-3xl", "justify-center"])
 })
 
 test("spreadVariantGroups 3", async () => {
@@ -46,6 +46,25 @@ test("spreadVariantGroups 3", async () => {
 	md:( text-xl /* border-yellow-500 */ )
 	2xl:( // #$%@#$ )
 	color[/**/red/*dsd*/] )
-	justify-center`
-	expect(spreadVariantGroups(input)).toEqual(["flex", "md:text-xl", "2xl:color[red]", "justify-center"])
+	// comment
+	flex
+	md:( text-xl)
+	lg:(
+			flex
+		text-5xl
+			border-yellow-500
+	)text-2xl/*sdf
+	justify-center*/clear-left`
+	expect(spreadVariantGroups(input)).toEqual([
+		"flex",
+		"md:text-xl",
+		"2xl:color[red]",
+		"flex",
+		"md:text-xl",
+		"lg:flex",
+		"lg:text-5xl",
+		"lg:border-yellow-500",
+		"text-2xl",
+		"clear-left",
+	])
 })

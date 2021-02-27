@@ -68,7 +68,6 @@ function classesCompletion(
 	const suggestion = completeElement({ input, position, separator: state.separator })
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const preferVariantWithParentheses = options.preferVariantWithParentheses
-	const inputCharacter = input.slice(position - 1, position)
 	const nextCharacter = input.slice(position, position + 1)
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const isIncomplete = false
@@ -77,10 +76,6 @@ function classesCompletion(
 	const userVariants = suggestion.variants.texts
 	let variantItems: lsp.CompletionItem[] = []
 	let variantEnabled = true
-
-	if (inputCharacter === "." || inputCharacter === "/") {
-		variantEnabled = false
-	}
 
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
@@ -217,7 +212,7 @@ function classesCompletion(
 				if (position > a && position < b) classNameEnabled = false
 				break
 			case tw.TokenKind.Unknown:
-				if (position > a) classNameEnabled = false
+				// if (position > a) classNameEnabled = false
 				break
 			case tw.TokenKind.Comment:
 				classNameEnabled = false
@@ -238,7 +233,7 @@ function classesCompletion(
 				const item = classNameItems[i]
 				item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + " ")
 			}
-		} else if (suggestion.token.kind === tw.TokenKind.ClassName) {
+		} else if (suggestion.token.kind === tw.TokenKind.ClassName || suggestion.token.kind === tw.TokenKind.Unknown) {
 			if (position <= b) {
 				for (let i = 0; i < classNameItems.length; i++) {
 					const item = classNameItems[i]
