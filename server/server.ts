@@ -134,6 +134,7 @@ class Server {
 								"function",
 								"enumMember",
 								"operator",
+								"comment",
 							],
 						},
 						range: true,

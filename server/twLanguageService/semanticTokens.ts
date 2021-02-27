@@ -5,7 +5,7 @@ import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 import * as tw from "~/common/twin"
 import { findAllMatch, PatternKind } from "~/common/ast"
-import parseSemanticTokens, { NodeType, Node } from "~/common/parseSemanticTokens"
+import { NodeKind, Semantic, Node } from "~/common/parseSemanticTokens"
 import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
@@ -18,6 +18,7 @@ enum SemanticKind {
 	function,
 	enumMember,
 	operator,
+	comment,
 }
 
 enum BlockKind {
@@ -26,6 +27,7 @@ enum BlockKind {
 	CssProperty = SemanticKind.function,
 	Brackets = SemanticKind.variable,
 	Important = SemanticKind.operator,
+	Comment = SemanticKind.comment,
 }
 
 export default function provideSemanticTokens(
@@ -57,8 +59,8 @@ export default function provideSemanticTokens(
 				return true
 			}
 			if (!colorDecorators) return true
-			if (node.kind === NodeType.Class) {
-				const color = state.classnames.getColorInfo(node.value.text)
+			if (node.kind === NodeKind.ClassName) {
+				const color = state.classnames.getColorInfo(node.token.text)
 				if (!color || Object.keys(color).length === 0) {
 					return true
 				}
@@ -72,74 +74,55 @@ export default function provideSemanticTokens(
 			return true
 		}
 
-		renderClasses(kind, isValidClass, isValidVariant, canRender, getPosition, builder, parseSemanticTokens(value))
-	}
-	return builder.build()
-}
-
-function renderClasses(
-	kind: PatternKind,
-	isValidClass: (variants: string[], value: string) => boolean,
-	isValidVariant: (variant: string) => boolean,
-	canRender: (node: Node) => boolean,
-	getPosition: (offset: number) => lsp.Position,
-	builder: lsp.SemanticTokensBuilder,
-	blocks: ReturnType<typeof parseSemanticTokens>,
-	context = tw.createTokenList(),
-) {
-	for (const node of blocks) {
-		for (const variant of node.variants) {
-			if (!isValidVariant(variant.text)) {
-				continue
-			}
-			const pos = getPosition(variant.start)
-			const len = variant.end - variant.start
-			builder.push(pos.line, pos.character, len + 1, BlockKind.Variant, 0)
-		}
-
-		if (node.kind === NodeType.Group) {
-			const pos = getPosition(node.lbrace)
-			builder.push(pos.line, pos.character, 1, BlockKind.Brackets, 0)
-		}
-
-		if (node.kind === NodeType.Class) {
-			if (
-				kind === PatternKind.Twin &&
-				isValidClass(tw.createTokenList([...context, ...node.variants]).texts, node.value.text)
-			) {
-				if (canRender(node)) {
-					const pos = getPosition(node.value.start)
-					builder.push(pos.line, pos.character, node.value.end - node.value.start, BlockKind.Classname, 0)
+		new Semantic(value).accept(node => {
+			const pos = getPosition(node.token.start)
+			const length = node.token.end - node.token.start
+			switch (node.kind) {
+				case NodeKind.ClassName:
+					if (kind === PatternKind.Twin && isValidClass(node.context.texts, node.token.text)) {
+						if (canRender(node)) {
+							builder.push(pos.line, pos.character, length, BlockKind.Classname, 0)
+						}
+					}
+					break
+				case NodeKind.Variant:
+					if (isValidVariant(node.token.text.slice(0, -1))) {
+						builder.push(pos.line, pos.character, length, BlockKind.Variant, 0)
+					}
+					break
+				case NodeKind.CssProperty:
+					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					break
+				case NodeKind.CssValue:
+					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					break
+				case NodeKind.CssBracket:
+					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					break
+				case NodeKind.Bracket:
+					builder.push(pos.line, pos.character, length, BlockKind.Brackets, 0)
+					break
+				case NodeKind.Important:
+					builder.push(pos.line, pos.character, length, BlockKind.Important, 0)
+					break
+				case NodeKind.LineComment:
+					builder.push(pos.line, pos.character, length, BlockKind.Comment, 0)
+					break
+				case NodeKind.BlockComment: {
+					const end = getPosition(node.token.end)
+					builder.push(pos.line, pos.character, length, BlockKind.Comment, 0)
+					if (pos.line < end.line) {
+						for (let line = pos.line + 1; line < end.line; line++) {
+							builder.push(line, 0, length, BlockKind.Comment, 0)
+						}
+						builder.push(end.line, 0, end.character, BlockKind.Comment, 0)
+					}
+					break
 				}
 			}
-		} else if (node.kind === NodeType.CssProperty) {
-			const pos = getPosition(node.value.start)
-			builder.push(pos.line, pos.character, node.value.end - node.value.start, BlockKind.CssProperty, 0)
-		} else if (node.kind === NodeType.Group && node.children.length > 0) {
-			renderClasses(
-				kind,
-				isValidClass,
-				isValidVariant,
-				canRender,
-				getPosition,
-				builder,
-				node.children,
-				tw.createTokenList([...context, ...node.variants]),
-			)
-		}
-
-		if (node.kind === NodeType.Group && typeof node.rbrace === "number") {
-			const pos = getPosition(node.rbrace)
-			builder.push(pos.line, pos.character, 1, BlockKind.Brackets, 0)
-		}
-
-		if (node.kind === NodeType.Group || node.kind === NodeType.Class || node.kind === NodeType.CssProperty) {
-			if (typeof node.important === "number") {
-				const pos = getPosition(node.important)
-				builder.push(pos.line, pos.character, 1, BlockKind.Important, 0)
-			}
-		}
+		})
 	}
+	return builder.build()
 }
 
 function parseColor(value: unknown): string | undefined {

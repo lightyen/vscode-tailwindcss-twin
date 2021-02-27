@@ -1,6 +1,6 @@
 // unused module
 
-function findRightBracket(classes: string, start = 0, end = classes.length, brackets = ["(", ")"]) {
+function findRightBracket(classes: string, start = 0, end = classes.length, brackets = ["(", ")"]): number | undefined {
 	const stack = []
 	let comment = 0
 	for (let index = start; index < end; index++) {
@@ -34,7 +34,16 @@ function findRightBracket(classes: string, start = 0, end = classes.length, brac
 	return undefined
 }
 
-function removeComments(text: string) {
+function findRightBlockComment(classes: string, start = 0, end = classes.length): number | undefined {
+	for (let index = start + 2; index < end; index++) {
+		if (classes.slice(index, index + 2) === "*/") {
+			return index + 1
+		}
+	}
+	return undefined
+}
+
+function removeComment(text: string) {
 	return text.replace(/(\/\/[^\n]*\n?)|(\/\*.*?\*\/)/gs, "")
 }
 
@@ -45,24 +54,31 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	const results: string[] = []
 	classes = classes.slice(start, end).trim()
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*.*?\*\/)|([\w-]+:)|(\w+)\[|([\w-./]+!?)|\(|(\S+)/gs
+	// const lineComment = /\/\/[^\n]*\n?/
+	// const blockComment = /\/\*.*?\*\//
+	// const variant = /(?:[a-z]+-)*[a-z0-9]+/
+	// const cssProperty = /-?(?:[a-zA-Z]+-)*[a-zA-Z]+/
+	// const className = /-?(?:[a-z]+-)*(?:(?:\d+[./])*\d+|(?:[a-z0-9]+))/
+	// `(${lineComment})|(${blockComment})|(${variant}):|(${cssProperty})\\[|(${className}!?)|\\(|(\\S+)`
+
+	const regex = /(\/\/[^\n]*\n?)|(\/\*)|((?:[a-z]+-)*[a-z0-9]+:)|(-?(?:[a-zA-Z]+-)*[a-zA-Z]+)\[|(-?(?:[a-z]+-)*(?:(?:\d+[./])*\d+|(?:[a-z0-9]+))!?)|\(|(\S+)/gs
 	let match: RegExpExecArray
 	const baseContext = context
-	while ((match = reg.exec(classes))) {
+	while ((match = regex.exec(classes))) {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			context += variant
 
-			if (/\s/.test(classes[reg.lastIndex])) {
+			if (/\s/.test(classes[regex.lastIndex])) {
 				context = baseContext
 				continue
 			}
 
-			if (classes[reg.lastIndex] === "(") {
-				const closeBracket = findRightBracket(classes, reg.lastIndex)
+			if (classes[regex.lastIndex] === "(") {
+				const closeBracket = findRightBracket(classes, regex.lastIndex)
 				if (typeof closeBracket !== "number") {
-					throw `"${classes}" except to find a ')' to match the '(' at ${reg.lastIndex}`
+					throw `"${classes}" except to find a ')' to match the '(' at ${regex.lastIndex}`
 				}
 
 				const importantGroup = classes[closeBracket + 1] === "!"
@@ -71,33 +87,37 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 						classes,
 						context,
 						importantContext || importantGroup,
-						reg.lastIndex + 1,
+						regex.lastIndex + 1,
 						closeBracket,
 					),
 				)
-				reg.lastIndex = closeBracket + (importantGroup ? 2 : 1)
+				regex.lastIndex = closeBracket + (importantGroup ? 2 : 1)
 				context = baseContext
 			}
 		} else if (cssProperty) {
-			const closeBracket = findRightBracket(classes, reg.lastIndex - 1, classes.length, ["[", "]"])
+			const closeBracket = findRightBracket(classes, regex.lastIndex - 1, classes.length, ["[", "]"])
 			if (typeof closeBracket !== "number") {
-				throw `"${classes}" except to find a ']' to match the '[' at ${reg.lastIndex - 1}`
+				throw `"${classes}" except to find a ']' to match the '[' at ${regex.lastIndex - 1}`
 			}
 			const importantGroup = classes[closeBracket + 1] === "!"
-			const css = removeComments(classes.slice(match.index, closeBracket + 1))
+			const css = removeComment(classes.slice(match.index, closeBracket + 1))
 			results.push(context + css + (importantGroup || importantContext ? "!" : ""))
-			reg.lastIndex = closeBracket + (importantGroup ? 2 : 1)
+			regex.lastIndex = closeBracket + (importantGroup ? 2 : 1)
 			context = baseContext
 		} else if (className) {
 			const tail = !className.endsWith("!") && importantContext ? "!" : ""
 			results.push(context + className + tail)
 			context = baseContext
 		} else if (notHandled) {
-			throw `${notHandled} unexpected token at ${reg.lastIndex}`
+			throw `${notHandled} unexpected token at ${regex.lastIndex}`
 		} else if (lineComment) {
 			//
 		} else if (blockComment) {
-			//
+			const closeComment = findRightBlockComment(classes, match.index)
+			if (typeof closeComment !== "number") {
+				throw `"${classes}" except to find a '*/' to match the '/*' at ${match.index}`
+			}
+			regex.lastIndex = closeComment + 1
 		} else {
 			const closeBracket = findRightBracket(classes, match.index)
 			if (typeof closeBracket !== "number") {
@@ -114,7 +134,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 					closeBracket,
 				),
 			)
-			reg.lastIndex = closeBracket + (importantGroup ? 2 : 1)
+			regex.lastIndex = closeBracket + (importantGroup ? 2 : 1)
 		}
 	}
 

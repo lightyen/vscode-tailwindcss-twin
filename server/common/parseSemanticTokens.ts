@@ -1,57 +1,95 @@
 import * as tw from "./twin"
 import findRightBracket from "./findRightBracket"
+import findRightBlockComment from "./findRightBlockComment"
 
-export enum NodeType {
+export enum NodeKind {
 	Unknown,
-	Class,
-	Group,
-	Empty,
+	ClassName,
+	Variant,
 	CssProperty,
+	CssValue,
+	CssBracket,
+	Bracket,
+	Important,
+	LineComment,
+	BlockComment,
 }
-
-export type Node = UnknownNode | EmptyNode | GroupNode | ClassNode | CssPropertyNode
-
-type Index = number
 
 interface UnknownNode {
-	kind: NodeType.Unknown
-	variants: tw.TokenList
-	value?: tw.Token
+	kind: NodeKind.Unknown
+	token: tw.Token
+	context: tw.TokenList
 }
 
-interface EmptyNode {
-	kind: NodeType.Empty
-	variants: tw.TokenList
+interface ClassNameNode {
+	kind: NodeKind.ClassName
+	token: tw.Token
+	context: tw.TokenList
 }
 
-interface GroupNode {
-	kind: NodeType.Group
-	variants: tw.TokenList
-	children: Node[]
-	lbrace: Index
-	rbrace?: Index
-	important?: Index
-}
-
-interface ClassNode {
-	kind: NodeType.Class
-	variants: tw.TokenList
-	value: tw.Token
-	important?: Index
+interface VariantNode {
+	kind: NodeKind.Variant
+	token: tw.Token
+	context: tw.TokenList
 }
 
 interface CssPropertyNode {
-	kind: NodeType.CssProperty
-	variants: tw.TokenList
-	value: tw.Token
-	important?: Index
+	kind: NodeKind.CssProperty
+	token: tw.Token
+	context: tw.TokenList
 }
 
-function createBlock(): Node {
-	return {
-		kind: NodeType.Unknown,
-		variants: tw.createTokenList(),
+interface CssValueNode {
+	kind: NodeKind.CssValue
+	token: tw.Token
+}
+
+interface CssBracketNode {
+	kind: NodeKind.CssBracket
+	token: tw.Token
+}
+
+interface BracketNode {
+	kind: NodeKind.Bracket
+	token: tw.Token
+}
+
+interface ImportantNode {
+	kind: NodeKind.Important
+	token: tw.Token
+}
+
+interface LineCommentNode {
+	kind: NodeKind.LineComment
+	token: tw.Token
+}
+
+interface BlockCommentNode {
+	kind: NodeKind.BlockComment
+	token: tw.Token
+}
+
+export type Node =
+	| UnknownNode
+	| ClassNameNode
+	| VariantNode
+	| CssPropertyNode
+	| CssValueNode
+	| CssBracketNode
+	| BracketNode
+	| ImportantNode
+	| LineCommentNode
+	| BlockCommentNode
+
+function createNode(kind: NodeKind, token: tw.Token, context?: tw.TokenList): Node {
+	switch (kind) {
+		case NodeKind.Unknown:
+		case NodeKind.Variant:
+		case NodeKind.ClassName:
+		case NodeKind.CssProperty:
+			return { kind, token, context }
 	}
+	return { kind, token }
 }
 
 function trimLeft(str: string, start = 0, end = str.length) {
@@ -64,173 +102,229 @@ function trimLeft(str: string, start = 0, end = str.length) {
 	return [start, end]
 }
 
-export default function parseClasses(input: string, start = 0, end = input.length): Node[] {
-	if (start === end) {
-		return []
+export class Semantic {
+	text: string
+	private cbNode: (node: Node) => void
+
+	constructor(text: string) {
+		this.text = text
 	}
 
-	;[start, end] = trimLeft(input, start, end)
+	accept(cb: (node: Node) => void) {
+		this.cbNode = cb
+		this.parseClasses(this.text)
+	}
 
-	const reg = /([\w-]+):|([\w-]+\[)|([\w-./]+!?)|\(|(\S+)/g
+	private parseClasses(input: string, start = 0, end = input.length, context = tw.createTokenList()) {
+		if (start === end) {
+			return
+		}
 
-	const result: Node[] = []
-	let node = createBlock()
-	let match: RegExpExecArray
+		;[start, end] = trimLeft(input, start, end)
 
-	reg.lastIndex = start
-	input = input.slice(0, end)
-	let context = tw.createTokenList()
-	while ((match = reg.exec(input))) {
-		const [value, variant, cssProperty, className, notHandled] = match
-		if (variant) {
-			const token = tw.createToken(match.index, reg.lastIndex - 1, variant)
-			context.push(token)
+		const reg = /(\/\/[^\n]*\n?)|(\/\*)|((?:[a-z]+-)*[a-z0-9]+):|(-?(?:[a-zA-Z]+-)*[a-zA-Z]+)\[|(-?(?:[a-z]+-)*(?:(?:\d+[./])*\d+|(?:[a-z0-9]+))!?)|\(|(\S+)/gs
+		let match: RegExpExecArray
 
-			if (reg.lastIndex < end) {
-				while (/\s/.test(input[reg.lastIndex])) {
-					node.kind = NodeType.Empty
-					reg.lastIndex++
-				}
-			} else {
-				node.kind = NodeType.Empty
-			}
+		reg.lastIndex = start
+		input = input.slice(0, end)
+		const baseContext = context.slice()
 
-			if (node.kind === NodeType.Empty) {
-				node.kind = NodeType.Empty
-				node.variants = context
-				result.push(node)
-				node = createBlock()
-				context = tw.createTokenList()
-				continue
-			}
-
-			if (input[reg.lastIndex] === "(") {
-				node.kind = NodeType.Group
-			}
-
-			if (node.kind === NodeType.Group) {
-				node.children = []
-				node.lbrace = reg.lastIndex
-				node.variants = context
-				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
-
-				if (typeof closedBracket !== "number") {
-					node.children = parseClasses(input, reg.lastIndex + 1, end)
-					result.push(node)
-					return result
-				}
-
-				const important = input[closedBracket + 1] === "!"
-				node.rbrace = closedBracket
-				if (important) {
-					node.important = closedBracket + 1
-				}
-				node.children = parseClasses(input, reg.lastIndex + 1, closedBracket)
-
-				result.push(node)
-				node = createBlock()
-				reg.lastIndex = closedBracket + (important ? 2 : 1)
-				context = tw.createTokenList()
-			}
-		} else if (cssProperty) {
-			node.kind = NodeType.CssProperty
-			if (node.kind === NodeType.CssProperty) {
-				const closedBracket = findRightBracket({ input, start: reg.lastIndex - 1, end, brackets: ["[", "]"] })
-				if (typeof closedBracket !== "number") {
-					node.variants = context
-					node.value = tw.createToken(match.index, end, input.slice(match.index, end))
-					result.push(node)
-					return result
-				}
-				const token = tw.createToken(
-					match.index,
-					closedBracket + 1,
-					input.slice(match.index, closedBracket + 1),
+		while ((match = reg.exec(input))) {
+			const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
+			if (variant) {
+				this.cbNode(
+					createNode(NodeKind.Variant, tw.createToken(match.index, reg.lastIndex, value), context.slice()),
 				)
+
+				context.push(tw.createToken(match.index, reg.lastIndex - 1, variant))
+
+				let isEmpty = false
+				if (reg.lastIndex < end) {
+					while (/\s/.test(input[reg.lastIndex])) {
+						isEmpty = true
+						reg.lastIndex++
+					}
+				} else {
+					isEmpty = true
+				}
+
+				if (isEmpty) {
+					context = tw.createTokenList()
+					continue
+				}
+
+				if (input[reg.lastIndex] === "(") {
+					this.cbNode(
+						createNode(
+							NodeKind.Bracket,
+							tw.createToken(reg.lastIndex, reg.lastIndex + 1, input[reg.lastIndex]),
+						),
+					)
+
+					const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
+
+					if (typeof closedBracket !== "number") {
+						this.parseClasses(input, reg.lastIndex + 1, end)
+						return
+					}
+
+					this.parseClasses(input, reg.lastIndex + 1, closedBracket, context.slice())
+
+					this.cbNode(
+						createNode(
+							NodeKind.Bracket,
+							tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
+						),
+					)
+
+					const important = input[closedBracket + 1] === "!"
+					if (important) {
+						this.cbNode(
+							createNode(
+								NodeKind.Important,
+								tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
+							),
+						)
+					}
+
+					reg.lastIndex = closedBracket + (important ? 2 : 1)
+					context = baseContext.slice()
+				}
+			} else if (cssProperty) {
+				const prop = tw.createToken(match.index, match.index + cssProperty.length, cssProperty)
+				this.cbNode(createNode(NodeKind.CssProperty, prop, context.slice()))
+
+				this.cbNode(
+					createNode(
+						NodeKind.CssBracket,
+						tw.createToken(reg.lastIndex - 1, reg.lastIndex, input.slice(reg.lastIndex - 1, reg.lastIndex)),
+					),
+				)
+
+				const closedBracket = findRightBracket({
+					input,
+					start: reg.lastIndex - 1,
+					end,
+					brackets: ["[", "]"],
+				})
+
+				if (typeof closedBracket !== "number") {
+					this.parseCssValue(input, reg.lastIndex, end)
+					return
+				}
+
+				this.parseCssValue(input, reg.lastIndex, closedBracket)
+
+				this.cbNode(
+					createNode(
+						NodeKind.CssBracket,
+						tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
+					),
+				)
+
 				const important = input[closedBracket + 1] === "!"
 				if (important) {
-					node.important = closedBracket + 1
+					this.cbNode(
+						createNode(
+							NodeKind.Important,
+							tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
+						),
+					)
 				}
-				node.variants = context
-				node.value = token
-				result.push(node)
-				node = createBlock()
-				context = tw.createTokenList()
+
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
-			}
-		} else if (className) {
-			node.kind = NodeType.Class
-			if (node.kind === NodeType.Class) {
+				context = baseContext.slice()
+			} else if (className) {
 				const token = tw.createToken(match.index, reg.lastIndex, value)
+
 				const important = value.endsWith("!")
 				if (important) {
 					token.end -= 1
-					node.important = token.end
 					token.text = token.text.slice(0, -1)
 				}
-				node.variants = context
-				node.value = token
-				result.push(node)
-				node = createBlock()
-				context = tw.createTokenList()
-			}
-		} else if (notHandled) {
-			node.kind = NodeType.Unknown
-			if (node.kind === NodeType.Unknown) {
-				const weirdToken = tw.createToken(match.index, reg.lastIndex, value)
-				node.variants = context.slice()
-				node.value = weirdToken
-				result.push(node)
-				node = createBlock()
-				context = tw.createTokenList()
-			}
-		} else {
-			node.kind = NodeType.Group
-			if (node.kind === NodeType.Group) {
-				node.lbrace = match.index
+
+				this.cbNode(createNode(NodeKind.ClassName, token, context.slice()))
+				if (important) {
+					this.cbNode(createNode(NodeKind.Important, tw.createToken(token.end, token.end + 1, "!")))
+				}
+
+				context = baseContext.slice()
+			} else if (notHandled) {
+				const token = tw.createToken(match.index, reg.lastIndex, value)
+				this.cbNode(createNode(NodeKind.Unknown, token, context.slice()))
+			} else if (lineComment) {
+				const token = tw.createToken(match.index, reg.lastIndex, value)
+				this.cbNode(createNode(NodeKind.LineComment, token))
+			} else if (blockComment) {
+				const closeComment = findRightBlockComment(input, match.index)
+				if (typeof closeComment !== "number") {
+					this.cbNode(
+						createNode(
+							NodeKind.BlockComment,
+							tw.createToken(match.index, end, input.slice(match.index, end)),
+						),
+					)
+					return
+				}
+
+				const tokenEnd = closeComment + 1
+				const token = tw.createToken(match.index, tokenEnd, input.slice(match.index, tokenEnd))
+				this.cbNode(createNode(NodeKind.BlockComment, token))
+				reg.lastIndex = tokenEnd
+			} else {
+				const token = tw.createToken(match.index, reg.lastIndex, value)
+				this.cbNode(createNode(NodeKind.Bracket, token))
+
 				const closedBracket = findRightBracket({ input, start: match.index, end })
 
 				if (typeof closedBracket !== "number") {
-					node.children = parseClasses(input, match.index + 1, end)
-					result.push(node)
-					return result
+					this.parseClasses(input, match.index + 1, end, context.slice())
+					return
 				}
+
+				this.parseClasses(input, match.index + 1, closedBracket, context.slice())
+
+				this.cbNode(
+					createNode(
+						NodeKind.Bracket,
+						tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
+					),
+				)
 
 				const important = input[closedBracket + 1] === "!"
-				node.rbrace = closedBracket
 				if (important) {
-					node.important = closedBracket + 1
+					this.cbNode(
+						createNode(
+							NodeKind.Important,
+							tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
+						),
+					)
 				}
-				node.children = parseClasses(input, match.index + 1, closedBracket)
 
-				result.push(node)
-				node = createBlock()
 				reg.lastIndex = closedBracket + (important ? 2 : 1)
+				context = baseContext.slice()
 			}
 		}
 	}
-	return result
-}
 
-export function format(blocks: ReturnType<typeof parseClasses>): string {
-	const results: string[] = []
-	for (const block of blocks) {
-		let out = ""
-		for (const v of block.variants) {
-			out += v.text + ":"
+	private parseCssValue(input: string, start = 0, end = input.length) {
+		;[start, end] = trimLeft(input, start, end)
+		const regex = /(\/\/[^\n]*\n?)|(\/\*.*?\*\/)|((?!(\/\/[^\n]*\n?)|(\/\*.*?\*\/)).)+/gs
+		let match: RegExpExecArray
+		regex.lastIndex = start
+		input = input.slice(0, end)
+		while ((match = regex.exec(input))) {
+			const [value, lineComment, blockComment, cssValue] = match
+			if (lineComment) {
+				const token = tw.createToken(match.index, regex.lastIndex, value)
+				this.cbNode(createNode(NodeKind.LineComment, token))
+			} else if (blockComment) {
+				const token = tw.createToken(match.index, regex.lastIndex, value)
+				this.cbNode(createNode(NodeKind.BlockComment, token))
+			} else if (cssValue) {
+				const token = tw.createToken(match.index, regex.lastIndex, value)
+				this.cbNode(createNode(NodeKind.CssValue, token))
+			}
 		}
-		switch (block.kind) {
-			case NodeType.Group:
-				out += `(${format(block.children)})` + (typeof block.important === "number" ? "!" : "")
-				break
-			case NodeType.Class:
-				out += block.value.text + (typeof block.important === "number" ? "!" : "")
-				break
-			case NodeType.Unknown:
-				out += block.value.text
-				break
-		}
-		out && results.push(out)
 	}
-	return results.join(" ")
 }

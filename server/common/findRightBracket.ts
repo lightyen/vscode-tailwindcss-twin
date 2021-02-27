@@ -10,19 +10,35 @@ export default function findRightBracket({
 	end?: number
 	/** brackets, default is `["(", ")"]` */
 	brackets?: [string, string]
-}): number | undefined {
-	let stack = 0
-	for (let i = start; i < end; i++) {
-		if (input[i] === brackets[0]) {
-			stack += 1
-		} else if (input[i] === brackets[1]) {
-			if (stack === 0) {
-				return undefined
+}) {
+	const stack = []
+	let comment = 0
+	for (let index = start; index < end; index++) {
+		if (comment === 0) {
+			if (input[index] === brackets[0]) {
+				stack.push(index)
+			} else if (input.slice(index, index + 2) === "//") {
+				comment = 1
+			} else if (input.slice(index, index + 2) === "/*") {
+				comment = 2
+			} else if (input[index] === brackets[1]) {
+				if (stack.length === 0) {
+					return undefined
+				}
+
+				if (stack.length === 1) {
+					return index
+				}
+
+				stack.pop()
 			}
-			if (stack === 1) {
-				return i
+		} else {
+			if (comment === 1 && input[index] === "\n") {
+				comment = 0
+			} else if (comment === 2 && input.slice(index, index + 2) === "*/") {
+				comment = 0
+				index += 1
 			}
-			stack -= 1
 		}
 	}
 	return undefined
