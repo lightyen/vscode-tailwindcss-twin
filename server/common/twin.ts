@@ -18,6 +18,7 @@ export enum TokenKind {
 	ClassName,
 	CssProperty,
 	VariantsGroup,
+	Comment,
 }
 
 export interface Context {
@@ -45,6 +46,11 @@ export interface CssProperty extends Context {
 	token: Token
 	prop: Token
 	value: Token
+}
+
+export interface Comment {
+	kind: TokenKind.Comment
+	token: Token
 }
 
 export interface Error {
@@ -82,7 +88,7 @@ export interface EmptyCssProperty {
 	end: number
 }
 
-export type TwinElement = Unknown | ClassName | CssProperty
+export type TwinElement = Unknown | ClassName | CssProperty | Comment
 export type EmptyElement = EmptyClass | EmptyGroup | EmptyCssProperty
 
 export function createToken(start: number, end: number, value: string) {
@@ -169,8 +175,11 @@ export function createTwinElementList(arr?: TwinElement[]) {
 					for (let i = 0; i < target.length; i++) {
 						let context = ""
 						const item = target[i]
+						if (item.kind === TokenKind.Comment) {
+							continue
+						}
 						for (let j = 0; j < item.variants.length; j++) {
-							context += target[i].variants[j].text + ":"
+							context += item.variants[j].text + ":"
 						}
 						results.push(context + item.token.text + (item.important ? "!" : ""))
 					}
@@ -248,5 +257,10 @@ export interface SelectedCssProperty {
 
 export interface SelectedVariantsGroup {
 	kind: TokenKind.VariantsGroup
+	token: Token
+}
+
+export interface SelectedComment {
+	kind: TokenKind.Comment
 	token: Token
 }

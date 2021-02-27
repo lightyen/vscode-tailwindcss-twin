@@ -98,6 +98,9 @@ function classesCompletion(
 					}
 				}
 				break
+			case tw.TokenKind.Comment:
+				variantEnabled = false
+				break
 		}
 	}
 
@@ -215,6 +218,9 @@ function classesCompletion(
 				break
 			case tw.TokenKind.Unknown:
 				if (position > a) classNameEnabled = false
+				break
+			case tw.TokenKind.Comment:
+				classNameEnabled = false
 				break
 		}
 	}

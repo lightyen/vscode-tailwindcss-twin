@@ -54,14 +54,15 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	const results: string[] = []
 	classes = classes.slice(start, end).trim()
 
+	// const keyword = /[\w-.]+(?:\/\d+)?/
 	// const lineComment = /\/\/[^\n]*\n?/
 	// const blockComment = /\/\*.*?\*\//
-	// const variant = /(?:[a-z]+-)*[a-z0-9]+/
-	// const cssProperty = /-?(?:[a-zA-Z]+-)*[a-zA-Z]+/
-	// const className = /-?(?:[a-z]+-)*(?:(?:\d+[./])*\d+|(?:[a-z0-9]+))/
+	// const variant = keyword
+	// const cssProperty = keyword
+	// const className = keyword
 	// `(${lineComment})|(${blockComment})|(${variant}):|(${cssProperty})\\[|(${className}!?)|\\(|(\\S+)`
 
-	const regex = /(\/\/[^\n]*\n?)|(\/\*)|((?:[a-z]+-)*[a-z0-9]+:)|(-?(?:[a-zA-Z]+-)*[a-zA-Z]+)\[|(-?(?:[a-z]+-)*(?:(?:\d+[./])*\d+|(?:[a-z0-9]+))!?)|\(|(\S+)/gs
+	const regex = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?:)|([\w-.]+(?:\/\d+)?)\[|((?:[\w-.]+)(?:\/\d+)?!?)|\(|(\S+)/gs
 	let match: RegExpExecArray
 	const baseContext = context
 	while ((match = regex.exec(classes))) {

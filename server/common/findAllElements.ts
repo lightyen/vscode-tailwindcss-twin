@@ -1,5 +1,6 @@
 import * as tw from "./twin"
 import findRightBracket from "./findRightBracket"
+import findRightBlockComment from "./findRightBlockComment"
 
 function trimLeft(str: string, start = 0, end = str.length): [number, number] {
 	while (/\s/.test(str[start])) {
@@ -59,7 +60,7 @@ export default function findAllElements({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-]+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?):|([\w-.]+(?:\/\d+)?)\[|([\w-.]+(?:\/\d+)?!?)|\(|(\S+)/gs
 
 	let result: Result = zero()
 	let match: RegExpExecArray
@@ -68,7 +69,7 @@ export default function findAllElements({
 	input = input.slice(0, end)
 	const baseContext = context.slice()
 	while ((match = reg.exec(input))) {
-		const [value, variant, cssProperty, className, notHandled] = match
+		const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			const variantToken = tw.createToken(match.index, reg.lastIndex - 1, variant)
 			context.push(variantToken)
@@ -210,6 +211,21 @@ export default function findAllElements({
 			})
 
 			context = baseContext.slice()
+		} else if (lineComment) {
+			//
+		} else if (blockComment) {
+			const closeComment = findRightBlockComment(input, match.index)
+			if (typeof closeComment !== "number") {
+				result.error = {
+					message: `except to find a "*/" to match the "/*"`,
+					start: match.index,
+					end,
+				}
+				return result
+			}
+
+			const tokenEnd = closeComment + 1
+			reg.lastIndex = tokenEnd
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			if (typeof closedBracket !== "number") {

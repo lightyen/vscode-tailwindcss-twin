@@ -1,5 +1,6 @@
 import * as tw from "./twin"
 import findRightBracket from "./findRightBracket"
+import findRightBlockComment from "./findRightBlockComment"
 
 function trimLeft(str: string, start = 0, end = str.length) {
 	while (/\s/.test(str[start])) {
@@ -18,6 +19,7 @@ interface Result extends tw.Context {
 		| tw.SelectedVariant
 		| tw.SelectedCssProperty
 		| tw.SelectedVariantsGroup
+		| tw.SelectedComment
 }
 
 export function completeElement({
@@ -49,7 +51,7 @@ export function completeElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-]+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?):|([\w-.]+(?:\/\d+)?)\[|([\w-.]+(?:\/\d+)?!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -58,7 +60,7 @@ export function completeElement({
 	const baseContext = context.slice()
 
 	while ((match = reg.exec(input))) {
-		const [value, variant, cssProperty, className, notHandled] = match
+		const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			if (position >= match.index && position < reg.lastIndex) {
 				return {
@@ -200,6 +202,25 @@ export function completeElement({
 					variants: context,
 				}
 			}
+		} else if (lineComment) {
+			//
+		} else if (blockComment) {
+			const closeComment = findRightBlockComment(input, match.index)
+			if (typeof closeComment !== "number") {
+				break
+			}
+			if (position > match.index && position < closeComment) {
+				return {
+					token: {
+						kind: tw.TokenKind.Comment,
+						token: tw.createToken(match.index, reg.lastIndex, value),
+					},
+					variants: context,
+					important: importantContext,
+				}
+			}
+			const tokenEnd = closeComment + 1
+			reg.lastIndex = tokenEnd
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			const hasRightBracket = typeof closedBracket === "number"
@@ -281,7 +302,7 @@ export function hoverElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = new RegExp(`([\\w-]+)${separator}|([\\w-]+)\\[|([\\w-./]+!?)|\\(|(\\S+)`, "g")
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-.]+(?:\/\d+)?):|([\w-.]+(?:\/\d+)?)\[|([\w-.]+(?:\/\d+)?!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -290,7 +311,7 @@ export function hoverElement({
 	const baseContext = context.slice()
 
 	while ((match = reg.exec(input))) {
-		const [value, variant, cssProperty, className, notHandled] = match
+		const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			const token = tw.createToken(match.index, reg.lastIndex - separator.length, variant)
 
@@ -425,6 +446,16 @@ export function hoverElement({
 					variants: context,
 				}
 			}
+		} else if (lineComment) {
+			//
+		} else if (blockComment) {
+			const closeComment = findRightBlockComment(input, match.index)
+			if (typeof closeComment !== "number") {
+				break
+			}
+
+			const tokenEnd = closeComment + 1
+			reg.lastIndex = tokenEnd
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
 			const hasRightBracket = typeof closedBracket === "number"
