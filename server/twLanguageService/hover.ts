@@ -51,7 +51,13 @@ export default function hover(
 				const value = selection.token.value.text
 				const important = selection.important
 
-				const values = ["```scss", "& {", `\t${key}: ${value}${important ? " !important" : ""};`, "}", "```\n"]
+				const values = [
+					"```scss",
+					"& {",
+					`\t${key}: ${tw.removeComments(value)}${important ? " !important" : ""};`,
+					"}",
+					"```\n",
+				]
 
 				const entry = cssDataManager.getProperty(key)
 				if (entry) {

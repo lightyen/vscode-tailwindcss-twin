@@ -43,8 +43,8 @@ function findRightBlockComment(classes: string, start = 0, end = classes.length)
 	return undefined
 }
 
-function removeComment(text: string) {
-	return text.replace(/(\/\/[^\n]*\n?)|(\/\*.*?\*\/)/gs, "")
+function removeComments(text: string) {
+	return text.replace(/(\/\/[^\n]*\n?)|(\/\*[\S\s]*?\*\/)/gs, "")
 }
 
 function spreadVariantGroups(classes: string, context = "", importantContext = false, start = 0, end?: number) {
@@ -93,7 +93,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 				throw `"${classes}" except to find a ']' to match the '[' at ${regex.lastIndex - 1}`
 			}
 			const importantGroup = classes[closeBracket + 1] === "!"
-			const css = removeComment(classes.slice(match.index, closeBracket + 1))
+			const css = removeComments(classes.slice(match.index, closeBracket + 1))
 			results.push(context + css + (importantGroup || importantContext ? "!" : ""))
 			regex.lastIndex = closeBracket + (importantGroup ? 2 : 1)
 			context = baseContext

@@ -264,3 +264,7 @@ export interface SelectedComment {
 	kind: TokenKind.Comment
 	token: Token
 }
+
+export function removeComments(text: string) {
+	return text.replace(/(\/\/[^\n]*\n?)|(\/\*[\S\s]*?\*\/)/gs, "")
+}
