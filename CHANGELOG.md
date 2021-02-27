@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.7.0
+
+Support comments
+
 ## 0.6.5
 
 Change gallery banner color

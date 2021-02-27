@@ -1,7 +1,7 @@
 {
   "name": "server",
   "description": "Tailwind Twin Language Server",
-  "version": "0.6.5",
+  "version": "0.7.0-alpha+allow-comments",
   "author": "lightyen",
   "license": "MIT",
   "engines": {
@@ -15,11 +15,11 @@
     "chroma-js": "^2.1.0",
     "fuse.js": "^6.4.6",
     "immer": "^8.0.1",
-    "postcss": "^8.2.6",
+    "postcss": "8.2.6",
     "postcss-selector-parser": "^6.0.4",
     "semver": "^7.3.4",
     "serialize-error": "^8.0.1",
-    "tailwindcss": "^2.0.3",
+    "tailwindcss": "2.0.3",
     "twin.macro": "2.2.3",
     "vscode-css-languageservice": "^5.1.0",
     "vscode-languageserver": "^7.0.0",

@@ -138,6 +138,9 @@ function validateTwin({
 		if (kind === PatternKind.Twin) {
 			for (let i = 0; i < elementList.length; i++) {
 				const item = elementList[i]
+				if (item.kind === tw.TokenKind.Comment) {
+					continue
+				}
 				const variants = item.variants.texts
 				if (item.important) {
 					continue
@@ -200,6 +203,9 @@ function validateTwin({
 		} else if (kind === PatternKind.TwinCssProperty) {
 			for (let i = 0; i < elementList.length; i++) {
 				const item = elementList[i]
+				if (item.kind === tw.TokenKind.Comment) {
+					continue
+				}
 				if (item.kind === tw.TokenKind.Unknown || item.kind === tw.TokenKind.ClassName) {
 					let message = `Invalid token '${item.token.text}'`
 					if (cssDataManager.getProperty(item.token.text)) {
