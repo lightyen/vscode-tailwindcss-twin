@@ -122,7 +122,7 @@ export class Semantic {
 
 		;[start, end] = trimLeft(input, start, end)
 
-		const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-]+(?!\/\/|\/\*)(?:[./])?[\w-]*!?)|\(|(\S+)/gs
+		const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
 		let match: RegExpExecArray
 
 		reg.lastIndex = start
@@ -140,9 +140,17 @@ export class Semantic {
 
 				let isEmpty = false
 				if (reg.lastIndex < end) {
-					while (/\s/.test(input[reg.lastIndex])) {
-						isEmpty = true
-						reg.lastIndex++
+					for (let idx = reg.lastIndex; idx < end; idx++) {
+						const next = input.slice(idx, idx + 2)
+						if (/^\s/.test(next)) {
+							isEmpty = true
+							reg.lastIndex = idx
+						} else if (/\/\/|\/\*/.test(next)) {
+							isEmpty = true
+							break
+						} else {
+							break
+						}
 					}
 				} else {
 					isEmpty = true

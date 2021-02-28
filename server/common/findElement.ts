@@ -51,7 +51,7 @@ export function completeElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-]+(?!\/\/|\/\*)(?:[./])?[\w-]*!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -78,15 +78,29 @@ export function completeElement({
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
-				while (/\s/.test(input[reg.lastIndex])) {
-					if (!isEmpty && position === reg.lastIndex) {
-						return {
-							important: importantContext,
-							variants: context,
+				for (let idx = reg.lastIndex; idx < end; idx++) {
+					const next = input.slice(idx, idx + 2)
+					if (/^\s/.test(next)) {
+						if (!isEmpty && position === reg.lastIndex) {
+							return {
+								important: importantContext,
+								variants: context,
+							}
 						}
+						isEmpty = true
+						reg.lastIndex = idx
+					} else if (/\/\/|\/\*/.test(next)) {
+						if (!isEmpty && position === reg.lastIndex) {
+							return {
+								important: importantContext,
+								variants: context,
+							}
+						}
+						isEmpty = true
+						break
+					} else {
+						break
 					}
-					isEmpty = true
-					reg.lastIndex++
 				}
 			} else {
 				if (position === reg.lastIndex) {
@@ -321,7 +335,7 @@ export function hoverElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-]+(?!\/\/|\/\*)(?:[./])?[\w-]*!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -353,9 +367,17 @@ export function hoverElement({
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
-				while (/\s/.test(input[reg.lastIndex])) {
-					isEmpty = true
-					reg.lastIndex++
+				for (let idx = reg.lastIndex; idx < end; idx++) {
+					const next = input.slice(idx, idx + 2)
+					if (/^\s/.test(next)) {
+						isEmpty = true
+						reg.lastIndex = idx
+					} else if (/\/\/|\/\*/.test(next)) {
+						isEmpty = true
+						break
+					} else {
+						break
+					}
 				}
 			} else {
 				isEmpty = true
