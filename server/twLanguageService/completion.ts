@@ -116,6 +116,17 @@ function classesCompletion(
 							command: "editor.action.triggerSuggest",
 						},
 					}
+				} else if (label === "placeholder") {
+					return {
+						label: label + ":",
+						sortText: "*" + label,
+						kind: lsp.CompletionItemKind.Method,
+						data: { type: "variant", data, variants: userVariants, kind },
+						command: {
+							title: "Suggest",
+							command: "editor.action.triggerSuggest",
+						},
+					}
 				} else {
 					const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
 					return {

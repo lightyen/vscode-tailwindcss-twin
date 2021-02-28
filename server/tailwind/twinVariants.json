@@ -51,5 +51,20 @@
   "svg": ["svg"],
   "target": [":target"],
   "valid": [":valid"],
-  "visited": [":visited"]
+  "visited": [":visited"],
+  "placeholder": ["::placeholder"],
+  "screen": ["@media screen"],
+  "print": ["@media print"],
+  "landscape": ["@media (orientation: landscape)"],
+  "portrait": ["@media (orientation: portrait)"],
+  "any-pointer-none": ["@media (any-pointer: none)"],
+  "any-pointer-fine": ["@media (any-pointer: fine)"],
+  "any-pointer-coarse": ["@media (any-pointer: coarse)"],
+  "pointer-none": ["@media (pointer: none)"],
+  "pointer-fine": ["@media (pointer: fine)"],
+  "pointer-coarse": ["@media (pointer: coarse)"],
+  "any-hover": ["@media (any-hover: hover)"],
+  "any-hover-none": ["@media (any-hover: none)"],
+  "can-hover": ["@media (hover: hover)"],
+  "cant-hover": ["@media (hover: none)"]
 }
