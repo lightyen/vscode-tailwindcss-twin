@@ -38,6 +38,7 @@ export class TailwindLanguageService implements LanguageService {
 		this.options = { ...this.options, ...setting }
 	}
 	isReady() {
+		if (!this.options.enabled) return false
 		return !!this.state.classnames
 	}
 	onCompletion(params: lsp.TextDocumentPositionParams) {
@@ -75,12 +76,14 @@ export class TailwindLanguageService implements LanguageService {
 		)
 	}
 	async provideSemanticTokens(params: lsp.SemanticTokensParams) {
-		if (!this.isReady()) return null
+		const builder = new lsp.SemanticTokensBuilder()
+		if (!this.isReady()) return builder.build()
 		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return await idebounce(
 			"provideSemanticTokens" + document.uri,
 			provideSemanticTokens,
+			builder,
 			document,
 			this.state,
 			this.options,

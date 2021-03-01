@@ -31,11 +31,11 @@ enum BlockKind {
 }
 
 export default function provideSemanticTokens(
+	builder: lsp.SemanticTokensBuilder,
 	document: TextDocument,
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.SemanticTokens {
-	const builder = new lsp.SemanticTokensBuilder()
 	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
 
 	for (const { token, kind } of tokens) {

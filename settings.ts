@@ -1,4 +1,5 @@
 export interface Settings {
+	enabled: boolean
 	colorDecorators: boolean | null
 	references: boolean
 	preferVariantWithParentheses: boolean

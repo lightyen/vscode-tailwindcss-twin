@@ -193,6 +193,12 @@ class Server {
 				let needToRenderColors = false
 				let needToDiagnostics = false
 
+				if (this.settings.enabled !== extSettings.enabled) {
+					this.settings.enabled = extSettings.enabled
+					needToUpdate = true
+					console.log(`enabled = ${this.settings.enabled}`)
+				}
+
 				if (this.settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
 					this.settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
 					needToUpdate = true
