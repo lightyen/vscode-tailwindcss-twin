@@ -6,7 +6,16 @@
       { "runtime": "automatic", "importSource": "@emotion/react" }
     ]
   ],
-  "plugins": ["@babel/plugin-transform-runtime", "@emotion", "macros"],
+  "plugins": [
+    "@babel/plugin-transform-runtime",
+    "macros",
+    [
+      "@emotion",
+      {
+        "autoLabel": "always"
+      }
+    ]
+  ],
   "env": {
     "development": {
       "plugins": ["react-refresh/babel"]
