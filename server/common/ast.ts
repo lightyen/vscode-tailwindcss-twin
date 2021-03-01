@@ -187,8 +187,8 @@ function findAllNode(
 		.flat()
 }
 
-function checkImportTwin(source: ts.SourceFile): Features {
-	let twProp = false
+function checkImportTwin(source: ts.SourceFile, twPropChecking = true): Features {
+	let twProp = !twPropChecking
 	let twTemplate = false
 	let themeTemplate: string = undefined
 	source.forEachChild(node => {
@@ -227,8 +227,8 @@ function checkImportTwin(source: ts.SourceFile): Features {
 	return { twProp, twTemplate, themeTemplate }
 }
 
-export function findToken(source: ts.SourceFile, position: number): TokenResult {
-	const features = checkImportTwin(source)
+export function findToken(source: ts.SourceFile, position: number, twPropChecking = true): TokenResult {
+	const features = checkImportTwin(source, twPropChecking)
 	const node = findNode(source, source, position, features)
 	if (node) {
 		return transfromToken(node, source)
@@ -236,8 +236,8 @@ export function findToken(source: ts.SourceFile, position: number): TokenResult 
 	return undefined
 }
 
-export function findAllToken(source: ts.SourceFile): TokenResult[] {
-	const features = checkImportTwin(source)
+export function findAllToken(source: ts.SourceFile, twPropChecking = true): TokenResult[] {
+	const features = checkImportTwin(source, twPropChecking)
 	try {
 		const nodes = findAllNode(source, source, features)
 		return nodes.map(node => transfromToken(node, source))
@@ -246,7 +246,17 @@ export function findAllToken(source: ts.SourceFile): TokenResult[] {
 	}
 }
 
-export function canMatch(document: TextDocument, position: lsp.Position, hover = false): TokenResult {
+export function canMatch({
+	document,
+	position,
+	hover = false,
+	twPropChecking = true,
+}: {
+	document: TextDocument
+	position: lsp.Position
+	hover?: boolean
+	twPropChecking?: boolean
+}): TokenResult {
 	const pos = document.offsetAt(position) + (hover ? 1 : 0)
 	let scriptKind: ts.ScriptKind
 	switch (document.languageId) {
@@ -267,7 +277,7 @@ export function canMatch(document: TextDocument, position: lsp.Position, hover =
 	}
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		const token = findToken(source, pos)
+		const token = findToken(source, pos, twPropChecking)
 		if (!token) {
 			return undefined
 		}
@@ -276,7 +286,13 @@ export function canMatch(document: TextDocument, position: lsp.Position, hover =
 	return undefined
 }
 
-export function findAllMatch(document: TextDocument): TokenResult[] {
+export function findAllMatch({
+	document,
+	twPropChecking = true,
+}: {
+	document: TextDocument
+	twPropChecking?: boolean
+}): TokenResult[] {
 	let scriptKind: ts.ScriptKind
 	switch (document.languageId) {
 		case "typescript":
@@ -296,7 +312,7 @@ export function findAllMatch(document: TextDocument): TokenResult[] {
 	}
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		return findAllToken(source)
+		return findAllToken(source, twPropChecking)
 	}
 	return []
 }

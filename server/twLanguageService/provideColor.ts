@@ -12,13 +12,13 @@ import parseThemeValue from "~/common/parseThemeValue"
 export default function provideColor(
 	document: TextDocument,
 	state: Tailwind,
-	_options: ServiceOptions,
+	options: ServiceOptions,
 	cache: Cache,
 	_result: lsp.ColorInformation[],
 ) {
 	const colors: ColorInformation[] = []
 	const cachedResult = cache[document.uri.toString()]
-	const tokens = findAllMatch(document)
+	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
 		const twin = kind === PatternKind.Twin

@@ -33,10 +33,10 @@ enum BlockKind {
 export default function provideSemanticTokens(
 	document: TextDocument,
 	state: Tailwind,
-	{ colorDecorators }: ServiceOptions,
+	options: ServiceOptions,
 ): lsp.SemanticTokens {
 	const builder = new lsp.SemanticTokensBuilder()
-	const tokens = findAllMatch(document)
+	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
 
 	for (const { token, kind } of tokens) {
 		const [start, , value] = token
@@ -44,7 +44,7 @@ export default function provideSemanticTokens(
 		const getPosition = (offset: number) => document.positionAt(start + offset)
 
 		if (kind === PatternKind.TwinTheme) {
-			renderThemeValue(token, getPosition, builder, state, colorDecorators)
+			renderThemeValue(token, getPosition, builder, state, options.colorDecorators)
 			continue
 		}
 
@@ -58,7 +58,7 @@ export default function provideSemanticTokens(
 			if (kind === PatternKind.TwinCssProperty) {
 				return true
 			}
-			if (!colorDecorators) return true
+			if (!options.colorDecorators) return true
 			if (node.kind === NodeKind.ClassName) {
 				const color = state.classnames.getColorInfo(node.token.text)
 				if (!color || Object.keys(color).length === 0) {

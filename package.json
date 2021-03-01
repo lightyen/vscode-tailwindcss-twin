@@ -170,6 +170,11 @@
         "tailwindcss.fallbackDefaultConfig": {
           "type": "boolean",
           "default": true
+        },
+        "tailwindcss.twPropImportChecking": {
+          "description": "tw prop import checking(set it to false if using with babel-plugin-twin)",
+          "type": "boolean",
+          "default": true
         }
       }
     },
