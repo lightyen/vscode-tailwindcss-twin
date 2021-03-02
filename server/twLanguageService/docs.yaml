@@ -404,8 +404,108 @@
 : name: twin.macro
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md":
-  name: Container (twin.macro)
+  name: twin.macro
   desc: |
     Custom paddings on the `container` class were introduced in Tailwind v1.4 and also in Twin shortly after.
 
     Twin adds another feature and that is custom independent left/right margins and paddings. This can be used on layouts that are a little more creative with their horizontal layout positioning.
+
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::before":
+  name: twin.macro
+  desc: "In CSS, **::before** creates a pseudo-element that is the first child of the selected element. It is often used to add cosmetic content to an element with the `content` property. It is inline by default."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::after":
+  name: twin.macro
+  desc: "In CSS, **::after** creates a pseudo-element that is the last child of the selected element. It is often used to add cosmetic content to an element with the `content` property. It is inline by default."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:link":
+  name: twin.macro
+  desc: "The **:link** CSS pseudo-class represents an element that has not yet been visited. It matches every unvisited `<a>` or `<area>` element that has an `href` attribute."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:target":
+  name: twin.macro
+  desc: "The **:target** CSS pseudo-class represents a unique element (the *target element*) with an `id` matching the URL's fragment."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:checked":
+  name: twin.macro
+  desc: 'The **:checked** CSS pseudo-class selector represents any radio (`<input type="radio">`), checkbox (`<input type="checkbox">`), or option (`<option>` in a `<select>`) element that is checked or toggled to an `on` state.'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:default":
+  name: twin.macro
+  desc: "The **:default** CSS pseudo-class selects form elements that are the default in a group of related elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled":
+  name: twin.macro
+  desc: "The **:enabled** CSS pseudo-class represents any enabled element. An element is enabled if it can be activated (selected, clicked on, typed into, etc.) or accept focus. The element also has a disabled state, in which it can't be activated or accept focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate":
+  name: twin.macro
+  desc: "The **:indeterminate** CSS pseudo-class represents any form element whose state is `indeterminate`, such as checkboxes which have their HTML indeterminate attribute set to `true`, radio buttons which are members of a group in which all radio buttons are unchecked, and indeterminate `<progress>` elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid":
+  name: twin.macro
+  desc: "The **:invalid** CSS pseudo-class represents any `<input>` or other `<form>` element whose contents fail to validate."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:valid":
+  name: twin.macro
+  desc: "The **:valid** CSS pseudo-class represents any `<input>` or other `<form>` element whose contents validate successfully. This allows to easily make valid fields adopt an appearance that helps the user confirm that their data is formatted properly."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:optional":
+  name: twin.macro
+  desc: "The **:optional** CSS pseudo-class represents any `<input>`, `<select>`, or `<textarea>` element that does not have the `required` attribute set on it."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:required":
+  name: twin.macro
+  desc: "The **:required** CSS pseudo-class represents any `<input>`, `<select>`, or `<textarea>` element that has the `required` attribute set on it."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown":
+  name: twin.macro
+  desc: "The **:placeholder-shown** CSS pseudo-class represents any `<input>` or `<textarea>` element that is currently displaying placeholder text."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only":
+  name: twin.macro
+  desc: "The **:read-only** CSS pseudo-class represents an element (such as `input` or `textarea`) that is not editable by the user."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:read-write":
+  name: twin.macro
+  desc: "The **:read-write** CSS pseudo-class represents an element (such as `input` or `textarea`) that is editable by the user."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled":
+  name: twin.macro
+  desc: "The **:disabled** CSS pseudo-class represents any disabled element. An element is disabled if it can't be activated (selected, clicked on, typed into, etc.) or accept focus. The element also has an enabled state, in which it can be activated or accept focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type":
+  name: twin.macro
+  desc: "The **:first-of-type** CSS pseudo-class represents the first element of its type among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type":
+  name: twin.macro
+  desc: "The **:last-of-type** CSS pseudo-class represents the last element of its type among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child":
+  name: twin.macro
+  desc: "The **:first-child** CSS pseudo-class represents the first element among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child":
+  name: twin.macro
+  desc: "The **:only-child** CSS pseudo-class represents an element without any siblings. This is the same as `:first-child:last-child` or `:nth-child(1):nth-last-child(1)`, but with a lower specificity."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type":
+  name: twin.macro
+  desc: "The **:only-of-type** CSS pseudo-class represents an element that has no siblings of the same type."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type":
+  name: twin.macro
+  desc: "The **:nth-of-type()** CSS pseudo-class matches elements of a given type (tag name), based on their position among a group of siblings."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors":
+  name: twin.macro
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator":
+  name: twin.macro
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator":
+  name: twin.macro
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media":
+  name: twin.macro
+  desc: |
+    The **@media** CSS [at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/At-rule) can be used to apply part of a style sheet based on the result of one or more [media queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries). With it, you specify a media query and a block of CSS to apply to the document if and only if the media query matches the device on which the content is being used.
+
+    Note: In JavaScript, the rules created using @media can be accessed with the CSSMediaRule CSS object model interface.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation":
+  name: twin.macro
+  desc: "The **orientation** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test the orientation of the [viewport](https://developer.mozilla.org/en-US/docs/Glossary/Viewport) (or the page box, for [paged media](https://developer.mozilla.org/en-US/docs/Web/CSS/Paged_Media))."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-pointer":
+  name: twin.macro
+  desc: "The **any-pointer** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) tests whether the user has *any* pointing device (such as a mouse), and if so, how accurate it is."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer":
+  name: twin.macro
+  desc: |
+    The **pointer** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) tests whether the user has a pointing device (such as a mouse), and if so, how accurate the *primary* pointing device is.
+
+    Note: If you want to test the accuracy of any pointing device, use any-pointer instead.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover":
+  name: twin.macro
+  desc: "The **any-hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether *any* available input mechanism can hover over elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover":
+  name: twin.macro
+  desc: "The **hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether the user's *primary* input mechanism can hover over elements."
