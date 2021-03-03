@@ -36,7 +36,7 @@ export default function provideSemanticTokens(
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.SemanticTokens {
-	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
+	const tokens = findAllMatch(document, options.jsxPropImportChecking)
 
 	for (const { token, kind } of tokens) {
 		const [start, , value] = token

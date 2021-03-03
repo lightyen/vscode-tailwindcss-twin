@@ -211,10 +211,10 @@ class Server {
 					console.log(`references = ${this.settings.references}`)
 				}
 
-				if (this.settings.twPropImportChecking !== extSettings.twPropImportChecking) {
-					this.settings.twPropImportChecking = extSettings.twPropImportChecking
+				if (this.settings.jsxPropImportChecking !== extSettings.jsxPropImportChecking) {
+					this.settings.jsxPropImportChecking = extSettings.jsxPropImportChecking
 					needToUpdate = true
-					console.log(`twPropImportChecking = ${this.settings.twPropImportChecking}`)
+					console.log(`jsxPropImportChecking = ${this.settings.jsxPropImportChecking}`)
 				}
 
 				const colorDecorators = extSettings.colorDecorators ?? editor.colorDecorators

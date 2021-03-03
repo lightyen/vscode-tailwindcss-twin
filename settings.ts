@@ -11,5 +11,5 @@ export interface Settings {
 		emptyGroup: boolean
 		emptyCssProperty: boolean
 	}
-	twPropImportChecking: boolean
+	jsxPropImportChecking: boolean
 }

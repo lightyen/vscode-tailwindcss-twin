@@ -18,7 +18,7 @@ export default function provideColor(
 ) {
 	const colors: ColorInformation[] = []
 	const cachedResult = cache[document.uri.toString()]
-	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
+	const tokens = findAllMatch(document, options.jsxPropImportChecking)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
 		const twin = kind === PatternKind.Twin

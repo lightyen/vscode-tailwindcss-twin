@@ -19,7 +19,7 @@ export default function hover(
 	options: ServiceOptions,
 ): lsp.Hover {
 	try {
-		const result = canMatch({ document, position, hover: true, twPropChecking: options.twPropImportChecking })
+		const result = canMatch(document, position, true, options.jsxPropImportChecking)
 		if (!result) {
 			return undefined
 		}

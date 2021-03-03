@@ -18,7 +18,7 @@ const csspropSearcher = new Fuse(cssProperties, { includeScore: true })
 export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
 	const uri = document.uri.toString()
-	const tokens = findAllMatch({ document, twPropChecking: options.twPropImportChecking })
+	const tokens = findAllMatch(document, options.jsxPropImportChecking)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
 		if (kind === PatternKind.TwinTheme) {

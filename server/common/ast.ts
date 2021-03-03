@@ -13,7 +13,7 @@ export enum PatternKind {
 }
 
 interface Features {
-	twProp: boolean
+	jsxProp: boolean
 	twTemplate: boolean
 	themeTemplate: string
 }
@@ -69,7 +69,7 @@ function findNode(
 	}
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
-		if (features.twProp && id === "tw") {
+		if (features.jsxProp && id === "tw") {
 			const token = find(source, node, ts.isStringLiteral, position)
 			if (!token) {
 				return undefined
@@ -78,7 +78,7 @@ function findNode(
 				return undefined
 			}
 			return { token, kind: PatternKind.Twin }
-		} else if (features.twProp && id === "cs") {
+		} else if (features.jsxProp && id === "cs") {
 			const token = find(source, node, ts.isStringLiteral, position)
 			if (!token) {
 				return undefined
@@ -135,13 +135,13 @@ function findAllNode(
 ): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> {
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
-		if (features.twProp && id === "tw") {
+		if (features.jsxProp && id === "tw") {
 			const token = find(source, node, ts.isStringLiteral)
 			if (!token) {
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
-		} else if (features.twProp && id === "cs") {
+		} else if (features.jsxProp && id === "cs") {
 			const token = find(source, node, ts.isStringLiteral)
 			if (!token) {
 				return undefined
@@ -187,15 +187,15 @@ function findAllNode(
 		.flat()
 }
 
-function checkImportTwin(source: ts.SourceFile, twPropChecking = true): Features {
-	let twProp = !twPropChecking
+function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Features {
+	let jsxProp = !jsxPropChecking
 	let twTemplate = false
 	let themeTemplate: string = undefined
 	source.forEachChild(node => {
 		if (ts.isImportDeclaration(node)) {
 			const token = find(source, node, ts.isStringLiteral)
 			if (token?.text === "twin.macro") {
-				twProp = true
+				jsxProp = true
 				const clause = find(source, node, ts.isImportClause)
 				if (clause) {
 					const first = clause.getChildAt(0, source)
@@ -224,11 +224,11 @@ function checkImportTwin(source: ts.SourceFile, twPropChecking = true): Features
 			}
 		}
 	})
-	return { twProp, twTemplate, themeTemplate }
+	return { jsxProp, twTemplate, themeTemplate }
 }
 
-export function findToken(source: ts.SourceFile, position: number, twPropChecking = true): TokenResult {
-	const features = checkImportTwin(source, twPropChecking)
+export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): TokenResult {
+	const features = checkImportTwin(source, jsxPropChecking)
 	const node = findNode(source, source, position, features)
 	if (node) {
 		return transfromToken(node, source)
@@ -236,8 +236,8 @@ export function findToken(source: ts.SourceFile, position: number, twPropCheckin
 	return undefined
 }
 
-export function findAllToken(source: ts.SourceFile, twPropChecking = true): TokenResult[] {
-	const features = checkImportTwin(source, twPropChecking)
+export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): TokenResult[] {
+	const features = checkImportTwin(source, jsxPropChecking)
 	try {
 		const nodes = findAllNode(source, source, features)
 		return nodes.map(node => transfromToken(node, source))
@@ -246,17 +246,12 @@ export function findAllToken(source: ts.SourceFile, twPropChecking = true): Toke
 	}
 }
 
-export function canMatch({
-	document,
-	position,
-	hover = false,
-	twPropChecking = true,
-}: {
-	document: TextDocument
-	position: lsp.Position
-	hover?: boolean
-	twPropChecking?: boolean
-}): TokenResult {
+export function canMatch(
+	document: TextDocument,
+	position: lsp.Position,
+	hover: boolean,
+	jsxPropChecking = true,
+): TokenResult {
 	const pos = document.offsetAt(position) + (hover ? 1 : 0)
 	let scriptKind: ts.ScriptKind
 	switch (document.languageId) {
@@ -277,7 +272,7 @@ export function canMatch({
 	}
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		const token = findToken(source, pos, twPropChecking)
+		const token = findToken(source, pos, jsxPropChecking)
 		if (!token) {
 			return undefined
 		}
@@ -286,13 +281,7 @@ export function canMatch({
 	return undefined
 }
 
-export function findAllMatch({
-	document,
-	twPropChecking = true,
-}: {
-	document: TextDocument
-	twPropChecking?: boolean
-}): TokenResult[] {
+export function findAllMatch(document: TextDocument, jsxPropChecking = true): TokenResult[] {
 	let scriptKind: ts.ScriptKind
 	switch (document.languageId) {
 		case "typescript":
@@ -312,7 +301,7 @@ export function findAllMatch({
 	}
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		return findAllToken(source, twPropChecking)
+		return findAllToken(source, jsxPropChecking)
 	}
 	return []
 }

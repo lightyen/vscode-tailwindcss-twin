@@ -30,7 +30,7 @@ export default function completion(
 	options: ServiceOptions,
 ): lsp.CompletionList {
 	try {
-		const result = canMatch({ document, position, twPropChecking: options.twPropImportChecking })
+		const result = canMatch(document, position, false, options.jsxPropImportChecking)
 		if (!result) {
 			return null
 		}
