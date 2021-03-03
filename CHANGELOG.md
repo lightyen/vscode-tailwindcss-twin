@@ -2,7 +2,15 @@
 
 ## 0.7.0
 
-Support comments
+- allow comments
+- support prefix
+
+### Changes
+
+- add setting: `enabled`
+- add setting: `jsxPropImportChecking`
+- add more new variants
+- add more docs
 
 ## 0.6.5
 

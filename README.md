@@ -38,7 +38,9 @@ Support ONLY `react` and `twin.macro`
     "emptyCssProperty": true
   },
   "tailwindcss.preferVariantWithParentheses": false,
-  "tailwindcss.fallbackDefaultConfig": true
+  "tailwindcss.fallbackDefaultConfig": true,
+  "tailwindcss.enabled": true,
+  "tailwindcss.jsxPropImportChecking": true
 }
 ```
 
@@ -74,6 +76,7 @@ Support ONLY `react` and `twin.macro`
 | cssProperty | function   |
 | brackets    | variable   |
 | important   | operator   |
+| comment     | comment    |
 
 ### Custom CompletionList Panel
 
