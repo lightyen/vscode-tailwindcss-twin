@@ -10,9 +10,7 @@ export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
 const selectorProcessor = parser()
 
-const TWIN_CONTENT = {
-	content: [{ __source: "utilities", __pseudo: [], __context: [], decls: { content: ['""'] } }],
-}
+const TWIN_CONTENT = [{ __source: "utilities", __pseudo: [], __context: [], decls: { content: ['""'] } }]
 
 interface ClassName {
 	scope?: string
@@ -78,6 +76,7 @@ export function getClassNames(rule: Rule, notRules: Record<string, Set<string>>)
 export function extractClassNames(
 	[_base, components, utilities]: [Result, Result, Result],
 	darkMode: false | "media" | "class",
+	prefix: string,
 	twin = true,
 ) {
 	return parseResults(
@@ -87,6 +86,7 @@ export function extractClassNames(
 			{ source: "utilities", result: utilities },
 		],
 		darkMode,
+		prefix,
 		twin,
 	)
 }
@@ -94,6 +94,7 @@ export function extractClassNames(
 export function parseResults(
 	groups: Array<{ source: string; result: Result }>,
 	darkMode: false | "media" | "class" = false,
+	prefix: string,
 	twin = true,
 ) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -433,7 +434,7 @@ export function parseResults(
 				dictionary = this.dictionary
 			}
 			if (twinPattern) {
-				dictionary = { ...dictionary, ...TWIN_CONTENT }
+				dictionary = { ...dictionary, ...{ [prefix + "content"]: TWIN_CONTENT } }
 			}
 			return dictionary
 		},
@@ -512,9 +513,7 @@ export function parseResults(
 			return ([label, info]) => {
 				if (twinPattern) {
 					switch (label) {
-						case "group":
-							return false
-						case "container":
+						case prefix + "container":
 							return variants?.length === 0
 					}
 				}

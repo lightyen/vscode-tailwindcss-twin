@@ -12,7 +12,8 @@ export default function completionResolve(
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
-	if (item.kind === lsp.CompletionItemKind.Constant && item.label === "container") {
+	const keyword = item.label.slice(state.config.prefix.length)
+	if (item.kind === lsp.CompletionItemKind.Constant && keyword === "container") {
 		resolveContainer(item, state, options)
 		return item
 	}
@@ -20,7 +21,7 @@ export default function completionResolve(
 	item = resolve(item, state, options)
 
 	if (options.references && typeof item.documentation === "object") {
-		const refs = getReferenceLinks(item.label)
+		const refs = getReferenceLinks(keyword)
 		if (refs.length == 1) {
 			item.documentation.value += "\n" + `[Reference](${refs[0].url})`
 		} else if (refs.length > 0) {
@@ -50,7 +51,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	if (options.references) {
-		item.detail = getName(item.label)
+		item.detail = getName(item.label.slice(state.config.prefix.length))
 	}
 
 	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
@@ -173,13 +174,16 @@ function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: Se
 		}
 	}
 
-	const rules = state.classnames.getClassNameRule([], false, "container")
+	const label_container = state.config.prefix + "container"
+	const rules = state.classnames.getClassNameRule([], false, label_container)
 	const lines = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {
 			const hasContext = r.__context.length > 0
-			lines.push(hasContext ? `${r.__context.join(" ")} {\n` + "\t.container {" : ".container {")
+			lines.push(
+				hasContext ? `${r.__context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`,
+			)
 			for (const key in r.decls) {
 				for (const value of r.decls[key]) {
 					lines.push(hasContext ? `\t\t${key}: ${value};` : `\t${key}: ${value};`)

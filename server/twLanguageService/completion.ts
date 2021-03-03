@@ -450,7 +450,7 @@ function createCompletionItem({
 		sortText: (label.slice(0, 1) === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
-	if (item.label === "container") {
+	if (item.label === state.config.prefix + "container") {
 		item.detail = "container"
 		return item
 	}

@@ -84,7 +84,8 @@ export default function hover(
 				return undefined
 			}
 
-			if (selection.token.token.text === "container") {
+			const keyword = text.slice(state.config.prefix.length)
+			if (keyword === "container") {
 				return resolveContainer({ kind, range, selection, state, options })
 			}
 
@@ -101,12 +102,12 @@ export default function hover(
 
 			let title = ""
 			if (options.references) {
-				const type = getDescription(text)
+				const type = getDescription(keyword)
 				if (type) {
 					title = type + "\n"
 				}
 
-				const refs = getReferenceLinks(text)
+				const refs = getReferenceLinks(keyword)
 				if (refs.length > 0) {
 					title += "\n" + refs.map(ref => `[Reference](${ref.url}) `).join("\n") + "\n"
 				}
@@ -349,13 +350,16 @@ function resolveContainer({
 		contents.value += "\n\n---\n\n"
 	}
 
-	const rules = state.classnames.getClassNameRule([], kind === PatternKind.Twin, "container")
+	const label_container = state.config.prefix + "container"
+	const rules = state.classnames.getClassNameRule([], kind === PatternKind.Twin, label_container)
 	const lines = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {
 			const hasContext = r.__context.length > 0
-			lines.push(hasContext ? `${r.__context.join(" ")} {\n` + "\t.container {" : ".container {")
+			lines.push(
+				hasContext ? `${r.__context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`,
+			)
 			for (const key in r.decls) {
 				for (const value of r.decls[key]) {
 					lines.push(

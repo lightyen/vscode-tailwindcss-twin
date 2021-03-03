@@ -67,12 +67,14 @@ export class Tailwind {
 		this.config.separator = __INNER_TAILWIND_SEPARATOR__
 
 		// change config for twin
-		this.separator = ":" // always use ":" in twin
+		this.separator = ":"
 		this.config.purge = { enabled: false, content: [] }
 		if (!this.config.darkMode) {
 			this.config.darkMode = "media"
 		}
-		this.config.prefix = undefined
+		if (typeof this.config.prefix !== "string") {
+			this.config.prefix = ""
+		}
 		this.config.important = undefined
 	}
 
@@ -143,7 +145,7 @@ export class Tailwind {
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 		])
 		this.config = this.resolveConfig(this.config)
-		this.classnames = extractClassNames(results, this.config.darkMode)
+		this.classnames = extractClassNames(results, this.config.darkMode, this.config.prefix)
 	}
 
 	/**
