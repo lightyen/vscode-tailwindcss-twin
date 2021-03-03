@@ -93,9 +93,17 @@ export default function provideSemanticTokens(
 				case NodeKind.CssProperty:
 					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
 					break
-				case NodeKind.CssValue:
+				case NodeKind.CssValue: {
+					const end = getPosition(node.token.end)
 					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					if (pos.line < end.line) {
+						for (let line = pos.line + 1; line < end.line; line++) {
+							builder.push(line, 0, length, BlockKind.CssProperty, 0)
+						}
+						builder.push(end.line, 0, end.character, BlockKind.CssProperty, 0)
+					}
 					break
+				}
 				case NodeKind.CssBracket:
 					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
 					break
