@@ -14,8 +14,8 @@ export enum PatternKind {
 
 interface Features {
 	jsxProp: boolean
-	twTemplate: boolean
-	themeTemplate: string
+	twTemplate: Set<string>
+	themeTemplate: Set<string>
 }
 
 export type TokenResult = { token: tw.Token; kind: PatternKind }
@@ -98,7 +98,7 @@ function findNode(
 		}
 
 		const id = node.getFirstToken(source).getText(source)
-		if (features.twTemplate && id === "tw") {
+		if (features.twTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
 				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
@@ -108,7 +108,7 @@ function findNode(
 			} else {
 				return undefined
 			}
-		} else if (features.themeTemplate && id === features.themeTemplate) {
+		} else if (features.themeTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
 				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
@@ -159,14 +159,14 @@ function findAllNode(
 
 		const id = node.getFirstToken(source).getText(source)
 
-		if (features.twTemplate && id === "tw") {
+		if (features.twTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
 				return [{ token: literal, kind: PatternKind.Twin }]
 			} else {
 				return undefined
 			}
-		} else if (features.themeTemplate && id === features.themeTemplate) {
+		} else if (features.themeTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
 				return [{ token: literal, kind: PatternKind.TwinTheme }]
@@ -189,8 +189,8 @@ function findAllNode(
 
 function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Features {
 	let jsxProp = !jsxPropChecking
-	let twTemplate = false
-	let themeTemplate: string = undefined
+	const twTemplate = new Set<string>()
+	const themeTemplate = new Set<string>()
 	source.forEachChild(node => {
 		if (ts.isImportDeclaration(node)) {
 			const token = find(source, node, ts.isStringLiteral)
@@ -198,27 +198,36 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 				jsxProp = true
 				const clause = find(source, node, ts.isImportClause)
 				if (clause) {
-					const first = clause.getChildAt(0, source)
-					if (first?.getText(source) === "tw") {
-						twTemplate = true
-					}
-					if (!themeTemplate) {
-						const namedImports = find(source, clause, ts.isNamedImports)
-						if (namedImports) {
-							namedImports.forEachChild(node => {
-								if (ts.isImportSpecifier(node)) {
-									if (node.getFirstToken(source)?.getText(source) === "theme") {
-										themeTemplate = "theme"
-									}
-									if (themeTemplate) {
-										const b = node.getLastToken(source)
-										if (b) themeTemplate = b.getText(source)
-										return true
+					clause.forEachChild(node => {
+						if (ts.isIdentifier(node)) {
+							const identifier = node.getText(source)
+							if (!twTemplate.has(identifier)) {
+								twTemplate.add(identifier)
+							}
+						}
+					})
+
+					ts.getJSDocReadonlyTag
+					const namedImports = find(source, clause, ts.isNamedImports)
+					if (namedImports) {
+						namedImports.forEachChild(node => {
+							if (ts.isImportSpecifier(node)) {
+								if (node.getFirstToken(source)?.getText(source) === "theme") {
+									const count = node.getChildCount(source)
+									if (count === 1) {
+										const identifier = node.getFirstToken(source)?.getText(source)
+										if (identifier && !themeTemplate.has(identifier)) {
+											themeTemplate.add(identifier)
+										}
+									} else if (count === 3) {
+										const identifier = node.getLastToken(source)?.getText(source)
+										if (identifier && !themeTemplate.has(identifier)) {
+											themeTemplate.add(identifier)
+										}
 									}
 								}
-								return undefined
-							})
-						}
+							}
+						})
 					}
 				}
 			}
