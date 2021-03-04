@@ -6,10 +6,12 @@ import * as tw from "./twin"
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"
 
+const twinLabel = "twin.macro"
+
 export enum PatternKind {
-	Twin = 1,
-	TwinTheme = 2,
-	TwinCssProperty = 3,
+	Twin = "tw",
+	TwinTheme = "theme",
+	TwinCssProperty = "cs",
 }
 
 interface Features {
@@ -28,7 +30,7 @@ function transfromToken(
 	const start = result.token.getStart(source) + 1
 	let end = result.token.getEnd()
 	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText : result.token.text
-	if (text.endsWith("'") || text.endsWith('"') || text.endsWith("`")) {
+	if (/['"`]$/.test(text)) {
 		end -= 1
 		return { kind: result.kind, token: tw.createToken(start, end, value) }
 	} else {
@@ -69,7 +71,7 @@ function findNode(
 	}
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
-		if (features.jsxProp && id === "tw") {
+		if (features.jsxProp && id === PatternKind.Twin) {
 			const token = find(source, node, ts.isStringLiteral, position)
 			if (!token) {
 				return undefined
@@ -78,7 +80,7 @@ function findNode(
 				return undefined
 			}
 			return { token, kind: PatternKind.Twin }
-		} else if (features.jsxProp && id === "cs") {
+		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
 			const token = find(source, node, ts.isStringLiteral, position)
 			if (!token) {
 				return undefined
@@ -135,13 +137,13 @@ function findAllNode(
 ): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> {
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
-		if (features.jsxProp && id === "tw") {
+		if (features.jsxProp && id === PatternKind.Twin) {
 			const token = find(source, node, ts.isStringLiteral)
 			if (!token) {
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
-		} else if (features.jsxProp && id === "cs") {
+		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
 			const token = find(source, node, ts.isStringLiteral)
 			if (!token) {
 				return undefined
@@ -194,7 +196,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 	source.forEachChild(node => {
 		if (ts.isImportDeclaration(node)) {
 			const token = find(source, node, ts.isStringLiteral)
-			if (token?.text === "twin.macro") {
+			if (token?.text === twinLabel) {
 				jsxProp = true
 				const clause = find(source, node, ts.isImportClause)
 				if (clause) {
@@ -212,7 +214,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 					if (namedImports) {
 						namedImports.forEachChild(node => {
 							if (ts.isImportSpecifier(node)) {
-								if (node.getFirstToken(source)?.getText(source) === "theme") {
+								if (node.getFirstToken(source)?.getText(source) === PatternKind.TwinTheme) {
 									const count = node.getChildCount(source)
 									if (count === 1) {
 										const identifier = node.getFirstToken(source)?.getText(source)
