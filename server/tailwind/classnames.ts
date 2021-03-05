@@ -280,12 +280,16 @@ export function parseResults(
 				}
 
 				let color: chroma.Color
-				if (m.groups?.r) {
-					const { r, g, b } = m.groups
-					color = chroma(+r, +g, +b)
-				} else {
-					color = chroma(m[0])
-				}
+				try {
+					if (m.groups?.r) {
+						const { r, g, b } = m.groups
+						color = chroma(+r, +g, +b)
+					} else {
+						color = chroma(m[0])
+					}
+				} catch {}
+
+				if (!color) continue
 
 				const val = color.hex()
 
@@ -603,11 +607,15 @@ export function parseResults(
 					}
 
 					let color: chroma.Color
-					if (m.groups?.r) {
-						const { r, g, b } = m.groups
-						color = chroma(+r, +g, +b)
-					} else {
-						color = chroma(m[0])
+					try {
+						if (m.groups?.r) {
+							const { r, g, b } = m.groups
+							color = chroma(+r, +g, +b)
+						} else {
+							color = chroma(m[0])
+						}
+					} catch {
+						return undefined
 					}
 
 					const val = color.hex()
