@@ -1,10 +1,10 @@
-import parser from "postcss-selector-parser"
-import type { Result, Node, Rule } from "postcss"
 import chroma from "chroma-js"
 import Fuse from "fuse.js"
+import type { Node, Result, Rule } from "postcss"
+import parser from "postcss-selector-parser"
 import __baseVariants from "./baseVariants.json"
-import twinVariants from "./twinVariants.json"
 import { dlv, dset, intersection } from "./common"
+import twinVariants from "./twinVariants.json"
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 

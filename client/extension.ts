@@ -1,10 +1,9 @@
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
-import vscode from "vscode"
 import path from "path"
-
+import { Settings } from "shared"
+import vscode from "vscode"
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
 import colorDecoration from "./colorDecoration"
 import debug from "./debug"
-import { Settings } from "settings"
 
 const CLIENT_ID = "Tailwind Twin IntelliSense"
 

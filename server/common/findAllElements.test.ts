@@ -1,5 +1,5 @@
-import * as tw from "./twin"
 import findAllElements from "./findAllElements"
+import * as tw from "./twin"
 
 test("findAllElements", async () => {
 	const input = `text-gray-100! md:dark:(hover:(text-gray-500 bg-white)) lg:(light:bg-black) ((flex text-center)))))! hover:(maxWidth[100%]!)`

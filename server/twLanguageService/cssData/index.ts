@@ -1,9 +1,9 @@
 import type {
-	IPropertyData,
 	IAtDirectiveData,
+	ICSSDataProvider,
+	IPropertyData,
 	IPseudoClassData,
 	IPseudoElementData,
-	ICSSDataProvider,
 } from "vscode-css-languageservice"
 import { CSSDataManager } from "vscode-css-languageservice/lib/esm/languageFacts/dataManager"
 export * from "./facts"

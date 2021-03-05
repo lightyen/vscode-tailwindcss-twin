@@ -1,6 +1,6 @@
-import * as tw from "./twin"
-import findRightBracket from "./findRightBracket"
 import findRightBlockComment from "./findRightBlockComment"
+import findRightBracket from "./findRightBracket"
+import * as tw from "./twin"
 
 export enum NodeKind {
 	Unknown,

@@ -1,10 +1,9 @@
+import ReactRefreshPlugin from "@pmmmwh/react-refresh-webpack-plugin"
+import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
+import path from "path"
+import type { Configuration } from "webpack"
 import { merge } from "webpack-merge"
 import createBaseConfig from "./webpack.common"
-import type { Configuration } from "webpack"
-import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
-import ReactRefreshPlugin from "@pmmmwh/react-refresh-webpack-plugin"
-
-import path from "path"
 
 process.env.NODE_ENV = "development"
 process.env.PUBLIC_URL = ""

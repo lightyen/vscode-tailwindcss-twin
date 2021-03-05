@@ -1,6 +1,7 @@
+import chroma from "chroma-js"
+import { ColorDecoration } from "shared"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
-import chroma from "chroma-js"
 
 class ColorMap {
 	colorMap = new Map<string, vscode.TextEditorDecorationType>()
@@ -95,14 +96,12 @@ class ColorMap {
 
 export default async function ({ client }: { client: LanguageClient }) {
 	const colorMap = new ColorMap(new vscode.ThemeColor("badge.background"))
-	type ColorInformation = {
-		range: vscode.Range
-		color: string
-		backgroundColor: string
-		borderColor: string
-	}
 
-	function updateDecorations(enabled: boolean, uri: string, colors: ColorInformation[]) {
+	function updateDecorations(
+		enabled: boolean,
+		uri: string,
+		colors: Array<ColorDecoration & { range: vscode.Range }>,
+	) {
 		const editor = vscode.window.visibleTextEditors.find(v => v.document.uri.toString() === uri)
 		if (!editor) {
 			return

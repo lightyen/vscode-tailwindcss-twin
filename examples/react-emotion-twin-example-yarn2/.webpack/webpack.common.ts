@@ -1,15 +1,12 @@
-import packageJSON from "../package.json"
-
-import path from "path"
-import { EnvironmentPlugin } from "webpack"
-import { Configuration } from "webpack"
-
+import glob from "glob"
 // Plugins
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import MiniCssExtractPlugin from "mini-css-extract-plugin"
-import WebpackBarPlugin from "webpackbar"
+import path from "path"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
-import glob from "glob"
+import { Configuration, EnvironmentPlugin } from "webpack"
+import WebpackBarPlugin from "webpackbar"
+import packageJSON from "../package.json"
 
 export default function (): Configuration {
 	const workspaceFolder = path.resolve(__dirname, "..")

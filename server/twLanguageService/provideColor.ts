@@ -1,27 +1,25 @@
+import chroma from "chroma-js"
+import { ColorDecoration } from "shared"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import chroma from "chroma-js"
-import { ColorInformation } from "~/LanguageService"
-import { Tailwind } from "~/tailwind"
-import type { ServiceOptions, Cache } from "."
 import { findAllMatch, PatternKind } from "~/common/ast"
-import * as tw from "~/common/twin"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
+import * as tw from "~/common/twin"
+import { Tailwind } from "~/tailwind"
+import type { Cache, ServiceOptions } from "."
 
-export default function provideColor(
+export function provideColorDecorations(
 	document: TextDocument,
 	state: Tailwind,
 	options: ServiceOptions,
 	cache: Cache,
-	_result: lsp.ColorInformation[],
 ) {
-	const colors: ColorInformation[] = []
+	const colors: Array<ColorDecoration & { range: lsp.Range }> = []
 	const cachedResult = cache[document.uri.toString()]
 	const tokens = findAllMatch(document, options.jsxPropImportChecking)
 	for (const { token, kind } of tokens) {
 		const [start, end, value] = token
-		const twin = kind === PatternKind.Twin
 		const a = document.positionAt(start)
 		const b = document.positionAt(end)
 
@@ -53,46 +51,10 @@ export default function provideColor(
 		}
 
 		const { elementList } = cachedResult[value]
+		const twin = kind === PatternKind.Twin
 
 		for (const c of elementList) {
 			switch (c.kind) {
-				case tw.TokenKind.CssProperty:
-					{
-						// XXX: Experimental
-						// function getColor(value: string): string | undefined {
-						// 	if (value === "transparent") {
-						// 		return value
-						// 	}
-						// 	try {
-						// 		const c = chroma(value)
-						// 		return c.css()
-						// 	} catch {
-						// 		return undefined
-						// 	}
-						// }
-						// const color = getColor(c.value.trim().text)
-						// if (color) {
-						// 	if (color === "transparent") {
-						// 		result.push({
-						// 			range: {
-						// 				start: document.positionAt(start + c.value.start),
-						// 				end: document.positionAt(start + c.value.end),
-						// 			},
-						// 			color: lsp.Color.create(0, 0, 0, 0),
-						// 		})
-						// 	} else {
-						// 		const [red, green, blue, alpha] = chroma(color).rgba()
-						// 		result.push({
-						// 			range: {
-						// 				start: document.positionAt(start + c.value.start),
-						// 				end: document.positionAt(start + c.value.end),
-						// 			},
-						// 			color: lsp.Color.create(red / 255, green / 255, blue / 255, alpha),
-						// 		})
-						// 	}
-						// }
-					}
-					break
 				case tw.TokenKind.ClassName:
 					{
 						if (!state.classnames.isClassName(c.variants.texts, twin, c.token.text)) {

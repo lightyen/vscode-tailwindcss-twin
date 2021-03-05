@@ -1,14 +1,13 @@
-import * as lsp from "vscode-languageserver"
 import type {
-	IPropertyData,
+	HoverSettings,
 	IAtDirectiveData,
+	IPropertyData,
 	IPseudoClassData,
 	IPseudoElementData,
 	IValueData,
-	HoverSettings,
 } from "vscode-css-languageservice"
-
 import { getEntryDescription as _getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/facts"
+import * as lsp from "vscode-languageserver"
 
 export const getEntryDescription = _getEntryDescription as (
 	entry: IPropertyData | IAtDirectiveData | IPseudoClassData | IPseudoElementData | IValueData,

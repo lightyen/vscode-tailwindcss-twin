@@ -1,12 +1,12 @@
-import { TextDocument } from "vscode-languageserver-textdocument"
-import * as lsp from "vscode-languageserver"
 import chroma from "chroma-js"
+import * as lsp from "vscode-languageserver"
+import { TextDocument } from "vscode-languageserver-textdocument"
+import { findAllMatch, PatternKind } from "~/common/ast"
+import { Node, NodeKind, Semantic } from "~/common/parseSemanticTokens"
+import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
+import * as tw from "~/common/twin"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
-import * as tw from "~/common/twin"
-import { findAllMatch, PatternKind } from "~/common/ast"
-import { NodeKind, Semantic, Node } from "~/common/parseSemanticTokens"
-import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
 

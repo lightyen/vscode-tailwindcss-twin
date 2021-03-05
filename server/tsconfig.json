@@ -26,9 +26,9 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
-      "settings": ["../settings.ts"]
+      "shared": ["../shared.ts"]
     }
   },
-  "include": ["**/*.ts", "**/*.json", "../settings.ts"],
+  "include": ["**/*.ts", "**/*.json", "../shared.ts"],
   "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

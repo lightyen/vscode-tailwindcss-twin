@@ -1,16 +1,16 @@
+import produce from "immer"
+import { serializeError } from "serialize-error"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { serializeError } from "serialize-error"
-import produce from "immer"
-import { Tailwind } from "~/tailwind"
-import type { ServiceOptions } from "~/twLanguageService"
 import { canMatch, PatternKind } from "~/common/ast"
-import toKebab from "~/common/toKebab"
-import * as tw from "~/common/twin"
 import { hoverElement } from "~/common/findElement"
 import parseThemeValue from "~/common/parseThemeValue"
+import toKebab from "~/common/toKebab"
+import * as tw from "~/common/twin"
+import { Tailwind } from "~/tailwind"
+import type { ServiceOptions } from "~/twLanguageService"
 import { cssDataManager, getEntryDescription } from "./cssData"
-import { getReferenceLinks, getDescription } from "./referenceLink"
+import { getDescription, getReferenceLinks } from "./referenceLink"
 
 export default function hover(
 	document: TextDocument,

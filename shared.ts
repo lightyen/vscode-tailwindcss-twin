@@ -13,3 +13,9 @@ export interface Settings {
 	}
 	jsxPropImportChecking: boolean
 }
+
+export interface ColorDecoration {
+	color?: string
+	backgroundColor?: string
+	borderColor?: string
+}

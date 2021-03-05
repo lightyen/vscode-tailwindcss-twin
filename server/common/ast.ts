@@ -1,6 +1,6 @@
+import ts from "typescript"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import ts from "typescript"
 import * as tw from "./twin"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers

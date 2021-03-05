@@ -1,22 +1,18 @@
-import * as lsp from "vscode-languageserver/node"
+import { ColorDecoration, Settings } from "shared"
+import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Settings } from "settings"
 
-export interface ColorInformation {
-	range: lsp.Range
-	color?: string
-	backgroundColor?: string
-	borderColor?: string
-}
 export interface LanguageService {
 	init(): Promise<void>
 	reload(settings?: Settings): Promise<void>
 	isReady(): boolean
 	updateSettings(options: Partial<Settings>): void
-	onCompletion: Parameters<lsp.Connection["onCompletion"]>[0]
-	onCompletionResolve: Parameters<lsp.Connection["onCompletionResolve"]>[0]
-	onHover: Parameters<lsp.Connection["onHover"]>[0]
+	onCompletion: (params: lsp.CompletionParams) => Promise<lsp.CompletionList>
+	onCompletionResolve: (params: lsp.CompletionItem) => Promise<lsp.CompletionItem>
+	onHover: (params: lsp.HoverParams) => Promise<lsp.Hover>
 	validate: (document: TextDocument) => Promise<lsp.Diagnostic[]>
-	provideColor: (document: TextDocument, colors: lsp.ColorInformation[]) => Promise<ColorInformation[]>
-	provideSemanticTokens: Parameters<lsp.Connection["languages"]["semanticTokens"]["on"]>[0]
+	provideColorDecorations: (document: TextDocument) => Promise<Array<ColorDecoration & { range: lsp.Range }>>
+	provideSemanticTokens: (params: lsp.SemanticTokensRangeParams) => Promise<lsp.SemanticTokens>
+	onDocumentColor: (params: lsp.DocumentColorParams) => Promise<lsp.ColorInformation[]>
+	onColorPresentation: (params: lsp.ColorPresentationParams) => Promise<lsp.ColorPresentation[]>
 }

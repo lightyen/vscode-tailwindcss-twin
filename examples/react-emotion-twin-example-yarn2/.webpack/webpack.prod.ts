@@ -1,12 +1,11 @@
-import { merge } from "webpack-merge"
-import createBaseConfig from "./webpack.common"
-import type { Configuration } from "webpack"
-import TerserPlugin from "terser-webpack-plugin"
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
-
 import path from "path"
+import TerserPlugin from "terser-webpack-plugin"
+import type { Configuration } from "webpack"
+import { merge } from "webpack-merge"
+import createBaseConfig from "./webpack.common"
 
 process.env.NODE_ENV = "production"
 

@@ -1,19 +1,19 @@
 // dash word issue: https://github.com/microsoft/language-server-protocol/issues/937
 
-import * as lsp from "vscode-languageserver"
-import { TextDocument } from "vscode-languageserver-textdocument"
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
-import type { CSSRuleItem } from "~/tailwind/classnames"
-import type { ServiceOptions } from "~/twLanguageService"
-import type { Tailwind } from "~/tailwind"
+import * as lsp from "vscode-languageserver"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
-import * as tw from "~/common/twin"
 import { completeElement } from "~/common/findElement"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
-import { cssDataManager } from "./cssData"
 import toKebab from "~/common/toKebab"
+import * as tw from "~/common/twin"
+import type { Tailwind } from "~/tailwind"
+import type { CSSRuleItem } from "~/tailwind/classnames"
+import type { ServiceOptions } from "~/twLanguageService"
 import { getCompletionsForDeclarationValue } from "./completionCssPropertyValue"
+import { cssDataManager } from "./cssData"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "variant" | "other"

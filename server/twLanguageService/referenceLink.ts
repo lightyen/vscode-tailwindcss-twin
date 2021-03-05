@@ -1,5 +1,5 @@
-import references from "./references.yaml"
 import docs from "./docs.yaml"
+import references from "./references.yaml"
 
 export interface Reference {
 	name: string

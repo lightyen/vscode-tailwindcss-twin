@@ -1,5 +1,5 @@
+import { completeElement, hoverElement } from "./findElement"
 import * as tw from "./twin"
-import { hoverElement, completeElement } from "./findElement"
 
 test("hover", async () => {
 	const input = `lg:var:class-name! lg:(var:(prop[value])!) !`

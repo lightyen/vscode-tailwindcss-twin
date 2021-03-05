@@ -1,14 +1,13 @@
-import * as lsp from "vscode-languageserver/node"
-import { TextDocument } from "vscode-languageserver-textdocument"
-import { URI } from "vscode-uri"
-import { TailwindLanguageService } from "./twLanguageService"
-import { LanguageService } from "./LanguageService"
-import { FileChangeType } from "vscode-languageserver/node"
-import path from "path"
 import { deepStrictEqual } from "assert"
-import { Settings } from "settings"
+import path from "path"
+import { Settings } from "shared"
+import { TextDocument } from "vscode-languageserver-textdocument"
+import * as lsp from "vscode-languageserver/node"
+import { FileChangeType } from "vscode-languageserver/node"
+import { URI } from "vscode-uri"
 import { requireModule } from "~/common/module"
-import chroma from "chroma-js"
+import { LanguageService } from "./LanguageService"
+import { TailwindLanguageService } from "./twLanguageService"
 
 interface InitializationOptions extends Settings {
 	/** uri */
@@ -72,12 +71,15 @@ class Server {
 				console.log("add default service...")
 				this.addService(this.defaultConfigUri, workspaceFolder, settings)
 			}
+
 			documents.all().forEach(document => {
 				matchService(document.uri, this.services)?.init()
 			})
-			// console.log(Array.from(this.services).map(v => v[0]))
+
 			this.bind()
+
 			progress.done()
+
 			return {
 				capabilities: {
 					workspace: {
@@ -167,12 +169,7 @@ class Server {
 				}
 			}
 			this.configs = Array.from(this.services).map(([cfg]) => cfg)
-
-			await Promise.all(
-				documents.all().map(async document => {
-					await matchService(document.uri, this.services)?.validate(document)
-				}),
-			)
+			documents.all().forEach(document => matchService(document.uri, this.services)?.validate(document))
 		})
 
 		connection.onDidChangeConfiguration(async params => {
@@ -255,14 +252,8 @@ class Server {
 
 				if (needToRenderColors) {
 					await Promise.all(
-						documents.all().map(async document => {
-							const service = matchService(document.uri, this.services)
-							if (service) {
-								connection.sendNotification("tailwindcss/documentColors", {
-									colors: await service.provideColor(document, []),
-									uri: document.uri,
-								})
-							}
+						documents.all().map(document => {
+							this.colorDecorations(document)
 						}),
 					)
 				}
@@ -273,8 +264,7 @@ class Server {
 							const service = matchService(document.uri, this.services)
 							if (service) {
 								service.updateSettings(this.settings)
-								const diagnostics = await service.validate(document)
-								this.connection.sendDiagnostics({ uri: document.uri, diagnostics })
+								await this.diagnostics(document)
 							}
 						}),
 					)
@@ -294,7 +284,7 @@ class Server {
 		if (!this.services.has(configUri)) {
 			try {
 				const configPath = URI.parse(configUri).fsPath
-				console.log("add:", configPath)
+				console.log("loading:", configPath)
 				const srv = new TailwindLanguageService(this.documents, {
 					...settings,
 					workspaceFolder: URI.parse(workspaceFolder).fsPath,
@@ -302,8 +292,8 @@ class Server {
 				})
 				this.services.set(configUri, srv)
 				if (srv.state) {
-					console.log(`userConfig = ${srv.state.hasConfig}`)
-					console.log(`distConfig = ${srv.state.distConfigPath}`)
+					console.log(`config = ${srv.state.hasConfig}`)
+					console.log(`target = ${srv.state.distConfigPath}\n`)
 				}
 			} catch {}
 		}
@@ -326,8 +316,8 @@ class Server {
 				})
 				this.services.set(configUri, srv)
 				if (srv.state) {
-					console.log(`userConfig = ${srv.state.hasConfig}`)
-					console.log(`distConfig = ${srv.state.distConfigPath}`)
+					console.log(`config = ${srv.state.hasConfig}`)
+					console.log(`target = ${srv.state.distConfigPath}\n`)
 				}
 			} catch {}
 		}
@@ -335,79 +325,65 @@ class Server {
 
 	private async reloadService(configUri: string) {
 		const srv = this.services.get(configUri) as TailwindLanguageService
-		console.log("reload:", URI.parse(configUri).fsPath)
+		console.log("reloading:", URI.parse(configUri).fsPath)
 		await srv?.reload()
 		if (srv?.state) {
-			console.log(`userConfig = ${srv.state.hasConfig}`)
-			console.log(`distConfig = ${srv.state.distConfigPath}`)
+			console.log(`config = ${srv.state.hasConfig}`)
+			console.log(`target = ${srv.state.distConfigPath}\n`)
+		}
+	}
+
+	private async colorDecorations(document: TextDocument) {
+		if (!this.settings.colorDecorators) {
+			return
+		}
+		const service = matchService(document.uri, this.services)
+		if (service) {
+			this.connection.sendNotification("tailwindcss/documentColors", {
+				uri: document.uri,
+				colors: await service.provideColorDecorations(document),
+			})
+		}
+	}
+
+	private async diagnostics(document: TextDocument) {
+		if (!this.hasDiagnosticRelatedInformationCapability) {
+			return
+		}
+		if (!this.settings.diagnostics.enabled) {
+			return
+		}
+		const service = matchService(document.uri, this.services)
+		if (service) {
+			this.connection.sendDiagnostics({
+				uri: document.uri,
+				diagnostics: await service.validate(document),
+			})
 		}
 	}
 
 	bind() {
 		const { documents, connection } = this
+
 		documents.onDidOpen(async params => {
 			const service = matchService(params.document.uri, this.services)
 			await service?.init()
-			if (!this.hasDiagnosticRelatedInformationCapability) {
-				return
-			}
-			if (service) {
-				const diagnostics = await service.validate(params.document)
-				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
-			}
+			this.colorDecorations(params.document)
+			this.diagnostics(params.document)
 		})
 
 		documents.onDidChangeContent(async params => {
-			if (!this.hasDiagnosticRelatedInformationCapability) {
-				return
-			}
-			if (!this.settings.diagnostics.enabled) {
-				return
-			}
-			const service = matchService(params.document.uri, this.services)
-			if (service) {
-				const diagnostics = await service.validate(params.document)
-				this.connection.sendDiagnostics({ uri: params.document.uri, diagnostics })
-			}
+			this.colorDecorations(params.document)
+			this.diagnostics(params.document)
 		})
 
-		connection.onCompletion((...params) => {
-			return matchService(params[0].textDocument.uri, this.services)?.onCompletion(...params)
-		})
+		connection.onCompletion(params => matchService(params.textDocument.uri, this.services)?.onCompletion(params))
 
-		connection.onCompletionResolve((...params) => {
-			const uri = params[0].data.uri
-			return matchService(uri, this.services)?.onCompletionResolve(...params)
-		})
+		connection.onCompletionResolve(params =>
+			matchService(params.data.uri, this.services)?.onCompletionResolve(params),
+		)
 
-		connection.onHover((...params) => {
-			return matchService(params[0].textDocument.uri, this.services)?.onHover(...params)
-		})
-
-		connection.onDocumentColor(async params => {
-			const result: lsp.ColorInformation[] = []
-			if (!this.settings.colorDecorators) {
-				return result
-			}
-			const document = documents.get(params.textDocument.uri)
-			const service = matchService(params.textDocument.uri, this.services)
-			if (service) {
-				connection.sendNotification("tailwindcss/documentColors", {
-					colors: await service.provideColor(document, result),
-					uri: document.uri,
-				})
-			}
-			return result
-		})
-
-		connection.onColorPresentation(({ range, color }) => {
-			const c = chroma(color.red * 255, color.green * 255, color.blue * 255, color.alpha)
-			return [
-				lsp.ColorPresentation.create(c.css(), lsp.TextEdit.replace(range, c.css())),
-				lsp.ColorPresentation.create(c.hex(), lsp.TextEdit.replace(range, c.hex())),
-				lsp.ColorPresentation.create(c.css("hsl"), lsp.TextEdit.replace(range, c.css("hsl"))),
-			]
-		})
+		connection.onHover(params => matchService(params.textDocument.uri, this.services)?.onHover(params))
 
 		connection.onCodeAction(params => {
 			type Data = { text: string; newText: string }
@@ -438,9 +414,17 @@ class Server {
 			})
 		})
 
-		connection.languages.semanticTokens.onRange(async (...params) => {
-			return await matchService(params[0].textDocument.uri, this.services)?.provideSemanticTokens(...params)
-		})
+		connection.languages.semanticTokens.onRange(params =>
+			matchService(params.textDocument.uri, this.services)?.provideSemanticTokens(params),
+		)
+
+		connection.onDocumentColor(params =>
+			matchService(params.textDocument.uri, this.services)?.onDocumentColor(params),
+		)
+
+		connection.onColorPresentation(params =>
+			matchService(params.textDocument.uri, this.services)?.onColorPresentation(params),
+		)
 	}
 }
 

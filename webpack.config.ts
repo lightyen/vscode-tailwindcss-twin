@@ -1,10 +1,10 @@
-import path from "path"
-import { ExternalsPlugin } from "webpack"
-import type { Configuration, Compiler } from "webpack"
-import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
-import ESLintPlugin from "eslint-webpack-plugin"
-import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import { CleanWebpackPlugin } from "clean-webpack-plugin"
+import ESLintPlugin from "eslint-webpack-plugin"
+import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
+import path from "path"
+import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
+import type { Compiler, Configuration } from "webpack"
+import { ExternalsPlugin } from "webpack"
 
 class ExternalsVendorPlugin {
 	externals: Record<string, string>

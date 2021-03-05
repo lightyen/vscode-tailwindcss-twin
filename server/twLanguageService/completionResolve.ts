@@ -1,11 +1,11 @@
-import * as lsp from "vscode-languageserver"
-import type { CSSRuleItem } from "~/tailwind/classnames"
-import { Tailwind } from "~/tailwind"
-import { PatternKind } from "~/common/ast"
-import type { ServiceOptions } from "~/twLanguageService"
-import { getReferenceLinks, getName, getDescription } from "./referenceLink"
 import { IPropertyData } from "vscode-css-languageservice"
+import * as lsp from "vscode-languageserver"
+import { PatternKind } from "~/common/ast"
+import { Tailwind } from "~/tailwind"
+import type { CSSRuleItem } from "~/tailwind/classnames"
+import type { ServiceOptions } from "~/twLanguageService"
 import { getEntryDescription } from "./cssData"
+import { getDescription, getName, getReferenceLinks } from "./referenceLink"
 
 export default function completionResolve(
 	item: lsp.CompletionItem,

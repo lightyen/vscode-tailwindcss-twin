@@ -1,7 +1,7 @@
-import * as lsp from "vscode-languageserver"
-import { cssDataManager, getEntryDescription, units } from "./cssData"
 import { IPropertyData } from "vscode-css-languageservice"
+import * as lsp from "vscode-languageserver"
 import * as languageFacts from "./cssData"
+import { cssDataManager, getEntryDescription, units } from "./cssData"
 
 function isDeprecated(entry: IPropertyData): boolean {
 	if (entry.status && (entry.status === "nonstandard" || entry.status === "obsolete")) {

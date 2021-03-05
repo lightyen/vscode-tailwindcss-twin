@@ -1,5 +1,5 @@
-import type { Postcss, Plugin } from "postcss"
 import path from "path"
+import type { Plugin, Postcss } from "postcss"
 import { requireModule, resolveModule } from "~/common/module"
 import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"

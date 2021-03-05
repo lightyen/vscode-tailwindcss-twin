@@ -1,16 +1,16 @@
+import { Settings } from "shared"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Settings } from "settings"
-import { Tailwind, TailwindOptions } from "~/tailwind"
-import { LanguageService } from "~/LanguageService"
-import completion from "./completion"
-import completionResolve from "./completionResolve"
-import hover from "./hover"
-import { validate } from "./diagnostics"
-import provideColor from "./provideColor"
-import provideSemanticTokens from "./semanticTokens"
 import findAllElements from "~/common/findAllElements"
 import idebounce from "~/common/idebounce"
+import { LanguageService } from "~/LanguageService"
+import { Tailwind, TailwindOptions } from "~/tailwind"
+import completion from "./completion"
+import completionResolve from "./completionResolve"
+import { validate } from "./diagnostics"
+import hover from "./hover"
+import { provideColorDecorations } from "./provideColor"
+import provideSemanticTokens from "./semanticTokens"
 
 export type ServiceOptions = TailwindOptions & Settings
 
@@ -27,30 +27,33 @@ export class TailwindLanguageService implements LanguageService {
 		this.state = new Tailwind(options)
 		this.cache = {}
 	}
-	init() {
+	async init() {
 		if (this.isReady()) return void 0
 		return this.state.process()
 	}
-	reload(...params: Parameters<Tailwind["reload"]>) {
+	async reload(...params: Parameters<Tailwind["reload"]>) {
 		return this.state.reload(...params)
 	}
 	updateSettings(setting: Partial<Settings>) {
 		this.options = { ...this.options, ...setting }
 	}
 	isReady() {
+		if (!this.options.enabled && !this.state.classnames) {
+			console.log("not ready")
+		}
 		if (!this.options.enabled) return false
 		return !!this.state.classnames
 	}
-	onCompletion(params: lsp.TextDocumentPositionParams) {
+	async onCompletion(params: lsp.CompletionParams) {
 		if (!this.isReady()) return null
 		const document = this.documents.get(params.textDocument.uri)
 		return completion(document, params.position, this.state, this.options)
 	}
-	onCompletionResolve(item: lsp.CompletionItem) {
+	async onCompletionResolve(item: lsp.CompletionItem) {
 		if (!this.isReady()) return null
 		return completionResolve(item, this.state, this.options)
 	}
-	onHover(params: lsp.HoverParams) {
+	async onHover(params: lsp.HoverParams) {
 		if (!this.isReady()) return null
 		const document = this.documents.get(params.textDocument.uri)
 		return hover(document, params.position, this.state, this.options)
@@ -62,17 +65,18 @@ export class TailwindLanguageService implements LanguageService {
 		if (!this.isReady()) return []
 		return await idebounce("validate" + document.uri, validate, document, this.state, this.options, this.cache)
 	}
-	async provideColor(document: TextDocument, colors: lsp.ColorInformation[]) {
+	async provideColorDecorations(document: TextDocument) {
 		if (!this.options.colorDecorators) return []
-		if (!this.isReady()) return []
+		if (!this.isReady()) {
+			return []
+		}
 		return await idebounce(
-			"provideColor" + document.uri,
-			provideColor,
+			"provideColorDecorations" + document.uri,
+			provideColorDecorations,
 			document,
 			this.state,
 			this.options,
 			this.cache,
-			colors,
 		)
 	}
 	async provideSemanticTokens(params: lsp.SemanticTokensParams) {
@@ -88,5 +92,19 @@ export class TailwindLanguageService implements LanguageService {
 			this.state,
 			this.options,
 		)
+	}
+	async onDocumentColor(params: lsp.DocumentColorParams) {
+		// TODO: onDocumentColor
+		return []
+	}
+	async onColorPresentation(params: lsp.ColorPresentationParams) {
+		// TODO: onColorPresentation
+		// const c = chroma(color.red * 255, color.green * 255, color.blue * 255, color.alpha)
+		// 	return [
+		// 		lsp.ColorPresentation.create(c.css(), lsp.TextEdit.replace(range, c.css())),
+		// 		lsp.ColorPresentation.create(c.hex(), lsp.TextEdit.replace(range, c.hex())),
+		// 		lsp.ColorPresentation.create(c.css("hsl"), lsp.TextEdit.replace(range, c.css("hsl"))),
+		// 	]
+		return []
 	}
 }
