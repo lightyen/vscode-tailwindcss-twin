@@ -100,6 +100,9 @@ function validateTwin({
 				case tw.TokenKind.ClassName:
 					result.push(...checkTwinClassName(c, document, offset, state))
 					break
+				case tw.TokenKind.CssProperty:
+					result.push(...checkTwinCssProperty(c, document, offset, state))
+					break
 				case tw.TokenKind.Unknown:
 					result.push(...checkTwinClassName(c, document, offset, state))
 					break
@@ -308,6 +311,69 @@ function validateTwin({
 		}
 	}
 
+	return result
+}
+
+function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offset: number, state: Tailwind) {
+	const result: Diagnostic[] = []
+	const variants = item.variants.texts
+	for (const [a, b, variant] of item.variants) {
+		if (state.classnames.isVariant(variant, true)) {
+			continue
+		}
+		const ret = state.classnames.getSearcher(variants, true).variants.search(variant)
+		const ans = ret?.[0]?.item
+		if (ans) {
+			result.push({
+				source,
+				message: `Can't find '${variant}', did you mean '${ans}'?`,
+				range: {
+					start: document.positionAt(offset + a),
+					end: document.positionAt(offset + b),
+				},
+				data: { text: variant, newText: ans },
+				severity: DiagnosticSeverity.Error,
+			})
+		} else {
+			result.push({
+				source,
+				message: `Can't find '${variant}'`,
+				range: {
+					start: document.positionAt(offset + a),
+					end: document.positionAt(offset + b),
+				},
+				severity: DiagnosticSeverity.Error,
+			})
+		}
+	}
+
+	if (item.token.text) {
+		const { text, start, end } = item.prop
+		const ret = csspropSearcher.search(text)
+		const score = ret?.[0]?.score
+		if (score > 0) {
+			result.push({
+				source,
+				message: `Can't find '${text}', did you mean '${ret[0].item}'?`,
+				range: {
+					start: document.positionAt(offset + start),
+					end: document.positionAt(offset + end),
+				},
+				data: { text, newText: ret[0].item },
+				severity: DiagnosticSeverity.Error,
+			})
+		} else if (score !== 0) {
+			result.push({
+				source,
+				message: `Can't find '${text}'`,
+				range: {
+					start: document.positionAt(offset + start),
+					end: document.positionAt(offset + end),
+				},
+				severity: DiagnosticSeverity.Error,
+			})
+		}
+	}
 	return result
 }
 
