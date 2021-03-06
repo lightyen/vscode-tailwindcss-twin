@@ -175,8 +175,9 @@ class Server {
 		connection.onDidChangeConfiguration(async params => {
 			console.log(`[setting changes were detected]`)
 			if (this.hasConfigurationCapability) {
-				type EditorConfig = {
+				interface EditorConfig {
 					colorDecorators: boolean
+					semanticTokenColorCustomizations: unknown
 				}
 				const configs = await connection.workspace.getConfiguration([
 					{ section: "tailwindcss" },
@@ -251,11 +252,7 @@ class Server {
 				}
 
 				if (needToRenderColors) {
-					await Promise.all(
-						documents.all().map(document => {
-							this.colorDecorations(document)
-						}),
-					)
+					await Promise.all(documents.all().map(document => this.colorDecorations(document)))
 				}
 
 				if (needToDiagnostics) {
@@ -324,12 +321,12 @@ class Server {
 	}
 
 	private async reloadService(configUri: string) {
-		const srv = this.services.get(configUri) as TailwindLanguageService
+		const srv = this.services.get(configUri)
 		console.log("reloading:", URI.parse(configUri).fsPath)
 		await srv?.reload()
-		if (srv?.state) {
-			console.log(`config = ${srv.state.hasConfig}`)
-			console.log(`target = ${srv.state.distConfigPath}\n`)
+		if (srv) {
+			console.log(`config = ${srv.hasConfig}`)
+			console.log(`target = ${srv.targetConfig}\n`)
 		}
 	}
 
@@ -368,12 +365,10 @@ class Server {
 		documents.onDidOpen(async params => {
 			const service = matchService(params.document.uri, this.services)
 			await service?.init()
-			this.colorDecorations(params.document)
 			this.diagnostics(params.document)
 		})
 
 		documents.onDidChangeContent(async params => {
-			this.colorDecorations(params.document)
 			this.diagnostics(params.document)
 		})
 
@@ -407,7 +402,7 @@ class Server {
 					kind: lsp.CodeActionKind.QuickFix,
 					edit: {
 						changes: {
-							[params.textDocument.uri.toString()]: [lsp.TextEdit.replace(range, newText)],
+							[params.textDocument.uri]: [lsp.TextEdit.replace(range, newText)],
 						},
 					},
 				}
@@ -418,9 +413,10 @@ class Server {
 			matchService(params.textDocument.uri, this.services)?.provideSemanticTokens(params),
 		)
 
-		connection.onDocumentColor(params =>
-			matchService(params.textDocument.uri, this.services)?.onDocumentColor(params),
-		)
+		connection.onDocumentColor(params => {
+			this.colorDecorations(documents.get(params.textDocument.uri))
+			return matchService(params.textDocument.uri, this.services)?.onDocumentColor(params)
+		})
 
 		connection.onColorPresentation(params =>
 			matchService(params.textDocument.uri, this.services)?.onColorPresentation(params),

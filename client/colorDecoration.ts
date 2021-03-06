@@ -95,6 +95,12 @@ class ColorMap {
 }
 
 export default async function ({ client }: { client: LanguageClient }) {
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		// if (editor) {
+		// 	console.log("trigger change editor")
+		// }
+	})
+
 	const colorMap = new ColorMap(new vscode.ThemeColor("badge.background"))
 
 	function updateDecorations(
@@ -110,21 +116,19 @@ export default async function ({ client }: { client: LanguageClient }) {
 			editor.setDecorations(null, [])
 			return
 		}
-		const list = new Map<
-			string,
-			{ ranges: vscode.Range[]; color: string; backgroundColor: string; borderColor: string }
-		>()
-		const rs = colors.filter(
-			({ color, backgroundColor, borderColor }) =>
-				color !== "currentColor" && backgroundColor !== "currentColor" && borderColor !== "currentColor",
-		)
-		rs.forEach(({ range, color, backgroundColor, borderColor }) => {
-			const key = [color, backgroundColor, borderColor].join("_")
-			if (!list.has(key)) {
-				list.set(key, { color, backgroundColor, borderColor, ranges: [] })
-			}
-			list.get(key).ranges.push(range)
-		})
+		const list = new Map<string, { ranges: vscode.Range[] } & ColorDecoration>()
+		colors
+			.filter(
+				({ color, backgroundColor, borderColor }) =>
+					color !== "currentColor" && backgroundColor !== "currentColor" && borderColor !== "currentColor",
+			)
+			.forEach(({ range, color, backgroundColor, borderColor }) => {
+				const key = [color, backgroundColor, borderColor].join("_")
+				if (!list.has(key)) {
+					list.set(key, { color, backgroundColor, borderColor, ranges: [] })
+				}
+				list.get(key).ranges.push(range)
+			})
 
 		colorMap.diff(Array.from(list.keys()))
 		list.forEach(({ ranges }, key) => {

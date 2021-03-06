@@ -27,8 +27,18 @@ export class TailwindLanguageService implements LanguageService {
 		this.state = new Tailwind(options)
 		this.cache = {}
 	}
+	get ready() {
+		if (!this.options.enabled) return false
+		return !!this.state.classnames
+	}
+	get hasConfig() {
+		return this.state.hasConfig
+	}
+	get targetConfig(): string {
+		return this.state.distConfigPath
+	}
 	async init() {
-		if (this.isReady()) return void 0
+		if (this.ready) return void 0
 		return this.state.process()
 	}
 	async reload(...params: Parameters<Tailwind["reload"]>) {
@@ -37,39 +47,29 @@ export class TailwindLanguageService implements LanguageService {
 	updateSettings(setting: Partial<Settings>) {
 		this.options = { ...this.options, ...setting }
 	}
-	isReady() {
-		if (!this.options.enabled && !this.state.classnames) {
-			console.log("not ready")
-		}
-		if (!this.options.enabled) return false
-		return !!this.state.classnames
-	}
 	async onCompletion(params: lsp.CompletionParams) {
-		if (!this.isReady()) return null
+		if (!this.ready) return null
 		const document = this.documents.get(params.textDocument.uri)
 		return completion(document, params.position, this.state, this.options)
 	}
 	async onCompletionResolve(item: lsp.CompletionItem) {
-		if (!this.isReady()) return null
+		if (!this.ready) return null
 		return completionResolve(item, this.state, this.options)
 	}
 	async onHover(params: lsp.HoverParams) {
-		if (!this.isReady()) return null
+		if (!this.ready) return null
 		const document = this.documents.get(params.textDocument.uri)
 		return hover(document, params.position, this.state, this.options)
 	}
 	async validate(document: TextDocument) {
-		const uri = document.uri.toString()
-		this.cache[uri] = {}
+		this.cache[document.uri] = {}
+		if (!this.ready) return []
 		if (!this.options.diagnostics.enabled) return []
-		if (!this.isReady()) return []
 		return await idebounce("validate" + document.uri, validate, document, this.state, this.options, this.cache)
 	}
 	async provideColorDecorations(document: TextDocument) {
+		if (!this.ready) return []
 		if (!this.options.colorDecorators) return []
-		if (!this.isReady()) {
-			return []
-		}
 		return await idebounce(
 			"provideColorDecorations" + document.uri,
 			provideColorDecorations,
@@ -80,9 +80,8 @@ export class TailwindLanguageService implements LanguageService {
 		)
 	}
 	async provideSemanticTokens(params: lsp.SemanticTokensParams) {
+		if (!this.ready) []
 		const builder = new lsp.SemanticTokensBuilder()
-		if (!this.isReady()) return builder.build()
-		// TODO: use cache
 		const document = this.documents.get(params.textDocument.uri)
 		return await idebounce(
 			"provideSemanticTokens" + document.uri,
@@ -94,10 +93,12 @@ export class TailwindLanguageService implements LanguageService {
 		)
 	}
 	async onDocumentColor(params: lsp.DocumentColorParams) {
+		if (!this.ready) []
 		// TODO: onDocumentColor
 		return []
 	}
 	async onColorPresentation(params: lsp.ColorPresentationParams) {
+		if (!this.ready) []
 		// TODO: onColorPresentation
 		// const c = chroma(color.red * 255, color.green * 255, color.blue * 255, color.alpha)
 		// 	return [

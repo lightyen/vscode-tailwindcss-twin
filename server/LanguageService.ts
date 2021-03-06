@@ -4,8 +4,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 export interface LanguageService {
 	init(): Promise<void>
+	hasConfig: boolean
+	targetConfig: string
 	reload(settings?: Settings): Promise<void>
-	isReady(): boolean
 	updateSettings(options: Partial<Settings>): void
 	onCompletion: (params: lsp.CompletionParams) => Promise<lsp.CompletionList>
 	onCompletionResolve: (params: lsp.CompletionItem) => Promise<lsp.CompletionItem>
