@@ -1,11 +1,9 @@
 import path from "path"
-import { Settings } from "shared"
+import { NAME, SECTION_ID, Settings } from "shared"
 import vscode from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
 import colorDecoration from "./colorDecoration"
 import debug from "./debug"
-
-const CLIENT_ID = "Tailwind Twin IntelliSense"
 
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact"]
 
@@ -41,7 +39,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	}
 
 	const userSettings = vscode.workspace.getConfiguration("", ws)
-	const initOptions: Partial<InitializationOptions> = userSettings.get("tailwindcss")
+	const initOptions: Partial<InitializationOptions> = userSettings.get(SECTION_ID)
 	if (typeof initOptions.colorDecorators !== "boolean") {
 		initOptions.colorDecorators = userSettings.get("editor.colorDecorators")
 	}
@@ -64,7 +62,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 				new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 			),
 		},
-		diagnosticCollectionName: CLIENT_ID,
+		diagnosticCollectionName: NAME,
 		workspaceFolder: ws,
 		outputChannel: outputChannel,
 		middleware: {},
@@ -72,7 +70,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 		initializationOptions: initOptions,
 	}
 
-	const client = new LanguageClient(CLIENT_ID, CLIENT_ID, serverOptions, clientOptions)
+	const client = new LanguageClient(NAME, NAME, serverOptions, clientOptions)
 	clients.set(ws.uri.toString(), client)
 	client.onReady().then(() => {
 		colorDecoration({ client })
@@ -85,7 +83,7 @@ let outputChannel: vscode.OutputChannel
 let serverModule: string
 
 export async function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel(CLIENT_ID)
+	outputChannel = vscode.window.createOutputChannel(NAME)
 	serverModule = context.asAbsolutePath(path.join("dist", "server", "server.js"))
 	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []

@@ -1,6 +1,6 @@
 import { deepStrictEqual } from "assert"
 import path from "path"
-import { Settings } from "shared"
+import { DIAGNOSTICS_ID, NAME, SECTION_ID, Settings } from "shared"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver/node"
 import { FileChangeType } from "vscode-languageserver/node"
@@ -59,7 +59,7 @@ class Server {
 			this.workspaceFolder = workspaceFolder
 			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
 			this.settings = settings
-			progress.begin("Initializing Tailwind Twin Intellisence")
+			progress.begin(`Initializing ${NAME}`)
 
 			console.log("tailwindcss version:", requireModule("tailwindcss/package.json").version)
 			console.log("postcss version:", requireModule("postcss/package.json").version)
@@ -154,7 +154,7 @@ class Server {
 
 		// when changed tailwind.config.js
 		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			console.log(`[some changes were detected]`)
+			console.log(`[changes were detected]`)
 			for (const change of changes) {
 				switch (change.type) {
 					case FileChangeType.Created:
@@ -180,7 +180,7 @@ class Server {
 					semanticTokenColorCustomizations: unknown
 				}
 				const configs = await connection.workspace.getConfiguration([
-					{ section: "tailwindcss" },
+					{ section: SECTION_ID },
 					{ section: "editor" },
 				])
 				const extSettings: Settings = configs[0]
@@ -383,7 +383,7 @@ class Server {
 		connection.onCodeAction(params => {
 			type Data = { text: string; newText: string }
 			const diagnostics = params.context.diagnostics.filter(dia => {
-				if (dia.source !== "tailwindcss") {
+				if (dia.source !== DIAGNOSTICS_ID) {
 					return false
 				}
 				if (!dia.data) {

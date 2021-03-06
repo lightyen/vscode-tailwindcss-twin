@@ -1,6 +1,7 @@
 import Fuse from "fuse.js"
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
+import { DIAGNOSTICS_ID } from "~/../shared"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
@@ -10,7 +11,6 @@ import type { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "~/twLanguageService"
 import { cssDataManager } from "./cssData"
 
-const source = "tailwindcss"
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
 const csspropSearcher = new Fuse(cssProperties, { includeScore: true })
 
@@ -29,7 +29,7 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 						start: document.positionAt(start + err.start),
 						end: document.positionAt(start + err.end),
 					},
-					source,
+					source: DIAGNOSTICS_ID,
 					message: err.message,
 					severity: DiagnosticSeverity.Error,
 				})
@@ -37,7 +37,7 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 			if (!state.getTheme(result.keys())) {
 				diagnostics.push({
 					range: { start: document.positionAt(start), end: document.positionAt(end) },
-					source,
+					source: DIAGNOSTICS_ID,
 					message: "value is undefined",
 					severity: DiagnosticSeverity.Error,
 				})
@@ -84,7 +84,7 @@ function validateTwin({
 
 	if (error) {
 		result.push({
-			source,
+			source: DIAGNOSTICS_ID,
 			message: error.message,
 			range: {
 				start: document.positionAt(offset + error.start),
@@ -122,7 +122,7 @@ function validateTwin({
 							? `${token.text} is conflicted on property: ${prop}`
 							: `${token.text} is conflicted`
 					result.push({
-						source,
+						source: DIAGNOSTICS_ID,
 						message,
 						range: {
 							start: document.positionAt(offset + token.start),
@@ -215,7 +215,7 @@ function validateTwin({
 						message += ", missing square brackets?"
 					}
 					result.push({
-						source,
+						source: DIAGNOSTICS_ID,
 						message,
 						range: {
 							start: document.positionAt(offset + item.token.start),
@@ -255,7 +255,7 @@ function validateTwin({
 				const ans = searcher.variants.search(variant)
 				if (ans?.length > 0) {
 					result.push({
-						source,
+						source: DIAGNOSTICS_ID,
 						message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
 						range: {
 							start: document.positionAt(offset + a),
@@ -266,7 +266,7 @@ function validateTwin({
 					})
 				} else {
 					result.push({
-						source,
+						source: DIAGNOSTICS_ID,
 						message: `Can't find '${variant}'`,
 						range: {
 							start: document.positionAt(offset + a),
@@ -280,7 +280,7 @@ function validateTwin({
 
 		if (item.kind === tw.EmptyKind.Group && diagnostics.emptyGroup) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `forgot something?`,
 				range: {
 					start: document.positionAt(offset + item.start),
@@ -290,7 +290,7 @@ function validateTwin({
 			})
 		} else if (item.kind === tw.EmptyKind.Classname && diagnostics.emptyClass) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `forgot something?`,
 				range: {
 					start: document.positionAt(offset + item.start),
@@ -300,7 +300,7 @@ function validateTwin({
 			})
 		} else if (item.kind === tw.EmptyKind.CssProperty && diagnostics.emptyCssProperty) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `forgot something?`,
 				range: {
 					start: document.positionAt(offset + item.start),
@@ -325,7 +325,7 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}', did you mean '${ans}'?`,
 				range: {
 					start: document.positionAt(offset + a),
@@ -336,7 +336,7 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 			})
 		} else {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}'`,
 				range: {
 					start: document.positionAt(offset + a),
@@ -353,7 +353,7 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 		const score = ret?.[0]?.score
 		if (score > 0) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${text}', did you mean '${ret[0].item}'?`,
 				range: {
 					start: document.positionAt(offset + start),
@@ -364,7 +364,7 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 			})
 		} else if (score !== 0) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${text}'`,
 				range: {
 					start: document.positionAt(offset + start),
@@ -389,7 +389,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}', did you mean '${ans}'?`,
 				range: {
 					start: document.positionAt(offset + a),
@@ -400,7 +400,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 			})
 		} else {
 			result.push({
-				source,
+				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}'`,
 				range: {
 					start: document.positionAt(offset + a),
@@ -420,7 +420,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 				switch (ret.kind) {
 					case PredictionKind.CssProperty:
 						result.push({
-							source,
+							source: DIAGNOSTICS_ID,
 							message: `Invalid token '${text}', missing square brackets?`,
 							range: {
 								start: document.positionAt(offset + start),
@@ -431,7 +431,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 						break
 					case PredictionKind.Variant:
 						result.push({
-							source,
+							source: DIAGNOSTICS_ID,
 							message: `Invalid token '${text}', missing separator?`,
 							range: {
 								start: document.positionAt(offset + start),
@@ -442,7 +442,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 						break
 					default:
 						result.push({
-							source,
+							source: DIAGNOSTICS_ID,
 							message: `Can't find '${text}'`,
 							range: {
 								start: document.positionAt(offset + start),
@@ -453,7 +453,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 				}
 			} else {
 				result.push({
-					source,
+					source: DIAGNOSTICS_ID,
 					message: `Can't find '${text}', did you mean '${ret.value}'?`,
 					range: {
 						start: document.positionAt(offset + start),
