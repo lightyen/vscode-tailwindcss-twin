@@ -105,6 +105,59 @@
         }
       }
     },
+    "semanticTokenTypes": [
+      {
+        "id": "className",
+        "superType": "enumMember",
+        "description": "A class type."
+      },
+      {
+        "id": "variant",
+        "superType": "interface",
+        "description": "A variant type."
+      },
+      {
+        "id": "bracket",
+        "superType": "variable",
+        "description": "A bracket type."
+      },
+      {
+        "id": "important",
+        "superType": "operator",
+        "description": "An exclamation mark type."
+      },
+      {
+        "id": "shortCssProperty",
+        "superType": "function",
+        "description": "A short css property type."
+      },
+      {
+        "id": "shortCssValue",
+        "superType": "function",
+        "description": "A short css value type."
+      },
+      {
+        "id": "shortCssBracket",
+        "superType": "function",
+        "description": "A short css bracket type."
+      },
+      {
+        "id": "themeKey",
+        "superType": "number",
+        "description": "A theme key type."
+      },
+      {
+        "id": "themeBracket",
+        "superType": "struct",
+        "description": "A theme bracket type."
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "twin",
+        "description": "Annotates a symbol that is implemented for twin."
+      }
+    ],
     "configuration": {
       "title": "Tailwind Twin IntelliSense",
       "properties": {

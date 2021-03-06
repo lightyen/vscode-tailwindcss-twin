@@ -53,13 +53,13 @@ Support ONLY `react` and `twin.macro`
     "[Atom One Dark]": {
       "enabled": true,
       "rules": {
-        "operator": "#6e90ff"
+        "important": "#6e90ff"
       }
     },
     "[Dracula]": {
       "enabled": true,
       "rules": {
-        "interface": "#77f13e"
+        "important": "#77f13e"
       }
     }
   }
@@ -67,16 +67,20 @@ Support ONLY `react` and `twin.macro`
 
 ```
 
-#### Mapping Table (Experimental)
+#### semantic token types (Experimental)
 
-| type        | target     |
-| ----------- | ---------- |
-| variant     | interface  |
-| classname   | enumMember |
-| cssProperty | function   |
-| brackets    | variable   |
-| important   | operator   |
-| comment     | comment    |
+| type             |
+| ---------------- |
+| className        |
+| variant          |
+| bracket          |
+| important        |
+| shortCssProperty |
+| shortCssValue    |
+| shortCssBracket  |
+| themeKey         |
+| themeBracket     |
+| comment          |
 
 ### Custom CompletionList Panel
 

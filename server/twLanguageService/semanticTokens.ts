@@ -10,24 +10,17 @@ import type { ServiceOptions } from "~/twLanguageService"
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
 
-enum SemanticKind {
-	keyword,
-	number,
-	interface,
-	variable,
-	function,
-	enumMember,
-	operator,
+enum SemanticTokenKind {
+	className,
+	variant,
+	bracket,
+	important,
+	shortCssProperty,
+	shortCssValue,
+	shortCssBracket,
+	themeKey,
+	themeBracket,
 	comment,
-}
-
-enum BlockKind {
-	Variant = SemanticKind.interface,
-	Classname = SemanticKind.enumMember,
-	CssProperty = SemanticKind.function,
-	Brackets = SemanticKind.variable,
-	Important = SemanticKind.operator,
-	Comment = SemanticKind.comment,
 }
 
 export default function provideSemanticTokens(
@@ -81,49 +74,49 @@ export default function provideSemanticTokens(
 				case NodeKind.ClassName:
 					if (kind === PatternKind.Twin && isValidClass(node.context.texts, node.token.text)) {
 						if (canRender(node)) {
-							builder.push(pos.line, pos.character, length, BlockKind.Classname, 0)
+							builder.push(pos.line, pos.character, length, SemanticTokenKind.className, 0)
 						}
 					}
 					break
 				case NodeKind.Variant:
 					if (isValidVariant(node.token.text.slice(0, -1))) {
-						builder.push(pos.line, pos.character, length, BlockKind.Variant, 0)
+						builder.push(pos.line, pos.character, length, SemanticTokenKind.variant, 0)
 					}
 					break
 				case NodeKind.CssProperty:
-					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.shortCssProperty, 0)
 					break
 				case NodeKind.CssValue: {
 					const end = getPosition(node.token.end)
-					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.shortCssValue, 0)
 					if (pos.line < end.line) {
 						for (let line = pos.line + 1; line < end.line; line++) {
-							builder.push(line, 0, length, BlockKind.CssProperty, 0)
+							builder.push(line, 0, length, SemanticTokenKind.shortCssValue, 0)
 						}
-						builder.push(end.line, 0, end.character, BlockKind.CssProperty, 0)
+						builder.push(end.line, 0, end.character, SemanticTokenKind.shortCssValue, 0)
 					}
 					break
 				}
 				case NodeKind.CssBracket:
-					builder.push(pos.line, pos.character, length, BlockKind.CssProperty, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.shortCssBracket, 0)
 					break
 				case NodeKind.Bracket:
-					builder.push(pos.line, pos.character, length, BlockKind.Brackets, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.bracket, 0)
 					break
 				case NodeKind.Important:
-					builder.push(pos.line, pos.character, length, BlockKind.Important, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.important, 0)
 					break
 				case NodeKind.LineComment:
-					builder.push(pos.line, pos.character, length, BlockKind.Comment, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.comment, 0)
 					break
 				case NodeKind.BlockComment: {
 					const end = getPosition(node.token.end)
-					builder.push(pos.line, pos.character, length, BlockKind.Comment, 0)
+					builder.push(pos.line, pos.character, length, SemanticTokenKind.comment, 0)
 					if (pos.line < end.line) {
 						for (let line = pos.line + 1; line < end.line; line++) {
-							builder.push(line, 0, length, BlockKind.Comment, 0)
+							builder.push(line, 0, length, SemanticTokenKind.comment, 0)
 						}
-						builder.push(end.line, 0, end.character, BlockKind.Comment, 0)
+						builder.push(end.line, 0, end.character, SemanticTokenKind.comment, 0)
 					}
 					break
 				}
@@ -168,9 +161,9 @@ function renderThemeValue(
 		const [a, b] = node.token
 		const pos = getPosition(a)
 		if (node.kind === TwThemeElementKind.Identifier || node.kind === TwThemeElementKind.BracketIdentifier) {
-			builder.push(pos.line, pos.character, b - a, SemanticKind.number, 0)
+			builder.push(pos.line, pos.character, b - a, SemanticTokenKind.themeKey, 0)
 		} else {
-			builder.push(pos.line, pos.character, 1, SemanticKind.variable, 0)
+			builder.push(pos.line, pos.character, 1, SemanticTokenKind.themeBracket, 0)
 		}
 	}
 }
