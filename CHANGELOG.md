@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.7.1
+
+### Fixes
+
+- parsing color value failed
+
+### Changes
+
+- allow multi alias when import twin
+- vaidate short css
+- semnatic token types
+
 ## 0.7.0
 
 - allow comments

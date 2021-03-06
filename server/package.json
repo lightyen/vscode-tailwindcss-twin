@@ -1,7 +1,7 @@
 {
   "name": "server",
   "description": "Tailwind Twin Language Server",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "author": "lightyen",
   "license": "MIT",
   "engines": {
@@ -15,7 +15,7 @@
     "chroma-js": "^2.1.1",
     "fuse.js": "^6.4.6",
     "immer": "^8.0.1",
-    "postcss": "8.2.6",
+    "postcss": "8.2.7",
     "postcss-selector-parser": "^6.0.4",
     "semver": "^7.3.4",
     "serialize-error": "^8.0.1",
