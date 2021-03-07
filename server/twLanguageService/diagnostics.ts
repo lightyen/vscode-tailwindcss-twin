@@ -5,7 +5,6 @@ import { DIAGNOSTICS_ID } from "~/../shared"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
-import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
 import type { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "~/twLanguageService"
@@ -151,7 +150,7 @@ function validateTwin({
 
 				if (item.kind === tw.TokenKind.CssProperty) {
 					const twinKeys = variants.sort()
-					const property = toKebab(item.prop.text)
+					const property = item.prop.toKebab()
 					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
@@ -227,7 +226,7 @@ function validateTwin({
 				}
 
 				const twinKeys = item.variants.texts.sort()
-				const property = toKebab(item.prop.text)
+				const property = item.prop.toKebab()
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {

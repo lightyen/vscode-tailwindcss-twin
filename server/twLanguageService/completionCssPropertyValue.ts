@@ -13,7 +13,7 @@ function isDeprecated(entry: IPropertyData): boolean {
 
 export function getCompletionsForDeclarationValue(
 	propertyName: string,
-	value: string,
+	currentWord: string,
 	range: lsp.Range,
 ): lsp.CompletionItem[] {
 	const items: lsp.CompletionItem[] = []
@@ -58,7 +58,7 @@ export function getCompletionsForDeclarationValue(
 
 		items.push(...getValueEnumProposals(range, entry))
 		items.push(...getCSSWideKeywordProposals(range))
-		items.push(...getUnitProposals(value, range, entry))
+		items.push(...getUnitProposals(currentWord, range, entry))
 	}
 
 	// TODO: apply context

@@ -7,7 +7,6 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import { completeElement } from "~/common/findElement"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
-import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
 import type { Tailwind } from "~/tailwind"
 import type { CSSRuleItem } from "~/tailwind/classnames"
@@ -303,14 +302,13 @@ function classesCompletion(
 	}
 
 	if (cssValueEnabled && suggestion.token.kind === tw.TokenKind.CssProperty) {
+		const prop = suggestion.token.key.toKebab()
+		const word = suggestion.token.value.getWord(position)
 		cssValueItems.push(
 			...getCompletionsForDeclarationValue(
-				toKebab(suggestion.token.key.text),
-				suggestion.token.value.text.trim(),
-				lsp.Range.create(
-					document.positionAt(offset + suggestion.token.value.start),
-					document.positionAt(offset + suggestion.token.value.end),
-				),
+				prop,
+				word.text,
+				lsp.Range.create(document.positionAt(offset + word.start), document.positionAt(offset + word.end)),
 			),
 		)
 	}

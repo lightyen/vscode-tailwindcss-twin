@@ -5,7 +5,6 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import { hoverElement } from "~/common/findElement"
 import parseThemeValue from "~/common/parseThemeValue"
-import toKebab from "~/common/toKebab"
 import * as tw from "~/common/twin"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
@@ -47,7 +46,7 @@ export default function hover(
 			)
 
 			if (selection.token.kind === tw.TokenKind.CssProperty) {
-				const key = toKebab(selection.token.key.text)
+				const key = selection.token.key.toKebab()
 				const value = selection.token.value.text
 				const important = selection.important
 

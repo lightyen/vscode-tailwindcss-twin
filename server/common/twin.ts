@@ -5,6 +5,8 @@ export interface Token extends _Token {
 	end: number
 	text: string
 	trim(): Token
+	getWord(offset?: number): Token
+	toKebab(): string
 }
 
 export interface TokenList extends Array<Token> {
@@ -118,6 +120,18 @@ export function createToken(start: number, end: number, value: string) {
 							}
 						}
 						return createToken(a + i, b - j, text.slice(i, len - j))
+					}
+				case "getWord":
+					return function (offset = end) {
+						let i = offset - 1 - start
+						while (i >= 0 && ' \t\n\r":{[()]},*>+'.indexOf(value.charAt(i)) === -1) {
+							i--
+						}
+						return createToken(i + 1 + start, offset, value.slice(i + 1, offset - start))
+					}
+				case "toKebab":
+					return function toKebab() {
+						return value.replace(/\B[A-Z][a-z]*/g, s => "-" + s.toLowerCase())
 					}
 				default:
 					return target[prop]
