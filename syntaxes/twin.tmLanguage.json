@@ -1,0 +1,152 @@
+{
+  "name": "twin.macro",
+  "scopeName": "source.twin",
+  "injectionSelector": "L:meta.tag.attributes.tsx, R:meta.tag.attributes.tsx",
+  "patterns": [
+    {
+      "name": "source.twin",
+      "begin": "\\s*(tw)(=)('|{')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.twin" },
+        "2": { "name": "keyword.operator.assignment.twin" },
+        "3": {
+          "name": "string.quoted.single",
+          "patterns": [
+            {
+              "match": "({)?(')",
+              "captures": {
+                "1": {
+                  "name": "punctuation.section.embedded.begin.twin"
+                },
+                "2": {
+                  "name": "punctuation.definition.string.begin.twin"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "end": "(')(})?",
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.single",
+          "patterns": [{ "match": "'", "name": "punctuation.definition.string.end.twin" }]
+        },
+        "2": {
+          "name": "punctuation.definition.embedded.end.twin"
+        }
+      },
+      "patterns": [{ "include": "#expression-single-quote" }]
+    },
+    {
+      "name": "source.twin",
+      "begin": "\\s*(tw)(=)(\"|{\")",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.twin" },
+        "2": { "name": "keyword.operator.assignment.twin" },
+        "3": {
+          "name": "string.quoted.double",
+          "patterns": [
+            {
+              "match": "({)?(\")",
+              "captures": {
+                "1": {
+                  "name": "punctuation.section.embedded.begin.twin"
+                },
+                "2": {
+                  "name": "punctuation.definition.string.begin.twin"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "end": "(\")(})?",
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.double",
+          "patterns": [{ "match": "\"", "name": "punctuation.definition.string.end.twin" }]
+        },
+        "2": {
+          "name": "punctuation.definition.embedded.end.twin"
+        }
+      },
+      "patterns": [{ "include": "#expression-double-quote" }]
+    }
+  ],
+  "repository": {
+    "expression-single-quote": {
+      "patterns": [
+        { "include": "#line-comment-end-single-quote" },
+        { "include": "#block-comment" },
+        { "include": "#expression-variant" },
+        { "include": "#expression-classname" },
+        { "include": "#variant-group-expression" },
+        { "include": "#jsx-tag-attributes-illegal" }
+      ]
+    },
+    "expression-double-quote": {
+      "patterns": [
+        { "include": "#line-comment-end-double-quote" },
+        { "include": "#block-comment" },
+        { "include": "#expression-variant" },
+        { "include": "#expression-classname" },
+        { "include": "#variant-group-expression" },
+        { "include": "#jsx-tag-attributes-illegal" }
+      ]
+    },
+    "line-comment-end-single-quote": {
+      "begin": "(//)",
+      "end": "(?=[\\n'])",
+      "name": "comment.line.twin"
+    },
+    "line-comment-end-double-quote": {
+      "begin": "(//)",
+      "end": "(?=[\\n\"])",
+      "name": "comment.line.twin"
+    },
+    "block-comment": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.twin"
+    },
+    "expression-variant": {
+      "match": "([\\w-]+:)",
+      "captures": {
+        "0": {
+          "name": "entity.name.type.interface"
+        }
+      },
+      "patterns": {
+        "include": "#expression"
+      }
+    },
+    "expression-classname": {
+      "match": "([\\w\\-\\.]*(?!\\/\\/|\\/\\*)(?:\\/)?[\\w\\-\\.]+)(!?)",
+      "captures": {
+        "1": { "name": "variable.constant", "contentName": "className" },
+        "2": { "name": "keyword.operator.important-bang.twin" }
+      },
+      "name": "expression.classname.twin"
+    },
+    "variant-group-expression": {
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.variant-group.begin.twin" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.variant-group.end.twin" }
+      },
+      "captures": {
+        "0": {
+          "patterns": [{ "include": "#expression-double-quote" }]
+        }
+      }
+    },
+    "jsx-tag-attributes-illegal": {
+      "name": "invalid.illegal.twin",
+      "match": "\\S+"
+    }
+  }
+}

@@ -158,6 +158,16 @@
         "description": "Annotates a symbol that is implemented for twin."
       }
     ],
+    "grammars": [
+      {
+        "injectTo": [
+          "source.jsx",
+          "source.tsx"
+        ],
+        "scopeName": "source.twin",
+        "path": "./syntaxes/twin.tmLanguage.json"
+      }
+    ],
     "configuration": {
       "title": "Tailwind Twin IntelliSense",
       "properties": {

@@ -119,31 +119,31 @@ class Server {
 					},
 					hoverProvider: true,
 					codeActionProvider: true,
-					semanticTokensProvider: {
-						documentSelector: [
-							{ language: "typescriptreact", scheme: "file" },
-							{ language: "javascriptreact", scheme: "file" },
-							{ language: "typescript", scheme: "file" },
-							{ language: "javascript", scheme: "file" },
-						],
-						legend: {
-							tokenModifiers: ["twin"],
-							tokenTypes: [
-								"className",
-								"variant",
-								"bracket",
-								"important",
-								"shortCssProperty",
-								"shortCssValue",
-								"shortCssBracket",
-								"themeKey",
-								"themeBracket",
-								"comment",
-							],
-						},
-						range: true,
-						full: false,
-					},
+					// semanticTokensProvider: {
+					// 	documentSelector: [
+					// 		{ language: "typescriptreact", scheme: "file" },
+					// 		{ language: "javascriptreact", scheme: "file" },
+					// 		{ language: "typescript", scheme: "file" },
+					// 		{ language: "javascript", scheme: "file" },
+					// 	],
+					// 	legend: {
+					// 		tokenModifiers: ["twin"],
+					// 		tokenTypes: [
+					// 			"className",
+					// 			"variant",
+					// 			"bracket",
+					// 			"important",
+					// 			"shortCssProperty",
+					// 			"shortCssValue",
+					// 			"shortCssBracket",
+					// 			"themeKey",
+					// 			"themeBracket",
+					// 			"comment",
+					// 		],
+					// 	},
+					// 	range: true,
+					// 	full: false,
+					// },
 				},
 			}
 		})
