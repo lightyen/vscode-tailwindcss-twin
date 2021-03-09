@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.7.2
+
+### Changes
+
+- remove semantic highlight from lsp because of bad performance, and add textmate rules
+- drop css checking when using css variable
+
+### Enhance
+
+- css value auto-completion
+
 ## 0.7.1
 
 ### Fixes
