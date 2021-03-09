@@ -4,10 +4,9 @@
   "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "contentName": "entity.name.string.tagged-template.twin",
-      "begin": "(tw)(`)",
+      "begin": "tw(?:(?:\\.\\w+)?|\\(\\w*\\))(`)",
       "beginCaptures": {
-        "2": {
+        "1": {
           "name": "punctuation.definition.string.template.begin.twin"
         }
       },
@@ -36,16 +35,16 @@
       "begin": "(/\\*)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.begin.twin"
         }
       },
       "end": "(\\*/)|(`)",
       "endCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.end.twin"
         },
         "2": {
-          "name": "punctuation.definition.string.end.twin"
+          "name": "punctuation.definition.string.template.end.twin"
         }
       },
       "contentName": "comment.block.twin"
@@ -78,12 +77,12 @@
           "name": "support.type.css-prop.twin"
         },
         "2": {
-          "name": "punctuation.section.embedded.begin.short-css.twin"
+          "name": "punctuation.section.embedded.short-css.begin.twin"
         }
       },
       "endCaptures": {
         "1": {
-          "name": "punctuation.section.embedded.end.short-css.twin"
+          "name": "punctuation.section.embedded.short-css.end.twin"
         },
         "2": {
           "name": "support.function.important-bang.short-css.twin"
@@ -93,15 +92,14 @@
     "variant-group-expression": {
       "begin": "(\\()",
       "end": "(\\))(!?)",
-      "name": "meta.block.variant-group.twin",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.variant-group.begin.twin"
+          "name": "punctuation.definition.bracket.variant-group.begin.twin"
         }
       },
       "endCaptures": {
         "1": {
-          "name": "punctuation.definition.variant-group.end.twin"
+          "name": "punctuation.definition.bracket.variant-group.end.twin"
         },
         "2": {
           "name": "support.function.important-bang.variant-group.twin"
@@ -116,7 +114,7 @@
         }
       ]
     },
-    "jsx-tag-attributes-illegal": {
+    "illegal": {
       "name": "invalid.illegal.twin",
       "match": "(\\S+?)(?!(?://|\"|'|`))"
     },

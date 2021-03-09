@@ -4,7 +4,6 @@
   "injectionSelector": "L:meta.tag.attributes -comment",
   "patterns": [
     {
-      "name": "meta.tag.twin",
       "begin": "\\s*(tw)(=)('|{')",
       "beginCaptures": {
         "1": {
@@ -20,10 +19,10 @@
               "match": "({)?(')",
               "captures": {
                 "1": {
-                  "name": "punctuation.section.embedded.begin.twin"
+                  "name": "punctuation.section.embedded.twProp.begin.twin"
                 },
                 "2": {
-                  "name": "punctuation.definition.string.begin.twin"
+                  "name": "punctuation.definition.string.twProp.begin.twin"
                 }
               }
             }
@@ -37,12 +36,12 @@
           "patterns": [
             {
               "match": "'",
-              "name": "punctuation.definition.string.end.twin"
+              "name": "punctuation.definition.string.twProp.end.twin"
             }
           ]
         },
         "2": {
-          "name": "punctuation.definition.embedded.end.twin"
+          "name": "punctuation.definition.embedded.twProp.end.twin"
         }
       },
       "patterns": [
@@ -62,14 +61,14 @@
           "name": "keyword.operator.assignment.twin"
         },
         "3": {
-          "name": "punctuation.section.embedded.begin.twin"
+          "name": "punctuation.section.embedded.twProp.begin.twin"
         },
         "4": {
           "name": "string.quoted.double",
           "patterns": [
             {
               "match": "\"",
-              "name": "punctuation.definition.string.begin.twin"
+              "name": "punctuation.definition.string.twProp.begin.twin"
             }
           ]
         }
@@ -81,12 +80,12 @@
           "patterns": [
             {
               "match": "\"",
-              "name": "punctuation.definition.string.end.twin"
+              "name": "punctuation.definition.string.twProp.end.twin"
             }
           ]
         },
         "2": {
-          "name": "punctuation.definition.embedded.end.twin"
+          "name": "punctuation.definition.embedded.twProp.end.twin"
         }
       },
       "patterns": [
@@ -123,16 +122,16 @@
       "begin": "(/\\*)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.begin.twin"
         }
       },
       "end": "(\\*/)|(')",
       "endCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.end.twin"
         },
         "2": {
-          "name": "punctuation.definition.string.end.twin"
+          "name": "punctuation.definition.string.twProp.end.twin"
         }
       },
       "contentName": "comment.block.twin"
@@ -141,16 +140,16 @@
       "begin": "(/\\*)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.begin.twin"
         }
       },
       "end": "(\\*/)|(\")",
       "endCaptures": {
         "1": {
-          "name": "punctuation.definition.comment.tsx"
+          "name": "punctuation.definition.comment.end.twin"
         },
         "2": {
-          "name": "punctuation.definition.string.end.twin"
+          "name": "punctuation.definition.string.twProp.end.twin"
         }
       },
       "contentName": "comment.block.twin"
@@ -183,12 +182,12 @@
           "name": "support.type.css-prop.twin"
         },
         "2": {
-          "name": "punctuation.section.embedded.begin.short-css.twin"
+          "name": "punctuation.section.embedded.short-css.begin.twin"
         }
       },
       "endCaptures": {
         "1": {
-          "name": "punctuation.section.embedded.end.short-css.twin"
+          "name": "punctuation.section.embedded.short-css.end.twin"
         },
         "2": {
           "name": "support.function.important-bang.short-css.twin"
@@ -201,12 +200,12 @@
       "name": "meta.block.variant-group.twin",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.variant-group.begin.twin"
+          "name": "punctuation.definition.bracket.variant-group.begin.twin"
         }
       },
       "endCaptures": {
         "1": {
-          "name": "punctuation.definition.variant-group.end.twin"
+          "name": "punctuation.definition.bracket.variant-group.end.twin"
         },
         "2": {
           "name": "support.function.important-bang.variant-group.twin"
@@ -221,7 +220,7 @@
         }
       ]
     },
-    "jsx-tag-attributes-illegal": {
+    "illegal": {
       "name": "invalid.illegal.twin",
       "match": "(\\S+?)(?!(?://|\"|'|`))"
     },
@@ -263,9 +262,6 @@
         },
         {
           "include": "#variant-group-expression"
-        },
-        {
-          "include": "#jsx-tag-attributes-illegal"
         }
       ]
     }
