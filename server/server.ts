@@ -119,31 +119,6 @@ class Server {
 					},
 					hoverProvider: true,
 					codeActionProvider: true,
-					semanticTokensProvider: {
-						documentSelector: [
-							{ language: "typescriptreact", scheme: "file" },
-							{ language: "javascriptreact", scheme: "file" },
-							{ language: "typescript", scheme: "file" },
-							{ language: "javascript", scheme: "file" },
-						],
-						legend: {
-							tokenModifiers: ["twin"],
-							tokenTypes: [
-								"className",
-								"variant",
-								"bracket",
-								"important",
-								"shortCssProperty",
-								"shortCssValue",
-								"shortCssBracket",
-								"themeKey",
-								"themeBracket",
-								"comment",
-							],
-						},
-						range: true,
-						full: false,
-					},
 				},
 			}
 		})
@@ -179,7 +154,6 @@ class Server {
 			if (this.hasConfigurationCapability) {
 				interface EditorConfig {
 					colorDecorators: boolean
-					semanticTokenColorCustomizations: unknown
 				}
 				const configs = await connection.workspace.getConfiguration([
 					{ section: SECTION_ID },
@@ -410,10 +384,6 @@ class Server {
 				}
 			})
 		})
-
-		connection.languages.semanticTokens.onRange(params =>
-			matchService(params.textDocument.uri, this.services)?.provideSemanticTokens(params),
-		)
 
 		connection.onDocumentColor(params => {
 			this.colorDecorations(documents.get(params.textDocument.uri))

@@ -1,0 +1,144 @@
+{
+  "name": "source.twin",
+  "scopeName": "source.twin",
+  "injectionSelector": "L:source -comment",
+  "patterns": [
+    {
+      "begin": "tw(?:(?:\\.\\w+)?|\\(\\w*\\))(`)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.template.begin.twin"
+        }
+      },
+      "end": "(`)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.template.end.twin"
+        }
+      },
+      "patterns": [{ "include": "#expression-backtick" }]
+    }
+  ],
+  "repository": {
+    "line-comment-end-backtick": {
+      "match": "(//)[^`]*",
+      "captures": {
+        "0": {
+          "name": "comment.line.double-slash.twin"
+        },
+        "1": {
+          "name": "punctuation.definition.comment.twin"
+        }
+      }
+    },
+    "block-comment-end-backtick": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.begin.twin"
+        }
+      },
+      "end": "(\\*/)|(`)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.end.twin"
+        },
+        "2": {
+          "name": "punctuation.definition.string.template.end.twin"
+        }
+      },
+      "contentName": "comment.block.twin"
+    },
+    "expression-variant": {
+      "match": "([\\w-]+:)",
+      "captures": {
+        "0": {
+          "name": "entity.other.inherited-class.variant.twin"
+        }
+      }
+    },
+    "expression-classname": {
+      "match": "([\\w\\-\\.]*(?!\\/\\/|\\/\\*)(?:\\/)?[\\w\\-\\.]+)(!?)",
+      "captures": {
+        "1": {
+          "name": "support.constant.classname.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.classname.twin"
+        }
+      }
+    },
+    "expression-short-css": {
+      "name": "entity.name.variable.css-value.twin",
+      "begin": "([\\w-]+)(\\[)",
+      "end": "(\\])(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.type.css-prop.twin"
+        },
+        "2": {
+          "name": "punctuation.section.embedded.short-css.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.short-css.end.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.short-css.twin"
+        }
+      }
+    },
+    "variant-group-expression": {
+      "begin": "(\\()",
+      "end": "(\\))(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.bracket.variant-group.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.bracket.variant-group.end.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.variant-group.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        },
+        {
+          "include": "#expression-backtick"
+        }
+      ]
+    },
+    "illegal": {
+      "name": "invalid.illegal.twin",
+      "match": "(\\S+?)(?!(?://|\"|'|`))"
+    },
+    "expression-backtick": {
+      "patterns": [
+        {
+          "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "#expression-variant"
+        },
+        {
+          "include": "#expression-short-css"
+        },
+        {
+          "include": "#expression-classname"
+        },
+        {
+          "include": "#variant-group-expression"
+        }
+      ]
+    }
+  }
+}

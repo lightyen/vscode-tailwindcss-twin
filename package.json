@@ -105,57 +105,34 @@
         }
       }
     },
-    "semanticTokenTypes": [
+    "grammars": [
       {
-        "id": "className",
-        "superType": "enumMember",
-        "description": "A class type."
+        "injectTo": [
+          "source.tsx",
+          "source.jsx",
+          "source.ts",
+          "source.js"
+        ],
+        "scopeName": "source.twin",
+        "path": "./syntaxes/twin.tmLanguage.json"
       },
       {
-        "id": "variant",
-        "superType": "interface",
-        "description": "A variant type."
+        "injectTo": [
+          "source.tsx",
+          "source.jsx",
+          "source.ts",
+          "source.js"
+        ],
+        "scopeName": "source.twin-theme",
+        "path": "./syntaxes/theme.tmLanguage.json"
       },
       {
-        "id": "bracket",
-        "superType": "variable",
-        "description": "A bracket type."
-      },
-      {
-        "id": "important",
-        "superType": "operator",
-        "description": "An exclamation mark type."
-      },
-      {
-        "id": "shortCssProperty",
-        "superType": "function",
-        "description": "A short css property type."
-      },
-      {
-        "id": "shortCssValue",
-        "superType": "function",
-        "description": "A short css value type."
-      },
-      {
-        "id": "shortCssBracket",
-        "superType": "function",
-        "description": "A short css bracket type."
-      },
-      {
-        "id": "themeKey",
-        "superType": "number",
-        "description": "A theme key type."
-      },
-      {
-        "id": "themeBracket",
-        "superType": "struct",
-        "description": "A theme bracket type."
-      }
-    ],
-    "semanticTokenModifiers": [
-      {
-        "id": "twin",
-        "description": "Annotates a symbol that is implemented for twin."
+        "injectTo": [
+          "source.tsx",
+          "source.jsx"
+        ],
+        "scopeName": "source.twin-prop",
+        "path": "./syntaxes/twProp.tmLanguage.json"
       }
     ],
     "configuration": {
