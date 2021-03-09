@@ -13,7 +13,6 @@ export interface LanguageService {
 	onHover: (params: lsp.HoverParams) => Promise<lsp.Hover>
 	validate: (document: TextDocument) => Promise<lsp.Diagnostic[]>
 	provideColorDecorations: (document: TextDocument) => Promise<Array<ColorDecoration & { range: lsp.Range }>>
-	provideSemanticTokens: (params: lsp.SemanticTokensRangeParams) => Promise<lsp.SemanticTokens>
 	onDocumentColor: (params: lsp.DocumentColorParams) => Promise<lsp.ColorInformation[]>
 	onColorPresentation: (params: lsp.ColorPresentationParams) => Promise<lsp.ColorPresentation[]>
 }

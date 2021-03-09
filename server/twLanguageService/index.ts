@@ -10,7 +10,6 @@ import completionResolve from "./completionResolve"
 import { validate } from "./diagnostics"
 import hover from "./hover"
 import { provideColorDecorations } from "./provideColor"
-import provideSemanticTokens from "./semanticTokens"
 
 export type ServiceOptions = TailwindOptions & Settings
 
@@ -77,19 +76,6 @@ export class TailwindLanguageService implements LanguageService {
 			this.state,
 			this.options,
 			this.cache,
-		)
-	}
-	async provideSemanticTokens(params: lsp.SemanticTokensParams) {
-		if (!this.ready) []
-		const builder = new lsp.SemanticTokensBuilder()
-		const document = this.documents.get(params.textDocument.uri)
-		return await idebounce(
-			"provideSemanticTokens" + document.uri,
-			provideSemanticTokens,
-			builder,
-			document,
-			this.state,
-			this.options,
 		)
 	}
 	async onDocumentColor(params: lsp.DocumentColorParams) {

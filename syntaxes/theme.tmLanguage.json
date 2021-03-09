@@ -1,0 +1,48 @@
+{
+  "name": "source.twin-theme",
+  "scopeName": "source.twin-theme",
+  "injectionSelector": "L:source -comment",
+  "patterns": [
+    {
+      "contentName": "entity.name.string.tagged-template.twin-theme",
+      "begin": "(theme)(`)",
+      "beginCaptures": {
+        "2": {
+          "name": "punctuation.definition.string.template.begin.twin-theme"
+        }
+      },
+      "end": "(`)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.template.end.twin-theme"
+        }
+      },
+      "patterns": [{ "include": "#expression-backtick" }]
+    }
+  ],
+  "repository": {
+    "expression-backtick": {
+      "match": "(\\w+)|(\\.)([\\w+\\/])|(\\[)([\\w\\.\\/]+)(\\])",
+      "captures": {
+        "1": {
+          "name": "support.constant.key.twin-theme"
+        },
+        "2": {
+          "name": "punctuation.accessor.twin-theme"
+        },
+        "3": {
+          "name": "support.constant.key.twin-theme"
+        },
+        "4": {
+          "name": "meta.brace.square.begin.twin-theme"
+        },
+        "5": {
+          "name": "support.constant.key.twin-theme"
+        },
+        "6": {
+          "name": "meta.brace.square.end.twin-theme"
+        }
+      }
+    }
+  }
+}

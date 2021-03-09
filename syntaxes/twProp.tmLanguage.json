@@ -1,0 +1,273 @@
+{
+  "name": "source.twin-prop",
+  "scopeName": "source.twin-prop",
+  "injectionSelector": "L:meta.tag.attributes -comment",
+  "patterns": [
+    {
+      "name": "meta.tag.twin",
+      "begin": "\\s*(tw)(=)('|{')",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.other.attribute-name.twin"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.twin"
+        },
+        "3": {
+          "name": "string.quoted.single",
+          "patterns": [
+            {
+              "match": "({)?(')",
+              "captures": {
+                "1": {
+                  "name": "punctuation.section.embedded.begin.twin"
+                },
+                "2": {
+                  "name": "punctuation.definition.string.begin.twin"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "end": "(')(})?",
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.single",
+          "patterns": [
+            {
+              "match": "'",
+              "name": "punctuation.definition.string.end.twin"
+            }
+          ]
+        },
+        "2": {
+          "name": "punctuation.definition.embedded.end.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression-single-quote"
+        }
+      ]
+    },
+    {
+      "name": "meta.tag.twin",
+      "begin": "\\s*?(tw)(=)({)?(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.other.attribute-name.twin"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.twin"
+        },
+        "3": {
+          "name": "punctuation.section.embedded.begin.twin"
+        },
+        "4": {
+          "name": "string.quoted.double",
+          "patterns": [
+            {
+              "match": "\"",
+              "name": "punctuation.definition.string.begin.twin"
+            }
+          ]
+        }
+      },
+      "end": "(\")(})?",
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.double",
+          "patterns": [
+            {
+              "match": "\"",
+              "name": "punctuation.definition.string.end.twin"
+            }
+          ]
+        },
+        "2": {
+          "name": "punctuation.definition.embedded.end.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression-double-quote"
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "line-comment-end-single-quote": {
+      "match": "(//)[^']*",
+      "captures": {
+        "0": {
+          "name": "comment.line.double-slash.twin"
+        },
+        "1": {
+          "name": "punctuation.definition.comment.twin"
+        }
+      }
+    },
+    "line-comment-end-double-quote": {
+      "match": "(//)[^\"]*",
+      "captures": {
+        "0": {
+          "name": "comment.line.double-slash.twin"
+        },
+        "1": {
+          "name": "punctuation.definition.comment.twin"
+        }
+      }
+    },
+    "block-comment-end-single-quote": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.tsx"
+        }
+      },
+      "end": "(\\*/)|(')",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.tsx"
+        },
+        "2": {
+          "name": "punctuation.definition.string.end.twin"
+        }
+      },
+      "contentName": "comment.block.twin"
+    },
+    "block-comment-end-double-quote": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.tsx"
+        }
+      },
+      "end": "(\\*/)|(\")",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.tsx"
+        },
+        "2": {
+          "name": "punctuation.definition.string.end.twin"
+        }
+      },
+      "contentName": "comment.block.twin"
+    },
+    "expression-variant": {
+      "match": "([\\w-]+:)",
+      "captures": {
+        "0": {
+          "name": "entity.other.inherited-class.variant.twin"
+        }
+      }
+    },
+    "expression-classname": {
+      "match": "([\\w\\-\\.]*(?!\\/\\/|\\/\\*)(?:\\/)?[\\w\\-\\.]+)(!?)",
+      "captures": {
+        "1": {
+          "name": "support.constant.classname.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.classname.twin"
+        }
+      }
+    },
+    "expression-short-css": {
+      "name": "entity.name.variable.css-value.twin",
+      "begin": "([\\w-]+)(\\[)",
+      "end": "(\\])(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.type.css-prop.twin"
+        },
+        "2": {
+          "name": "punctuation.section.embedded.begin.short-css.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.short-css.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.short-css.twin"
+        }
+      }
+    },
+    "variant-group-expression": {
+      "begin": "(\\()",
+      "end": "(\\))(!?)",
+      "name": "meta.block.variant-group.twin",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.variant-group.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.variant-group.end.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.variant-group.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        },
+        {
+          "include": "#expression-double-quote"
+        }
+      ]
+    },
+    "jsx-tag-attributes-illegal": {
+      "name": "invalid.illegal.twin",
+      "match": "(\\S+?)(?!(?://|\"|'|`))"
+    },
+    "expression-single-quote": {
+      "patterns": [
+        {
+          "include": "#line-comment-end-single-quote"
+        },
+        {
+          "include": "#block-comment-end-single-quote"
+        },
+        {
+          "include": "#expression-variant"
+        },
+        {
+          "include": "#expression-classname"
+        },
+        {
+          "include": "#variant-group-expression"
+        }
+      ]
+    },
+    "expression-double-quote": {
+      "patterns": [
+        {
+          "include": "#line-comment-end-double-quote"
+        },
+        {
+          "include": "#block-comment-end-double-quote"
+        },
+        {
+          "include": "#expression-variant"
+        },
+        {
+          "include": "#expression-short-css"
+        },
+        {
+          "include": "#expression-classname"
+        },
+        {
+          "include": "#variant-group-expression"
+        },
+        {
+          "include": "#jsx-tag-attributes-illegal"
+        }
+      ]
+    }
+  }
+}
