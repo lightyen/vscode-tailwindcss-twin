@@ -9,7 +9,7 @@ const process = async (css: string) => {
 const __source = "test"
 
 const processCss = async (css: string) => {
-	return parseResults([{ source: __source, result: await process(css) }], false, false)
+	return parseResults([{ source: __source, result: await process(css) }], false, "", false)
 }
 
 test("B", async () => {
