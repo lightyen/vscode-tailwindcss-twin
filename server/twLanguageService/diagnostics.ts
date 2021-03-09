@@ -348,6 +348,9 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 
 	if (item.token.text) {
 		const { text, start, end } = item.prop
+		if (text.startsWith("--")) {
+			return result
+		}
 		const ret = csspropSearcher.search(text)
 		const score = ret?.[0]?.score
 		if (score > 0) {
