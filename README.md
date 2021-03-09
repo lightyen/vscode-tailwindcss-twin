@@ -44,44 +44,6 @@ Support ONLY `react` and `twin.macro`
 }
 ```
 
-### Semantic Highlight (Experimental)
-
-```json5
-// example
-{
-  "editor.semanticTokenColorCustomizations": {
-    "[Atom One Dark]": {
-      "enabled": true,
-      "rules": {
-        "important": "#6e90ff"
-      }
-    },
-    "[Dracula]": {
-      "enabled": true,
-      "rules": {
-        "important": "#77f13e"
-      }
-    }
-  }
-}
-
-```
-
-#### semantic token types (Experimental)
-
-| type             |
-| ---------------- |
-| className        |
-| variant          |
-| bracket          |
-| important        |
-| shortCssProperty |
-| shortCssValue    |
-| shortCssBracket  |
-| themeKey         |
-| themeBracket     |
-| comment          |
-
 ### Custom CompletionList Panel
 
 ```json5

@@ -129,7 +129,9 @@
       {
         "injectTo": [
           "source.tsx",
-          "source.jsx"
+          "source.jsx",
+          "source.ts",
+          "source.js"
         ],
         "scopeName": "source.twin-prop",
         "path": "./syntaxes/twProp.tmLanguage.json"
