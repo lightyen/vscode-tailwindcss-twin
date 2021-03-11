@@ -127,7 +127,7 @@ function classesCompletion(
 						},
 					}
 				} else {
-					const f = state.classnames.isDarkLightMode(twin, label) || state.classnames.isMotionControl(label)
+					const f = state.classnames.isDarkLightMode(twin, label)
 					return {
 						label: label + ":",
 						sortText: f ? "*" + label : "~~~:" + label,

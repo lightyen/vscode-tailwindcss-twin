@@ -371,9 +371,6 @@ export function parseResults(
 		isMotionControl(variant: string) {
 			return variant === "motion-reduce" || variant === "motion-safe"
 		},
-		hasMotionControl(variants: string[]) {
-			return variants.some(v => this.isMotionControl(v))
-		},
 		getVariants(twinPattern: boolean) {
 			if (twinPattern) {
 				return this.variants
@@ -391,9 +388,6 @@ export function parseResults(
 				return false
 			}
 			if (this.isDarkLightMode(twinPattern, label)) {
-				return false
-			}
-			if (this.isMotionControl(label)) {
 				return false
 			}
 			return !!this.getVariants(twinPattern)[label]
@@ -454,7 +448,6 @@ export function parseResults(
 			const flags: Flag =
 				(this.hasBreakingPoint(variants) && Flag.Responsive) |
 				(this.hasDarkLightMode(variants, twinPattern) && Flag.DarkLightMode) |
-				(this.hasMotionControl(variants) && Flag.MotionControl) |
 				(variants.some(v => this.isCommonVariant(twinPattern, v)) && Flag.CommonVariant)
 			return label => {
 				if (twinPattern) {
@@ -468,11 +461,6 @@ export function parseResults(
 					}
 					if (flags & Flag.DarkLightMode) {
 						if (this.isDarkLightMode(twinPattern, label)) {
-							return false
-						}
-					}
-					if (flags & Flag.MotionControl) {
-						if (this.isMotionControl(label)) {
 							return false
 						}
 					}
