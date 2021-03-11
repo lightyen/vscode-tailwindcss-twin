@@ -12,6 +12,10 @@ export default function completionResolve(
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
+	if (item.data.kind === PatternKind.TwinTheme) {
+		return item
+	}
+
 	const keyword = item.label.slice(state.config.prefix.length)
 	if (item.kind === lsp.CompletionItemKind.Constant && keyword === "container") {
 		resolveContainer(item, state, options)
@@ -37,10 +41,6 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		variants: string[]
 		kind: PatternKind
 		entry?: IPropertyData
-	}
-
-	if (kind === PatternKind.TwinTheme) {
-		return item
 	}
 
 	if (type === "cssPropertyName" || type === "cssPropertyValue") {

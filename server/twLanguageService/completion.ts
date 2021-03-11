@@ -365,13 +365,19 @@ function twinThemeCompletion(
 				sortText: formatCandidates(label),
 			}
 			const value = state.getTheme([...keys, label])
-			const isObject = typeof value === "object"
 			item.data = {
 				kind: PatternKind.TwinTheme,
 				type: "other",
 			}
-			if (isObject) {
+			if (typeof value === "object") {
 				item.kind = lsp.CompletionItemKind.Module
+			} else if (typeof value === "function") {
+				item.kind = lsp.CompletionItemKind.Function
+				item.documentation = {
+					kind: lsp.MarkupKind.Markdown,
+					value: `\`\`\`text\nfunction\n\`\`\``,
+				}
+				item.detail = label
 			} else {
 				if (typeof value === "string") {
 					try {
@@ -388,13 +394,12 @@ function twinThemeCompletion(
 						item.data.type = "color"
 					} catch {
 						item.kind = lsp.CompletionItemKind.Constant
-						item.documentation = value
+						item.documentation = {
+							kind: lsp.MarkupKind.Markdown,
+							value: `\`\`\`txt\n${value}\n\`\`\``,
+						}
 						item.detail = label
 					}
-				} else if (value instanceof Array) {
-					item.kind = lsp.CompletionItemKind.Field
-					item.documentation = label
-					item.detail = value.join("\n")
 				}
 			}
 

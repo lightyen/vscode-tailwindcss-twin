@@ -307,11 +307,11 @@ function resolveThemeValue({
 	}
 
 	if (typeof value === "string") {
-		markdown.value = value
+		markdown.value = `\`\`\`txt\n${value}\n\`\`\``
 	} else if (value instanceof Array) {
-		markdown.value = value.join(", ")
+		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
 	} else if (value) {
-		markdown.value = "object"
+		markdown.value = `\`\`\`js\n${value.toString?.() ?? typeof value}\n\`\`\``
 	}
 
 	return {
