@@ -474,9 +474,6 @@ function createCompletionItem({
 
 	item.kind = lsp.CompletionItemKind.Color
 	if (label.includes("current")) {
-		item.documentation = "currentColor"
-		item.data.type = "color"
-		item.data.data = "currentColor"
 		return item
 	}
 
