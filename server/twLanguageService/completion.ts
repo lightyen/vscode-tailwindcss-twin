@@ -200,6 +200,17 @@ function classesCompletion(
 						item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label)
 					}
 				}
+			} else if (suggestion.token.token.text === state.separator) {
+				for (let i = 0; i < variantItems.length; i++) {
+					const item = variantItems[i]
+					item.textEdit = lsp.TextEdit.replace(
+						{
+							start: document.positionAt(offset + a),
+							end: document.positionAt(offset + a + 1),
+						},
+						item.label,
+					)
+				}
 			} else {
 				variantItems.length = 0
 			}
