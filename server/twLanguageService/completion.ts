@@ -382,6 +382,11 @@ function twinThemeCompletion(
 			}
 			if (typeof value === "object") {
 				item.kind = lsp.CompletionItemKind.Module
+				item.documentation = {
+					kind: lsp.MarkupKind.Markdown,
+					value: `\`\`\`text\nobject\n\`\`\``,
+				}
+				item.detail = label
 			} else if (typeof value === "function") {
 				item.kind = lsp.CompletionItemKind.Function
 				item.documentation = {
