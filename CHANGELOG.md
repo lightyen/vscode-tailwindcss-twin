@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.7.3
+
+### Changes
+
+- treat motion-control variants as normal variants
+
+### Enhance
+
+- completion/hover on theme value
+- completion on 'current'
+- completion on single colon (you can get all variants by typing single colon.)
+
 ## 0.7.2
 
 ### Changes
