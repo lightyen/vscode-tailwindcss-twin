@@ -2,6 +2,7 @@
 
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
+import type { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
@@ -15,11 +16,45 @@ import { getCompletionsForDeclarationValue } from "./completionCssPropertyValue"
 import { cssDataManager } from "./cssData"
 
 export interface InnerData {
-	type: "screen" | "utilities" | "variant" | "other"
+	type: "screen" | "utilities" | "components" | "color" | "variant" | "theme" | "cssPropertyName" | "cssPropertyValue"
 	kind: PatternKind
 	uri: string
 	variants?: string[]
 	data?: CSSRuleItem | CSSRuleItem[]
+	entry?: IPropertyData
+}
+
+function doReplace(
+	list: lsp.CompletionItem[],
+	document: TextDocument,
+	offset: number,
+	start: number,
+	end: number,
+	handler: (item: lsp.CompletionItem) => string,
+) {
+	for (let i = 0; i < list.length; i++) {
+		const item = list[i]
+		item.textEdit = lsp.TextEdit.replace(
+			{
+				start: document.positionAt(offset + start),
+				end: document.positionAt(offset + end),
+			},
+			handler(item),
+		)
+	}
+}
+
+function doInsert(
+	list: lsp.CompletionItem[],
+	document: TextDocument,
+	offset: number,
+	start: number,
+	handler: (item: lsp.CompletionItem) => string,
+) {
+	for (let i = 0; i < list.length; i++) {
+		const item = list[i]
+		item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + start), handler(item))
+	}
 }
 
 export default function completion(
@@ -42,7 +77,7 @@ export default function completion(
 			}
 			return list
 		} else {
-			const list = classesCompletion(document, index, token, kind, state, options)
+			const list = twinCompletion(document, index, token, kind, state, options)
 			for (let i = 0; i < list.items.length; i++) {
 				list.items[i].data.uri = document.uri
 			}
@@ -54,17 +89,7 @@ export default function completion(
 	}
 }
 
-function makeReplace(document: TextDocument, offset: number, start: number, end: number, text: string): lsp.TextEdit {
-	return lsp.TextEdit.replace(
-		{
-			start: document.positionAt(offset + start),
-			end: document.positionAt(offset + end),
-		},
-		text,
-	)
-}
-
-function classesCompletion(
+function twinCompletion(
 	document: TextDocument,
 	index: number,
 	match: tw.Token,
@@ -75,15 +100,28 @@ function classesCompletion(
 	const [offset, , input] = match
 	const position = index - offset
 	const suggestion = completeElement({ input, position, separator: state.separator })
-	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
-	const preferVariantWithParentheses = options.preferVariantWithParentheses
-	const nextCharacter = input.slice(position, position + 1) ?? " "
-	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const isIncomplete = false
 
-	// textEdit type: insert, replace, insert with space
+	const variants = variantsCompletion(document, input, position, offset, kind, suggestion, state, options)
+	const utilties = utiltiesCompletion(document, input, position, offset, kind, suggestion, state, options)
+	const shortcss = shortcssCompletion(document, input, position, offset, kind, suggestion, state, options)
 
-	// list variants
+	return lsp.CompletionList.create([...variants, ...utilties, ...shortcss], isIncomplete)
+}
+
+function variantsCompletion(
+	document: TextDocument,
+	input: string,
+	position: number,
+	offset: number,
+	kind: PatternKind,
+	suggestion: ReturnType<typeof completeElement>,
+	state: Tailwind,
+	{ preferVariantWithParentheses }: ServiceOptions,
+) {
+	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
+	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
+	const nextCharacter = input.slice(position, position + 1)
 	const userVariants = suggestion.variants.texts
 	let variantItems: lsp.CompletionItem[] = []
 	let variantEnabled = true
@@ -104,7 +142,7 @@ function classesCompletion(
 				const bp = state.classnames.getBreakingPoint(label)
 				if (bp) {
 					return {
-						label: label + ":",
+						label: label + state.separator,
 						sortText: bp.toString().padStart(5, " "),
 						kind: lsp.CompletionItemKind.Module,
 						data: { type: "screen", data, variants: userVariants, kind },
@@ -115,7 +153,7 @@ function classesCompletion(
 					}
 				} else if (label === "placeholder") {
 					return {
-						label: label + ":",
+						label: label + state.separator,
 						sortText: "*" + label,
 						kind: lsp.CompletionItemKind.Method,
 						data: { type: "variant", data, variants: userVariants, kind },
@@ -127,7 +165,7 @@ function classesCompletion(
 				} else {
 					const f = state.classnames.isDarkLightMode(twin, label)
 					return {
-						label: label + ":",
+						label: label + state.separator,
 						sortText: f ? "*" + label : "~~~:" + label,
 						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Method,
 						data: { type: "variant", data, variants: userVariants, kind },
@@ -157,46 +195,46 @@ function classesCompletion(
 				twin,
 			)
 			if (!isVariantWord || (position > a && position < b)) {
-				for (let i = 0; i < variantItems.length; i++) {
-					const item = variantItems[i]
-					item.textEdit = makeReplace(document, offset, a, b, item.label)
-				}
+				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
 		} else if (
 			suggestion.token.kind === tw.TokenKind.ClassName ||
 			suggestion.token.kind === tw.TokenKind.CssProperty
 		) {
 			if (position > a) {
-				for (let i = 0; i < variantItems.length; i++) {
-					const item = variantItems[i]
-					item.textEdit = makeReplace(document, offset, a, b, item.insertText)
-				}
+				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
 		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
 			if (position === a) {
 				if (nextCharacter === state.separator) {
-					for (let i = 0; i < variantItems.length; i++) {
-						const item = variantItems[i]
-						item.textEdit = makeReplace(document, offset, a, a + 1, item.label)
-					}
+					doReplace(variantItems, document, offset, a, a + 1, item => item.label)
 				} else {
-					for (let i = 0; i < variantItems.length; i++) {
-						const item = variantItems[i]
-						item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label)
-					}
+					doInsert(variantItems, document, offset, a, item => item.label)
 				}
 			} else if (suggestion.token.token.text === state.separator) {
-				for (let i = 0; i < variantItems.length; i++) {
-					const item = variantItems[i]
-					item.textEdit = makeReplace(document, offset, a, a + 1, item.label)
-				}
+				doReplace(variantItems, document, offset, a, a + 1, item => item.label)
 			} else {
 				variantItems.length = 0
 			}
 		}
 	}
 
-	// list className
+	return variantItems
+}
+
+function utiltiesCompletion(
+	document: TextDocument,
+	input: string,
+	position: number,
+	offset: number,
+	kind: PatternKind,
+	suggestion: ReturnType<typeof completeElement>,
+	state: Tailwind,
+	_: ServiceOptions,
+) {
+	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
+	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
+	const userVariants = suggestion.variants.texts
 	let classNameItems: lsp.CompletionItem[] = []
 	let classNameEnabled = true
 
@@ -210,7 +248,9 @@ function classesCompletion(
 					value.slice(0, value.length - state.separator.length),
 					twin,
 				)
-				if (position === b && !isVariantWord) classNameEnabled = false
+				if (position === b && !isVariantWord) {
+					classNameEnabled = false
+				}
 				break
 			}
 			case tw.TokenKind.Comment:
@@ -231,17 +271,29 @@ function classesCompletion(
 
 	if (suggestion.token) {
 		if ((position > a && position < b) || (position === b && suggestion.token.kind === tw.TokenKind.ClassName)) {
-			for (let i = 0; i < classNameItems.length; i++) {
-				const item = classNameItems[i]
-				item.textEdit = makeReplace(document, offset, a, b, item.label)
-			}
+			doReplace(classNameItems, document, offset, a, b, item => item.label)
 		} else if (position === a) {
-			for (let i = 0; i < classNameItems.length; i++) {
-				const item = classNameItems[i]
-				item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + " ")
-			}
+			doInsert(classNameItems, document, offset, a, item => item.label + " ")
+		} else {
+			classNameItems.length = 0
 		}
 	}
+
+	return classNameItems
+}
+
+function shortcssCompletion(
+	document: TextDocument,
+	input: string,
+	position: number,
+	offset: number,
+	kind: PatternKind,
+	suggestion: ReturnType<typeof completeElement>,
+	state: Tailwind,
+	_: ServiceOptions,
+) {
+	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
+	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 
 	let cssPropItems: lsp.CompletionItem[] = []
 	const cssValueItems: lsp.CompletionItem[] = []
@@ -250,6 +302,16 @@ function classesCompletion(
 
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
+			case tw.TokenKind.Variant: {
+				const isVariantWord = state.classnames.isVariant(
+					value.slice(0, value.length - state.separator.length),
+					twin,
+				)
+				if (position === b && !isVariantWord) {
+					cssPropEnabled = false
+				}
+				break
+			}
 			case tw.TokenKind.Comment:
 				cssPropEnabled = false
 				break
@@ -288,39 +350,21 @@ function classesCompletion(
 		if (suggestion.token.kind === tw.TokenKind.CssProperty) {
 			const { start, end } = suggestion.token.key
 			if (position > start && position <= end) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
-				}
+				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
 			} else if (position === start) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
-				}
+				doInsert(cssPropItems, document, offset, a, item => item.label + "[$0] ")
 			}
 		} else if (suggestion.token.kind === tw.TokenKind.Variant) {
 			if (position > a && position < b) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
-				}
+				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
 			} else if (position === a) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
-				}
+				doInsert(cssPropItems, document, offset, a, item => item.label + "[$0] ")
 			}
 		} else {
 			if (position > a && position <= b) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
-				}
+				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
 			} else if (position === a) {
-				for (let i = 0; i < cssPropItems.length; i++) {
-					const item = cssPropItems[i]
-					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
-				}
+				doInsert(cssPropItems, document, offset, a, item => item.label + "[$0] ")
 			}
 		}
 	}
@@ -337,10 +381,7 @@ function classesCompletion(
 		)
 	}
 
-	return lsp.CompletionList.create(
-		[...variantItems, ...classNameItems, ...cssPropItems, ...cssValueItems],
-		isIncomplete,
-	)
+	return [...cssPropItems, ...cssValueItems]
 }
 
 function twinThemeCompletion(
@@ -391,7 +432,7 @@ function twinThemeCompletion(
 			const value = state.getTheme([...keys, label])
 			item.data = {
 				kind: PatternKind.TwinTheme,
-				type: "other",
+				type: "theme",
 			}
 			if (typeof value === "object") {
 				item.kind = lsp.CompletionItemKind.Module
