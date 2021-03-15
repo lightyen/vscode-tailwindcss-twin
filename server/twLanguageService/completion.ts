@@ -54,6 +54,16 @@ export default function completion(
 	}
 }
 
+function makeReplace(document: TextDocument, offset: number, start: number, end: number, text: string): lsp.TextEdit {
+	return lsp.TextEdit.replace(
+		{
+			start: document.positionAt(offset + start),
+			end: document.positionAt(offset + end),
+		},
+		text,
+	)
+}
+
 function classesCompletion(
 	document: TextDocument,
 	index: number,
@@ -67,9 +77,11 @@ function classesCompletion(
 	const suggestion = completeElement({ input, position, separator: state.separator })
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const preferVariantWithParentheses = options.preferVariantWithParentheses
-	const nextCharacter = input.slice(position, position + 1)
+	const nextCharacter = input.slice(position, position + 1) ?? " "
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const isIncomplete = false
+
+	// textEdit type: insert, replace, insert with space
 
 	// list variants
 	const userVariants = suggestion.variants.texts
@@ -129,7 +141,7 @@ function classesCompletion(
 	}
 
 	if (preferVariantWithParentheses) {
-		if ((!suggestion.token && nextCharacter !== "(") || suggestion.token?.token.end === position) {
+		if (nextCharacter !== "(" && !(suggestion.token?.kind === tw.TokenKind.Variant && position === a)) {
 			for (let i = 0; i < variantItems.length; i++) {
 				const item = variantItems[i]
 				item.insertTextFormat = lsp.InsertTextFormat.Snippet
@@ -144,17 +156,10 @@ function classesCompletion(
 				value.slice(0, value.length - state.separator.length),
 				twin,
 			)
-			if (!isVariantWord || position < b) {
-				// replace variant
+			if (!isVariantWord || (position > a && position < b)) {
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
-					item.textEdit = lsp.TextEdit.replace(
-						{
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						item.label,
-					)
+					item.textEdit = makeReplace(document, offset, a, b, item.label)
 				}
 			}
 		} else if (
@@ -162,16 +167,9 @@ function classesCompletion(
 			suggestion.token.kind === tw.TokenKind.CssProperty
 		) {
 			if (position > a) {
-				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
-					item.textEdit = lsp.TextEdit.replace(
-						{
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						item.insertText,
-					)
+					item.textEdit = makeReplace(document, offset, a, b, item.insertText)
 				}
 			}
 		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
@@ -179,13 +177,7 @@ function classesCompletion(
 				if (nextCharacter === state.separator) {
 					for (let i = 0; i < variantItems.length; i++) {
 						const item = variantItems[i]
-						item.textEdit = lsp.TextEdit.replace(
-							{
-								start: document.positionAt(offset + a),
-								end: document.positionAt(offset + a + 1),
-							},
-							item.label,
-						)
+						item.textEdit = makeReplace(document, offset, a, a + 1, item.label)
 					}
 				} else {
 					for (let i = 0; i < variantItems.length; i++) {
@@ -196,13 +188,7 @@ function classesCompletion(
 			} else if (suggestion.token.token.text === state.separator) {
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
-					item.textEdit = lsp.TextEdit.replace(
-						{
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + a + 1),
-						},
-						item.label,
-					)
+					item.textEdit = makeReplace(document, offset, a, a + 1, item.label)
 				}
 			} else {
 				variantItems.length = 0
@@ -224,14 +210,9 @@ function classesCompletion(
 					value.slice(0, value.length - state.separator.length),
 					twin,
 				)
-				if (!isVariantWord || position < b) classNameEnabled = false
+				if (position === b && !isVariantWord) classNameEnabled = false
 				break
 			}
-			case tw.TokenKind.CssProperty:
-				if (position < b) classNameEnabled = false
-				break
-			case tw.TokenKind.Unknown:
-				break
 			case tw.TokenKind.Comment:
 				classNameEnabled = false
 				break
@@ -246,23 +227,15 @@ function classesCompletion(
 	}
 
 	if (suggestion.token) {
-		if (position === a || (value.slice(0, 1) === "-" && position === a + 1 && position < b)) {
+		if ((position > a && position < b) || (position === b && suggestion.token.kind === tw.TokenKind.ClassName)) {
+			for (let i = 0; i < classNameItems.length; i++) {
+				const item = classNameItems[i]
+				item.textEdit = makeReplace(document, offset, a, b, item.label)
+			}
+		} else if (position === a) {
 			for (let i = 0; i < classNameItems.length; i++) {
 				const item = classNameItems[i]
 				item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + " ")
-			}
-		} else if (suggestion.token.kind === tw.TokenKind.ClassName || suggestion.token.kind === tw.TokenKind.Unknown) {
-			if (position <= b) {
-				for (let i = 0; i < classNameItems.length; i++) {
-					const item = classNameItems[i]
-					item.textEdit = lsp.TextEdit.replace(
-						{
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						item.label,
-					)
-				}
 			}
 		}
 	}
@@ -277,6 +250,8 @@ function classesCompletion(
 			const { start, end } = suggestion.token.value
 			if (position >= start && position <= end) {
 				cssPropEnabled = false
+			}
+			if (position >= start && position <= end) {
 				cssValueEnabled = true
 			}
 		}
@@ -289,15 +264,7 @@ function classesCompletion(
 			kind: lsp.CompletionItemKind.Field,
 			insertTextFormat: lsp.InsertTextFormat.Snippet,
 			insertText: entry.name + "[$0]",
-			textEdit: suggestion.token
-				? lsp.TextEdit.replace(
-						{
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						entry.name + "[$0]",
-				  )
-				: undefined,
+			textEdit: suggestion.token ? makeReplace(document, offset, a, b, entry.name + "[$0]") : undefined,
 			command: {
 				title: "Suggest",
 				command: "editor.action.triggerSuggest",

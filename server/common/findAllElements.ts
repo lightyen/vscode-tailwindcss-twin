@@ -60,7 +60,7 @@ export default function findAllElements({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
 	let result: Result = zero()
 	let match: RegExpExecArray

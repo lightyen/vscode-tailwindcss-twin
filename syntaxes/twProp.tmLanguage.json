@@ -163,7 +163,7 @@
       }
     },
     "expression-classname": {
-      "match": "([\\w\\-\\.]*(?!\\/\\/|\\/\\*)(?:\\/)?[\\w\\-\\.]+)(!?)",
+      "match": "((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
       "captures": {
         "1": {
           "name": "support.constant.classname.twin"

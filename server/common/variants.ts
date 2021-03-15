@@ -54,7 +54,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	const results: string[] = []
 	classes = classes.slice(start, end).trim()
 
-	const regex = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+:)|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
+	const regex = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+:)|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 	let match: RegExpExecArray
 	const baseContext = context
 	while ((match = regex.exec(classes))) {

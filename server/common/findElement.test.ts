@@ -439,7 +439,7 @@ test("completion", async () => {
 				break
 			case 3:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
+					token: { kind: tw.TokenKind.Variant, token: [0, 3, "lg:"] },
 					variants: [[0, 2, "lg"]],
 					important: false,
 				})
@@ -467,12 +467,12 @@ test("completion", async () => {
 				break
 			case 7:
 				expect(completion).toEqual({
-					token: { kind: tw.TokenKind.ClassName, token: [7, 17, "class-name"] },
+					token: { kind: tw.TokenKind.Variant, token: [3, 7, "var:"] },
 					variants: [
 						[0, 2, "lg"],
 						[3, 6, "var"],
 					],
-					important: true,
+					important: false,
 				})
 				break
 			case 8:
@@ -600,7 +600,11 @@ test("completion", async () => {
 				})
 				break
 			case 22:
-				expect(completion).toEqual({ important: false, variants: [[19, 21, "lg"]] })
+				expect(completion).toEqual({
+					token: { kind: tw.TokenKind.Variant, token: [19, 22, "lg:"] },
+					important: false,
+					variants: [[19, 21, "lg"]],
+				})
 				break
 			case 23:
 				expect(completion).toEqual({
@@ -632,7 +636,8 @@ test("completion", async () => {
 				break
 			case 27:
 				expect(completion).toEqual({
-					important: true,
+					token: { kind: tw.TokenKind.Variant, token: [23, 27, "var:"] },
+					important: false,
 					variants: [
 						[19, 21, "lg"],
 						[23, 26, "var"],
@@ -924,7 +929,10 @@ test("completion on invalid input", async () => {
 		position,
 	})
 	expect(result.variants).toEqual([[3, 7, "dark"]])
-	expect(result.token).toEqual(undefined)
+	expect(result.token).toEqual({
+		kind: tw.TokenKind.Variant,
+		token: [3, 8, "dark:"],
+	})
 })
 
 test("completion2", async () => {
@@ -934,9 +942,17 @@ test("completion2", async () => {
 			[3, 6, "var"],
 		],
 		important: false,
+		token: {
+			kind: tw.TokenKind.Variant,
+			token: [3, 7, "var:"],
+		},
 	})
 	expect(completeElement({ input: `(var:)`, position: 5 })).toEqual({
 		variants: [[1, 4, "var"]],
 		important: false,
+		token: {
+			kind: tw.TokenKind.Variant,
+			token: [1, 5, "var:"],
+		},
 	})
 })

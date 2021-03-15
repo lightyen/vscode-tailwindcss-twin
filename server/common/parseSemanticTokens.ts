@@ -122,7 +122,7 @@ export class Semantic {
 
 		;[start, end] = trimLeft(input, start, end)
 
-		const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
+		const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 		let match: RegExpExecArray
 
 		reg.lastIndex = start

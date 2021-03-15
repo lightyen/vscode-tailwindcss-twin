@@ -50,8 +50,7 @@ export function completeElement({
 	}
 
 	;[start, end] = trimLeft(input, start, end)
-
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
@@ -63,9 +62,11 @@ export function completeElement({
 		const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
 			const token = tw.createToken(match.index, reg.lastIndex - separator.length, variant)
-			context.push(token)
 
 			if (position >= match.index && position <= reg.lastIndex) {
+				if (position === reg.lastIndex) {
+					context.push(token)
+				}
 				return {
 					token: {
 						kind: tw.TokenKind.Variant,
@@ -75,6 +76,8 @@ export function completeElement({
 					important: importantContext,
 				}
 			}
+
+			context.push(token)
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
@@ -335,7 +338,7 @@ export function hoverElement({
 
 	;[start, end] = trimLeft(input, start, end)
 
-	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|([\w-.]*(?!\/\/|\/\*)(?:\/)?[\w-.]+!?)|\(|(\S+)/gs
+	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
 	let match: RegExpExecArray
 
