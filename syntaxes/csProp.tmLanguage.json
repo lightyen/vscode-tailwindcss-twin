@@ -1,10 +1,10 @@
 {
-  "name": "source.twin-prop",
-  "scopeName": "source.twin-prop",
+  "name": "source.cs-prop",
+  "scopeName": "source.cs-prop",
   "injectionSelector": "L:meta.tag.attributes -comment",
   "patterns": [
     {
-      "begin": "\\s*(tw)(=)('|{')",
+      "begin": "\\s*(cs)(=)('|{')",
       "beginCaptures": {
         "1": {
           "name": "entity.other.attribute-name.twin"
@@ -52,7 +52,7 @@
     },
     {
       "name": "meta.tag.twin",
-      "begin": "\\s*?(tw)(=)({)?(\")",
+      "begin": "\\s*?(cs)(=)({)?(\")",
       "beginCaptures": {
         "1": {
           "name": "entity.other.attribute-name.twin"
@@ -239,9 +239,6 @@
           "include": "#expression-short-css"
         },
         {
-          "include": "#expression-classname"
-        },
-        {
           "include": "#variant-group-expression"
         }
       ]
@@ -259,9 +256,6 @@
         },
         {
           "include": "#expression-short-css"
-        },
-        {
-          "include": "#expression-classname"
         },
         {
           "include": "#variant-group-expression"

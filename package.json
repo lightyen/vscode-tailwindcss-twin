@@ -135,6 +135,16 @@
         ],
         "scopeName": "source.twin-prop",
         "path": "./syntaxes/twProp.tmLanguage.json"
+      },
+      {
+        "injectTo": [
+          "source.tsx",
+          "source.jsx",
+          "source.ts",
+          "source.js"
+        ],
+        "scopeName": "source.cs-prop",
+        "path": "./syntaxes/csProp.tmLanguage.json"
       }
     ],
     "configuration": {
