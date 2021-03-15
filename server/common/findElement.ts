@@ -217,7 +217,7 @@ export function completeElement({
 				}
 			}
 		} else if (lineComment) {
-			if (position > match.index && position < reg.lastIndex) {
+			if (position > match.index && position <= reg.lastIndex) {
 				return {
 					token: {
 						kind: tw.TokenKind.Comment,
@@ -242,7 +242,7 @@ export function completeElement({
 				}
 				break
 			}
-			if (position > match.index && position < closeComment) {
+			if (position > match.index && position <= closeComment) {
 				return {
 					token: {
 						kind: tw.TokenKind.Comment,
