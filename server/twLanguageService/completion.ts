@@ -264,7 +264,6 @@ function classesCompletion(
 			kind: lsp.CompletionItemKind.Field,
 			insertTextFormat: lsp.InsertTextFormat.Snippet,
 			insertText: entry.name + "[$0]",
-			textEdit: suggestion.token ? makeReplace(document, offset, a, b, entry.name + "[$0]") : undefined,
 			command: {
 				title: "Suggest",
 				command: "editor.action.triggerSuggest",
@@ -274,6 +273,23 @@ function classesCompletion(
 				entry,
 			},
 		}))
+	}
+
+	if (suggestion.token) {
+		if (suggestion.token.kind === tw.TokenKind.CssProperty) {
+			const { start, end } = suggestion.token.key
+			if (position > start && position <= end) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
+				}
+			} else if (position === start) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
+				}
+			}
+		}
 	}
 
 	if (cssValueEnabled && suggestion.token.kind === tw.TokenKind.CssProperty) {
