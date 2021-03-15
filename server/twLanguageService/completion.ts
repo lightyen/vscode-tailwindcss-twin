@@ -216,6 +216,9 @@ function classesCompletion(
 			case tw.TokenKind.Comment:
 				classNameEnabled = false
 				break
+			case tw.TokenKind.CssProperty:
+				classNameEnabled = false
+				break
 		}
 	}
 
@@ -290,6 +293,30 @@ function classesCompletion(
 					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
 				}
 			} else if (position === start) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
+				}
+			}
+		} else if (suggestion.token.kind === tw.TokenKind.Variant) {
+			if (position > a && position < b) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
+				}
+			} else if (position === a) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
+				}
+			}
+		} else {
+			if (position > a && position <= b) {
+				for (let i = 0; i < cssPropItems.length; i++) {
+					const item = cssPropItems[i]
+					item.textEdit = makeReplace(document, offset, a, b, item.label + "[$0]")
+				}
+			} else if (position === a) {
 				for (let i = 0; i < cssPropItems.length; i++) {
 					const item = cssPropItems[i]
 					item.textEdit = lsp.TextEdit.insert(document.positionAt(offset + a), item.label + "[$0] ")
