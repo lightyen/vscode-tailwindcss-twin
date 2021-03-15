@@ -246,13 +246,19 @@ function classesCompletion(
 	let cssValueEnabled = false
 
 	if (suggestion.token) {
-		if (suggestion.token.kind === tw.TokenKind.CssProperty) {
-			const { start, end } = suggestion.token.value
-			if (position >= start && position <= end) {
+		switch (suggestion.token.kind) {
+			case tw.TokenKind.Comment:
 				cssPropEnabled = false
-			}
-			if (position >= start && position <= end) {
-				cssValueEnabled = true
+				break
+			case tw.TokenKind.CssProperty: {
+				const { start, end } = suggestion.token.value
+				if (position >= start && position <= end) {
+					cssPropEnabled = false
+				}
+				if (position >= start && position <= end) {
+					cssValueEnabled = true
+				}
+				break
 			}
 		}
 	}
