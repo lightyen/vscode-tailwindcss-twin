@@ -78,20 +78,6 @@ function classesCompletion(
 
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
-			case tw.TokenKind.ClassName:
-				if (position > a && position < b) variantEnabled = false
-				break
-			case tw.TokenKind.CssProperty:
-				if (position > suggestion.token.token.start) {
-					if (suggestion.token.token.text.slice(-1) === "]") {
-						if (position < suggestion.token.token.end) {
-							variantEnabled = false
-						}
-					} else if (position <= suggestion.token.token.end) {
-						variantEnabled = false
-					}
-				}
-				break
 			case tw.TokenKind.Comment:
 				variantEnabled = false
 				break
@@ -154,7 +140,11 @@ function classesCompletion(
 
 	if (suggestion.token) {
 		if (suggestion.token.kind === tw.TokenKind.Variant) {
-			if (position > a) {
+			const isVariantWord = state.classnames.isVariant(
+				value.slice(0, value.length - state.separator.length),
+				twin,
+			)
+			if (!isVariantWord || position < b) {
 				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
 					const item = variantItems[i]
@@ -167,7 +157,10 @@ function classesCompletion(
 					)
 				}
 			}
-		} else if (suggestion.token.kind === tw.TokenKind.ClassName) {
+		} else if (
+			suggestion.token.kind === tw.TokenKind.ClassName ||
+			suggestion.token.kind === tw.TokenKind.CssProperty
+		) {
 			if (position > a) {
 				// replace variant
 				for (let i = 0; i < variantItems.length; i++) {
@@ -226,14 +219,18 @@ function classesCompletion(
 	}
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
-			case tw.TokenKind.Variant:
-				if (position > a) classNameEnabled = false
+			case tw.TokenKind.Variant: {
+				const isVariantWord = state.classnames.isVariant(
+					value.slice(0, value.length - state.separator.length),
+					twin,
+				)
+				if (!isVariantWord || position < b) classNameEnabled = false
 				break
+			}
 			case tw.TokenKind.CssProperty:
-				if (position > a && position < b) classNameEnabled = false
+				if (position < b) classNameEnabled = false
 				break
 			case tw.TokenKind.Unknown:
-				// if (position > a) classNameEnabled = false
 				break
 			case tw.TokenKind.Comment:
 				classNameEnabled = false

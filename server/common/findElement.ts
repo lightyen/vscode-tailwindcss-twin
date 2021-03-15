@@ -62,7 +62,10 @@ export function completeElement({
 	while ((match = reg.exec(input))) {
 		const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 		if (variant) {
-			if (position >= match.index && position < reg.lastIndex) {
+			const token = tw.createToken(match.index, reg.lastIndex - separator.length, variant)
+			context.push(token)
+
+			if (position >= match.index && position <= reg.lastIndex) {
 				return {
 					token: {
 						kind: tw.TokenKind.Variant,
@@ -72,9 +75,6 @@ export function completeElement({
 					important: importantContext,
 				}
 			}
-
-			const token = tw.createToken(match.index, reg.lastIndex - separator.length, variant)
-			context.push(token)
 
 			let isEmpty = false
 			if (reg.lastIndex < end) {
