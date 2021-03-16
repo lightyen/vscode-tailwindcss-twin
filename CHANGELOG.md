@@ -1,5 +1,21 @@
 # CHANGELOG.md
 
+## 0.7.4
+
+### Changes
+
+- change classname regex
+
+### Enhances
+
+- add textmate rules for `cs` prop
+- enhance short css property completion
+- enhance variants completion
+
+### Fixes
+
+- should not show any suggestion in comments
+
 ## 0.7.3
 
 ### Changes
