@@ -60,6 +60,31 @@ function find<T>(
 	return ts.forEachChild(node, child => find(source, child, cb, position))
 }
 
+function getJsxPropFirstStringLiteral(node: ts.Node, source: ts.SourceFile): ts.StringLiteral {
+	const target = node.getChildAt(2, source)
+	let token: ts.Node
+	if (ts.isStringLiteral(target)) {
+		token = target
+	} else if (ts.isJsxExpression(target)) {
+		for (let i = 0; i < target.getChildCount(source); i++) {
+			const t = target.getChildAt(i, source)
+			if (!t) {
+				break
+			}
+			if (ts.isStringLiteral(t)) {
+				token = t
+			}
+		}
+	}
+	if (!token) {
+		return undefined
+	}
+	if (!ts.isStringLiteral(token)) {
+		return undefined
+	}
+	return token
+}
+
 function findNode(
 	source: ts.SourceFile,
 	node: ts.Node,
@@ -72,7 +97,7 @@ function findNode(
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
 		if (features.jsxProp && id === PatternKind.Twin) {
-			const token = find(source, node, ts.isStringLiteral, position)
+			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
@@ -81,7 +106,7 @@ function findNode(
 			}
 			return { token, kind: PatternKind.Twin }
 		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
-			const token = find(source, node, ts.isStringLiteral, position)
+			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
@@ -138,13 +163,13 @@ function findAllNode(
 	if (ts.isJsxAttribute(node)) {
 		const id = node.getFirstToken(source).getText(source)
 		if (features.jsxProp && id === PatternKind.Twin) {
-			const token = find(source, node, ts.isStringLiteral)
+			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
 			return [{ token, kind: PatternKind.Twin }]
 		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
-			const token = find(source, node, ts.isStringLiteral)
+			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
