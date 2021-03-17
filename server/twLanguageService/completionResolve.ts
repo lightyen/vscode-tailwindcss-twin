@@ -109,7 +109,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			kind: lsp.MarkupKind.Markdown,
 			value: [
 				"```scss",
-				`.${item.label} {\n${Object.entries(result)
+				`.${item.label.replace(/\//g, "\\/")} {\n${Object.entries(result)
 					.map(([prop, value]) => `\t${prop}: ${value};`)
 					.join("\n")}\n}`,
 				"```",
