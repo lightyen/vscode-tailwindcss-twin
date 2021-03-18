@@ -151,6 +151,28 @@ function findNode(
 				return undefined
 			}
 		}
+	} else if (ts.isCallExpression(node)) {
+		if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
+			return undefined
+		}
+		const first = node.getChildAt(0, source)
+		if (first && ts.isIdentifier(first)) {
+			if (features.themeTemplate.has(first.getText(source))) {
+				const token = ts.forEachChild(node, c => {
+					if (ts.isStringLiteral(c)) {
+						return c
+					}
+					return undefined
+				})
+				if (!token) {
+					return undefined
+				}
+				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
+					return undefined
+				}
+				return { token, kind: PatternKind.TwinTheme }
+			}
+		}
 	}
 	return ts.forEachChild(node, child => findNode(source, child, position, features))
 }
@@ -204,6 +226,22 @@ function findAllNode(
 			const expr = find(source, node, ts.isTemplateExpression)
 			if (!expr) {
 				return undefined
+			}
+		}
+	} else if (ts.isCallExpression(node)) {
+		const first = node.getChildAt(0, source)
+		if (first && ts.isIdentifier(first)) {
+			if (features.themeTemplate.has(first.getText(source))) {
+				const token = ts.forEachChild(node, c => {
+					if (ts.isStringLiteral(c)) {
+						return c
+					}
+					return undefined
+				})
+				if (!token) {
+					return undefined
+				}
+				return [{ token, kind: PatternKind.TwinTheme }]
 			}
 		}
 	}
