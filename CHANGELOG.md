@@ -1,5 +1,15 @@
 # CHANGELOG.md
 
+## 0.7.5
+
+### Fixes
+
+fix completion css preview
+
+### Enhances
+
+support theme value with call expression
+
 ## 0.7.4
 
 ### Changes
