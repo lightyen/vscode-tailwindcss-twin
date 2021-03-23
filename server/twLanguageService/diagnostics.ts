@@ -161,32 +161,13 @@ function validateTwin({
 					continue
 				}
 
-				const data = state.classnames.getClassNameRule(variants, true, item.token.text)
+				const label = item.token.text
+				const data = state.classnames.getClassNameRule(variants, true, label)
 				if (!(data instanceof Array)) {
 					continue
 				}
 
-				if (diagnostics.conflict === "strict") {
-					for (const d of data) {
-						const twinKeys = variants.sort()
-						for (const property of Object.keys(d.decls)) {
-							// NOTE: skip tailwind css variable, because of duplicated by tailwindcss itself
-							if (property.startsWith("--tw")) {
-								continue
-							}
-							const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
-							const target = map[key]
-							if (target instanceof Array) {
-								target.push(item.token)
-							} else {
-								map[key] = tw.createTokenList([item.token])
-							}
-						}
-						if (d.__source === "components") {
-							break
-						}
-					}
-				} else if (diagnostics.conflict === "loose") {
+				if (diagnostics.conflict === "loose" || isIgnored(label)) {
 					const s = new Set<string>()
 					for (const d of data) {
 						for (const c of Object.keys(d.decls)) {
@@ -199,6 +180,22 @@ function validateTwin({
 						target.push(elementList[i].token)
 					} else {
 						map[key] = tw.createTokenList([elementList[i].token])
+					}
+				} else if (diagnostics.conflict === "strict") {
+					for (const d of data) {
+						const twinKeys = variants.sort()
+						for (const property of Object.keys(d.decls)) {
+							const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
+							const target = map[key]
+							if (target instanceof Array) {
+								target.push(item.token)
+							} else {
+								map[key] = tw.createTokenList([item.token])
+							}
+						}
+						if (d.__source === "components") {
+							break
+						}
 					}
 				}
 			}
@@ -512,4 +509,16 @@ function guess(
 		value,
 		score,
 	}
+}
+
+function isIgnored(label: string) {
+	if (label.match(/transition/)) {
+		return true
+	}
+
+	if (label.match(/-opacity-\d+/)) {
+		return true
+	}
+
+	return false
 }
