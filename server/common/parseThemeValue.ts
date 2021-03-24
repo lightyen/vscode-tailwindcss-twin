@@ -45,7 +45,7 @@ interface Result {
 	blocks: Block[]
 	errors: tw.Error[]
 	keys(): string[]
-	hit(index: number): Block
+	hit(index: number): Block | undefined
 }
 
 export default function parseThemeValue(input: string): Result {
@@ -59,7 +59,7 @@ export default function parseThemeValue(input: string): Result {
 	const end = input.length
 	reg.lastIndex = start
 	input = input.slice(0, end)
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 	let x = 0
 
 	while ((match = reg.exec(input))) {
@@ -203,10 +203,10 @@ export function findThemeValueKeys(
 	position: number,
 ): {
 	keys: string[]
-	hit: tw.Token
+	hit: tw.Token | undefined
 } {
 	const keys: string[] = []
-	let hit: tw.Token
+	let hit: tw.Token | undefined
 
 	let init = false
 	const reg = /(\.[\w-/]*)|(\[[\w-./]*)|([\w-/]+)/g
@@ -214,7 +214,7 @@ export function findThemeValueKeys(
 	const end = input.length
 	reg.lastIndex = start
 	input = input.slice(0, end)
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 
 	while ((match = reg.exec(input))) {
 		const [, dotId, bracId, Id] = match

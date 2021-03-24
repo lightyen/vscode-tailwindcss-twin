@@ -11,7 +11,7 @@ export default function findRightBracket({
 	/** brackets, default is `["(", ")"]` */
 	brackets?: [string, string]
 }) {
-	const stack = []
+	const stack: number[] = []
 	let comment = 0
 	for (let index = start; index < end; index++) {
 		if (comment === 0) {

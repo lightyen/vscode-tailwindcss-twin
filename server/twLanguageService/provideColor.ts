@@ -79,7 +79,7 @@ export function provideColorDecorations(
 	return colors
 }
 
-function getThemeDecoration(text: string, state: Tailwind): string {
+function getThemeDecoration(text: string, state: Tailwind): string | undefined {
 	const result = parseThemeValue(text)
 	if (result.errors.length > 0) {
 		return undefined

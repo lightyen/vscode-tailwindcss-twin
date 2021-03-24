@@ -47,17 +47,19 @@ export class TailwindLanguageService implements LanguageService {
 		this.options = { ...this.options, ...setting }
 	}
 	async onCompletion(params: lsp.CompletionParams) {
-		if (!this.ready) return null
+		if (!this.ready) return undefined
 		const document = this.documents.get(params.textDocument.uri)
+		if (!document) return undefined
 		return completion(document, params.position, this.state, this.options)
 	}
 	async onCompletionResolve(item: lsp.CompletionItem) {
-		if (!this.ready) return null
+		if (!this.ready) return item
 		return completionResolve(item, this.state, this.options)
 	}
 	async onHover(params: lsp.HoverParams) {
-		if (!this.ready) return null
+		if (!this.ready) return undefined
 		const document = this.documents.get(params.textDocument.uri)
+		if (!document) return undefined
 		return hover(document, params.position, this.state, this.options)
 	}
 	async validate(document: TextDocument) {

@@ -15,7 +15,7 @@ interface NLSConfig {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG) as NLSConfig
+const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "") as NLSConfig
 
 interface InitializationOptions extends Settings {
 	/** uri */
@@ -39,7 +39,8 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	}
 
 	const userSettings = vscode.workspace.getConfiguration("", ws)
-	const initOptions: Partial<InitializationOptions> = userSettings.get(SECTION_ID)
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const initOptions: Partial<InitializationOptions> = userSettings.get(SECTION_ID)!
 	if (typeof initOptions.colorDecorators !== "boolean") {
 		initOptions.colorDecorators = userSettings.get("editor.colorDecorators")
 	}

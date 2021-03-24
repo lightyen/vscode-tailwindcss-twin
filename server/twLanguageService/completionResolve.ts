@@ -40,7 +40,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		type: string
 		variants: string[]
 		kind: PatternKind
-		entry?: IPropertyData
+		entry: IPropertyData
 	}
 
 	if (type === "cssPropertyName" || type === "cssPropertyValue") {
@@ -141,7 +141,8 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			if (!blocks.has(selector)) {
 				blocks.set(selector, [])
 			}
-			blocks.get(selector).push(...c.decls.map(([prop, value]) => `${prop}: ${value};`))
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			blocks.get(selector)!.push(...c.decls.map(([prop, value]) => `${prop}: ${value};`))
 		})
 
 		item.documentation = {
@@ -176,7 +177,7 @@ function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: Se
 
 	const label_container = state.config.prefix + "container"
 	const rules = state.classnames.getClassNameRule([], false, label_container)
-	const lines = []
+	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {

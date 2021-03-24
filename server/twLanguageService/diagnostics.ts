@@ -350,7 +350,17 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 		}
 		const ret = csspropSearcher.search(text)
 		const score = ret?.[0]?.score
-		if (score > 0) {
+		if (score == undefined) {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `Can't find '${text}'`,
+				range: {
+					start: document.positionAt(offset + start),
+					end: document.positionAt(offset + end),
+				},
+				severity: DiagnosticSeverity.Error,
+			})
+		} else if (score > 0) {
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `Can't find '${text}', did you mean '${ret[0].item}'?`,
@@ -359,16 +369,6 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 					end: document.positionAt(offset + end),
 				},
 				data: { text, newText: ret[0].item },
-				severity: DiagnosticSeverity.Error,
-			})
-		} else if (score !== 0) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Can't find '${text}'`,
-				range: {
-					start: document.positionAt(offset + start),
-					end: document.positionAt(offset + end),
-				},
 				severity: DiagnosticSeverity.Error,
 			})
 		}
@@ -486,19 +486,19 @@ function guess(
 	let value = ""
 	let score = +Infinity
 
-	if (a?.[0]?.score < score) {
+	if (a?.[0]?.score && a[0].score < score) {
 		kind = PredictionKind.Classname
 		value = a[0].item
 		score = a[0].score
 	}
 
-	if (b?.[0]?.score < score) {
+	if (b?.[0]?.score && b[0].score < score) {
 		kind = PredictionKind.Variant
 		value = b[0].item
 		score = b[0].score
 	}
 
-	if (c?.[0]?.score < score) {
+	if (c?.[0]?.score && c[0].score < score) {
 		kind = PredictionKind.CssProperty
 		value = c[0].item
 		score = c[0].score

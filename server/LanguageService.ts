@@ -8,9 +8,9 @@ export interface LanguageService {
 	targetConfig: string
 	reload(settings?: Settings): Promise<void>
 	updateSettings(options: Partial<Settings>): void
-	onCompletion: (params: lsp.CompletionParams) => Promise<lsp.CompletionList>
+	onCompletion: (params: lsp.CompletionParams) => Promise<lsp.CompletionList | undefined>
 	onCompletionResolve: (params: lsp.CompletionItem) => Promise<lsp.CompletionItem>
-	onHover: (params: lsp.HoverParams) => Promise<lsp.Hover>
+	onHover: (params: lsp.HoverParams) => Promise<lsp.Hover | undefined>
 	validate: (document: TextDocument) => Promise<lsp.Diagnostic[]>
 	provideColorDecorations: (document: TextDocument) => Promise<Array<ColorDecoration & { range: lsp.Range }>>
 	onDocumentColor: (params: lsp.DocumentColorParams) => Promise<lsp.ColorInformation[]>

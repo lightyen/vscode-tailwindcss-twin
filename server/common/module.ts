@@ -6,7 +6,7 @@ interface PnpEntry {
 }
 
 export function resolveModule(fsPath: string): string | undefined {
-	let pnp: PnpEntry
+	let pnp: PnpEntry | undefined
 	const base = path.dirname(fsPath)
 	try {
 		const fsPath = path.join(base, ".pnp.js")
@@ -18,7 +18,7 @@ export function resolveModule(fsPath: string): string | undefined {
 	}
 
 	try {
-		return pnp ? pnp.resolveRequest(fsPath) : __non_webpack_require__.resolve(fsPath)
+		return pnp ? pnp.resolveRequest?.(fsPath) : __non_webpack_require__.resolve(fsPath)
 	} catch {
 		return undefined
 	}
@@ -32,7 +32,7 @@ export function requireModule<T = any>(fsPath: string, removeCache = true): T | 
 		}
 	}
 
-	let pnp: PnpEntry
+	let pnp: PnpEntry | undefined
 	const base = path.dirname(fsPath)
 	try {
 		const fsPath = path.join(base, ".pnp.js")

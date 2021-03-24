@@ -1,4 +1,5 @@
-export function dlv(cur: unknown, paths: string[]) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function dlv(cur: any, paths: string[]): any {
 	if (cur == undefined) {
 		return undefined
 	}
@@ -12,7 +13,8 @@ export function dlv(cur: unknown, paths: string[]) {
 	return cur
 }
 
-export function dset(cur: unknown, paths: Array<string | number>, value: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function dset(cur: any, paths: Array<string | number>, value: unknown) {
 	if (cur == undefined || paths.length === 0) {
 		return
 	}

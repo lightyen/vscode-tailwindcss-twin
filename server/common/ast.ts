@@ -294,7 +294,6 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 						}
 					})
 
-					ts.getJSDocReadonlyTag
 					const namedImports = find(source, clause, ts.isNamedImports)
 					if (namedImports) {
 						namedImports.forEachChild(node => {

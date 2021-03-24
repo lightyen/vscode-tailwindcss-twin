@@ -1,7 +1,7 @@
 // unused module
 
 function findRightBracket(classes: string, start = 0, end = classes.length, brackets = ["(", ")"]): number | undefined {
-	const stack = []
+	const stack: number[] = []
 	let comment = 0
 	for (let index = start; index < end; index++) {
 		if (comment === 0) {
@@ -55,7 +55,7 @@ function spreadVariantGroups(classes: string, context = "", importantContext = f
 	classes = classes.slice(start, end).trim()
 
 	const regex = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+:)|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 	const baseContext = context
 	while ((match = regex.exec(classes))) {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars

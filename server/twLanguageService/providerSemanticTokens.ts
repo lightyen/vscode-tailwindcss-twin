@@ -37,7 +37,8 @@ export default function provideSemanticTokens(
 		const getPosition = (offset: number) => document.positionAt(start + offset)
 
 		if (kind === PatternKind.TwinTheme) {
-			renderThemeValue(token, getPosition, builder, state, options.colorDecorators)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			renderThemeValue(token, getPosition, builder, state, options.colorDecorators!)
 			continue
 		}
 

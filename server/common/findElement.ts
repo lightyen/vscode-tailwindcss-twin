@@ -52,7 +52,7 @@ export function completeElement({
 	;[start, end] = trimLeft(input, start, end)
 	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 
 	reg.lastIndex = start
 	input = input.slice(0, end)
@@ -122,15 +122,15 @@ export function completeElement({
 
 			if (input[reg.lastIndex] === "(") {
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
-				const hasRightBracket = typeof closedBracket === "number"
-				const important = (hasRightBracket && input[closedBracket + 1] === "!") || importantContext
+				const important =
+					(typeof closedBracket === "number" && input[closedBracket + 1] === "!") || importantContext
 
 				if (position === reg.lastIndex) {
 					importantContext = important
 					break
 				}
 
-				if (hasRightBracket) {
+				if (typeof closedBracket === "number") {
 					if (position > reg.lastIndex && position <= closedBracket) {
 						return completeElement({
 							input,
@@ -259,16 +259,12 @@ export function completeElement({
 			reg.lastIndex = tokenEnd
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
-			const hasRightBracket = typeof closedBracket === "number"
-			const important = hasRightBracket && input[closedBracket + 1] === "!"
+			const important = typeof closedBracket === "number" && input[closedBracket + 1] === "!"
 			if (position === match.index) {
+				const e = closedBracket ? closedBracket + 1 : end
 				return {
 					token: {
-						token: tw.createToken(
-							match.index,
-							closedBracket + 1,
-							input.slice(match.index, closedBracket + 1),
-						),
+						token: tw.createToken(match.index, e, input.slice(match.index, e)),
 						kind: tw.TokenKind.VariantsGroup,
 					},
 					important: important || importantContext,
@@ -276,7 +272,7 @@ export function completeElement({
 				}
 			}
 
-			if (hasRightBracket) {
+			if (typeof closedBracket === "number") {
 				if (position >= reg.lastIndex && position <= closedBracket) {
 					return completeElement({
 						input,
@@ -340,7 +336,7 @@ export function hoverElement({
 
 	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 
 	reg.lastIndex = start
 	input = input.slice(0, end)
@@ -393,15 +389,15 @@ export function hoverElement({
 
 			if (input[reg.lastIndex] === "(") {
 				const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
-				const hasRightBracket = typeof closedBracket === "number"
-				const important = (hasRightBracket && input[closedBracket + 1] === "!") || importantContext
+				const important =
+					(typeof closedBracket === "number" && input[closedBracket + 1] === "!") || importantContext
 
 				if (position === reg.lastIndex || position === closedBracket) {
 					importantContext = important
 					break
 				}
 
-				if (hasRightBracket) {
+				if (typeof closedBracket === "number") {
 					if (position > reg.lastIndex && position < closedBracket) {
 						return hoverElement({
 							input,
@@ -506,15 +502,14 @@ export function hoverElement({
 			reg.lastIndex = tokenEnd
 		} else {
 			const closedBracket = findRightBracket({ input, start: match.index, end })
-			const hasRightBracket = typeof closedBracket === "number"
-			const important = hasRightBracket && input[closedBracket + 1] === "!"
+			const important = typeof closedBracket === "number" && input[closedBracket + 1] === "!"
 
 			if (position === reg.lastIndex || position === closedBracket) {
 				importantContext = important
 				break
 			}
 
-			if (hasRightBracket) {
+			if (typeof closedBracket === "number") {
 				if (position > reg.lastIndex && position < closedBracket) {
 					return hoverElement({
 						input,

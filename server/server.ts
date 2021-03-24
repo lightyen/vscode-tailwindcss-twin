@@ -33,11 +33,11 @@ class Server {
 	hasConfigurationCapability = false
 	hasDiagnosticRelatedInformationCapability = false
 	/** uri */
-	configs: string[]
-	defaultConfigUri: string
+	configs: string[] = []
+	defaultConfigUri!: string
 	/** uri */
-	workspaceFolder: string
-	settings: Settings
+	workspaceFolder!: string
+	settings!: Settings
 
 	constructor() {
 		this.services = new Map()
@@ -386,7 +386,8 @@ class Server {
 		})
 
 		connection.onDocumentColor(params => {
-			this.colorDecorations(documents.get(params.textDocument.uri))
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.colorDecorations(documents.get(params.textDocument.uri)!)
 			return matchService(params.textDocument.uri, this.services)?.onDocumentColor(params)
 		})
 

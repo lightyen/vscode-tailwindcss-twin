@@ -63,7 +63,7 @@ export default function findAllElements({
 	const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
 
 	let result: Result = zero()
-	let match: RegExpExecArray
+	let match: RegExpExecArray | null
 
 	reg.lastIndex = start
 	input = input.slice(0, end)

@@ -62,11 +62,11 @@ export default function completion(
 	position: lsp.Position,
 	state: Tailwind,
 	options: ServiceOptions,
-): lsp.CompletionList {
+): lsp.CompletionList | undefined {
 	try {
 		const result = canMatch(document, position, false, options.jsxPropImportChecking)
 		if (!result) {
-			return null
+			return undefined
 		}
 		const index = document.offsetAt(position)
 		const { kind, token } = result
@@ -85,7 +85,7 @@ export default function completion(
 		}
 	} catch (err) {
 		console.log(serializeError(err))
-		return null
+		return undefined
 	}
 }
 
@@ -369,7 +369,7 @@ function shortcssCompletion(
 		}
 	}
 
-	if (cssValueEnabled && suggestion.token.kind === tw.TokenKind.CssProperty) {
+	if (cssValueEnabled && suggestion.token?.kind === tw.TokenKind.CssProperty) {
 		const prop = suggestion.token.key.toKebab()
 		const word = suggestion.token.value.getWord(position)
 		cssValueItems.push(

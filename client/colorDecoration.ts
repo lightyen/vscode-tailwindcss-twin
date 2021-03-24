@@ -22,14 +22,18 @@ class ColorMap {
 			)
 			options.backgroundColor = backgroundColor.css()
 			if (__backgroundColor === "transparent") {
-				options.light.borderWidth = "3px"
-				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.93)"
-				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				options.dark.borderWidth = "3px"
-				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgba(255, 255, 255, 0.93)"
-				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				if (options.light) {
+					options.light.borderWidth = "3px"
+					options.light.borderStyle = "dashed"
+					options.light.color = "rgb(28, 28, 28, 0.93)"
+					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				}
+				if (options.dark) {
+					options.dark.borderWidth = "3px"
+					options.dark.borderStyle = "dashed"
+					options.dark.color = "rgba(255, 255, 255, 0.93)"
+					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				}
 			} else {
 				options.color =
 					backgroundColor.luminance() < 0.3 ? "rgba(255, 255, 255, 0.93)" : "rgba(28, 28, 28, 0.93)"
@@ -41,14 +45,18 @@ class ColorMap {
 			options.borderWidth = "1.5px"
 			options.borderStyle = "solid"
 			if (__borderColor === "transparent") {
-				options.light.borderWidth = "3px"
-				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.93)"
-				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				options.dark.borderWidth = "3px"
-				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgba(255, 255, 255, 0.93)"
-				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				if (options.light) {
+					options.light.borderWidth = "3px"
+					options.light.borderStyle = "dashed"
+					options.light.color = "rgb(28, 28, 28, 0.93)"
+					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				}
+				if (options.dark) {
+					options.dark.borderWidth = "3px"
+					options.dark.borderStyle = "dashed"
+					options.dark.color = "rgba(255, 255, 255, 0.93)"
+					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				}
 			}
 		}
 		if (__color) {
@@ -57,20 +65,28 @@ class ColorMap {
 				options.color = color.css()
 				if (!options.backgroundColor) {
 					if (color.luminance() < 0.1) {
-						options.dark.backgroundColor = "rgba(255, 255, 255, 0.93)"
+						if (options.dark) {
+							options.dark.backgroundColor = "rgba(255, 255, 255, 0.93)"
+						}
 					} else if (color.luminance() > 0.6) {
-						options.light.backgroundColor = "rgba(28, 28, 28, 0.93)"
+						if (options.light) {
+							options.light.backgroundColor = "rgba(28, 28, 28, 0.93)"
+						}
 					}
 				}
 			} else {
-				options.light.borderWidth = "3px"
-				options.light.borderStyle = "dashed"
-				options.light.color = "rgb(28, 28, 28, 0.93)"
-				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				options.dark.borderWidth = "3px"
-				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgb(255, 255, 255, 0.93)"
-				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				if (options.light) {
+					options.light.borderWidth = "3px"
+					options.light.borderStyle = "dashed"
+					options.light.color = "rgb(28, 28, 28, 0.93)"
+					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+				}
+				if (options.dark) {
+					options.dark.borderWidth = "3px"
+					options.dark.borderStyle = "dashed"
+					options.dark.color = "rgb(255, 255, 255, 0.93)"
+					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+				}
 			}
 		}
 
@@ -87,7 +103,7 @@ class ColorMap {
 			if (keys.includes(c)) {
 				continue
 			}
-			this.get(c).dispose()
+			this.get(c)?.dispose()
 			this.colorMap.delete(c)
 		}
 		add.forEach(c => this.colorMap.get(c))
@@ -113,7 +129,8 @@ export default async function ({ client }: { client: LanguageClient }) {
 			return
 		}
 		if (!enabled) {
-			editor.setDecorations(null, [])
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			editor.setDecorations(null!, [])
 			return
 		}
 		const list = new Map<string, { ranges: vscode.Range[] } & ColorDecoration>()
@@ -127,12 +144,13 @@ export default async function ({ client }: { client: LanguageClient }) {
 				if (!list.has(key)) {
 					list.set(key, { color, backgroundColor, borderColor, ranges: [] })
 				}
-				list.get(key).ranges.push(range)
+				list.get(key)?.ranges.push(range)
 			})
 
 		colorMap.diff(Array.from(list.keys()))
 		list.forEach(({ ranges }, key) => {
-			editor.setDecorations(colorMap.get(key), ranges)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			editor.setDecorations(colorMap.get(key)!, ranges)
 		})
 	}
 

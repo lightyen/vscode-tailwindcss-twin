@@ -3,7 +3,7 @@ import { LanguageClient } from "vscode-languageclient/node"
 
 export default async function ({ client }: { client: LanguageClient }) {
 	const name = client.clientOptions.diagnosticCollectionName
-	let progress: Thenable<void>
+	let progress: Thenable<void> | undefined
 	client.onNotification("tailwindcss/loading", async () => {
 		if (!progress) {
 			progress = vscode.window.withProgress(
@@ -19,13 +19,14 @@ export default async function ({ client }: { client: LanguageClient }) {
 							increment?: number
 							message?: string
 						}
-						const h = client.onProgress<ProgressParam>(null, "tailwindcss/progress", param => {
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const h = client.onProgress<ProgressParam>(null!, "tailwindcss/progress", param => {
 							if (!param) {
 								h.dispose()
 								return reject(void 0)
 							}
 							progress.report(param)
-							if (param.increment >= 100) {
+							if (param.increment && param.increment >= 100) {
 								h.dispose()
 								return resolve(void 0)
 							}
@@ -35,7 +36,7 @@ export default async function ({ client }: { client: LanguageClient }) {
 				},
 			)
 		}
-		progress.then((progress = null))
+		progress.then((progress = undefined))
 	})
 
 	client.onNotification("tailwindcss/info", message => client.info(message))

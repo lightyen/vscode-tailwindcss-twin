@@ -87,9 +87,11 @@ function createNode(kind: NodeKind, token: tw.Token, context?: tw.TokenList): No
 		case NodeKind.Variant:
 		case NodeKind.ClassName:
 		case NodeKind.CssProperty:
-			return { kind, token, context }
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return { kind, token, context: context! }
+		default:
+			return { kind, token }
 	}
-	return { kind, token }
 }
 
 function trimLeft(str: string, start = 0, end = str.length) {
@@ -103,19 +105,18 @@ function trimLeft(str: string, start = 0, end = str.length) {
 }
 
 export class Semantic {
-	text: string
-	private cbNode: (node: Node) => void
-
-	constructor(text: string) {
-		this.text = text
-	}
-
+	constructor(private readonly text: string) {}
 	accept(cb: (node: Node) => void) {
-		this.cbNode = cb
-		this.parseClasses(this.text)
+		this.parseClasses(cb, this.text)
 	}
 
-	private parseClasses(input: string, start = 0, end = input.length, context = tw.createTokenList()) {
+	private parseClasses(
+		cbNode: (node: Node) => void,
+		input: string,
+		start = 0,
+		end = input.length,
+		context = tw.createTokenList(),
+	) {
 		if (start === end) {
 			return
 		}
@@ -123,7 +124,7 @@ export class Semantic {
 		;[start, end] = trimLeft(input, start, end)
 
 		const reg = /(\/\/[^\n]*\n?)|(\/\*)|([\w-]+):|([\w-]+)\[|((?:(?!\/\/|\/\*)[\w-./])+!?)|\(|(\S+)/gs
-		let match: RegExpExecArray
+		let match: RegExpExecArray | null
 
 		reg.lastIndex = start
 		input = input.slice(0, end)
@@ -132,9 +133,7 @@ export class Semantic {
 		while ((match = reg.exec(input))) {
 			const [value, lineComment, blockComment, variant, cssProperty, className, notHandled] = match
 			if (variant) {
-				this.cbNode(
-					createNode(NodeKind.Variant, tw.createToken(match.index, reg.lastIndex, value), context.slice()),
-				)
+				cbNode(createNode(NodeKind.Variant, tw.createToken(match.index, reg.lastIndex, value), context.slice()))
 
 				context.push(tw.createToken(match.index, reg.lastIndex - 1, variant))
 
@@ -162,7 +161,7 @@ export class Semantic {
 				}
 
 				if (input[reg.lastIndex] === "(") {
-					this.cbNode(
+					cbNode(
 						createNode(
 							NodeKind.Bracket,
 							tw.createToken(reg.lastIndex, reg.lastIndex + 1, input[reg.lastIndex]),
@@ -172,13 +171,13 @@ export class Semantic {
 					const closedBracket = findRightBracket({ input, start: reg.lastIndex, end })
 
 					if (typeof closedBracket !== "number") {
-						this.parseClasses(input, reg.lastIndex + 1, end)
+						this.parseClasses(cbNode, input, reg.lastIndex + 1, end)
 						return
 					}
 
-					this.parseClasses(input, reg.lastIndex + 1, closedBracket, context.slice())
+					this.parseClasses(cbNode, input, reg.lastIndex + 1, closedBracket, context.slice())
 
-					this.cbNode(
+					cbNode(
 						createNode(
 							NodeKind.Bracket,
 							tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
@@ -187,7 +186,7 @@ export class Semantic {
 
 					const important = input[closedBracket + 1] === "!"
 					if (important) {
-						this.cbNode(
+						cbNode(
 							createNode(
 								NodeKind.Important,
 								tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
@@ -200,9 +199,9 @@ export class Semantic {
 				}
 			} else if (cssProperty) {
 				const prop = tw.createToken(match.index, match.index + cssProperty.length, cssProperty)
-				this.cbNode(createNode(NodeKind.CssProperty, prop, context.slice()))
+				cbNode(createNode(NodeKind.CssProperty, prop, context.slice()))
 
-				this.cbNode(
+				cbNode(
 					createNode(
 						NodeKind.CssBracket,
 						tw.createToken(reg.lastIndex - 1, reg.lastIndex, input.slice(reg.lastIndex - 1, reg.lastIndex)),
@@ -217,13 +216,13 @@ export class Semantic {
 				})
 
 				if (typeof closedBracket !== "number") {
-					this.parseCssValue(input, reg.lastIndex, end)
+					this.parseCssValue(cbNode, input, reg.lastIndex, end)
 					return
 				}
 
-				this.parseCssValue(input, reg.lastIndex, closedBracket)
+				this.parseCssValue(cbNode, input, reg.lastIndex, closedBracket)
 
-				this.cbNode(
+				cbNode(
 					createNode(
 						NodeKind.CssBracket,
 						tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
@@ -232,7 +231,7 @@ export class Semantic {
 
 				const important = input[closedBracket + 1] === "!"
 				if (important) {
-					this.cbNode(
+					cbNode(
 						createNode(
 							NodeKind.Important,
 							tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
@@ -251,22 +250,22 @@ export class Semantic {
 					token.text = token.text.slice(0, -1)
 				}
 
-				this.cbNode(createNode(NodeKind.ClassName, token, context.slice()))
+				cbNode(createNode(NodeKind.ClassName, token, context.slice()))
 				if (important) {
-					this.cbNode(createNode(NodeKind.Important, tw.createToken(token.end, token.end + 1, "!")))
+					cbNode(createNode(NodeKind.Important, tw.createToken(token.end, token.end + 1, "!")))
 				}
 
 				context = baseContext.slice()
 			} else if (notHandled) {
 				const token = tw.createToken(match.index, reg.lastIndex, value)
-				this.cbNode(createNode(NodeKind.Unknown, token, context.slice()))
+				cbNode(createNode(NodeKind.Unknown, token, context.slice()))
 			} else if (lineComment) {
 				const token = tw.createToken(match.index, reg.lastIndex, value)
-				this.cbNode(createNode(NodeKind.LineComment, token))
+				cbNode(createNode(NodeKind.LineComment, token))
 			} else if (blockComment) {
 				const closeComment = findRightBlockComment(input, match.index)
 				if (typeof closeComment !== "number") {
-					this.cbNode(
+					cbNode(
 						createNode(
 							NodeKind.BlockComment,
 							tw.createToken(match.index, end, input.slice(match.index, end)),
@@ -277,22 +276,22 @@ export class Semantic {
 
 				const tokenEnd = closeComment + 1
 				const token = tw.createToken(match.index, tokenEnd, input.slice(match.index, tokenEnd))
-				this.cbNode(createNode(NodeKind.BlockComment, token))
+				cbNode(createNode(NodeKind.BlockComment, token))
 				reg.lastIndex = tokenEnd
 			} else {
 				const token = tw.createToken(match.index, reg.lastIndex, value)
-				this.cbNode(createNode(NodeKind.Bracket, token))
+				cbNode(createNode(NodeKind.Bracket, token))
 
 				const closedBracket = findRightBracket({ input, start: match.index, end })
 
 				if (typeof closedBracket !== "number") {
-					this.parseClasses(input, match.index + 1, end, context.slice())
+					this.parseClasses(cbNode, input, match.index + 1, end, context.slice())
 					return
 				}
 
-				this.parseClasses(input, match.index + 1, closedBracket, context.slice())
+				this.parseClasses(cbNode, input, match.index + 1, closedBracket, context.slice())
 
-				this.cbNode(
+				cbNode(
 					createNode(
 						NodeKind.Bracket,
 						tw.createToken(closedBracket, closedBracket + 1, input[closedBracket]),
@@ -301,7 +300,7 @@ export class Semantic {
 
 				const important = input[closedBracket + 1] === "!"
 				if (important) {
-					this.cbNode(
+					cbNode(
 						createNode(
 							NodeKind.Important,
 							tw.createToken(closedBracket + 1, closedBracket + 2, input[closedBracket + 1]),
@@ -315,23 +314,23 @@ export class Semantic {
 		}
 	}
 
-	private parseCssValue(input: string, start = 0, end = input.length) {
+	private parseCssValue(cbNode: (node: Node) => void, input: string, start = 0, end = input.length) {
 		;[start, end] = trimLeft(input, start, end)
 		const regex = /(\/\/[^\n]*\n?)|(\/\*.*?\*\/)|((?!(\/\/[^\n]*\n?)|(\/\*.*?\*\/)).)+/gs
-		let match: RegExpExecArray
+		let match: RegExpExecArray | null
 		regex.lastIndex = start
 		input = input.slice(0, end)
 		while ((match = regex.exec(input))) {
 			const [value, lineComment, blockComment, cssValue] = match
 			if (lineComment) {
 				const token = tw.createToken(match.index, regex.lastIndex, value)
-				this.cbNode(createNode(NodeKind.LineComment, token))
+				cbNode(createNode(NodeKind.LineComment, token))
 			} else if (blockComment) {
 				const token = tw.createToken(match.index, regex.lastIndex, value)
-				this.cbNode(createNode(NodeKind.BlockComment, token))
+				cbNode(createNode(NodeKind.BlockComment, token))
 			} else if (cssValue) {
 				const token = tw.createToken(match.index, regex.lastIndex, value)
-				this.cbNode(createNode(NodeKind.CssValue, token))
+				cbNode(createNode(NodeKind.CssValue, token))
 			}
 		}
 	}

@@ -16,7 +16,7 @@ export default function hover(
 	position: lsp.Position,
 	state: Tailwind,
 	options: ServiceOptions,
-): lsp.Hover {
+): lsp.Hover | undefined {
 	try {
 		const result = canMatch(document, position, true, options.jsxPropImportChecking)
 		if (!result) {
@@ -137,9 +137,9 @@ function getHoverMarkdown({
 	selection: ReturnType<typeof hoverElement>
 	state: Tailwind
 	options: ServiceOptions
-}): lsp.MarkupContent {
+}): lsp.MarkupContent | undefined {
 	const { important, variants } = selection
-	const [, , value] = selection.token.token
+	const [, , value] = selection.token?.token ?? tw.createToken(0, 0, "")
 
 	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const inputVariants = variants.map(([, , v]) => v)
@@ -159,7 +159,7 @@ function getHoverMarkdown({
 		}
 	}
 
-	if (selection.token.kind === tw.TokenKind.Variant && state.classnames.isVariant(value, twin)) {
+	if (selection.token?.kind === tw.TokenKind.Variant && state.classnames.isVariant(value, twin)) {
 		const data = state.classnames.getVariants(twin)[value]
 		if (data) {
 			const text: string[] = []
@@ -179,7 +179,7 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	if (selection.token.kind !== tw.TokenKind.ClassName) {
+	if (selection.token?.kind !== tw.TokenKind.ClassName) {
 		return undefined
 	}
 
@@ -268,7 +268,7 @@ function getHoverMarkdown({
 			}
 			blocks
 				.get(selector)
-				.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
+				?.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
 		})
 
 	return {
@@ -293,7 +293,7 @@ function resolveThemeValue({
 	token: tw.Token
 	state: Tailwind
 	options: ServiceOptions
-}): lsp.Hover {
+}): lsp.Hover | undefined {
 	const result = parseThemeValue(token.text)
 	if (result.errors.length > 0) {
 		return undefined
@@ -351,7 +351,7 @@ function resolveContainer({
 
 	const label_container = state.config.prefix + "container"
 	const rules = state.classnames.getClassNameRule([], kind === PatternKind.Twin, label_container)
-	const lines = []
+	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {

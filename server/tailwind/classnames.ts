@@ -21,7 +21,7 @@ interface ClassName {
 
 export interface CSSRuleItem {
 	__scope?: string
-	decls?: Record<string, string[]>
+	decls: Record<string, string[]>
 	__source?: string
 	__context: string[]
 	__pseudo: string[]

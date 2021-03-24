@@ -24,7 +24,7 @@ interface TailwindConfigJS {
 	plugins: unknown[]
 	separator: string
 	prefix: string
-	important: boolean
+	important: boolean | undefined
 	variants: {
 		extend: Record<string, string[]>
 	}
@@ -37,7 +37,7 @@ export class Tailwind {
 		this.load(options)
 	}
 
-	private load({ configPath, workspaceFolder, fallbackDefaultConfig = false }: Partial<TailwindOptions>) {
+	private load({ configPath = "", workspaceFolder = "", fallbackDefaultConfig = false }: Partial<TailwindOptions>) {
 		this.configPath = configPath
 		this.workspaceFolder = workspaceFolder
 		configPath = configPath || ""
@@ -52,16 +52,16 @@ export class Tailwind {
 		if (isAbs) {
 			result = this.findConfig(configPath)
 		}
-		if (!result.config) {
+		if (result.config && result.configPath) {
+			this.config = result.config
+			this.distConfigPath = result.configPath
+			this.hasConfig = true
+		} else {
 			if (!fallbackDefaultConfig) {
 				throw Error("Error: resolve config " + configPath)
 			}
 			this.config = this.defaultConfig
 			this.distConfigPath = this.defaultConfigPath
-		} else {
-			this.config = result.config
-			this.distConfigPath = result.configPath
-			this.hasConfig = true
 		}
 		this.separator = this.config.separator || ":"
 		this.config.separator = __INNER_TAILWIND_SEPARATOR__
@@ -95,34 +95,35 @@ export class Tailwind {
 	jsonTwin?: { config?: string }
 
 	// tailwindcss
-	tailwindcss: (config: string | TailwindConfigJS) => Plugin
-	tailwindcssVersion: string
-	resolveConfig: (config: TailwindConfigJS) => TailwindConfigJS
-	defaultConfig: TailwindConfigJS
-	defaultConfigPath: string
-	separator: string
+	tailwindcss!: (config: string | TailwindConfigJS) => Plugin
+	tailwindcssVersion!: string
+	resolveConfig!: (config: TailwindConfigJS) => TailwindConfigJS
+	defaultConfig!: TailwindConfigJS
+	defaultConfigPath!: string
+	separator!: string
 
 	// postcss
-	postcss: Postcss
-	postcssVersion: string
+	postcss!: Postcss
+	postcssVersion!: string
 
 	private prepare() {
 		this.tailwindcss = requireModule("tailwindcss", false)
 		this.resolveConfig = requireModule("tailwindcss/resolveConfig", false)
 		this.tailwindcssVersion = requireModule("tailwindcss/package.json", false).version
-		this.defaultConfigPath = resolveModule("tailwindcss/defaultConfig")
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.defaultConfigPath = resolveModule("tailwindcss/defaultConfig")!
 		this.defaultConfig = requireModule("tailwindcss/defaultConfig", false)
 		this.postcss = requireModule("postcss", false)
 		this.postcssVersion = requireModule("postcss/package.json", false).version
 	}
 
 	// user config
-	configPath: string
-	distConfigPath: string
-	workspaceFolder: string
-	hasConfig: boolean
-	config: TailwindConfigJS
-	fallbackDefaultConfig: boolean
+	configPath = ""
+	distConfigPath = ""
+	workspaceFolder = ""
+	hasConfig = false
+	config!: TailwindConfigJS
+	fallbackDefaultConfig = false
 
 	private findConfig(configPath: string) {
 		const result: { configPath?: string; config?: TailwindConfigJS } = {}
@@ -135,16 +136,18 @@ export class Tailwind {
 		return result
 	}
 
-	classnames: ReturnType<typeof extractClassNames>
+	classnames!: ReturnType<typeof extractClassNames>
 
 	async process() {
-		const processer = this.postcss([this.tailwindcss(this.config)])
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const processer = this.postcss([this.tailwindcss(this.config!)])
 		const results = await Promise.all([
 			processer.process(`@tailwind base;`, { from: undefined }),
 			processer.process(`@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 		])
-		this.config = this.resolveConfig(this.config)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.config = this.resolveConfig(this.config!)
 		this.classnames = extractClassNames(results, this.config.darkMode, this.config.prefix)
 	}
 
@@ -154,7 +157,8 @@ export class Tailwind {
 	 * example: ```getTheme(["colors", "blue", "500"])```
 	 * @param keys
 	 */
-	getTheme(keys: string[]) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	getTheme(keys: string[]): any {
 		if (!this.config) {
 			return undefined
 		}
