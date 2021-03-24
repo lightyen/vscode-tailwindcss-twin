@@ -1,5 +1,5 @@
 import findRightBracket from "./findRightBracket"
-import * as tw from "./twin"
+import * as tw from "./token"
 
 export enum TwThemeElementKind {
 	Unknown,

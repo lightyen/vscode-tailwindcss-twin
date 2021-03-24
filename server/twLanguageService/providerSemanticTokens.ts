@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import { Node, NodeKind, Semantic } from "~/common/parseSemanticTokens"
 import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
-import * as tw from "~/common/twin"
+import * as tw from "~/common/token"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 

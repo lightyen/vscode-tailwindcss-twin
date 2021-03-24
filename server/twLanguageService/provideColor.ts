@@ -5,7 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
-import * as tw from "~/common/twin"
+import * as tw from "~/common/token"
 import { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "."
 

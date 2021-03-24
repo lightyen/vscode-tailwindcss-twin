@@ -1,6 +1,6 @@
 import findRightBlockComment from "./findRightBlockComment"
 import findRightBracket from "./findRightBracket"
-import * as tw from "./twin"
+import * as tw from "./token"
 
 function trimLeft(str: string, start = 0, end = str.length) {
 	while (/\s/.test(str[start])) {

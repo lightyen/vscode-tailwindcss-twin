@@ -1,7 +1,7 @@
 import ts from "typescript"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import * as tw from "./twin"
+import * as tw from "./token"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"
@@ -29,13 +29,13 @@ function transfromToken(
 	const text = result.token.getText(source)
 	const start = result.token.getStart(source) + 1
 	let end = result.token.getEnd()
-	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText : result.token.text
+	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText ?? "" : result.token.text
 	if (/['"`]$/.test(text)) {
 		end -= 1
 		return { kind: result.kind, token: tw.createToken(start, end, value) }
 	} else {
 		const m = text.match(/[ \r\t\n]/)
-		if (m) {
+		if (m?.index != undefined) {
 			end = start + m.index
 			return { kind: result.kind, token: tw.createToken(start, end, value.slice(0, m.index)) }
 		}
@@ -48,7 +48,7 @@ function find<T>(
 	node: ts.Node,
 	cb: (node: T) => node is T,
 	position: number | undefined = undefined,
-): T {
+): T | undefined {
 	if (typeof position == "number") {
 		if (position < node.getStart(source) || position >= node.getEnd()) {
 			return undefined
@@ -60,9 +60,9 @@ function find<T>(
 	return ts.forEachChild(node, child => find(source, child, cb, position))
 }
 
-function getJsxPropFirstStringLiteral(node: ts.Node, source: ts.SourceFile): ts.StringLiteral {
+function getJsxPropFirstStringLiteral(node: ts.Node, source: ts.SourceFile): ts.StringLiteral | undefined {
 	const target = node.getChildAt(2, source)
-	let token: ts.Node
+	let token: ts.Node | undefined
 	if (ts.isStringLiteral(target)) {
 		token = target
 	} else if (ts.isJsxExpression(target)) {
@@ -90,12 +90,16 @@ function findNode(
 	node: ts.Node,
 	position: number,
 	features: Features,
-): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind } {
+): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind } | undefined {
 	if (position < node.getStart(source) || position >= node.getEnd()) {
 		return undefined
 	}
 	if (ts.isJsxAttribute(node)) {
-		const id = node.getFirstToken(source).getText(source)
+		const first = node.getFirstToken(source)
+		if (!first) {
+			return undefined
+		}
+		const id = first.getText(source)
 		if (features.jsxProp && id === PatternKind.Twin) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
@@ -124,7 +128,11 @@ function findNode(
 			return undefined
 		}
 
-		const id = node.getFirstToken(source).getText(source)
+		const first = node.getFirstToken(source)
+		if (!first) {
+			return undefined
+		}
+		const id = first.getText(source)
 		if (features.twTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
@@ -155,6 +163,7 @@ function findNode(
 		if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
 			return undefined
 		}
+
 		const first = node.getChildAt(0, source)
 		if (first && ts.isIdentifier(first)) {
 			if (features.themeTemplate.has(first.getText(source))) {
@@ -177,13 +186,22 @@ function findNode(
 	return ts.forEachChild(node, child => findNode(source, child, position, features))
 }
 
+function notEmpty<T>(value: T | null | undefined): value is T {
+	return value != undefined
+}
+
 function findAllNode(
 	source: ts.SourceFile,
 	node: ts.Node,
 	features: Features,
-): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> {
+): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> | undefined {
 	if (ts.isJsxAttribute(node)) {
-		const id = node.getFirstToken(source).getText(source)
+		const first = node.getFirstToken(source)
+		if (!first) {
+			return undefined
+		}
+
+		const id = first.getText(source)
 		if (features.jsxProp && id === PatternKind.Twin) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
@@ -206,8 +224,12 @@ function findAllNode(
 			return undefined
 		}
 
-		const id = node.getFirstToken(source).getText(source)
+		const first = node.getFirstToken(source)
+		if (!first) {
+			return undefined
+		}
 
+		const id = first.getText(source)
 		if (features.twTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
@@ -248,7 +270,7 @@ function findAllNode(
 	return node
 		.getChildren(source)
 		.map(c => findAllNode(source, c, features))
-		.filter(Boolean)
+		.filter(notEmpty)
 		.flat()
 }
 
@@ -301,23 +323,18 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 	return { jsxProp, twTemplate, themeTemplate }
 }
 
-export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): TokenResult {
+export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): TokenResult | undefined {
 	const features = checkImportTwin(source, jsxPropChecking)
 	const node = findNode(source, source, position, features)
-	if (node) {
-		return transfromToken(node, source)
+	if (node == undefined) {
+		return undefined
 	}
-	return undefined
+	return transfromToken(node, source)
 }
 
 export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): TokenResult[] {
 	const features = checkImportTwin(source, jsxPropChecking)
-	try {
-		const nodes = findAllNode(source, source, features)
-		return nodes.map(node => transfromToken(node, source))
-	} catch {
-		return []
-	}
+	return findAllNode(source, source, features)?.map(node => transfromToken(node, source)) ?? []
 }
 
 export function canMatch(
@@ -325,9 +342,9 @@ export function canMatch(
 	position: lsp.Position,
 	hover: boolean,
 	jsxPropChecking = true,
-): TokenResult {
+): TokenResult | undefined {
 	const pos = document.offsetAt(position) + (hover ? 1 : 0)
-	let scriptKind: ts.ScriptKind
+	let scriptKind: ts.ScriptKind | undefined
 	switch (document.languageId) {
 		case "typescript":
 			scriptKind = ts.ScriptKind.TS
@@ -356,7 +373,7 @@ export function canMatch(
 }
 
 export function findAllMatch(document: TextDocument, jsxPropChecking = true): TokenResult[] {
-	let scriptKind: ts.ScriptKind
+	let scriptKind: ts.ScriptKind | undefined
 	switch (document.languageId) {
 		case "typescript":
 			scriptKind = ts.ScriptKind.TS

@@ -1,4 +1,4 @@
-import * as tw from "./twin"
+import * as tw from "./token"
 
 test("Token trim", async () => {
 	const token = tw.createToken(10, 20, "  abcdef  ")

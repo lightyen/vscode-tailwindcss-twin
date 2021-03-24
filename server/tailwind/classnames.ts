@@ -27,8 +27,8 @@ export interface CSSRuleItem {
 	__pseudo: string[]
 }
 
-export function createSelectorFromNodes(nodes: parser.Selector[]): string {
-	if (nodes.length === 0) return null
+export function createSelectorFromNodes(nodes: parser.Selector[]): string | undefined {
+	if (nodes.length === 0) return undefined
 	const selector = parser.selector({ value: "" })
 	for (let i = 0; i < nodes.length; i++) {
 		selector.append(nodes[i])
@@ -115,11 +115,11 @@ export function parseResults(
 				}
 			})
 
-			let p = rule as Node
+			let p = rule as Node | undefined
 			const keys: string[] = []
-			while (p.parent.type !== "root") {
-				p = p.parent
-				if (p.type === "atrule") {
+			while (p?.parent?.type !== "root") {
+				p = p?.parent
+				if (p?.type === "atrule") {
 					keys.push(`@${p["name"]} ${p["params"]}`)
 				}
 			}
@@ -224,7 +224,8 @@ export function parseResults(
 
 			type D = [property: string, value: string]
 			const decls: D[] = info.flatMap(v =>
-				Object.keys(v.decls || {}).flatMap(key => v.decls[key].map<D>(v => [key, v])),
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				Object.keys(v.decls || {}).flatMap(key => v.decls![key].map<D>(v => [key, v])),
 			)
 
 			if (decls.length === 0) {
@@ -279,7 +280,7 @@ export function parseResults(
 					continue
 				}
 
-				let color: chroma.Color
+				let color: chroma.Color | undefined
 				try {
 					if (m.groups?.r) {
 						const { r, g, b } = m.groups
@@ -308,10 +309,11 @@ export function parseResults(
 	}
 
 	enum Flag {
-		Responsive = 1,
-		DarkLightMode = 2,
-		MotionControl = 4,
-		CommonVariant = 8,
+		None = 0,
+		Responsive = 1 << 0,
+		DarkLightMode = 1 << 1,
+		MotionControl = 1 << 2,
+		CommonVariant = 1 << 3,
 	}
 
 	return {
@@ -414,7 +416,7 @@ export function parseResults(
 		 * @param twinPattern is current pattern twin?
 		 */
 		getClassNames(variants: string[], twinPattern: boolean): Record<string, CSSRuleItem | CSSRuleItem[]> {
-			let dictionary = undefined
+			let dictionary: Record<string, CSSRuleItem | CSSRuleItem[]>
 			if (variants.length > 0) {
 				const keys: string[] = []
 				const bp = variants.find(v => this.isResponsive(v))
@@ -446,9 +448,9 @@ export function parseResults(
 		 */
 		getVariantFilter(variants: string[], twinPattern: boolean): (label: string) => boolean {
 			const flags: Flag =
-				(this.hasBreakingPoint(variants) && Flag.Responsive) |
-				(this.hasDarkLightMode(variants, twinPattern) && Flag.DarkLightMode) |
-				(variants.some(v => this.isCommonVariant(twinPattern, v)) && Flag.CommonVariant)
+				(this.hasBreakingPoint(variants) ? Flag.Responsive : Flag.None) |
+				(this.hasDarkLightMode(variants, twinPattern) ? Flag.DarkLightMode : Flag.None) |
+				(variants.some(v => this.isCommonVariant(twinPattern, v)) ? Flag.CommonVariant : Flag.None)
 			return label => {
 				if (twinPattern) {
 					if (variants.some(v => v === label)) {
@@ -551,7 +553,9 @@ export function parseResults(
 			for (let i = 0; i < info.length; i++) {
 				const pseudo = info[i].__pseudo
 				if (pseudo.length > 0) continue
-				for (const [prop, values] of Object.entries(info[i].decls)) {
+				const decls = info[i].decls
+				if (!decls) continue
+				for (const [prop, values] of Object.entries(decls)) {
 					const value = values[values.length - 1]
 					if (!prop.includes("color") && !prop.includes("gradient") && prop !== "fill" && prop !== "stroke") {
 						continue
