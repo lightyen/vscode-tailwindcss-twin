@@ -386,8 +386,11 @@ class Server {
 		})
 
 		connection.onDocumentColor(params => {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.colorDecorations(documents.get(params.textDocument.uri)!)
+			const document = documents.get(params.textDocument.uri)
+			if (!document) {
+				return undefined
+			}
+			this.colorDecorations(document)
 			return matchService(params.textDocument.uri, this.services)?.onDocumentColor(params)
 		})
 
