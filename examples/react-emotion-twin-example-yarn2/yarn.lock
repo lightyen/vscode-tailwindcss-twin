@@ -7670,6 +7670,13 @@ fsevents@~2.3.1:
   languageName: node
   linkType: hard
 
+"lodash.get@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "lodash.get@npm:4.4.2"
+  checksum: 447e575e3caa5131ef44e5a0c135b1614f3c937d86b3be0568f9da7b0fd015010af3b6b4e41edf6e2698c9ce2dcc061ca71b31f274f799c991dceb018be16e4f
+  languageName: node
+  linkType: hard
+
 "lodash.isplainobject@npm:^4.0.6":
   version: 4.0.6
   resolution: "lodash.isplainobject@npm:4.0.6"
@@ -9580,7 +9587,7 @@ fsevents@~2.3.1:
     ts-loader: 8.0.17
     ts-node: 9.1.1
     ts-paths-resolve-plugin: 5.2.2
-    twin.macro: 2.2.3
+    twin.macro: 2.3.1
     typescript: 4.1.5
     url-loader: 4.1.1
     webpack: 5.24.0
@@ -11151,9 +11158,9 @@ resolve@^1.14.2:
   languageName: node
   linkType: hard
 
-"twin.macro@npm:2.2.3":
-  version: 2.2.3
-  resolution: "twin.macro@npm:2.2.3"
+"twin.macro@npm:2.3.1":
+  version: 2.3.1
+  resolution: "twin.macro@npm:2.3.1"
   dependencies:
     "@babel/parser": ^7.12.5
     babel-plugin-macros: ^2.8.0
@@ -11162,12 +11169,13 @@ resolve@^1.14.2:
     color: ^3.1.3
     dset: ^2.0.1
     lodash.flatmap: ^4.5.0
+    lodash.get: ^4.4.2
     lodash.merge: ^4.6.2
     postcss: ^8.1.8
     string-similarity: ^4.0.3
     tailwindcss: ^2.0.1
     timsort: ^0.3.0
-  checksum: 18615e697aa4b2542988500f0f4da857a062f5a6cfb97453c947f4000d34406749ea77db54d8c15b447cee301fa1d91233a81b7d9ea8469497d20d4bfbea2b68
+  checksum: d4bec1774864d09047d41118d43ab5bc5fbcab2d5c51ab8fb5de9baa524216f52120061d4d9081cb786815363a7831cee3519953b23c939979009b1938890fb8
   languageName: node
   linkType: hard
 

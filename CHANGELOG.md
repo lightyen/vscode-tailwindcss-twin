@@ -1,5 +1,15 @@
 # CHANGELOG.md
 
+## 0.7.6
+
+### Changes
+
+Ignore strict diagnostic at `transition` and `-opacity-` utilities.
+
+### Enhances
+
+Add i18n: `zh-tw`
+
 ## 0.7.5
 
 ### Fixes
