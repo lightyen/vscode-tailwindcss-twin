@@ -72,7 +72,6 @@
     "ts-node": "^9.1.1",
     "ts-paths-resolve-plugin": "^5.2.2",
     "vsce": "1.87.0",
-    "vscode-nls": "^5.0.0",
     "vscode-nls-dev": "^3.3.2",
     "webpack": "^5.26.0",
     "webpack-cli": "^4.5.0"
@@ -80,7 +79,8 @@
   "dependencies": {
     "postcss": "8.2.8",
     "tailwindcss": "2.0.3",
-    "typescript": "4.2.3"
+    "typescript": "4.2.3",
+    "vscode-nls": "^5.0.0"
   },
   "contributes": {
     "configurationDefaults": {
@@ -151,7 +151,7 @@
       "title": "Tailwind Twin IntelliSense",
       "properties": {
         "tailwindcss.colorDecorators": {
-          "description": "Controls whether the extension should render the inline color decorators.",
+          "description": "%ext.settings.colorDecorators%",
           "type": [
             "boolean",
             "null"
@@ -159,14 +159,16 @@
           "default": null
         },
         "tailwindcss.references": {
-          "description": "Controls whether the extension should show references when completion/hover.",
+          "description": "%ext.settings.references%",
           "type": "boolean",
           "default": true
         },
         "tailwindcss.diagnostics": {
+          "description": "%ext.settings.diagnostics%",
           "type": "object",
           "properties": {
             "enabled": {
+              "description": "%ext.settings.diagnostics.enabled%",
               "type": "boolean",
               "default": true
             },
@@ -179,9 +181,9 @@
               ],
               "default": "strict",
               "enumDescriptions": [
-                "Silent when conflict",
-                "Show warning when all css property were conflicted",
-                "Show warning when any css property was conflicted"
+                "%ext.settings.diagnostics.conflict.none%",
+                "%ext.settings.diagnostics.conflict.loose%",
+                "%ext.settings.diagnostics.conflict.strict%"
               ]
             },
             "emptyClass": {
@@ -214,12 +216,12 @@
           "default": true
         },
         "tailwindcss.enabled": {
-          "description": "Whether tailwind twin extension is enabled.",
+          "description": "%ext.settings.enabled%",
           "type": "boolean",
           "default": true
         },
         "tailwindcss.jsxPropImportChecking": {
-          "description": "jsx prop import checking.(set it to false if using with babel-plugin-twin)",
+          "description": "%ext.settings.jsxPropImportChecking%",
           "type": "boolean",
           "default": true
         }

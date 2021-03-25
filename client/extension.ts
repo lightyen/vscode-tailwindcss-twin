@@ -9,14 +9,6 @@ const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript"
 
 const clients: Map<string, LanguageClient> = new Map()
 
-interface NLSConfig {
-	locale: string
-	availableLanguages: Record<string, string>
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const nlsConfig = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "") as NLSConfig
-
 interface InitializationOptions extends Settings {
 	/** uri */
 	workspaceFolder: string

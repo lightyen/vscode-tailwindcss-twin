@@ -7,6 +7,7 @@ import { FileChangeType } from "vscode-languageserver/node"
 import { URI } from "vscode-uri"
 import { requireModule } from "~/common/module"
 import { LanguageService } from "./LanguageService"
+import { intl } from "./locale"
 import { TailwindLanguageService } from "./twLanguageService"
 
 interface InitializationOptions extends Settings {
@@ -61,8 +62,14 @@ class Server {
 			this.settings = settings
 			progress.begin(`Initializing ${NAME}`)
 
-			console.log("tailwindcss version:", requireModule("tailwindcss/package.json").version)
-			console.log("postcss version:", requireModule("postcss/package.json").version)
+			console.log(
+				`tailwindcss ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+				requireModule("tailwindcss/package.json").version,
+			)
+			console.log(
+				`postcss ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+				requireModule("postcss/package.json").version,
+			)
 
 			for (const configUri of configs) {
 				this.addService(configUri, workspaceFolder, settings)

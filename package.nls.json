@@ -1,0 +1,12 @@
+{
+  "ext.settings.enabled": "Enable tailwind twin extension.",
+  "ext.settings.colorDecorators": "Controls whether the extension should render the inline color decorators.",
+  "ext.settings.references": "Controls whether the extension should show references when completion/hover.",
+  "ext.settings.diagnostics": "Diagnostics",
+  "ext.settings.diagnostics.enabled": "Controls whether diagnostics enabled.",
+  "ext.settings.diagnostics.conflict.none": "Silent when conflict.",
+  "ext.settings.diagnostics.conflict.loose": "Show warning when all css property were conflicted.",
+  "ext.settings.diagnostics.conflict.strict": "Show warning when any css property was conflicted.",
+  "ext.settings.jsxPropImportChecking": "jsx prop import checking(set it to false if using with babel-plugin-twin).",
+  "ext.debug-outout.version": "version"
+}
