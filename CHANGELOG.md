@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.7
+
+### Fixes
+
+- crash error happened when incomplete user input, ex: `<div tw=></div>`
+
 ## 0.7.6
 
 ### Changes
