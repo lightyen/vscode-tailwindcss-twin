@@ -512,11 +512,45 @@ function guess(
 }
 
 function isIgnored(label: string) {
-	if (label.match(/transition/)) {
+	if (label.match(/^space-(x|y)-reverse$/)) {
 		return true
 	}
 
-	if (label.match(/-opacity-\d+/)) {
+	// opactiy
+
+	if (label.match(/-opacity-\d+$/)) {
+		return true
+	}
+
+	// transition
+
+	if (label.match(/^duration-\d+$/)) {
+		return true
+	}
+
+	if (label.match(/^delay-\d+$/)) {
+		return true
+	}
+
+	if (label.match(/^ease-(?:linear|in|out|in-out)$/)) {
+		return true
+	}
+
+	// transform
+
+	if (label.match(/^scale(?:-(?:x|y))?-\d+$/)) {
+		return true
+	}
+
+	if (label.match(/^-?rotate-\d+$/)) {
+		return true
+	}
+
+	if (label.match(/^-?translate-/)) {
+		return true
+	}
+
+	if (label.match(/^-?skew(?:-(?:x|y))?-\d+$/)) {
 		return true
 	}
 
