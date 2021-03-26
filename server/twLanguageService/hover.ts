@@ -230,7 +230,7 @@ function getHoverMarkdown({
 				)
 				continue
 			}
-			if (common.every(c => state.classnames.isVariant(c) && !state.classnames.baseVariants[c])) {
+			if (common.every(c => state.classnames.isVariant(c))) {
 				if (d.__pseudo.length === 0) {
 					d.__pseudo = variantValues // inject pseudoes
 				}
