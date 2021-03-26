@@ -13,7 +13,6 @@ import { cssDataManager } from "./cssData"
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
 const csspropSearcher = new Fuse(cssProperties, { includeScore: true })
 
-// TODO: Enhance performance
 export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
 	const uri = document.uri.toString()
@@ -164,6 +163,19 @@ function validateTwin({
 				const label = item.token.text
 				const data = state.classnames.getClassNameRule(variants, true, label)
 				if (!(data instanceof Array)) {
+					continue
+				}
+
+				// [except case] font-variant-numeric
+				if (label.match(/^slashed-zero|ordinal$/)) {
+					continue
+				}
+
+				if (label.match(/^(?:lining|oldstyle|proportional|tabular)-nums$/)) {
+					continue
+				}
+
+				if (label.match(/^(?:diagonal|stacked)-fractions$/)) {
 					continue
 				}
 
@@ -410,6 +422,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		}
 	}
 
+	// TODO: enhance performance
 	if (item.token.text) {
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
@@ -511,19 +524,33 @@ function guess(
 	}
 }
 
+// TODO: detect confliction on css shorthand properties
+
 function isIgnored(label: string) {
-	if (label.match(/^space-(x|y)-reverse$/)) {
+	// top, right, bottom, left
+	if (label.match(/^-?(?:top|right|bottom|left)-/)) {
+		return true
+	}
+
+	if (label.match(/^-?(?:mt|mr|mb|ml)-(?:auto|px|[\d.]+)$/)) {
+		return true
+	}
+
+	if (label.match(/^(?:pt|pr|pb|pl)-(?:px|[\d.]+)$/)) {
+		return true
+	}
+
+	// text
+	if (label.match(/^(?:leading)-(?:\d+|[a-z]+)$/)) {
 		return true
 	}
 
 	// opactiy
-
-	if (label.match(/-opacity-\d+$/)) {
+	if (label.match(/^(?:bg|ring|text|border|divide|placeholder)-opacity-\d+$/)) {
 		return true
 	}
 
 	// transition
-
 	if (label.match(/^duration-\d+$/)) {
 		return true
 	}
@@ -537,7 +564,6 @@ function isIgnored(label: string) {
 	}
 
 	// transform
-
 	if (label.match(/^scale(?:-(?:x|y))?-\d+$/)) {
 		return true
 	}
@@ -546,11 +572,21 @@ function isIgnored(label: string) {
 		return true
 	}
 
-	if (label.match(/^-?translate-/)) {
+	if (label.match(/^-?translate-(?:x|y)-(?:[\d./]+|px|full)$/)) {
 		return true
 	}
 
 	if (label.match(/^-?skew(?:-(?:x|y))?-\d+$/)) {
+		return true
+	}
+
+	// gradient
+	if (label.match(/^(?:via|to)-(?:[a-z]+)-\d+$/)) {
+		return true
+	}
+
+	// reverse
+	if (label.match(/^(?:divide|space)-(?:x|y)-reverse$/)) {
 		return true
 	}
 
