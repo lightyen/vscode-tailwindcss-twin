@@ -262,10 +262,14 @@ function utiltiesCompletion(
 	}
 
 	if (suggestion.token) {
-		if ((position > a && position < b) || (position === b && suggestion.token.kind === tw.TokenKind.ClassName)) {
+		if (position > a && position < b) {
 			doReplace(classNameItems, document, offset, a, b, item => item.label)
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
+		} else if (position === b) {
+			if (suggestion.token.kind === tw.TokenKind.ClassName) {
+				doReplace(classNameItems, document, offset, a, b, item => item.label)
+			}
 		} else {
 			classNameItems.length = 0
 		}
