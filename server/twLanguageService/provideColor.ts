@@ -51,13 +51,12 @@ export function provideColorDecorations(
 		}
 
 		const { elementList } = cachedResult[value]
-		const twin = kind === PatternKind.Twin
 
 		for (const c of elementList) {
 			switch (c.kind) {
 				case tw.TokenKind.ClassName:
 					{
-						if (!state.classnames.isClassName(c.variants.texts, twin, c.token.text)) {
+						if (!state.classnames.isClassName(c.variants.texts, c.token.text)) {
 							continue
 						}
 						const color = state.classnames.getColorInfo(c.token.text)

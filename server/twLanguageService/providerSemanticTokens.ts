@@ -42,11 +42,9 @@ export default function provideSemanticTokens(
 			continue
 		}
 
-		const isValidClass = (variants: string[], value: string) =>
-			state.classnames.isClassName(variants, kind === PatternKind.Twin, value)
+		const isValidClass = (variants: string[], value: string) => state.classnames.isClassName(variants, value)
 
-		const isValidVariant = (variant: string) =>
-			state.classnames.isVariant(variant, kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty)
+		const isValidVariant = (variant: string) => state.classnames.isVariant(variant)
 
 		const canRender = (node: Node) => {
 			if (kind === PatternKind.TwinCssProperty) {

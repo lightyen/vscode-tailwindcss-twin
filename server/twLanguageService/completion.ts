@@ -119,7 +119,6 @@ function variantsCompletion(
 	state: Tailwind,
 	{ preferVariantWithParentheses }: ServiceOptions,
 ) {
-	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const nextCharacter = input.slice(position, position + 1)
 	const userVariants = suggestion.variants.texts
@@ -135,8 +134,8 @@ function variantsCompletion(
 	}
 
 	if (variantEnabled) {
-		const variantFilter = state.classnames.getVariantFilter(userVariants, twin)
-		variantItems = Object.entries(state.classnames.getVariants(twin))
+		const variantFilter = state.classnames.getVariantFilter(userVariants)
+		variantItems = Object.entries(state.classnames.getVariants())
 			.filter(([label]) => variantFilter(label))
 			.map<lsp.CompletionItem>(([label, data]) => {
 				const bp = state.classnames.getBreakingPoint(label)
@@ -163,7 +162,7 @@ function variantsCompletion(
 						},
 					}
 				} else {
-					const f = state.classnames.isDarkLightMode(twin, label)
+					const f = state.classnames.isDarkLightMode(label)
 					return {
 						label: label + state.separator,
 						sortText: f ? "*" + label : "~~~:" + label,
@@ -190,10 +189,7 @@ function variantsCompletion(
 
 	if (suggestion.token) {
 		if (suggestion.token.kind === tw.TokenKind.Variant) {
-			const isVariantWord = state.classnames.isVariant(
-				value.slice(0, value.length - state.separator.length),
-				twin,
-			)
+			const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
 			if (!isVariantWord || (position > a && position < b)) {
 				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
@@ -232,7 +228,6 @@ function utiltiesCompletion(
 	state: Tailwind,
 	_: ServiceOptions,
 ) {
-	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 	const userVariants = suggestion.variants.texts
 	let classNameItems: lsp.CompletionItem[] = []
@@ -244,10 +239,7 @@ function utiltiesCompletion(
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
 			case tw.TokenKind.Variant: {
-				const isVariantWord = state.classnames.isVariant(
-					value.slice(0, value.length - state.separator.length),
-					twin,
-				)
+				const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
 				if (position === b && !isVariantWord) {
 					classNameEnabled = false
 				}
@@ -263,8 +255,8 @@ function utiltiesCompletion(
 	}
 
 	if (classNameEnabled) {
-		const classesFilter = state.classnames.getClassNameFilter(userVariants, twin)
-		classNameItems = Object.entries(state.classnames.getClassNames(userVariants, twin))
+		const classesFilter = state.classnames.getClassNameFilter(userVariants)
+		classNameItems = Object.entries(state.classnames.getClassNames())
 			.filter(classesFilter)
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
 	}
@@ -292,7 +284,6 @@ function shortcssCompletion(
 	state: Tailwind,
 	_: ServiceOptions,
 ) {
-	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
 
 	let cssPropItems: lsp.CompletionItem[] = []
@@ -303,10 +294,7 @@ function shortcssCompletion(
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
 			case tw.TokenKind.Variant: {
-				const isVariantWord = state.classnames.isVariant(
-					value.slice(0, value.length - state.separator.length),
-					twin,
-				)
+				const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
 				if (position === b && !isVariantWord) {
 					cssPropEnabled = false
 				}

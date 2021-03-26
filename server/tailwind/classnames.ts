@@ -77,7 +77,6 @@ export function extractClassNames(
 	[_base, components, utilities]: [Result, Result, Result],
 	darkMode: false | "media" | "class",
 	prefix: string,
-	twin = true,
 ) {
 	return parseResults(
 		[
@@ -87,7 +86,6 @@ export function extractClassNames(
 		],
 		darkMode,
 		prefix,
-		twin,
 	)
 }
 
@@ -192,6 +190,8 @@ export function parseResults(
 			variants["light"] = [".light"]
 		}
 	}
+
+	dset(tree, [prefix + "content"], TWIN_CONTENT)
 
 	function collectBreakingPoints(variants: Record<string, string[]>) {
 		const reg = /@media\s\(.*width:\s*(\d+)px/
@@ -316,6 +316,8 @@ export function parseResults(
 		CommonVariant = 1 << 3,
 	}
 
+	let searchers: { variants: Fuse<string>; classnames: Fuse<string> } | undefined = undefined
+
 	return {
 		/**
 		 * class rules
@@ -341,14 +343,8 @@ export function parseResults(
 		 * short breaking points table
 		 */
 		breakingPoints: collectBreakingPoints(variants),
-		// common
-		/**
-		 * Test the label whether it is a dark mode keyword
-		 * @param twinPattern is current pattern twin?
-		 * @param label input
-		 */
-		isDarkLightMode(twinPattern: boolean, label: string) {
-			return twinPattern ? label === "dark" || label === "light" : label === "dark"
+		isDarkLightMode(label: string) {
+			return label === "dark" || label === "light"
 		},
 		getBreakingPoint(label: string) {
 			return this.breakingPoints[label]
@@ -358,54 +354,47 @@ export function parseResults(
 		},
 		/**
 		 * Test the variant whether it is a valid variant
-		 * @param variant input
+		 * @param label input
 		 * @param twinPattern is current pattern twin?
 		 */
-		isVariant(variant: string, twinPattern: boolean) {
-			return !!this.getVariants(twinPattern)[variant]
+		isVariant(label: string) {
+			return this.getVariants()[label] != undefined
 		},
-		hasDarkLightMode(variants: string[], twinPattern: boolean) {
-			return variants.some(v => this.isDarkLightMode(twinPattern, v))
+		hasDarkLightMode(labels: string[]) {
+			return labels.some(v => this.isDarkLightMode(v))
 		},
-		hasBreakingPoint(variants: string[]) {
-			return variants.some(v => this.isResponsive(v))
+		hasBreakingPoint(labels: string[]) {
+			return labels.some(v => this.isResponsive(v))
 		},
-		isMotionControl(variant: string) {
-			return variant === "motion-reduce" || variant === "motion-safe"
+		isMotionControl(label: string) {
+			return label === "motion-reduce" || label === "motion-safe"
 		},
-		getVariants(twinPattern: boolean) {
-			if (twinPattern) {
-				return this.variants
-			} else {
-				return this.baseVariants
-			}
+		getVariants() {
+			return this.variants
 		},
 		/**
 		 * Test the variant whether it is a valid common variant.(not breaking point, not dark mode)
 		 * @param label input
-		 * @param twinPattern is current pattern twin?
 		 */
-		isCommonVariant(twinPattern: boolean, label: string) {
+		isCommonVariant(label: string) {
 			if (this.isResponsive(label)) {
 				return false
 			}
-			if (this.isDarkLightMode(twinPattern, label)) {
+			if (this.isDarkLightMode(label)) {
 				return false
 			}
-			return !!this.getVariants(twinPattern)[label]
+			return this.isVariant(label)
 		},
 		/**
-		 * Test the label whether it is valid className.
+		 * Test the label whether it is valid utility.
 		 * @param label input
-		 * @param variants input variant space
-		 * @param twinPattern is current pattern twin?
 		 */
-		isClassName(variants: string[], twinPattern: boolean, label: string) {
-			const obj = this.getClassNames(variants, twinPattern)
+		isClassName(variants: string[], label: string) {
+			const obj = this.getClassNames()
 			if (!(obj?.[label] instanceof Array)) {
 				return false
 			}
-			if (!this.getClassNameFilter(variants, twinPattern)([label, obj[label]])) {
+			if (!this.getClassNameFilter(variants)([label, obj[label]])) {
 				return false
 			}
 			return true
@@ -413,104 +402,51 @@ export function parseResults(
 		/**
 		 * Get all classNames information.
 		 * @param variants input variant space
-		 * @param twinPattern is current pattern twin?
 		 */
-		// TODO: enhance performance: dset(tree, [prefix + "content"], TWIN_CONTENT) ?
-		getClassNames(variants: string[], twinPattern: boolean): Record<string, CSSRuleItem | CSSRuleItem[]> {
-			let dictionary: Record<string, CSSRuleItem | CSSRuleItem[]>
-			if (variants.length > 0) {
-				const keys: string[] = []
-				const bp = variants.find(v => this.isResponsive(v))
-				if (bp) keys.push(bp)
-				if (!twinPattern) {
-					const i = variants.findIndex(x => this.isDarkLightMode(twinPattern, x))
-					if (i !== -1) {
-						variants[i] = "dark"
-						keys.push("dark")
-					}
-					keys.push(...variants.filter(v => !this.isResponsive(v) && !this.isDarkLightMode(twinPattern, v)))
-				}
-				dictionary = dlv(this.dictionary, [...keys]) as Record<string, CSSRuleItem | CSSRuleItem[]>
-			} else {
-				dictionary = this.dictionary
-			}
-			if (twinPattern) {
-				dictionary = { ...dictionary, ...{ [prefix + "content"]: TWIN_CONTENT } }
-			}
-			return dictionary
+		getClassNames(): Record<string, CSSRuleItem | CSSRuleItem[]> {
+			return this.dictionary
 		},
-		getClassNameRule(variants: string[], twinPattern: boolean, value: string): CSSRuleItem | CSSRuleItem[] {
-			return this.getClassNames(variants, twinPattern)?.[value]
+		getClassNameRule(label: string): CSSRuleItem | CSSRuleItem[] {
+			return this.getClassNames()[label]
 		},
 		/**
 		 * for providing proper variant list
 		 * @param variants input variant space
-		 * @param twinPattern is current pattern twin?
 		 */
-		getVariantFilter(variants: string[], twinPattern: boolean): (label: string) => boolean {
+		getVariantFilter(variants: string[]): (label: string) => boolean {
 			const flags: Flag =
 				(this.hasBreakingPoint(variants) ? Flag.Responsive : Flag.None) |
-				(this.hasDarkLightMode(variants, twinPattern) ? Flag.DarkLightMode : Flag.None) |
-				(variants.some(v => this.isCommonVariant(twinPattern, v)) ? Flag.CommonVariant : Flag.None)
+				(this.hasDarkLightMode(variants) ? Flag.DarkLightMode : Flag.None) |
+				(variants.some(v => this.isCommonVariant(v)) ? Flag.CommonVariant : Flag.None)
 			return label => {
-				if (twinPattern) {
-					if (variants.some(v => v === label)) {
+				if (variants.some(v => v === label)) {
+					return false
+				}
+				if (flags & Flag.Responsive) {
+					if (this.isResponsive(label)) {
 						return false
 					}
-					if (flags & Flag.Responsive) {
-						if (this.isResponsive(label)) {
-							return false
-						}
-					}
-					if (flags & Flag.DarkLightMode) {
-						if (this.isDarkLightMode(twinPattern, label)) {
-							return false
-						}
-					}
-				} else {
-					if (!darkMode && this.isDarkLightMode(twinPattern, label)) {
+				}
+				if (flags & Flag.DarkLightMode) {
+					if (this.isDarkLightMode(label)) {
 						return false
-					}
-					if (flags & Flag.MotionControl && !this.isCommonVariant(twinPattern, label)) {
-						return false
-					}
-					if (
-						flags & Flag.CommonVariant &&
-						(this.isResponsive(label) || this.isVariant(label, twinPattern))
-					) {
-						return false
-					}
-					if (
-						flags & Flag.DarkLightMode &&
-						(this.isResponsive(label) || this.isDarkLightMode(twinPattern, label))
-					) {
-						return false
-					}
-					if (flags & Flag.Responsive) {
-						if (this.isResponsive(label)) return false
 					}
 				}
 				return true
 			}
 		},
-		getVariantList(variants: string[], twinPattern: boolean) {
-			return Object.keys(this.getVariants(twinPattern)).filter(this.getVariantFilter(variants, twinPattern))
+		getVariantList(variants: string[]) {
+			return Object.keys(this.getVariants()).filter(this.getVariantFilter(variants))
 		},
 		/**
 		 * for providing proper className list
 		 * @param variants input variant space
-		 * @param twinPattern is current pattern twin?
 		 */
-		getClassNameFilter(
-			variants: string[],
-			twinPattern: boolean,
-		): (v: [string, CSSRuleItem | CSSRuleItem[]]) => boolean {
+		getClassNameFilter(variants: string[]): (v: [string, CSSRuleItem | CSSRuleItem[]]) => boolean {
 			return ([label, info]) => {
-				if (twinPattern) {
-					switch (label) {
-						case prefix + "container":
-							return variants?.length === 0
-					}
+				switch (label) {
+					case prefix + "container":
+						return variants?.length === 0
 				}
 				if (!(info instanceof Array)) {
 					return false
@@ -518,30 +454,25 @@ export function parseResults(
 				return true
 			}
 		},
-		getClassNameList(variants: string[], twinPattern: boolean) {
-			const classes = Object.entries(this.getClassNames(variants, twinPattern))
-				.filter(this.getClassNameFilter(variants, twinPattern))
+		getClassNameList(variants: string[]) {
+			const classes = Object.entries(this.getClassNames())
+				.filter(this.getClassNameFilter(variants))
 				.map(([label]) => label)
 			return classes
 		},
-		// fuzzy searching
-		/**
-		 * searchers cache
-		 */
-		searchers: {},
 		/**
 		 * get approximate string matching searcher
 		 */
-		getSearcher(variants: string[], twinPattern: boolean): { variants: Fuse<string>; classnames: Fuse<string> } {
-			const target = dlv(this.searchers, [...variants, twinPattern.toString()])
-			if (target) {
-				return target as { variants: Fuse<string>; classnames: Fuse<string> }
+		getSearcher(): { variants: Fuse<string>; classnames: Fuse<string> } {
+			if (searchers) {
+				return searchers
 			}
-			const vs = this.getVariantList(variants, twinPattern)
-			return {
+			const vs = this.getVariantList([])
+			searchers = {
 				variants: new Fuse(vs, { includeScore: true }),
-				classnames: new Fuse(this.getClassNameList(variants, twinPattern), { includeScore: true }),
+				classnames: new Fuse(this.getClassNameList([]), { includeScore: true }),
 			}
+			return searchers
 		},
 		getColorInfo(label: string) {
 			const info = dlv(this.dictionary, [label]) as CSSRuleItem | CSSRuleItem[]

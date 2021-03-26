@@ -74,11 +74,7 @@ export default function hover(
 
 			if (
 				selection.token.kind === tw.TokenKind.ClassName &&
-				!state.classnames.isClassName(
-					selection.variants.texts,
-					kind === PatternKind.Twin,
-					selection.token.token.text,
-				)
+				!state.classnames.isClassName(selection.variants.texts, selection.token.token.text)
 			) {
 				return undefined
 			}
@@ -141,26 +137,23 @@ function getHoverMarkdown({
 	const { important, variants } = selection
 	const [, , value] = selection.token?.token ?? tw.createToken(0, 0, "")
 
-	const twin = kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty
 	const inputVariants = variants.map(([, , v]) => v)
-	const common = inputVariants.filter(v => state.classnames.isCommonVariant(twin, v))
+	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
 	if (state.config.darkMode === "class") {
-		const f = notCommon.findIndex(v => state.classnames.isDarkLightMode(twin, v))
+		const f = notCommon.findIndex(v => state.classnames.isDarkLightMode(v))
 		if (f !== -1) {
 			common.push(...notCommon.splice(f, 1))
 		}
 	}
 
-	if (twin) {
-		if (value === "group") {
-			return undefined
-		}
+	if (value === "group") {
+		return undefined
 	}
 
-	if (selection.token?.kind === tw.TokenKind.Variant && state.classnames.isVariant(value, twin)) {
-		const data = state.classnames.getVariants(twin)[value]
+	if (selection.token?.kind === tw.TokenKind.Variant && state.classnames.isVariant(value)) {
+		const data = state.classnames.getVariants()[value]
 		if (data) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -183,7 +176,7 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	const data = state.classnames.getClassNameRule(inputVariants, twin, value)
+	const data = state.classnames.getClassNameRule(value)
 	if (!data) {
 		return undefined
 	}
@@ -199,7 +192,7 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	const __variants = state.classnames.getVariants(twin)
+	const __variants = state.classnames.getVariants()
 	const variantValues = common.flatMap(c => __variants[c])
 
 	const filterContext: boolean[] = []
@@ -237,7 +230,7 @@ function getHoverMarkdown({
 				)
 				continue
 			}
-			if (twin && common.every(c => state.classnames.isVariant(c, twin) && !state.classnames.baseVariants[c])) {
+			if (common.every(c => state.classnames.isVariant(c) && !state.classnames.baseVariants[c])) {
 				if (d.__pseudo.length === 0) {
 					d.__pseudo = variantValues // inject pseudoes
 				}
@@ -250,7 +243,7 @@ function getHoverMarkdown({
 	})
 
 	const blocks: Map<string, string[]> = new Map()
-	meta.filter((_, i) => twin || filterContext[i])
+	meta.filter((_, i) => filterContext[i])
 		.map(rule => {
 			let selector = value
 			if (rule.__source === "components") {
@@ -350,7 +343,7 @@ function resolveContainer({
 	}
 
 	const label_container = state.config.prefix + "container"
-	const rules = state.classnames.getClassNameRule([], kind === PatternKind.Twin, label_container)
+	const rules = state.classnames.getClassNameRule(label_container)
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")

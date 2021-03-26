@@ -161,7 +161,7 @@ function validateTwin({
 				}
 
 				const label = item.token.text
-				const data = state.classnames.getClassNameRule(variants, true, label)
+				const data = state.classnames.getClassNameRule(label)
 				if (!(data instanceof Array)) {
 					continue
 				}
@@ -251,15 +251,9 @@ function validateTwin({
 
 	for (let i = 0; i < emptyList.length; i++) {
 		const item = emptyList[i]
-		const variants = item.variants.texts
-		const searcher = state.classnames.getSearcher(
-			variants,
-			kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty,
-		)
+		const searcher = state.classnames.getSearcher()
 		for (const [a, b, variant] of item.variants) {
-			if (
-				!state.classnames.isVariant(variant, kind === PatternKind.Twin || kind === PatternKind.TwinCssProperty)
-			) {
+			if (!state.classnames.isVariant(variant)) {
 				const ans = searcher.variants.search(variant)
 				if (ans?.length > 0) {
 					result.push({
@@ -324,12 +318,11 @@ function validateTwin({
 
 function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
-	const variants = item.variants.texts
 	for (const [a, b, variant] of item.variants) {
-		if (state.classnames.isVariant(variant, true)) {
+		if (state.classnames.isVariant(variant)) {
 			continue
 		}
-		const ret = state.classnames.getSearcher(variants, true).variants.search(variant)
+		const ret = state.classnames.getSearcher().variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -390,13 +383,11 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 
 function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
-	const variants = item.variants.texts
 	for (const [a, b, variant] of item.variants) {
-		if (state.classnames.isVariant(variant, true)) {
+		if (state.classnames.isVariant(variant)) {
 			continue
 		}
-		// TODO: use another approximate string matching method?
-		const ret = state.classnames.getSearcher(variants, true).variants.search(variant)
+		const ret = state.classnames.getSearcher().variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -425,8 +416,8 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 	if (item.token.text) {
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
-		if (!state.classnames.isClassName(variants, true, text)) {
-			const ret = guess(state, variants, text)
+		if (!state.classnames.isClassName(variants, text)) {
+			const ret = guess(state, text)
 			if (ret.score === 0) {
 				switch (ret.kind) {
 					case PredictionKind.CssProperty:
@@ -486,13 +477,9 @@ enum PredictionKind {
 	Variant,
 }
 
-function guess(
-	state: Tailwind,
-	variants: string[],
-	text: string,
-): { kind: PredictionKind; value: string; score: number } {
-	const a = state.classnames.getSearcher(variants, true).classnames.search(text)
-	const b = state.classnames.getSearcher(variants, true).variants.search(text)
+function guess(state: Tailwind, text: string): { kind: PredictionKind; value: string; score: number } {
+	const a = state.classnames.getSearcher().classnames.search(text)
+	const b = state.classnames.getSearcher().variants.search(text)
 	const c = csspropSearcher.search(text)
 	let kind = PredictionKind.Unknown
 	let value = ""

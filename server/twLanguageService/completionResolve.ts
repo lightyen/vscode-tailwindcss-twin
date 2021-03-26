@@ -36,7 +36,7 @@ export default function completionResolve(
 }
 
 function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions): lsp.CompletionItem {
-	const { type, variants, kind, entry } = item.data as {
+	const { type, variants, entry } = item.data as {
 		type: string
 		variants: string[]
 		kind: PatternKind
@@ -70,7 +70,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	if (variants.length > 0 && !item.label.endsWith(":")) {
-		const __variants = state.classnames.getVariants(kind === PatternKind.Twin)
+		const __variants = state.classnames.getVariants()
 		if (data instanceof Array) {
 			data = data.filter(d => {
 				for (const context of d.__context) {
@@ -176,7 +176,7 @@ function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: Se
 	}
 
 	const label_container = state.config.prefix + "container"
-	const rules = state.classnames.getClassNameRule([], false, label_container)
+	const rules = state.classnames.getClassNameRule(label_container)
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
