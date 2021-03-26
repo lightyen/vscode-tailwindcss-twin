@@ -61,6 +61,9 @@ function find<T>(
 }
 
 function getJsxPropFirstStringLiteral(node: ts.Node, source: ts.SourceFile): ts.StringLiteral | undefined {
+	if (node.getChildCount(source) < 3) {
+		return undefined
+	}
 	const target = node.getChildAt(2, source)
 	let token: ts.Node | undefined
 	if (ts.isStringLiteral(target)) {
