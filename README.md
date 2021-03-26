@@ -50,13 +50,50 @@ Support ONLY `react` and `twin.macro`
 // example
 {
   "workbench.colorCustomizations": {
-    "[Atom One Dark]": {
+    "[One Dark Pro]": {
       "editorHoverWidget.background": "#17202ee5",
       "editorHoverWidget.border": "#6a7473",
       "editorSuggestWidget.background": "#17202ee5",
       "editorSuggestWidget.border": "#6a7473",
       "editorSuggestWidget.selectedBackground": "#009c70d0",
       "editor.wordHighlightBackground": "#0000"
+    }
+  }
+}
+```
+
+### Custom Semantic Colors [(docs)](https://code.visualstudio.com/api/language-extensions/syntax-highlight-guide)
+
+```json5
+{
+  "editor.tokenColorCustomizations": {
+    "[One Dark Pro]": {
+      "textMateRules": [
+        {
+          "scope": "entity.other.inherited-class.variant.twin",
+          "settings": {
+            "foreground": "#C678DD"
+          }
+        },
+        {
+          "scope": "support.type.css-prop.twin",
+          "settings": {
+            "foreground": "#5dbeff"
+          }
+        },
+        {
+          "scope": "punctuation.section.embedded.short-css",
+          "settings": {
+            "foreground": "#5dbeff"
+          }
+        },
+        {
+          "scope": "entity.name.variable.css-value.twin",
+          "settings": {
+            "foreground": "#c2bb76"
+          }
+        }
+      ]
     }
   }
 }
