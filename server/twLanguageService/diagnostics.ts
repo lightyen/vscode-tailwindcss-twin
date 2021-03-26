@@ -417,7 +417,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
 		if (!state.classnames.isClassName(variants, text)) {
-			const ret = guess(state, text)
+			const ret = guess(state, variants, text)
 			if (ret.score === 0) {
 				switch (ret.kind) {
 					case PredictionKind.CssProperty:
@@ -477,7 +477,11 @@ enum PredictionKind {
 	Variant,
 }
 
-function guess(state: Tailwind, text: string): { kind: PredictionKind; value: string; score: number } {
+function guess(
+	state: Tailwind,
+	variants: string[],
+	text: string,
+): { kind: PredictionKind; value: string; score: number } {
 	const a = state.classnames.getSearcher().classnames.search(text)
 	const b = state.classnames.getSearcher().variants.search(text)
 	const c = csspropSearcher.search(text)
@@ -485,19 +489,19 @@ function guess(state: Tailwind, text: string): { kind: PredictionKind; value: st
 	let value = ""
 	let score = +Infinity
 
-	if (a?.[0]?.score && a[0].score < score) {
+	if (a?.[0]?.score != undefined && a[0].score < score) {
 		kind = PredictionKind.Classname
 		value = a[0].item
 		score = a[0].score
 	}
 
-	if (b?.[0]?.score && b[0].score < score) {
+	if (b?.[0]?.score != undefined && b[0].score < score) {
 		kind = PredictionKind.Variant
 		value = b[0].item
 		score = b[0].score
 	}
 
-	if (c?.[0]?.score && c[0].score < score) {
+	if (c?.[0]?.score != undefined && c[0].score < score) {
 		kind = PredictionKind.CssProperty
 		value = c[0].item
 		score = c[0].score
