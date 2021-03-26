@@ -394,7 +394,11 @@ export function findAllMatch(document: TextDocument, jsxPropChecking = true): To
 	}
 	if (scriptKind) {
 		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		return findAllToken(source, jsxPropChecking)
+		try {
+			return findAllToken(source, jsxPropChecking)
+		} catch {
+			return []
+		}
 	}
 	return []
 }
