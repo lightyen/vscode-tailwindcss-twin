@@ -1,5 +1,18 @@
 # CHANGELOG.md
 
+### Changes
+
+conflict rules(turn to non-strict mode for the particular utilities)
+remove twin boolean option(no plan to support `className` prop)
+
+### Fixes
+
+- utilities completion list is not visiable
+
+### Enhances
+
+diagnostic performance
+
 ## 0.7.8
 
 ### Fixes
