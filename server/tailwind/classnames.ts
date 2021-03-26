@@ -415,6 +415,7 @@ export function parseResults(
 		 * @param variants input variant space
 		 * @param twinPattern is current pattern twin?
 		 */
+		// TODO: enhance performance: dset(tree, [prefix + "content"], TWIN_CONTENT) ?
 		getClassNames(variants: string[], twinPattern: boolean): Record<string, CSSRuleItem | CSSRuleItem[]> {
 			let dictionary: Record<string, CSSRuleItem | CSSRuleItem[]>
 			if (variants.length > 0) {

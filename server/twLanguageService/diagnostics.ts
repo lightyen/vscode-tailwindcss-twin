@@ -422,7 +422,6 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		}
 	}
 
-	// TODO: enhance performance
 	if (item.token.text) {
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
