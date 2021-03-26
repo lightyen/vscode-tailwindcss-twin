@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.8
+
+### Fixes
+
+- crash error happened when jsx tag is not closed and call `node.getChildren()`, ex: `<div tw="flex"`
+
 ## 0.7.7
 
 ### Fixes

@@ -1,7 +1,7 @@
 {
   "name": "client",
   "description": "Tailwind Twin Extension",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "author": "lightyen",
   "license": "MIT",
   "engines": {
