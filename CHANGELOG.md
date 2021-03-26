@@ -1,5 +1,7 @@
 # CHANGELOG.md
 
+## 0.8.0
+
 ### Changes
 
 conflict rules(turn to non-strict mode for the particular utilities)
@@ -11,7 +13,7 @@ remove twin boolean option(no plan to support `className` prop)
 
 ### Enhances
 
-diagnostic performance
+performance
 
 ## 0.7.8
 

@@ -267,7 +267,7 @@ function utiltiesCompletion(
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
-			if (suggestion.token.kind === tw.TokenKind.ClassName) {
+			if (suggestion.token.kind === tw.TokenKind.ClassName || suggestion.token.token.text === state.separator) {
 				doReplace(classNameItems, document, offset, a, b, item => item.label)
 			}
 		} else {
