@@ -28,7 +28,7 @@ export class TailwindLanguageService implements LanguageService {
 	}
 	get ready() {
 		if (!this.options.enabled) return false
-		return !!this.state.classnames
+		return !!this.state.twin
 	}
 	get hasConfig() {
 		return this.state.hasConfig

@@ -56,10 +56,10 @@ export function provideColorDecorations(
 			switch (c.kind) {
 				case tw.TokenKind.ClassName:
 					{
-						if (!state.classnames.isClassName(c.variants.texts, c.token.text)) {
+						if (!state.twin.isClassName(c.token.text)) {
 							continue
 						}
-						const color = state.classnames.getColorInfo(c.token.text)
+						const color = state.twin.colors.get(c.token.text)
 						if (color) {
 							colors.push({
 								range: {

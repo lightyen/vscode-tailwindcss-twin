@@ -1,8 +1,8 @@
 import path from "path"
 import type { Plugin, Postcss } from "postcss"
 import { requireModule, resolveModule } from "~/common/module"
-import { extractClassNames, __INNER_TAILWIND_SEPARATOR__ } from "./classnames"
 import { dlv } from "./common"
+import { Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
 
 export interface TailwindOptions {
 	workspaceFolder: string
@@ -136,19 +136,26 @@ export class Tailwind {
 		return result
 	}
 
-	classnames!: ReturnType<typeof extractClassNames>
+	twin!: Twin
 
 	async process() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const processer = this.postcss([this.tailwindcss(this.config!)])
 		const results = await Promise.all([
-			processer.process(`@tailwind base;`, { from: undefined }),
 			processer.process(`@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 		])
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.config = this.resolveConfig(this.config!)
-		this.classnames = extractClassNames(results, this.config.darkMode, this.config.prefix)
+		this.twin = new Twin(
+			{
+				separator: __INNER_TAILWIND_SEPARATOR__,
+				prefix: this.config.prefix,
+				darkMode: this.config.darkMode,
+			},
+			{ result: results[0], source: "components" },
+			{ result: results[1], source: "utilities" },
+		)
 	}
 
 	/**

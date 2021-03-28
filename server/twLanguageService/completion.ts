@@ -10,7 +10,7 @@ import { completeElement } from "~/common/findElement"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 import * as tw from "~/common/token"
 import type { Tailwind } from "~/tailwind"
-import type { CSSRuleItem } from "~/tailwind/classnames"
+import type { ClassNameItem } from "~/tailwind/twin"
 import type { ServiceOptions } from "~/twLanguageService"
 import { getCompletionsForDeclarationValue } from "./completionCssPropertyValue"
 import { cssDataManager } from "./cssData"
@@ -20,7 +20,7 @@ export interface InnerData {
 	kind: PatternKind
 	uri: string
 	variants?: string[]
-	data?: CSSRuleItem | CSSRuleItem[]
+	data?: ClassNameItem
 	entry?: IPropertyData
 }
 
@@ -134,11 +134,11 @@ function variantsCompletion(
 	}
 
 	if (variantEnabled) {
-		const variantFilter = state.classnames.getVariantFilter(userVariants)
-		variantItems = Object.entries(state.classnames.getVariants())
+		const variantFilter = state.twin.getSuggestedVariantFilter(userVariants)
+		variantItems = state.twin.variants
 			.filter(([label]) => variantFilter(label))
 			.map<lsp.CompletionItem>(([label, data]) => {
-				const bp = state.classnames.getBreakingPoint(label)
+				const bp = state.twin.getScreen(label)
 				if (bp) {
 					return {
 						label: label + state.separator,
@@ -162,7 +162,7 @@ function variantsCompletion(
 						},
 					}
 				} else {
-					const f = state.classnames.isDarkLightMode(label)
+					const f = state.twin.isDarkLightMode(label)
 					return {
 						label: label + state.separator,
 						sortText: f ? "*" + label : "~~~:" + label,
@@ -189,7 +189,7 @@ function variantsCompletion(
 
 	if (suggestion.token) {
 		if (suggestion.token.kind === tw.TokenKind.Variant) {
-			const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
+			const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
 			if (!isVariantWord || (position > a && position < b)) {
 				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
@@ -239,7 +239,7 @@ function utiltiesCompletion(
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
 			case tw.TokenKind.Variant: {
-				const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
+				const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
 				if (position === b && !isVariantWord) {
 					classNameEnabled = false
 				}
@@ -255,8 +255,8 @@ function utiltiesCompletion(
 	}
 
 	if (classNameEnabled) {
-		const classesFilter = state.classnames.getClassNameFilter(userVariants)
-		classNameItems = Object.entries(state.classnames.getClassNames())
+		const classesFilter = state.twin.getSuggestedClassNameFilter(userVariants)
+		classNameItems = state.twin.classnames
 			.filter(classesFilter)
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
 	}
@@ -298,7 +298,7 @@ function shortcssCompletion(
 	if (suggestion.token) {
 		switch (suggestion.token.kind) {
 			case tw.TokenKind.Variant: {
-				const isVariantWord = state.classnames.isVariant(value.slice(0, value.length - state.separator.length))
+				const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
 				if (position === b && !isVariantWord) {
 					cssPropEnabled = false
 				}
@@ -503,7 +503,7 @@ function createCompletionItem({
 	state,
 }: {
 	label: string
-	data: CSSRuleItem | CSSRuleItem[]
+	data: ClassNameItem
 	variants: string[]
 	kind: PatternKind
 	state: Tailwind
@@ -520,7 +520,7 @@ function createCompletionItem({
 		return item
 	}
 
-	const info = state.classnames.colors[label]
+	const info = state.twin.colors[label]
 	if (!info) {
 		return item
 	}
@@ -529,7 +529,7 @@ function createCompletionItem({
 		return item
 	}
 
-	if (data.length === 0 || data[0].__source === "components") {
+	if (data.length === 0 || data[0].source === "components") {
 		item.data.type = "components"
 		return item
 	}

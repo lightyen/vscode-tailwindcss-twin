@@ -2,7 +2,7 @@ import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
 import { PatternKind } from "~/common/ast"
 import { Tailwind } from "~/tailwind"
-import type { CSSRuleItem } from "~/tailwind/classnames"
+import type { ClassNameItem } from "~/tailwind/twin"
 import type { ServiceOptions } from "~/twLanguageService"
 import { getEntryDescription } from "./cssData"
 import { getDescription, getName, getReferenceLinks } from "./referenceLink"
@@ -54,28 +54,28 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		item.detail = getName(item.label.slice(state.config.prefix.length))
 	}
 
-	let data = item.data.data as CSSRuleItem | CSSRuleItem[]
+	let data = item.data.data as ClassNameItem
 	if (!data) {
 		return item
 	}
 
-	if (!(data instanceof Array)) {
-		if (data.__pseudo) {
-			item.documentation = {
-				kind: lsp.MarkupKind.Markdown,
-				value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
-			}
-		}
-		return item
-	}
+	// if (!(data instanceof Array)) {
+	// 	if (data.__pseudo) {
+	// 		item.documentation = {
+	// 			kind: lsp.MarkupKind.Markdown,
+	// 			value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
+	// 		}
+	// 	}
+	// 	return item
+	// }
 
 	if (variants.length > 0 && !item.label.endsWith(":")) {
-		const __variants = state.classnames.getVariants()
+		// const __variants = state.twin.variants
 		if (data instanceof Array) {
 			data = data.filter(d => {
-				for (const context of d.__context) {
-					for (const k in __variants) {
-						if (!__variants[k].includes(context)) {
+				for (const context of d.context) {
+					for (const [k, values] of state.twin.variants) {
+						if (!values.includes(context)) {
 							// not found, ignore
 							continue
 						}
@@ -109,7 +109,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			kind: lsp.MarkupKind.Markdown,
 			value: [
 				"```scss",
-				`.${item.label.replace(/\//g, "\\/")} {\n${Object.entries(result)
+				`.${item.label.replace(/\//g, "\\/")}${data[0].rest} {\n${Object.entries(result)
 					.map(([prop, value]) => `\t${prop}: ${value};`)
 					.join("\n")}\n}`,
 				"```",
@@ -131,13 +131,13 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	} else if (type === "components") {
 		const blocks: Map<string, string[]> = new Map()
 		data.map(rule => {
-			const selector = item.label + rule.__pseudo.join("")
+			const selector = item.label + rule.pseudo.join("")
 			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
 				values.map<[string, string]>(v => [prop, v]),
 			)
-			return { scope: rule.__scope ? rule.__scope + " " : "", selector, decls }
+			return { rest: rule.rest, selector, decls }
 		}).forEach(c => {
-			const selector = `${c.scope}.${c.selector.replace(/\//g, "\\/")}`
+			const selector = `.${c.selector.replace(/\//g, "\\/")}${c.rest}`
 			if (!blocks.has(selector)) {
 				blocks.set(selector, [])
 			}
@@ -176,15 +176,14 @@ function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: Se
 	}
 
 	const label_container = state.config.prefix + "container"
-	const rules = state.classnames.getClassNameRule(label_container)
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const rules = state.twin.classnamesMap.get(label_container)!
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {
-			const hasContext = r.__context.length > 0
-			lines.push(
-				hasContext ? `${r.__context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`,
-			)
+			const hasContext = r.context.length > 0
+			lines.push(hasContext ? `${r.context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`)
 			for (const key in r.decls) {
 				for (const value of r.decls[key]) {
 					lines.push(hasContext ? `\t\t${key}: ${value};` : `\t${key}: ${value};`)

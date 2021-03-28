@@ -74,7 +74,7 @@ export default function hover(
 
 			if (
 				selection.token.kind === tw.TokenKind.ClassName &&
-				!state.classnames.isClassName(selection.variants.texts, selection.token.token.text)
+				!state.twin.isClassName(selection.token.token.text)
 			) {
 				return undefined
 			}
@@ -138,11 +138,11 @@ function getHoverMarkdown({
 	const [, , value] = selection.token?.token ?? tw.createToken(0, 0, "")
 
 	const inputVariants = variants.map(([, , v]) => v)
-	const common = inputVariants.filter(v => state.classnames.isCommonVariant(v))
+	const common = inputVariants.filter(v => state.twin.isCommonVariant(v))
 	const notCommon = inputVariants.filter(v => !common.includes(v))
 
 	if (state.config.darkMode === "class") {
-		const f = notCommon.findIndex(v => state.classnames.isDarkLightMode(v))
+		const f = notCommon.findIndex(v => state.twin.isDarkLightMode(v))
 		if (f !== -1) {
 			common.push(...notCommon.splice(f, 1))
 		}
@@ -152,8 +152,8 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	if (selection.token?.kind === tw.TokenKind.Variant && state.classnames.isVariant(value)) {
-		const data = state.classnames.getVariants()[value]
+	if (selection.token?.kind === tw.TokenKind.Variant && state.twin.isVariant(value)) {
+		const data = state.twin.variantsMap.get(value)
 		if (data) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -176,32 +176,32 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	const data = state.classnames.getClassNameRule(value)
+	const data = state.twin.classnamesMap.get(value)
 	if (!data) {
 		return undefined
 	}
 
-	if (!(data instanceof Array)) {
-		if (data.__pseudo) {
-			return {
-				kind: lsp.MarkupKind.Markdown,
-				value: ["```scss", data.__pseudo.map(v => `.${value}${v}`).join("\n"), "```"].join("\n"),
-			}
-		}
+	// if (!(data instanceof Array)) {
+	// 	if (data.__pseudo) {
+	// 		return {
+	// 			kind: lsp.MarkupKind.Markdown,
+	// 			value: ["```scss", data.__pseudo.map(v => `.${value}${v}`).join("\n"), "```"].join("\n"),
+	// 		}
+	// 	}
 
-		return undefined
-	}
+	// 	return undefined
+	// }
 
-	const __variants = state.classnames.getVariants()
-	const variantValues = common.flatMap(c => __variants[c])
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const variantValues = common.flatMap(key => state.twin.variantsMap.get(key)!)
 
 	const filterContext: boolean[] = []
 	const meta = produce(data, draft => {
 		for (let i = 0; i < draft.length; i++) {
 			const d = draft[i]
 			if (
-				!d.__context.every(context => {
-					const e = Object.entries(__variants).find(([, values], index) => {
+				!d.context.every(context => {
+					const e = state.twin.variants.find(([, values], index) => {
 						return values.includes(context)
 					})
 					if (!e) {
@@ -217,27 +217,27 @@ function getHoverMarkdown({
 				filterContext.push(false)
 				continue
 			}
-			if (d.__source === "components") {
+			if (d.source === "components") {
 				filterContext.push(true)
 				continue
 			}
-			if (d.__scope) {
-				const scopes = d.__scope.split(" ")
-				filterContext.push(
-					scopes.every(s => {
-						return variantValues.includes(s)
-					}),
-				)
-				continue
-			}
-			if (common.every(c => state.classnames.isVariant(c))) {
-				if (d.__pseudo.length === 0) {
-					d.__pseudo = variantValues // inject pseudoes
+			// if (d.__scope) {
+			// 	const scopes = d.__scope.split(" ")
+			// 	filterContext.push(
+			// 		scopes.every(s => {
+			// 			return variantValues.includes(s)
+			// 		}),
+			// 	)
+			// 	continue
+			// }
+			if (common.every(c => state.twin.isVariant(c))) {
+				if (d.pseudo.length === 0) {
+					d.pseudo = variantValues // inject pseudoes
 				}
 				filterContext.push(true)
 				continue
 			}
-			filterContext.push(variantValues.every(c => d.__pseudo.some(p => p === c)))
+			filterContext.push(variantValues.every(c => d.pseudo.some(p => p === c)))
 			continue
 		}
 	})
@@ -246,16 +246,16 @@ function getHoverMarkdown({
 	meta.filter((_, i) => filterContext[i])
 		.map(rule => {
 			let selector = value
-			if (rule.__source === "components") {
-				selector = value + rule.__pseudo.join("")
+			if (rule.source === "components") {
+				selector = value + rule.pseudo.join("")
 			}
 			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
 				values.map<[string, string]>(v => [prop, v]),
 			)
-			return { scope: rule.__scope ? rule.__scope + " " : "", selector, decls }
+			return { rest: rule.rest, selector, decls }
 		})
 		.map(c => {
-			const selector = `${c.scope}.${c.selector.replace(/\//g, "\\/")}`
+			const selector = `.${c.selector.replace(/\//g, "\\/")}${c.rest}`
 			if (!blocks.has(selector)) {
 				blocks.set(selector, [])
 			}
@@ -343,15 +343,13 @@ function resolveContainer({
 	}
 
 	const label_container = state.config.prefix + "container"
-	const rules = state.classnames.getClassNameRule(label_container)
+	const rules = state.twin.classnamesMap.get(label_container)
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")
 		for (const r of rules) {
-			const hasContext = r.__context.length > 0
-			lines.push(
-				hasContext ? `${r.__context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`,
-			)
+			const hasContext = r.context.length > 0
+			lines.push(hasContext ? `${r.context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`)
 			for (const key in r.decls) {
 				for (const value of r.decls[key]) {
 					lines.push(

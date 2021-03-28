@@ -161,7 +161,7 @@ function validateTwin({
 				}
 
 				const label = item.token.text
-				const data = state.classnames.getClassNameRule(label)
+				const data = state.twin.classnamesMap.get(label)
 				if (!(data instanceof Array)) {
 					continue
 				}
@@ -197,7 +197,7 @@ function validateTwin({
 					for (const d of data) {
 						const twinKeys = variants.sort()
 						for (const property of Object.keys(d.decls)) {
-							const key = [...d.__context, d.__scope, ...d.__pseudo, ...twinKeys, property].join(".")
+							const key = [...d.context, d.rest, ...d.pseudo, ...twinKeys, property].join(".")
 							const target = map[key]
 							if (target instanceof Array) {
 								target.push(item.token)
@@ -205,7 +205,7 @@ function validateTwin({
 								map[key] = tw.createTokenList([item.token])
 							}
 						}
-						if (d.__source === "components") {
+						if (d.source === "components") {
 							break
 						}
 					}
@@ -251,9 +251,9 @@ function validateTwin({
 
 	for (let i = 0; i < emptyList.length; i++) {
 		const item = emptyList[i]
-		const searcher = state.classnames.getSearcher()
+		const searcher = state.twin.searchers
 		for (const [a, b, variant] of item.variants) {
-			if (!state.classnames.isVariant(variant)) {
+			if (!state.twin.isVariant(variant)) {
 				const ans = searcher.variants.search(variant)
 				if (ans?.length > 0) {
 					result.push({
@@ -319,10 +319,10 @@ function validateTwin({
 function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
-		if (state.classnames.isVariant(variant)) {
+		if (state.twin.isVariant(variant)) {
 			continue
 		}
-		const ret = state.classnames.getSearcher().variants.search(variant)
+		const ret = state.twin.searchers.variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -384,10 +384,10 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
-		if (state.classnames.isVariant(variant)) {
+		if (state.twin.isVariant(variant)) {
 			continue
 		}
-		const ret = state.classnames.getSearcher().variants.search(variant)
+		const ret = state.twin.searchers.variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -416,7 +416,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 	if (item.token.text) {
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
-		if (!state.classnames.isClassName(variants, text)) {
+		if (!state.twin.isClassName(text)) {
 			const ret = guess(state, variants, text)
 			if (ret.score === 0) {
 				switch (ret.kind) {
@@ -482,8 +482,8 @@ function guess(
 	variants: string[],
 	text: string,
 ): { kind: PredictionKind; value: string; score: number } {
-	const a = state.classnames.getSearcher().classnames.search(text)
-	const b = state.classnames.getSearcher().variants.search(text)
+	const a = state.twin.searchers.classnames.search(text)
+	const b = state.twin.searchers.variants.search(text)
 	const c = csspropSearcher.search(text)
 	let kind = PredictionKind.Unknown
 	let value = ""

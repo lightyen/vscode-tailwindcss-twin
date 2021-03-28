@@ -42,9 +42,9 @@ export default function provideSemanticTokens(
 			continue
 		}
 
-		const isValidClass = (variants: string[], value: string) => state.classnames.isClassName(variants, value)
+		const isValidClass = (variants: string[], value: string) => state.twin.isClassName(value)
 
-		const isValidVariant = (variant: string) => state.classnames.isVariant(variant)
+		const isValidVariant = (variant: string) => state.twin.isVariant(variant)
 
 		const canRender = (node: Node) => {
 			if (kind === PatternKind.TwinCssProperty) {
@@ -52,7 +52,7 @@ export default function provideSemanticTokens(
 			}
 			if (!options.colorDecorators) return true
 			if (node.kind === NodeKind.ClassName) {
-				const color = state.classnames.getColorInfo(node.token.text)
+				const color = state.twin.colors.get(node.token.text)
 				if (!color || Object.keys(color).length === 0) {
 					return true
 				}
