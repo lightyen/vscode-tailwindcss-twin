@@ -206,9 +206,7 @@ export class Twin {
 
 		for (let i = 0; i < nodes.length; i++) {
 			const selector = nodes[i]
-			let prev = ""
 			let temp: ClassNameMetaItem | undefined
-			let combinator = false
 
 			for (let j = 0; j < selector.nodes.length; j++) {
 				const node = selector.nodes[j]
@@ -220,12 +218,6 @@ export class Twin {
 						}
 						temp = newItem()
 
-						if (combinator) {
-							temp.context.push(prev)
-							prev = ""
-							combinator = false
-						}
-
 						const fields = node.value.split(separator)
 						if (fields.length === 1) {
 							temp.name = fields[0]
@@ -234,7 +226,6 @@ export class Twin {
 							temp.name = fields[fields.length - 1]
 						}
 
-						prev += node.toString()
 						break
 					}
 					case "pseudo":
@@ -245,7 +236,6 @@ export class Twin {
 								temp.rest += node.toString()
 							}
 						}
-						prev += node.toString()
 						break
 					default:
 						if (temp) {
@@ -269,8 +259,6 @@ export class Twin {
 				decls[decl.prop] = [decl.value]
 			}
 		})
-
-		// if (!selectors.some(s => s.name === "container")) return undefined
 
 		return {
 			classname,
