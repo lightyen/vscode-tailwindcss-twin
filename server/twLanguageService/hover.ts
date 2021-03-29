@@ -249,7 +249,7 @@ function getHoverMarkdown({
 		value: [
 			"```scss",
 			...Array.from(blocks).map(([selector, contents]) => {
-				return `${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}`
+				return `${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}\n`
 			}),
 			"```",
 		].join("\n"),
