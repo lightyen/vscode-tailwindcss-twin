@@ -1,5 +1,3 @@
-// dash word issue: https://github.com/microsoft/language-server-protocol/issues/937
-
 import chroma from "chroma-js"
 import { serializeError } from "serialize-error"
 import type { IPropertyData } from "vscode-css-languageservice"
@@ -138,8 +136,8 @@ function variantsCompletion(
 		variantItems = state.twin.variants
 			.filter(([label]) => variantFilter(label))
 			.map<lsp.CompletionItem>(([label, data]) => {
-				const bp = state.twin.getScreen(label)
-				if (bp) {
+				const bp = state.twin.screens.get(label)
+				if (bp != undefined) {
 					return {
 						label: label + state.separator,
 						sortText: bp.toString().padStart(5, " "),
@@ -520,17 +518,13 @@ function createCompletionItem({
 		return item
 	}
 
-	const info = state.twin.colors[label]
-	if (!info) {
-		return item
-	}
-
-	if (!(data instanceof Array)) {
-		return item
-	}
-
-	if (data.length === 0 || data[0].source === "components") {
+	if (data.some(d => d.source === "components")) {
 		item.data.type = "components"
+		return item
+	}
+
+	const info = state.twin.colors.get(label)
+	if (!info) {
 		return item
 	}
 
@@ -548,6 +542,7 @@ function createCompletionItem({
 
 	item.documentation = info.backgroundColor || info.borderColor || info.color
 	item.data.type = "color"
+
 	return item
 }
 

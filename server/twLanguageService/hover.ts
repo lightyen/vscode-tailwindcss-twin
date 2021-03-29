@@ -153,7 +153,7 @@ function getHoverMarkdown({
 	}
 
 	if (selection.token?.kind === tw.TokenKind.Variant && state.twin.isVariant(value)) {
-		const data = state.twin.variantsMap.get(value)
+		const data = state.twin.variants.get(value)
 		if (data) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -176,24 +176,13 @@ function getHoverMarkdown({
 		return undefined
 	}
 
-	const data = state.twin.classnamesMap.get(value)
+	const data = state.twin.classnames.get(value)
 	if (!data) {
 		return undefined
 	}
 
-	// if (!(data instanceof Array)) {
-	// 	if (data.__pseudo) {
-	// 		return {
-	// 			kind: lsp.MarkupKind.Markdown,
-	// 			value: ["```scss", data.__pseudo.map(v => `.${value}${v}`).join("\n"), "```"].join("\n"),
-	// 		}
-	// 	}
-
-	// 	return undefined
-	// }
-
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const variantValues = common.flatMap(key => state.twin.variantsMap.get(key)!)
+	const variantValues = common.flatMap(key => state.twin.variants.get(key)!)
 
 	const filterContext: boolean[] = []
 	const meta = produce(data, draft => {
@@ -221,15 +210,6 @@ function getHoverMarkdown({
 				filterContext.push(true)
 				continue
 			}
-			// if (d.__scope) {
-			// 	const scopes = d.__scope.split(" ")
-			// 	filterContext.push(
-			// 		scopes.every(s => {
-			// 			return variantValues.includes(s)
-			// 		}),
-			// 	)
-			// 	continue
-			// }
 			if (common.every(c => state.twin.isVariant(c))) {
 				if (d.pseudo.length === 0) {
 					d.pseudo = variantValues // inject pseudoes
@@ -343,7 +323,7 @@ function resolveContainer({
 	}
 
 	const label_container = state.config.prefix + "container"
-	const rules = state.twin.classnamesMap.get(label_container)
+	const rules = state.twin.classnames.get(label_container)
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")

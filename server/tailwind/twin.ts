@@ -93,8 +93,9 @@ interface RuleItem extends ClassNameMetaItem {
 }
 
 export type ClassNameItem = RuleItem[]
-
-export type ColorInfo = {
+export type VariantItem = string[]
+export type ScreenItem = number
+export type ColorItem = {
 	color?: string
 	backgroundColor?: string
 	borderColor?: string
@@ -115,6 +116,22 @@ interface Options {
 }
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
+
+interface IVariants extends Array<[string, VariantItem]> {
+	get(key: string): VariantItem | undefined
+}
+
+interface IClassNames extends Array<[string, ClassNameItem]> {
+	get(key: string): ClassNameItem | undefined
+}
+
+interface IScreens extends Array<[string, ScreenItem]> {
+	get(key: string): ScreenItem | undefined
+}
+
+interface IColors extends Array<[string, ColorItem]> {
+	get(key: string): ColorItem | undefined
+}
 
 export class Twin {
 	static selectorProcessor = parser()
@@ -153,10 +170,37 @@ export class Twin {
 		])
 
 		// collection
-		this.variants = Array.from(this.variantsMap)
-		this.classnames = Array.from(this.classnamesMap)
+		const vm = this.variantsMap
+		this.variants = new Proxy(Array.from(vm), {
+			get: function (target, prop) {
+				switch (prop) {
+					case "get":
+						return function (key: string) {
+							return vm.get(key)
+						}
+					default:
+						return target[prop]
+				}
+			},
+		}) as IVariants
+
+		const cm = this.classnamesMap
+		this.classnames = new Proxy(Array.from(cm), {
+			get: function (target, prop) {
+				switch (prop) {
+					case "get":
+						return function (key: string) {
+							return cm.get(key)
+						}
+					default:
+						return target[prop]
+				}
+			},
+		}) as IClassNames
+
 		this.screens = collectScreens(this.variants)
 		this.colors = collectColors(this.classnames)
+
 		this.searchers = {
 			variants: new Fuse(
 				this.variants.map(v => v[0]),
@@ -254,7 +298,7 @@ export class Twin {
 		rule.walkDecls(decl => {
 			const cur = decls[decl.prop]
 			if (cur instanceof Array) {
-				decls[decl.prop] = [...cur, decl.value]
+				cur.push(decl.value)
 			} else {
 				decls[decl.prop] = [decl.value]
 			}
@@ -266,12 +310,12 @@ export class Twin {
 		}
 	}
 
-	readonly variantsMap: Map<string, string[]> = new Map()
-	readonly classnamesMap: Map<string, ClassNameItem> = new Map()
-	readonly variants: Array<[string, string[]]> = []
-	readonly classnames: Array<[string, ClassNameItem]> = []
-	readonly colors: ReturnType<typeof collectColors> = new Map()
-	readonly screens: ReturnType<typeof collectScreens> = new Map()
+	private readonly variantsMap: Map<string, string[]> = new Map()
+	private readonly classnamesMap: Map<string, ClassNameItem> = new Map()
+	readonly variants: IVariants
+	readonly classnames: IClassNames
+	readonly colors: IColors
+	readonly screens: IScreens
 	readonly searchers!: { variants: Fuse<string>; classnames: Fuse<string> }
 
 	private addVariant(item: ClassNameMetaItem) {
@@ -313,12 +357,8 @@ export class Twin {
 		return key === "dark" || key === "light"
 	}
 
-	getScreen(key: string) {
-		return this.screens.get(key)
-	}
-
 	isResponsive(key: string) {
-		return !!this.getScreen(key)
+		return this.screens.get(key) != undefined
 	}
 
 	isVariant(key: string) {
@@ -330,7 +370,7 @@ export class Twin {
 	}
 
 	hasScreen(keys: string[]) {
-		return keys.some(v => this.isResponsive(v))
+		return keys.some(v => this.screens.get(v) != undefined)
 	}
 
 	isMotionControl(key: string) {
@@ -385,7 +425,7 @@ export class Twin {
 	}
 }
 
-function collectScreens(variants: Array<[string, string[]]>) {
+function collectScreens(variants: Array<[string, string[]]>): IScreens {
 	const result: Map<string, number> = new Map()
 	variants.forEach(([label, values]) => {
 		for (const val of values) {
@@ -397,11 +437,23 @@ function collectScreens(variants: Array<[string, string[]]>) {
 			}
 		}
 	})
-	return result
+
+	return new Proxy(Array.from(result), {
+		get: function (target, prop) {
+			switch (prop) {
+				case "get":
+					return function (key: string) {
+						return result.get(key)
+					}
+				default:
+					return target[prop]
+			}
+		},
+	}) as IScreens
 }
 
-function collectColors(utilities: Array<[string, ClassNameItem]>) {
-	const colors: Map<string, ColorInfo> = new Map()
+function collectColors(utilities: Array<[string, ClassNameItem]>): IColors {
+	const colors: Map<string, ColorItem> = new Map()
 	utilities.forEach(([label, info]) => {
 		type D = [property: string, value: string]
 		const decls: D[] = info.flatMap(v =>
@@ -485,5 +537,17 @@ function collectColors(utilities: Array<[string, ClassNameItem]>) {
 			}
 		}
 	})
-	return colors
+
+	return new Proxy(Array.from(colors), {
+		get: function (target, prop) {
+			switch (prop) {
+				case "get":
+					return function (key: string) {
+						return colors.get(key)
+					}
+				default:
+					return target[prop]
+			}
+		},
+	}) as IColors
 }

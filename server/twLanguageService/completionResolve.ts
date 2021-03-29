@@ -55,19 +55,9 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	let data = item.data.data as ClassNameItem
-	if (!data) {
+	if (!(data instanceof Array)) {
 		return item
 	}
-
-	// if (!(data instanceof Array)) {
-	// 	if (data.__pseudo) {
-	// 		item.documentation = {
-	// 			kind: lsp.MarkupKind.Markdown,
-	// 			value: ["```scss", data.__pseudo.map(v => `.${item.label}${v}`).join("\n"), "```"].join("\n"),
-	// 		}
-	// 	}
-	// 	return item
-	// }
 
 	if (variants.length > 0 && !item.label.endsWith(":")) {
 		// const __variants = state.twin.variants
@@ -177,7 +167,7 @@ function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: Se
 
 	const label_container = state.config.prefix + "container"
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const rules = state.twin.classnamesMap.get(label_container)!
+	const rules = state.twin.classnames.get(label_container)!
 	const lines: string[] = []
 	if (rules instanceof Array) {
 		lines.push("\n```scss")

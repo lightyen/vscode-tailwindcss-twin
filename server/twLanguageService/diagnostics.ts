@@ -161,7 +161,7 @@ function validateTwin({
 				}
 
 				const label = item.token.text
-				const data = state.twin.classnamesMap.get(label)
+				const data = state.twin.classnames.get(label)
 				if (!(data instanceof Array)) {
 					continue
 				}

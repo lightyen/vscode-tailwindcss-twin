@@ -29,7 +29,3 @@ export function dset(cur: any, paths: Array<string | number>, value: unknown) {
 	const last = paths[paths.length - 1]
 	cur[last] = value
 }
-
-export function intersection<T = unknown>(arr1: T[], arr2: T[]) {
-	return arr1.filter(value => arr2.indexOf(value) !== -1)
-}
