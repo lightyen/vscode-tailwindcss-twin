@@ -175,6 +175,7 @@ function variantsCompletion(
 			})
 	}
 
+	// FIXME: not working in some case
 	if (preferVariantWithParentheses) {
 		if (nextCharacter !== "(" && !(suggestion.token?.kind === tw.TokenKind.Variant && position === a)) {
 			for (let i = 0; i < variantItems.length; i++) {

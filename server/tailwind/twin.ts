@@ -5,6 +5,8 @@ import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
 
 const twinVariants: Array<[string, string[]]> = [
+	["dark", ["@media (prefers-color-scheme: dark)"]],
+	["light", ["@media (prefers-color-scheme: light)"]],
 	["active", [":active"]],
 	["after", ["::after"]],
 	["all", ["*"]],
@@ -154,10 +156,10 @@ export class Twin {
 			const [key, value] = twinVariants[i]
 			this.variantsMap.set(key, value)
 		}
-		if (this.darkMode === "media") {
-			this.variantsMap.set("light", ["@media (prefers-color-scheme: light)"])
-		} else if (this.darkMode === "class") {
-			this.variantsMap.set("light", [".light"])
+		if (this.darkMode === "class") {
+			this.classnamesMap.delete(this.prefix + "dark")
+			this.variantsMap.set("dark", ["." + "dark"])
+			this.variantsMap.set("light", ["." + "light"])
 		}
 		this.classnamesMap.delete(this.prefix + "group")
 		this.classnamesMap.set(this.prefix + "content", [
