@@ -1,5 +1,6 @@
 import path from "path"
 import type { Plugin, Postcss } from "postcss"
+import type { TailwindConfig } from "tailwindcss/tailwind-config"
 import { dlv } from "~/common/get_set"
 import { requireModule, resolveModule } from "~/common/module"
 import { Options, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
@@ -10,26 +11,22 @@ export interface TailwindOptions {
 	fallbackDefaultConfig: boolean
 }
 
-type PurgeOption =
+type DeepMutable<T> = {
+	-readonly [P in keyof T]: DeepMutable<T[P]>
+}
+
+type Purge =
 	| {
 			enabled: boolean
 			content: string[]
 	  }
 	| string[]
 
-interface TailwindConfigJS {
-	purge: PurgeOption
-	darkMode: false | "media" | "class"
-	theme: Record<string, unknown>
-	plugins: unknown[]
-	separator: string
-	prefix: string
-	important: boolean | undefined
-	variants: {
-		extend: Record<string, string[]>
-	}
+type DarkMode = false | "media" | "class"
 
-	// ...
+type TailwindConfigJS = Omit<DeepMutable<TailwindConfig>, "purge" | "darkMode"> & {
+	darkMode: DarkMode
+	purge: Purge
 }
 
 export class Tailwind {
@@ -63,19 +60,13 @@ export class Tailwind {
 			this.config = this.defaultConfig
 			this.distConfigPath = this.defaultConfigPath
 		}
-		this.separator = this.config.separator || ":"
-		this.config.separator = __INNER_TAILWIND_SEPARATOR__
 
-		// change config for twin
+		this.config.separator = this.config.separator ?? ":"
+		if (this.config.separator != ":") {
+			console.info("Option: `separator` forced to be set ':'.")
+		}
+		this.config.separator = __INNER_TAILWIND_SEPARATOR__
 		this.separator = ":"
-		this.config.purge = { enabled: false, content: [] }
-		if (!this.config.darkMode) {
-			this.config.darkMode = "media"
-		}
-		if (typeof this.config.prefix !== "string") {
-			this.config.prefix = ""
-		}
-		this.config.important = undefined
 	}
 
 	async reload(params?: Partial<TailwindOptions>) {
@@ -147,6 +138,31 @@ export class Tailwind {
 		])
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.config = this.resolveConfig(this.config!)
+
+		if (this.config.purge instanceof Array) {
+			if (this.config.purge.length > 0) {
+				console.info("Option: `purge` is ignored.")
+			}
+		} else if (this.config?.purge?.content != null || this.config?.purge?.enabled) {
+			console.info("Option: `purge` is ignored.")
+		}
+		this.config.purge = { enabled: false, content: [] }
+		if (this.config?.darkMode != "media" && this.config?.darkMode != "class") {
+			console.info("Option: `darkMode` is not found, it will force to be set 'media'.")
+			this.config.darkMode = "media"
+		}
+
+		this.config.prefix = this.config.prefix ?? ""
+		if (typeof this.config.prefix !== "string") {
+			console.info("Option: `prefix` forced to be set empty string.")
+			this.config.prefix = ""
+		}
+
+		if (this.config.important) {
+			console.info("Option: `important` forced to be set false.")
+			this.config.important = false
+		}
+
 		this.twin = new Twin(
 			this.config as Options,
 			{ result: results[0], source: "components" },
