@@ -87,7 +87,15 @@
         "2": {
           "name": "support.function.important-bang.short-css.twin"
         }
-      }
+      },
+      "patterns": [
+        {
+          "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
+        }
+      ]
     },
     "variant-group-expression": {
       "begin": "(\\()",

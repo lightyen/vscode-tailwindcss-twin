@@ -192,7 +192,15 @@
         "2": {
           "name": "support.function.important-bang.short-css.twin"
         }
-      }
+      },
+      "patterns": [
+        {
+          "include": "#line-comment-end-double-quote"
+        },
+        {
+          "include": "#block-comment-end-double-quote"
+        }
+      ]
     },
     "variant-group-expression": {
       "begin": "(\\()",
