@@ -56,7 +56,11 @@ export function provideColorDecorations(
 			switch (c.kind) {
 				case tw.TokenKind.ClassName:
 					{
-						if (!state.twin.isClassName(c.token.text)) {
+						const classname = state.twin.classnames.get(c.token.text)
+						if (!classname) {
+							continue
+						}
+						if (classname.some(c => c.source === "components")) {
 							continue
 						}
 						const color = state.twin.colors.get(c.token.text)
