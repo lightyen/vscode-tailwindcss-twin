@@ -119,20 +119,17 @@ export interface Options {
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
-interface IVariants extends Array<[string, VariantItem]> {
-	get(key: string): VariantItem | undefined
+type _KeyValuePair<T = unknown> = [string, T]
+
+interface KeyValuePair<T> extends _KeyValuePair<T> {
+	key: string
+	value: T
 }
 
-interface IClassNames extends Array<[string, ClassNameItem]> {
-	get(key: string): ClassNameItem | undefined
-}
-
-interface IScreens extends Array<[string, ScreenItem]> {
-	get(key: string): ScreenItem | undefined
-}
-
-interface IColors extends Array<[string, ColorItem]> {
-	get(key: string): ColorItem | undefined
+interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
+	[Symbol.iterator](): IterableIterator<KeyValuePair<T>>
+	keys(): IterableIterator<string>
+	get(key: string): T | undefined
 }
 
 export class Twin {
@@ -175,33 +172,8 @@ export class Twin {
 		])
 
 		// collection
-		const vm = this.variantsMap
-		this.variants = new Proxy(Array.from(vm), {
-			get: function (target, prop) {
-				switch (prop) {
-					case "get":
-						return function (key: string) {
-							return vm.get(key)
-						}
-					default:
-						return target[prop]
-				}
-			},
-		}) as IVariants
-
-		const cm = this.classnamesMap
-		this.classnames = new Proxy(Array.from(cm), {
-			get: function (target, prop) {
-				switch (prop) {
-					case "get":
-						return function (key: string) {
-							return cm.get(key)
-						}
-					default:
-						return target[prop]
-				}
-			},
-		}) as IClassNames
+		this.variants = createMap(this.variantsMap)
+		this.classnames = createMap(this.classnamesMap)
 
 		this.screens = collectScreens(this.variants)
 		this.colors = collectColors(this.classnames)
@@ -317,10 +289,10 @@ export class Twin {
 
 	private readonly variantsMap: Map<string, string[]> = new Map()
 	private readonly classnamesMap: Map<string, ClassNameItem> = new Map()
-	readonly variants: IVariants
-	readonly classnames: IClassNames
-	readonly colors: IColors
-	readonly screens: IScreens
+	readonly variants: IMap<VariantItem>
+	readonly classnames: IMap<ClassNameItem>
+	readonly colors: IMap<ColorItem>
+	readonly screens: IMap<ScreenItem>
 	readonly searchers!: { variants: Fuse<string>; classnames: Fuse<string> }
 
 	private addVariant(item: ClassNameMetaItem) {
@@ -396,11 +368,18 @@ export class Twin {
 		return this.classnamesMap.has(key)
 	}
 
-	getSuggestedClassNameFilter(variants: string[]): (v: [string, ClassNameItem]) => boolean {
-		return ([key]) => {
+	isSuggestedClassName(variants: string[], key: string) {
+		if (this.getSuggestedClassNameFilter(variants)(key)) {
+			return this.isClassName(key)
+		}
+		return false
+	}
+
+	getSuggestedClassNameFilter(variants: string[]): (key: string) => boolean {
+		return key => {
 			switch (key) {
 				case this.prefix + "container":
-					return variants?.length === 0
+					return variants.length === 0
 			}
 			return true
 		}
@@ -430,34 +409,57 @@ export class Twin {
 	}
 }
 
-function collectScreens(variants: Array<[string, string[]]>): IScreens {
-	const result: Map<string, number> = new Map()
-	variants.forEach(([label, values]) => {
-		for (const val of values) {
-			const match = val.match(/@media\s+\(.*width:\s*(\d+)px/)
-			if (match != null) {
-				const [, px] = match
-				result.set(label, Number(px))
-				break
-			}
-		}
-	})
-
-	return new Proxy(Array.from(result), {
+function createKeyValuePair<T>(record: [string, T]) {
+	return new Proxy(record, {
 		get: function (target, prop) {
 			switch (prop) {
+				case "key":
+					return record[0]
+				case "value":
+					return record[1]
+				default:
+					return target[prop]
+			}
+		},
+	}) as KeyValuePair<T>
+}
+
+function createMap<T>(map: Map<string, T>) {
+	return (new Proxy(Array.from(map).map(createKeyValuePair), {
+		get: function (target, prop) {
+			switch (prop) {
+				case "keys":
+					return function () {
+						return map.keys()
+					}
 				case "get":
 					return function (key: string) {
-						return result.get(key)
+						return map.get(key)
 					}
 				default:
 					return target[prop]
 			}
 		},
-	}) as IScreens
+	}) as unknown) as IMap<T>
 }
 
-function collectColors(utilities: Array<[string, ClassNameItem]>): IColors {
+function collectScreens(variants: IMap<VariantItem>) {
+	const result: Map<string, number> = new Map()
+	variants.forEach(({ key, value }) => {
+		for (const val of value) {
+			const match = val.match(/@media\s+\(.*width:\s*(\d+)px/)
+			if (match != null) {
+				const [, px] = match
+				result.set(key, Number(px))
+				break
+			}
+		}
+	})
+
+	return createMap(result)
+}
+
+function collectColors(utilities: IMap<ClassNameItem>) {
 	const colors: Map<string, ColorItem> = new Map()
 	utilities.forEach(([label, info]) => {
 		type D = [property: string, value: string]
@@ -543,16 +545,5 @@ function collectColors(utilities: Array<[string, ClassNameItem]>): IColors {
 		}
 	})
 
-	return new Proxy(Array.from(colors), {
-		get: function (target, prop) {
-			switch (prop) {
-				case "get":
-					return function (key: string) {
-						return colors.get(key)
-					}
-				default:
-					return target[prop]
-			}
-		},
-	}) as IColors
+	return createMap(colors)
 }

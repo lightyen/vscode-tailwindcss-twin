@@ -416,7 +416,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 	if (item.token.text) {
 		const variants = item.variants.texts
 		const { start, end, text } = item.token
-		if (!state.twin.isClassName(text)) {
+		if (!state.twin.isSuggestedClassName(variants, text)) {
 			const ret = guess(state, variants, text)
 			if (ret.score === 0) {
 				switch (ret.kind) {

@@ -258,7 +258,7 @@ function utiltiesCompletion(
 	if (classNameEnabled) {
 		const classesFilter = state.twin.getSuggestedClassNameFilter(userVariants)
 		classNameItems = state.twin.classnames
-			.filter(classesFilter)
+			.filter(item => classesFilter(item.key))
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
 	}
 

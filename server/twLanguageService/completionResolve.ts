@@ -60,7 +60,6 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	if (variants.length > 0 && !item.label.endsWith(":")) {
-		// const __variants = state.twin.variants
 		if (data instanceof Array) {
 			data = data.filter(d => {
 				for (const context of d.context) {

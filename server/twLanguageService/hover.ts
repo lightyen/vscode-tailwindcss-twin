@@ -74,7 +74,7 @@ export default function hover(
 
 			if (
 				selection.token.kind === tw.TokenKind.ClassName &&
-				!state.twin.isClassName(selection.token.token.text)
+				!state.twin.isSuggestedClassName(selection.variants.texts, selection.token.token.text)
 			) {
 				return undefined
 			}
