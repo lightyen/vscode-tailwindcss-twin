@@ -175,13 +175,15 @@ function variantsCompletion(
 			})
 	}
 
-	// FIXME: not working in some case
+	const next = input.slice(b, b + 1)
+	const nextNotSpace = next != "" && suggestion.token != undefined && next.match(/[\s)]/) == null
+
 	if (preferVariantWithParentheses) {
-		if (nextCharacter !== "(" && !(suggestion.token?.kind === tw.TokenKind.Variant && position === a)) {
+		if (nextCharacter !== "(") {
 			for (let i = 0; i < variantItems.length; i++) {
 				const item = variantItems[i]
 				item.insertTextFormat = lsp.InsertTextFormat.Snippet
-				item.insertText = item.label + "($0)"
+				item.insertText = item.label + "($0)" + (nextNotSpace ? " " : "")
 			}
 		}
 	}
@@ -197,7 +199,7 @@ function variantsCompletion(
 			suggestion.token.kind === tw.TokenKind.CssProperty
 		) {
 			if (position > a) {
-				doReplace(variantItems, document, offset, a, b, item => item.label)
+				doReplace(variantItems, document, offset, a, b, item => item.insertText || item.label)
 			}
 		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
 			if (position === a) {
@@ -260,14 +262,19 @@ function utiltiesCompletion(
 			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
 	}
 
+	const next = input.slice(b, b + 1)
+	const nextNotSpace = next !== "" && next.match(/[\s)]/) == null
+
 	if (suggestion.token) {
 		if (position > a && position < b) {
-			doReplace(classNameItems, document, offset, a, b, item => item.label)
+			doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
 			if (suggestion.token.kind === tw.TokenKind.ClassName || suggestion.token.token.text === state.separator) {
-				doReplace(classNameItems, document, offset, a, b, item => item.label)
+				doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
+			} else if (suggestion.token.kind === tw.TokenKind.Variant) {
+				doInsert(classNameItems, document, offset, b, item => item.label + (nextNotSpace ? " " : ""))
 			}
 		} else {
 			classNameItems.length = 0
