@@ -140,7 +140,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			value: [
 				"```scss",
 				...Array.from(blocks).map(([selector, contents]) => {
-					return `${selector} {\n${contents.map(c => `  ${c}`).join("\n")}\n}`
+					return `${selector} {\n${contents.map(content => "  " + content).join("\n")}\n}\n`
 				}),
 				"```",
 			].join("\n"),

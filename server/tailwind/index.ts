@@ -2,7 +2,7 @@ import path from "path"
 import type { Plugin, Postcss } from "postcss"
 import { dlv } from "~/common/get_set"
 import { requireModule, resolveModule } from "~/common/module"
-import { Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
+import { Options, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
 
 export interface TailwindOptions {
 	workspaceFolder: string
@@ -147,18 +147,11 @@ export class Tailwind {
 		])
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.config = this.resolveConfig(this.config!)
-		const hrstart = process.hrtime()
 		this.twin = new Twin(
-			{
-				separator: __INNER_TAILWIND_SEPARATOR__,
-				prefix: this.config.prefix,
-				darkMode: this.config.darkMode,
-			},
+			this.config as Options,
 			{ result: results[0], source: "components" },
 			{ result: results[1], source: "utilities" },
 		)
-		const hrend = process.hrtime(hrstart)
-		console.info("process time: %ds %dms\n", hrend[0], hrend[1] / 1000000)
 	}
 
 	/**

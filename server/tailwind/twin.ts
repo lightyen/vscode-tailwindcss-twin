@@ -109,10 +109,10 @@ enum Flag {
 	CommonVariant = 1 << 3,
 }
 
-interface Options {
+export interface Options {
 	separator: string
-	prefix?: string
-	darkMode?: "media" | "class" | false
+	prefix?: string | false | null | undefined
+	darkMode?: "media" | "class" | false | null | undefined
 }
 
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
@@ -140,10 +140,13 @@ export class Twin {
 	readonly prefix: string
 	readonly darkMode: string
 
-	constructor({ separator, prefix, darkMode }: Options, ...results: Array<{ result: Result; source?: string }>) {
+	constructor(
+		{ separator, prefix = "", darkMode = "media" }: Options,
+		...results: Array<{ result: Result; source?: string }>
+	) {
 		this.separator = separator
 		this.prefix = prefix || ""
-		this.darkMode = darkMode || "media"
+		this.darkMode = darkMode || "media" // always enable dark mode
 		results.forEach(a => this.parseResult(a))
 
 		// post processing
@@ -156,10 +159,10 @@ export class Twin {
 		} else if (this.darkMode === "class") {
 			this.variantsMap.set("light", [".light"])
 		}
-		this.classnamesMap.delete("group")
-		this.classnamesMap.set(prefix + "content", [
+		this.classnamesMap.delete(this.prefix + "group")
+		this.classnamesMap.set(this.prefix + "content", [
 			{
-				name: "content",
+				name: this.prefix + "content",
 				source: "utilities",
 				variants: [],
 				context: [],
