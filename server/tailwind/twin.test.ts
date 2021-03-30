@@ -2,7 +2,8 @@ import postcss from "postcss"
 import tailwindcss from "tailwindcss"
 import { Options, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
 
-const process = async (css: string, config: unknown) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const process = async (css: string, config: any) => {
 	const processer = postcss([tailwindcss(config)])
 	return processer.process(css, { from: undefined })
 }

@@ -1,5 +1,21 @@
 # CHANGELOG.md
 
+## 0.8.1
+
+refactor postcss ast traversal
+
+### Changes
+
+- disable color decoration for tailwind components
+
+### Enhances
+
+- textmate rules on short css (comment)
+- completion content
+- hover content
+- show more debug message when initializing
+- Ignore strict diagnostic at the specific utilities, ex: `transition`, `-opacity-`, ... and more.
+
 ## 0.8.0
 
 ### Changes
