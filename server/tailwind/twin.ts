@@ -295,19 +295,6 @@ export class Twin {
 	readonly screens: IMap<ScreenItem>
 	readonly searchers!: { variants: Fuse<string>; classnames: Fuse<string> }
 
-	private addVariant(item: ClassNameMetaItem) {
-		const b = item.variants[0]
-		if (!this.variantsMap.has(b)) {
-			if (item.context.length > 0) {
-				this.variantsMap.set(b, item.context)
-			} else if (item.pseudo.length > 0) {
-				this.variantsMap.set(b, item.pseudo)
-			} else {
-				this.variantsMap.set(b, [])
-			}
-		}
-	}
-
 	private parseResult({ result, source = "" }: { result: Result; source?: string }) {
 		result.root.walkRules(rule => {
 			const item = this.getRuleMetaItem(rule, this.separator)
@@ -315,7 +302,16 @@ export class Twin {
 				const { classname, decls } = item
 				for (const c of classname) {
 					if (c.variants.length > 0) {
-						this.addVariant(c)
+						const [key] = c.variants
+						if (!this.variantsMap.has(key)) {
+							if (c.context.length > 0) {
+								this.variantsMap.set(key, c.context)
+							} else if (c.pseudo.length > 0) {
+								this.variantsMap.set(key, c.pseudo)
+							} else {
+								this.variantsMap.set(key, [])
+							}
+						}
 						continue
 					}
 
@@ -348,10 +344,6 @@ export class Twin {
 
 	hasScreen(keys: string[]) {
 		return keys.some(v => this.screens.get(v) != undefined)
-	}
-
-	isMotionControl(key: string) {
-		return key === "motion-reduce" || key === "motion-safe"
 	}
 
 	isCommonVariant(key: string) {
@@ -418,26 +410,26 @@ function createKeyValuePair<T>(record: [string, T]) {
 				case "value":
 					return record[1]
 				default:
-					return target[prop]
+					return Reflect.get(target, prop)
 			}
 		},
 	}) as KeyValuePair<T>
 }
 
-function createMap<T>(map: Map<string, T>) {
-	return (new Proxy(Array.from(map).map(createKeyValuePair), {
+function createMap<T>(m: Map<string, T>) {
+	return (new Proxy(Array.from(m).map(createKeyValuePair), {
 		get: function (target, prop) {
 			switch (prop) {
 				case "keys":
 					return function () {
-						return map.keys()
+						return m.keys()
 					}
 				case "get":
 					return function (key: string) {
-						return map.get(key)
+						return m.get(key)
 					}
 				default:
-					return target[prop]
+					return Reflect.get(target, prop)
 			}
 		},
 	}) as unknown) as IMap<T>

@@ -42,7 +42,7 @@ export default function provideSemanticTokens(
 			continue
 		}
 
-		const isValidClass = (variants: string[], value: string) => state.twin.isClassName(value)
+		const isValidClass = (variants: string[], value: string) => state.twin.isSuggestedClassName(variants, value)
 
 		const isValidVariant = (variant: string) => state.twin.isVariant(variant)
 
