@@ -530,6 +530,10 @@ function isIgnored(label: string) {
 		return true
 	}
 
+	if (label.match(/^rounded-(?:t|r|b|l)(?:-\d?[a-z]+)?/)) {
+		return true
+	}
+
 	// text
 	if (label.match(/^(?:leading)-(?:\d+|[a-z]+)$/)) {
 		return true
