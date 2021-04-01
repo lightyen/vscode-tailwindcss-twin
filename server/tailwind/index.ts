@@ -60,13 +60,6 @@ export class Tailwind {
 			this.config = this.defaultConfig
 			this.distConfigPath = this.defaultConfigPath
 		}
-
-		this.config.separator = this.config.separator ?? ":"
-		if (this.config.separator != ":") {
-			console.info("Option: `separator` forced to be set ':'.")
-		}
-		this.config.separator = __INNER_TAILWIND_SEPARATOR__
-		this.separator = ":"
 	}
 
 	async reload(params?: Partial<TailwindOptions>) {
@@ -130,14 +123,12 @@ export class Tailwind {
 	twin!: Twin
 
 	async process() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const processer = this.postcss([this.tailwindcss(this.config!)])
-		const results = await Promise.all([
-			processer.process(`@tailwind components;`, { from: undefined }),
-			processer.process(`@tailwind utilities;`, { from: undefined }),
-		])
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.config = this.resolveConfig(this.config!)
+		this.config.separator = this.config.separator ?? ":"
+		if (this.config.separator != ":") {
+			console.info("Option: `separator` forced to be set ':'.")
+		}
+		this.config.separator = __INNER_TAILWIND_SEPARATOR__
+		this.separator = ":"
 
 		if (this.config.purge instanceof Array) {
 			if (this.config.purge.length > 0) {
@@ -147,6 +138,15 @@ export class Tailwind {
 			console.info("Option: `purge` is ignored.")
 		}
 		this.config.purge = { enabled: false, content: [] }
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const processer = this.postcss([this.tailwindcss(this.config!)])
+		const results = await Promise.all([
+			processer.process(`@tailwind components;`, { from: undefined }),
+			processer.process(`@tailwind utilities;`, { from: undefined }),
+		])
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.config = this.resolveConfig(this.config!)
 		if (this.config?.darkMode != "media" && this.config?.darkMode != "class") {
 			console.info("Option: `darkMode` is not found, it will force to be set 'media'.")
 			this.config.darkMode = "media"
