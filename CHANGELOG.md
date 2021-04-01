@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.8.2
+
+### Fixes
+
+- Ignore option: `purge`
+
 ## 0.8.1
 
 refactor postcss ast traversal
