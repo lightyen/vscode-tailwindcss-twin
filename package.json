@@ -228,7 +228,7 @@
             "number",
             "boolean"
           ],
-          "default": false
+          "default": true
         }
       }
     },

@@ -108,7 +108,14 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	if (type === "utilities") {
-		item.detail = item.detail + getRemUnit(item.label, options.rootFontSize, state)
+		const postfix = getRemUnit(item.label, options.rootFontSize, state)
+		if (postfix) {
+			if ((item.detail?.length ?? 0) <= 20) {
+				item.detail = item.detail + postfix
+			} else {
+				item.detail = postfix
+			}
+		}
 		item.documentation = {
 			kind: lsp.MarkupKind.Markdown,
 			value: md.renderClassname({ key: item.label, state, options }) ?? "",
@@ -137,7 +144,7 @@ function getRemUnit(key: string, rootFontSize: boolean | number, state: Tailwind
 		rootFontSize = 16
 	}
 
-	const reg = /\b(\d[.\d+e]*)rem/
+	const reg = /(-?\d[.\d+e]*)rem/
 
 	for (const rule of rules) {
 		for (const k in rule.decls) {

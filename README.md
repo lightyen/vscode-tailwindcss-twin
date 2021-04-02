@@ -41,7 +41,7 @@ Support ONLY `react` and `twin.macro`
   "tailwindcss.fallbackDefaultConfig": true,
   "tailwindcss.enabled": true,
   "tailwindcss.jsxPropImportChecking": true,
-  "tailwindcss.rootFontSize": false // false, true or number (default is 16)
+  "tailwindcss.rootFontSize": true // false, true or number (default is 16)
 }
 ```
 

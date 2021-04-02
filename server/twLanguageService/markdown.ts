@@ -6,7 +6,7 @@ function toPixelUnit(value: string, rootFontSize: number | boolean) {
 	if (rootFontSize === false) {
 		return value
 	}
-	const reg = /\b(\d[.\d+e]*)rem/
+	const reg = /(-?\d[.\d+e]*)rem/
 	const match = reg.exec(value)
 	if (!match) {
 		return value
