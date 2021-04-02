@@ -89,7 +89,7 @@ interface RuleMetaItem {
 	decls: Record<string, string[]>
 }
 
-interface RuleItem extends ClassNameMetaItem {
+export interface RuleItem extends ClassNameMetaItem {
 	source: string
 	decls: Record<string, string[]>
 }
@@ -505,7 +505,7 @@ function collectColors(utilities: IMap<ClassNameItem>) {
 				continue
 			}
 
-			const reg = /^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})\s*,\s*(?<a>\d{1,3})\s*\)/
+			const reg = /^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba?\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})/
 			const m = value.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1").match(reg)
 			if (m == null) {
 				continue

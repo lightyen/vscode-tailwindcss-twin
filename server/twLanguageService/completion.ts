@@ -15,10 +15,7 @@ import { cssDataManager } from "./cssData"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "components" | "color" | "variant" | "theme" | "cssPropertyName" | "cssPropertyValue"
-	kind: PatternKind
 	uri: string
-	variants?: string[]
-	data?: ClassNameItem
 	entry?: IPropertyData
 }
 
@@ -135,14 +132,14 @@ function variantsCompletion(
 		const variantFilter = state.twin.getSuggestedVariantFilter(userVariants)
 		variantItems = state.twin.variants
 			.filter(([label]) => variantFilter(label))
-			.map<lsp.CompletionItem>(([label, data]) => {
+			.map<lsp.CompletionItem>(([label]) => {
 				const bp = state.twin.screens.get(label)
 				if (bp != undefined) {
 					return {
 						label: label + state.separator,
 						sortText: bp.toString().padStart(5, " "),
 						kind: lsp.CompletionItemKind.Module,
-						data: { type: "screen", data, variants: userVariants, kind },
+						data: { type: "screen" },
 						command: {
 							title: "Suggest",
 							command: "editor.action.triggerSuggest",
@@ -153,7 +150,7 @@ function variantsCompletion(
 						label: label + state.separator,
 						sortText: "*" + label,
 						kind: lsp.CompletionItemKind.Method,
-						data: { type: "variant", data, variants: userVariants, kind },
+						data: { type: "variant" },
 						command: {
 							title: "Suggest",
 							command: "editor.action.triggerSuggest",
@@ -165,7 +162,7 @@ function variantsCompletion(
 						label: label + state.separator,
 						sortText: f ? "*" + label : "~~~:" + label,
 						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Method,
-						data: { type: "variant", data, variants: userVariants, kind },
+						data: { type: "variant" },
 						command: {
 							title: "Suggest",
 							command: "editor.action.triggerSuggest",
@@ -259,7 +256,7 @@ function utiltiesCompletion(
 		const classesFilter = state.twin.getSuggestedClassNameFilter(userVariants)
 		classNameItems = state.twin.classnames
 			.filter(item => classesFilter(item.key))
-			.map(([label, data]) => createCompletionItem({ label, data, variants: userVariants, kind, state }))
+			.map(([label, rules]) => createCompletionItem({ label, rules, variants: userVariants, kind, state }))
 	}
 
 	const next = input.slice(b, b + 1)
@@ -429,7 +426,6 @@ function twinThemeCompletion(
 			}
 			const value = state.getTheme([...keys, label])
 			item.data = {
-				kind: PatternKind.TwinTheme,
 				type: "theme",
 			}
 			if (typeof value === "object") {
@@ -453,7 +449,6 @@ function twinThemeCompletion(
 							item.kind = lsp.CompletionItemKind.Color
 							item.documentation = "rgba(0, 0, 0, 0.0)"
 							item.data.type = "color"
-							item.data.data = "transparent"
 							return item
 						}
 						chroma(value)
@@ -503,30 +498,23 @@ function twinThemeCompletion(
 
 function createCompletionItem({
 	label,
-	data,
-	variants,
-	kind,
+	rules,
 	state,
 }: {
 	label: string
-	data: ClassNameItem
+	rules: ClassNameItem
 	variants: string[]
 	kind: PatternKind
 	state: Tailwind
 }): lsp.CompletionItem {
 	const item: lsp.CompletionItem = {
 		label,
-		data: { type: "utilities", data, variants, kind },
+		data: { type: "utilities" },
 		kind: lsp.CompletionItemKind.Constant,
 		sortText: (label.slice(0, 1) === "-" ? "~~~" : "~~") + formatLabel(label),
 	}
 
-	if (item.label === state.config.prefix + "container") {
-		item.detail = "container"
-		return item
-	}
-
-	if (data.some(d => d.source === "components")) {
+	if (rules.some(d => d.source === "components")) {
 		item.data.type = "components"
 		return item
 	}
@@ -544,7 +532,6 @@ function createCompletionItem({
 	if (label.includes("transparent")) {
 		item.documentation = "rgba(0, 0, 0, 0.0)"
 		item.data.type = "color"
-		item.data.data = "transparent"
 		return item
 	}
 

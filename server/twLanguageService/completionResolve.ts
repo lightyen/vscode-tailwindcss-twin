@@ -1,45 +1,44 @@
 import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
-import { PatternKind } from "~/common/ast"
 import { Tailwind } from "~/tailwind"
-import type { ClassNameItem } from "~/tailwind/twin"
 import type { ServiceOptions } from "~/twLanguageService"
 import { getEntryDescription } from "./cssData"
-import { getDescription, getName, getReferenceLinks } from "./referenceLink"
+import * as md from "./markdown"
+import { getName, getReferenceLinks } from "./referenceLink"
 
 export default function completionResolve(
 	item: lsp.CompletionItem,
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
-	if (item.data.kind === PatternKind.TwinTheme) {
+	if (item.data.type === "theme") {
 		return item
 	}
 
 	const keyword = item.label.slice(state.config.prefix.length)
-	if (item.kind === lsp.CompletionItemKind.Constant && keyword === "container") {
-		resolveContainer(item, state, options)
-		return item
-	}
+	// if (item.kind === lsp.CompletionItemKind.Constant && keyword === "container") {
+	// 	resolveContainer(item, state, options)
+	// 	return item
+	// }
 
 	item = resolve(item, state, options)
 
-	if (options.references && typeof item.documentation === "object") {
-		const refs = getReferenceLinks(keyword)
-		if (refs.length == 1) {
-			item.documentation.value += "\n" + `[Reference](${refs[0].url})`
-		} else if (refs.length > 0) {
-			item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
+	if (options.references && item.documentation) {
+		if (typeof item.documentation === "object") {
+			const refs = getReferenceLinks(keyword)
+			if (refs.length == 1) {
+				item.documentation.value += "\n" + `[Reference](${refs[0].url})`
+			} else if (refs.length > 0) {
+				item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
+			}
 		}
 	}
 	return item
 }
 
 function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions): lsp.CompletionItem {
-	const { type, variants, entry } = item.data as {
+	const { type, entry } = item.data as {
 		type: string
-		variants: string[]
-		kind: PatternKind
 		entry: IPropertyData
 	}
 
@@ -52,33 +51,27 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 
 	if (options.references) {
 		item.detail = getName(item.label.slice(state.config.prefix.length))
-	}
-
-	let data = item.data.data as ClassNameItem
-	if (!(data instanceof Array)) {
-		return item
-	}
-
-	if (variants.length > 0 && !item.label.endsWith(":")) {
-		if (data instanceof Array) {
-			data = data.filter(d => {
-				for (const context of d.context) {
-					for (const [k, values] of state.twin.variants) {
-						if (!values.includes(context)) {
-							// not found, ignore
-							continue
-						}
-						if (!variants.includes(k)) {
-							return false
-						}
-					}
-				}
-				return true
-			})
+		if (!item.detail) {
+			if (type === "components") {
+				item.detail = "custom component"
+			} else if (type === "utilities") {
+				item.detail = "custom utility"
+			} else if (type === "variant") {
+				item.detail = "custom variant"
+			} else if (type === "screen") {
+				item.detail = "custom screen"
+			} else if (type === "color") {
+				item.detail = "custom color"
+			}
 		}
 	}
 
-	if (type === "utilities" || type === "color") {
+	if (type === "color") {
+		const data = state.twin.classnames.get(item.label)
+		if (!(data instanceof Array)) {
+			return item
+		}
+
 		const result: Record<string, string> = {}
 		for (const d of data) {
 			for (const k in d.decls) {
@@ -87,24 +80,26 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 				}
 			}
 		}
-		if (type === "color") {
-			item.detail = Object.entries(result)
-				.map(([prop, value]) => `${prop}: ${value};`)
-				.join("\n")
-			return item
-		}
-		// class
+		item.detail = Object.entries(result)
+			.map(([prop, value]) => `${prop}: ${value};`)
+			.join("\n")
+		return item
+	}
+
+	if (type === "utilities") {
 		item.documentation = {
 			kind: lsp.MarkupKind.Markdown,
-			value: [
-				"```scss",
-				`.${item.label.replace(/\//g, "\\/")}${data[0].rest} {\n${Object.entries(result)
-					.map(([prop, value]) => `\t${prop}: ${value};`)
-					.join("\n")}\n}`,
-				"```",
-			].join("\n"),
+			value: md.renderClassname({ key: item.label, state }) ?? "",
 		}
-	} else if (type === "variant" || type === "screen") {
+		return item
+	}
+
+	if (type === "variant" || type === "screen") {
+		const data = state.twin.variants.get(item.label.replace(new RegExp(`${state.separator}$`), ""))
+		if (!(data instanceof Array)) {
+			return item
+		}
+
 		if (data instanceof Array) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -117,75 +112,14 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 				value: ["```scss", ...text, "```"].join("\n"),
 			}
 		}
-	} else if (type === "components") {
-		const blocks: Map<string, string[]> = new Map()
-		data.map(rule => {
-			const selector = item.label + rule.pseudo.join("")
-			const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
-				values.map<[string, string]>(v => [prop, v]),
-			)
-			return { rest: rule.rest, selector, decls }
-		}).forEach(c => {
-			const selector = `.${c.selector.replace(/\//g, "\\/")}${c.rest}`
-			if (!blocks.has(selector)) {
-				blocks.set(selector, [])
-			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			blocks.get(selector)!.push(...c.decls.map(([prop, value]) => `${prop}: ${value};`))
-		})
+		return item
+	}
 
+	if (type === "components") {
 		item.documentation = {
 			kind: lsp.MarkupKind.Markdown,
-			value: [
-				"```scss",
-				...Array.from(blocks).map(([selector, contents]) => {
-					return `${selector} {\n${contents.map(content => "  " + content).join("\n")}\n}\n`
-				}),
-				"```",
-			].join("\n"),
+			value: md.renderClassname({ key: item.label, state }) ?? "",
 		}
 	}
-	return item
-}
-
-function resolveContainer(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions) {
-	item.documentation = {
-		kind: lsp.MarkupKind.Markdown,
-		value: "",
-	}
-
-	if (options.references) {
-		item.documentation.value = getDescription("container")
-		const refs = getReferenceLinks(item.label)
-		if (refs.length == 1) {
-			item.documentation.value += "\n" + `[Reference](${refs[0].url})`
-		} else if (refs.length > 0) {
-			item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
-		}
-	}
-
-	const label_container = state.config.prefix + "container"
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const rules = state.twin.classnames.get(label_container)!
-	const lines: string[] = []
-	if (rules instanceof Array) {
-		lines.push("\n```scss")
-		for (const r of rules) {
-			const hasContext = r.context.length > 0
-			lines.push(hasContext ? `${r.context.join(" ")} {\n` + `\t.${label_container} {` : `.${label_container} {`)
-			for (const key in r.decls) {
-				for (const value of r.decls[key]) {
-					lines.push(hasContext ? `\t\t${key}: ${value};` : `\t${key}: ${value};`)
-				}
-			}
-			if (hasContext) {
-				lines.push(`\t}`)
-			}
-			lines.push(`}\n`)
-		}
-		lines.push("```\n")
-	}
-	item.documentation.value += lines.join("\n")
-
 	return item
 }

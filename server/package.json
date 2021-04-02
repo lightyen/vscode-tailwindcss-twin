@@ -15,7 +15,6 @@
     "@types/webpack-env": "^1.16.0",
     "chroma-js": "^2.1.1",
     "fuse.js": "^6.4.6",
-    "immer": "^9.0.1",
     "postcss": "8.2.8",
     "postcss-selector-parser": "^6.0.4",
     "semver": "^7.3.4",
