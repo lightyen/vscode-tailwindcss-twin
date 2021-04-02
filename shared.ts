@@ -16,6 +16,7 @@ export interface Settings {
 		emptyCssProperty: boolean
 	}
 	jsxPropImportChecking: boolean
+	rootFontSize: boolean | number
 }
 
 export interface ColorDecoration {

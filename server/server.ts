@@ -198,6 +198,12 @@ class Server {
 					console.log(`jsxPropImportChecking = ${this.settings.jsxPropImportChecking}`)
 				}
 
+				if (this.settings.rootFontSize !== extSettings.rootFontSize) {
+					this.settings.rootFontSize = extSettings.rootFontSize
+					needToUpdate = true
+					console.log(`rootFontSize = ${this.settings.rootFontSize}`)
+				}
+
 				const colorDecorators = extSettings.colorDecorators ?? editor.colorDecorators
 				if (this.settings.colorDecorators !== colorDecorators) {
 					this.settings.colorDecorators = colorDecorators

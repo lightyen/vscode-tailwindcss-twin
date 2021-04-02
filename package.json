@@ -222,6 +222,13 @@
           "description": "%ext.settings.jsxPropImportChecking%",
           "type": "boolean",
           "default": true
+        },
+        "tailwindcss.rootFontSize": {
+          "type": [
+            "number",
+            "boolean"
+          ],
+          "default": false
         }
       }
     },

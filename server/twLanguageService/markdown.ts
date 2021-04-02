@@ -1,5 +1,27 @@
 import { Tailwind } from "~/tailwind"
 import type { RuleItem } from "~/tailwind/twin"
+import { ServiceOptions } from "."
+
+function toPixelUnit(value: string, rootFontSize: number | boolean) {
+	if (rootFontSize === false) {
+		return value
+	}
+	const reg = /\b(\d[.\d+e]*)rem/
+	const match = reg.exec(value)
+	if (!match) {
+		return value
+	}
+	if (rootFontSize === true) {
+		rootFontSize = 16
+	}
+	const [text, n] = match
+	const val = parseFloat(n)
+	if (Number.isNaN(val)) {
+		return value
+	}
+
+	return value.replace(reg, text + `/** ${(rootFontSize * val).toFixed(0)}px */`)
+}
 
 export function renderVariant({ key, state }: { key: string; state: Tailwind }): string | undefined {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -25,10 +47,12 @@ export function renderClassname({
 	key,
 	state,
 	important = false,
+	options,
 }: {
 	key: string
 	state: Tailwind
 	important?: boolean
+	options: ServiceOptions
 }): string | undefined {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	// const key = selection.token!.token.text
@@ -36,11 +60,12 @@ export function renderClassname({
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
-		console.dir(rule, { depth: null })
 		const lines: string[] = [`.${rule.name}${rule.pseudo.join("")}${rule.rest} {`.replace(/\//g, "\\/")]
 		for (const key in rule.decls) {
 			for (const value of rule.decls[key]) {
-				lines.push(`${indent}${key}: ${value}${important ? " !important" : ""};`)
+				lines.push(
+					`${indent}${key}: ${toPixelUnit(value, options.rootFontSize)}${important ? " !important" : ""};`,
+				)
 			}
 		}
 		lines.push(`}`)

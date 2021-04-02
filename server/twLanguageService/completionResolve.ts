@@ -86,14 +86,6 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		return item
 	}
 
-	if (type === "utilities") {
-		item.documentation = {
-			kind: lsp.MarkupKind.Markdown,
-			value: md.renderClassname({ key: item.label, state }) ?? "",
-		}
-		return item
-	}
-
 	if (type === "variant" || type === "screen") {
 		const data = state.twin.variants.get(item.label.replace(new RegExp(`${state.separator}$`), ""))
 		if (!(data instanceof Array)) {
@@ -115,11 +107,55 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		return item
 	}
 
+	if (type === "utilities") {
+		item.detail = item.detail + getRemUnit(item.label, options.rootFontSize, state)
+		item.documentation = {
+			kind: lsp.MarkupKind.Markdown,
+			value: md.renderClassname({ key: item.label, state, options }) ?? "",
+		}
+		return item
+	}
+
 	if (type === "components") {
 		item.documentation = {
 			kind: lsp.MarkupKind.Markdown,
-			value: md.renderClassname({ key: item.label, state }) ?? "",
+			value: md.renderClassname({ key: item.label, state, options }) ?? "",
 		}
 	}
 	return item
+}
+
+function getRemUnit(key: string, rootFontSize: boolean | number, state: Tailwind) {
+	if (rootFontSize === false) {
+		return ""
+	}
+
+	const rules = state.twin.classnames.get(key)
+	if (!rules) return ""
+
+	if (rootFontSize === true) {
+		rootFontSize = 16
+	}
+
+	const reg = /\b(\d[.\d+e]*)rem/
+
+	for (const rule of rules) {
+		for (const k in rule.decls) {
+			const values = rule.decls[k]
+			for (let i = 0; i < values.length; i++) {
+				const match = reg.exec(values[i])
+				if (!match) {
+					continue
+				}
+				const [text, n] = match
+				const val = parseFloat(n)
+				if (Number.isNaN(val)) {
+					continue
+				}
+				return ` (${text} = ${rootFontSize * val}px)`
+			}
+		}
+	}
+
+	return ""
 }

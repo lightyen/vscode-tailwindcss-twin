@@ -40,7 +40,8 @@ Support ONLY `react` and `twin.macro`
   "tailwindcss.preferVariantWithParentheses": false,
   "tailwindcss.fallbackDefaultConfig": true,
   "tailwindcss.enabled": true,
-  "tailwindcss.jsxPropImportChecking": true
+  "tailwindcss.jsxPropImportChecking": true,
+  "tailwindcss.rootFontSize": false // false, true or number (default is 16)
 }
 ```
 

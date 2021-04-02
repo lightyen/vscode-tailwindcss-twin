@@ -154,46 +154,11 @@ function getHoverTwinMarkdown({
 		return undefined
 	}
 
-	const data = state.twin.classnames.get(value)
-	if (!data) {
-		return undefined
+	const content = renderClassname({ state, key: value, important, options })
+	if (content) {
+		return { kind: lsp.MarkupKind.Markdown, value: content }
 	}
-
-	if (data.some(d => d.source === "components")) {
-		const content = renderClassname({ state, key: value, important })
-		if (content) {
-			return { kind: lsp.MarkupKind.Markdown, value: content }
-		}
-		return undefined
-	}
-
-	const blocks: Map<string, string[]> = new Map()
-	data.map(rule => {
-		const selector = value
-		const decls = Object.entries(rule.decls).flatMap(([prop, values]) =>
-			values.map<[string, string]>(v => [prop, v]),
-		)
-		return { rest: rule.rest, selector, decls }
-	}).map(c => {
-		const selector = `.${c.selector.replace(/\//g, "\\/")}${c.rest}`
-		if (!blocks.has(selector)) {
-			blocks.set(selector, [])
-		}
-		blocks
-			.get(selector)
-			?.push(...c.decls.map(([prop, value]) => `${prop}: ${value}${important ? " !important" : ""};`))
-	})
-
-	return {
-		kind: lsp.MarkupKind.Markdown,
-		value: [
-			"```scss",
-			...Array.from(blocks).map(([selector, contents]) => {
-				return `${selector} {\n${contents.map(c => `\t${c}`).join("\n")}\n}\n`
-			}),
-			"```",
-		].join("\n"),
-	}
+	return undefined
 }
 
 function resolveThemeValue({
