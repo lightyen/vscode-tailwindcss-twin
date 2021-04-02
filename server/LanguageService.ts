@@ -4,6 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 export interface LanguageService {
 	init(): Promise<void>
+	getColors(): Promise<string[]>
 	hasConfig: boolean
 	targetConfig: string
 	reload(settings?: Settings): Promise<void>

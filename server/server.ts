@@ -404,6 +404,10 @@ class Server {
 		connection.onColorPresentation(params =>
 			matchService(params.textDocument.uri, this.services)?.onColorPresentation(params),
 		)
+
+		connection.onRequest("tailwindcss/colors", async ({ uri }) => {
+			return matchService(uri, this.services)?.getColors()
+		})
 	}
 }
 

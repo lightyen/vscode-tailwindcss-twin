@@ -1,3 +1,4 @@
+import EventEmitter from "events"
 import { Settings } from "shared"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
@@ -20,6 +21,7 @@ export class TailwindLanguageService implements LanguageService {
 	options: ServiceOptions
 	documents: lsp.TextDocuments<TextDocument>
 	cache: Cache
+	em = new EventEmitter()
 	constructor(documents: lsp.TextDocuments<TextDocument>, options: ServiceOptions) {
 		this.options = options
 		this.documents = documents
@@ -38,7 +40,17 @@ export class TailwindLanguageService implements LanguageService {
 	}
 	async init() {
 		if (this.ready) return void 0
-		return this.state.process()
+		await this.state.process()
+		this.em.emit("ready")
+		return void 0
+	}
+	getColors() {
+		return new Promise<string[]>(resolve => {
+			if (this.ready) resolve(this.state.twin.colors.map(c => c.key))
+			this.em.on("ready", () => {
+				resolve(this.state.twin.colors.map(c => c.key))
+			})
+		})
 	}
 	async reload(...params: Parameters<Tailwind["reload"]>) {
 		return this.state.reload(...params)

@@ -68,6 +68,7 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	client.onReady().then(() => {
 		colorDecoration({ client })
 		debug({ client })
+		// vscode.window.registerTreeDataProvider("twinColors", new ColorNamesProvider(client))
 	})
 	client.start()
 }
@@ -96,6 +97,39 @@ export async function activate(context: vscode.ExtensionContext) {
 	if (vscode.workspace.workspaceFolders instanceof Array) {
 		for (const ws of vscode.workspace.workspaceFolders) {
 			await addClient(serverModule, outputChannel, ws)
+		}
+	}
+}
+
+// package.json
+// {
+// "activationEvents": [  "onView:twinColors" ],
+// "contributes": {
+// 		"views": {
+// 			"explorer": [
+// 				{
+// 					"id": "twinColors",
+// 					"name": "colors"
+// 				}
+// 			]
+// 		}
+// 	}
+// }
+
+type ColorElement = string
+
+export class ColorNamesProvider implements vscode.TreeDataProvider<ColorElement> {
+	constructor(private readonly client: LanguageClient) {}
+	async getChildren(e: ColorElement) {
+		if (!vscode.window.activeTextEditor) {
+			return
+		}
+		const document = vscode.window.activeTextEditor.document
+		return await this.client.sendRequest<string[]>("tailwindcss/colors", { uri: document.uri.toString() })
+	}
+	getTreeItem(name: ColorElement): vscode.TreeItem {
+		return {
+			label: name,
 		}
 	}
 }
