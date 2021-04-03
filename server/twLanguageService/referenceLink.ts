@@ -49,10 +49,9 @@ export function getName(keyword: string) {
 	return undefined
 }
 
-export function getDescription(keyword: string) {
-	const value = keyword.replace(":", "")
-	const originUrl = references[value]
-	const twinUrl = references["tw." + value]
+export function getDescription(keyword: string): string | undefined {
+	const originUrl = references[keyword]
+	const twinUrl = references["tw." + keyword]
 	const url = originUrl || twinUrl
 	if (url) {
 		if (docs[twinUrl]) {

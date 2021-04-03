@@ -79,7 +79,6 @@ export default function hover(
 				return undefined
 			}
 
-			const keyword = text.replace(new RegExp(`^${state.config.prefix}`), "")
 			const markdown = getHoverTwinMarkdown({
 				kind,
 				selection,
@@ -91,11 +90,16 @@ export default function hover(
 				return undefined
 			}
 
+			const keyword = text.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
 			let title = ""
 			if (options.references) {
 				const type = getDescription(keyword)
 				if (type) {
 					title = type + "\n"
+				}
+
+				if (type === "") {
+					title = "twin.macro" + "\n"
 				}
 
 				const refs = getReferenceLinks(keyword)

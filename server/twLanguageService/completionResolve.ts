@@ -4,7 +4,7 @@ import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 import { getEntryDescription } from "./cssData"
 import * as md from "./markdown"
-import { getName, getReferenceLinks } from "./referenceLink"
+import { getDescription, getName, getReferenceLinks } from "./referenceLink"
 
 export default function completionResolve(
 	item: lsp.CompletionItem,
@@ -16,10 +16,6 @@ export default function completionResolve(
 	}
 
 	const keyword = item.label.slice(state.config.prefix.length)
-	// if (item.kind === lsp.CompletionItemKind.Constant && keyword === "container") {
-	// 	resolveContainer(item, state, options)
-	// 	return item
-	// }
 
 	item = resolve(item, state, options)
 
@@ -120,6 +116,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 			kind: lsp.MarkupKind.Markdown,
 			value: md.renderClassname({ key: item.label, state, options }) ?? "",
 		}
+
 		return item
 	}
 
@@ -127,6 +124,11 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 		item.documentation = {
 			kind: lsp.MarkupKind.Markdown,
 			value: md.renderClassname({ key: item.label, state, options }) ?? "",
+		}
+
+		// special
+		if (item.label === state.config.prefix + "container") {
+			item.documentation.value = getDescription("container") + "\n" + item.documentation.value
 		}
 	}
 	return item
