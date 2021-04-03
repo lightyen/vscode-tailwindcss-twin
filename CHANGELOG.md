@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.8.3
+
+show pixel value for **rem**
+
+### Enhances
+
+- the completion/hover content of custom plugin
+
 ## 0.8.2
 
 ### Fixes
