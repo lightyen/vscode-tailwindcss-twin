@@ -1,35 +1,14 @@
 import path from "path"
 import type { Plugin, Postcss } from "postcss"
-import type { TailwindConfig } from "tailwindcss/tailwind-config"
 import { dlv } from "~/common/get_set"
 import { requireModule, resolveModule } from "~/common/module"
-import { Options, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
+import { Options, preprocessConfig, TailwindConfigJS, Twin } from "./twin"
 
 export interface TailwindOptions {
 	workspaceFolder: string
 	configPath: string
 	fallbackDefaultConfig: boolean
 }
-
-type DeepMutable<T> = {
-	-readonly [P in keyof T]: DeepMutable<T[P]>
-}
-
-type Purge =
-	| {
-			enabled: boolean
-			content: string[]
-	  }
-	| string[]
-
-type DarkMode = false | "media" | "class"
-
-type TailwindConfigJS = Omit<DeepMutable<TailwindConfig>, "purge" | "darkMode"> & {
-	darkMode: DarkMode
-	purge: Purge
-	mode?: "jit"
-}
-
 export class Tailwind {
 	constructor(options: Partial<TailwindOptions>) {
 		this.load(options)
@@ -124,39 +103,9 @@ export class Tailwind {
 	twin!: Twin
 
 	async process() {
-		this.config.separator = this.config.separator ?? ":"
-		if (this.config.separator != ":") {
-			console.info("Option: `separator` forced to be set ':'.")
-		}
-		this.config.separator = __INNER_TAILWIND_SEPARATOR__
 		this.separator = ":"
-
-		if (this.config.purge instanceof Array) {
-			if (this.config.purge.length > 0) {
-				console.info("Option: `purge` is ignored.")
-			}
-		} else if (this.config?.purge?.content != null || this.config?.purge?.enabled) {
-			console.info("Option: `purge` is ignored.")
-		}
-		this.config.purge = { enabled: false, content: [] }
-
-		if (this.config?.mode === "jit") {
-			console.info("Option: `mode` forced to be set undefined.")
-			this.config.mode = undefined
-		}
-
-		if (this.config?.important) {
-			console.info("Option: `important` forced to be set false.")
-			this.config.important = false
-		}
-
-		if (this.config?.darkMode !== "media" && this.config?.darkMode !== "class") {
-			console.info("Option: `darkMode` forced to be set 'media'.")
-			this.config.darkMode = "media"
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const processer = this.postcss([this.tailwindcss(this.config!)])
+		this.config = preprocessConfig(this.config)
+		const processer = this.postcss([this.tailwindcss(this.config)])
 		const results = await Promise.all([
 			processer.process(`@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),

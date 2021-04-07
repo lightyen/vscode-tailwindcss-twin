@@ -1,6 +1,6 @@
 import postcss from "postcss"
 import tailwindcss from "tailwindcss"
-import { Options, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
+import { preprocessConfig, Twin } from "./twin"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const process = async (css: string, config: any) => {
@@ -9,8 +9,9 @@ const process = async (css: string, config: any) => {
 }
 
 test("example", async () => {
-	const config = {
-		separator: __INNER_TAILWIND_SEPARATOR__,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let config: any = {
+		mode: "jit",
 		darkMode: "media",
 		prefix: "",
 		theme: {
@@ -32,9 +33,11 @@ test("example", async () => {
 		},
 	}
 
+	config = preprocessConfig(config)
+
 	const results = await Promise.all([process(`@tailwind components;`, config)])
 
-	const twin = new Twin(config as Options, { result: results[0], source: "components" })
+	const twin = new Twin(config, { result: results[0], source: "components" })
 
 	expect(twin.classnames.get("container")).toEqual([
 		{

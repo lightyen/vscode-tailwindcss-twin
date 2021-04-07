@@ -132,6 +132,60 @@ interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
 	get(key: string): T | undefined
 }
 
+type Purge =
+	| {
+			enabled: boolean
+			content: string[]
+	  }
+	| string[]
+
+type DarkMode = false | "media" | "class"
+
+export type TailwindConfigJS = {
+	separator?: string
+	darkMode?: DarkMode
+	purge?: Purge
+	mode?: "jit"
+	important?: boolean
+	theme?: unknown
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function preprocessConfig(config: any): any {
+	const cfg = { ...config } as TailwindConfigJS
+	cfg.separator = cfg.separator ?? ":"
+	if (cfg.separator !== ":") {
+		console.info("Option: `separator` forced to be set ':'.")
+	}
+	cfg.separator = __INNER_TAILWIND_SEPARATOR__
+
+	if (cfg.purge instanceof Array) {
+		if (cfg.purge.length > 0) {
+			console.info("Option: `purge` is ignored.")
+		}
+	} else if (cfg?.purge?.content != null || cfg?.purge?.enabled) {
+		console.info("Option: `purge` is ignored.")
+	}
+	cfg.purge = { enabled: false, content: [] }
+
+	if (cfg?.mode === "jit") {
+		console.info("Option: `mode` forced to be set undefined.")
+		cfg.mode = undefined
+	}
+
+	if (cfg?.important) {
+		console.info("Option: `important` forced to be set false.")
+		cfg.important = false
+	}
+
+	if (cfg?.darkMode !== "media" && cfg?.darkMode !== "class") {
+		console.info("Option: `darkMode` forced to be set 'media'.")
+		cfg.darkMode = "media"
+	}
+
+	return cfg
+}
+
 export class Twin {
 	static selectorProcessor = parser()
 
