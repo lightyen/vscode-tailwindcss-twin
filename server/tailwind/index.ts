@@ -27,6 +27,7 @@ type DarkMode = false | "media" | "class"
 type TailwindConfigJS = Omit<DeepMutable<TailwindConfig>, "purge" | "darkMode"> & {
 	darkMode: DarkMode
 	purge: Purge
+	mode?: "jit"
 }
 
 export class Tailwind {
@@ -139,6 +140,21 @@ export class Tailwind {
 		}
 		this.config.purge = { enabled: false, content: [] }
 
+		if (this.config?.mode === "jit") {
+			console.info("Option: `mode` forced to be set undefined.")
+			this.config.mode = undefined
+		}
+
+		if (this.config?.important) {
+			console.info("Option: `important` forced to be set false.")
+			this.config.important = false
+		}
+
+		if (this.config?.darkMode !== "media" && this.config?.darkMode !== "class") {
+			console.info("Option: `darkMode` forced to be set 'media'.")
+			this.config.darkMode = "media"
+		}
+
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const processer = this.postcss([this.tailwindcss(this.config!)])
 		const results = await Promise.all([
@@ -147,21 +163,6 @@ export class Tailwind {
 		])
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.config = this.resolveConfig(this.config!)
-		if (this.config?.darkMode != "media" && this.config?.darkMode != "class") {
-			console.info("Option: `darkMode` is not found, it will force to be set 'media'.")
-			this.config.darkMode = "media"
-		}
-
-		this.config.prefix = this.config.prefix ?? ""
-		if (typeof this.config.prefix !== "string") {
-			console.info("Option: `prefix` forced to be set empty string.")
-			this.config.prefix = ""
-		}
-
-		if (this.config.important) {
-			console.info("Option: `important` forced to be set false.")
-			this.config.important = false
-		}
 
 		this.twin = new Twin(
 			this.config as Options,

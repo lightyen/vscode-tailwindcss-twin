@@ -283,6 +283,9 @@
 "https://tailwindcss.com/docs/z-index":
   name: Z-Index
   desc: Utilities for controlling the stack order of an element.
+"https://tailwindcss.com/docs/isolation":
+  name: Isolation
+  desc: Utilities for controlling whether an element should explicitly create a new stacking context.
 "https://tailwindcss.com/docs/gap":
   name: Gap
   desc: Utilities for controlling gutters between grid rows and columns.
@@ -394,14 +397,84 @@
 "https://tailwindcss.com/docs/responsive-design":
   name: Responsive Design
   desc: Using responsive utility variants to build adaptive user interfaces.
-? "https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js"
-: name: twin.macro
+"https://tailwindcss.com/docs/box-decoration-break":
+  name: Box Decoration Break
+  desc: Utilities for controlling how element fragments should be rendered across multiple lines, columns, or pages.
+"https://tailwindcss.com/docs/mix-blend-mode":
+  name: Mix Blend Mode
+  desc: Utilities for controlling how an element should blend with the background.
+"https://tailwindcss.com/docs/background-blend-mode":
+  name: Background Blend Mode
+  desc: Utilities for controlling how an element's background image should blend with its background color.
+"https://tailwindcss.com/docs/filter":
+  name: Filter
+  desc: Utilities for enabling and disabling filters on an element.
+"https://tailwindcss.com/docs/blur":
+  name: Blur
+  desc: Utilities for applying blur filters to an element.
+"https://tailwindcss.com/docs/brightness":
+  name: Brightness
+  desc: Utilities for applying brightness filters to an element.
+"https://tailwindcss.com/docs/contrast":
+  name: Contrast
+  desc: Utilities for applying contrast filters to an element.
+"https://tailwindcss.com/docs/drop-shadow":
+  name: Drop Shadow
+  desc: Utilities for applying drop-shadow filters to an element.
+"https://tailwindcss.com/docs/grayscale":
+  name: Grayscale
+  desc: Utilities for applying grayscale filters to an element.
+"https://tailwindcss.com/docs/hue-rotate":
+  name: Hue Rotate
+  desc: Utilities for applying hue-rotate filters to an element.
+"https://tailwindcss.com/docs/invert":
+  name: Invert
+  desc: Utilities for applying invert filters to an element.
+"https://tailwindcss.com/docs/saturate":
+  name: Saturate
+  desc: Utilities for applying saturation filters to an element.
+"https://tailwindcss.com/docs/sepia":
+  name: Sepia
+  desc: Utilities for applying sepia filters to an element.
+"https://tailwindcss.com/docs/backdrop-filter":
+  name: Backdrop Filter
+  desc: Utilities for enabling and disabling backdrop filters on an element.
+"https://tailwindcss.com/docs/backdrop-blur":
+  name: Backdrop Blur
+  desc: Utilities for applying backdrop blur filters to an element.
+"https://tailwindcss.com/docs/backdrop-brightness":
+  name: Backdrop Brightness
+  desc: Utilities for applying backdrop brightness filters to an element.
+"https://tailwindcss.com/docs/backdrop-contrast":
+  name: Backdrop Contrast
+  desc: Utilities for applying backdrop contrast filters to an element.
+"https://tailwindcss.com/docs/backdrop-grayscale":
+  name: Backdrop Grayscale
+  desc: Utilities for applying backdrop grayscale filters to an element.
+"https://tailwindcss.com/docs/backdrop-hue-rotate":
+  name: Backdrop Hue Rotate
+  desc: Utilities for applying backdrop hue-rotate filters to an element.
+"https://tailwindcss.com/docs/backdrop-invert":
+  name: Backdrop Invert
+  desc: Utilities for applying backdrop invert filters to an element.
+"https://tailwindcss.com/docs/backdrop-opacity":
+  name: Backdrop Opacity
+  desc: Utilities for applying backdrop opacity filters to an element.
+"https://tailwindcss.com/docs/backdrop-saturate":
+  name: Backdrop Saturate
+  desc: Utilities for applying backdrop saturation filters to an element.
+"https://tailwindcss.com/docs/backdrop-sepia":
+  name: Backdrop Sepia
+  desc: Utilities for applying backdrop sepia filters to an element.
+
+"https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js":
+  name: twin.macro
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/group.md":
   name: twin.macro
   desc: ""
-? "https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles"
-: name: twin.macro
+"https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles":
+  name: twin.macro
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md":
   name: twin.macro

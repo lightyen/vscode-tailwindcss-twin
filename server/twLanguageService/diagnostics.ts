@@ -584,5 +584,26 @@ function isIgnored(label: string) {
 		return true
 	}
 
+	// filter
+	if (label.match(/^(?:backdrop-)?blur(?:-(?:0|none|sm|md|lg|\d+xl))?$/)) {
+		return true
+	}
+
+	if (label.match(/^-?(?:backdrop-)?hue-rotate-\d+$/)) {
+		return true
+	}
+
+	if (label.match(/^(?:backdrop-)?(?:brightness|contrast|grayscale|invert|sepia|saturate)(?:-\d+)?$/)) {
+		return true
+	}
+
+	if (label.match(/^drop-shadow(?:-(?:0|none|sm|md|lg|\d+xl))?$/)) {
+		return true
+	}
+
+	if (label.match(/^backdrop-opacity-\d+$/)) {
+		return true
+	}
+
 	return false
 }
