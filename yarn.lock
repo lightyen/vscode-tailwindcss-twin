@@ -775,11 +775,6 @@
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.0.tgz#7036640b4e21cc2f259ae826ce843d277dad8cff"
   integrity sha512-RJJrrySY7A8havqpGObOB4W92QXKJo63/jFLLgpvOtsGUqbQZ9Sbgl35KMm1DjC6j7AvmmU2bIno+3IyEaemaw==
 
-"@types/tailwindcss@^2.0.2":
-  version "2.0.2"
-  resolved "https://registry.npmjs.org/@types/tailwindcss/-/tailwindcss-2.0.2.tgz#7757f3821507c149e6bb09a45f1ac99502e77d49"
-  integrity sha512-C6gthGtfP/rDf0GhN6HhgdSGDbpvs0R8LElnSm3jnTPjYt1sCw9ZJ9cR841AsU8cQYiCqB5rzaRAUW6tF19X8Q==
-
 "@types/tapable@*":
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.6.tgz#a9ca4b70a18b270ccb2bc0aaafefd1d486b7ea74"
