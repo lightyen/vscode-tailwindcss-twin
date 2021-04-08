@@ -146,7 +146,7 @@ export type TailwindConfigJS = {
 	prefix: string
 	darkMode?: DarkMode
 	purge?: Purge
-	mode?: "jit"
+	mode?: "jit" | "aot"
 	important?: boolean
 	theme?: unknown
 }
@@ -170,8 +170,8 @@ export function preprocessConfig(config: any): any {
 	cfg.purge = { enabled: false, content: [] }
 
 	if (cfg?.mode === "jit") {
-		console.info("Option: `mode` forced to be set undefined.")
-		cfg.mode = undefined
+		console.info("Option: `mode` forced to be set 'aot'.")
+		cfg.mode = "aot"
 	}
 
 	if (cfg?.important) {
