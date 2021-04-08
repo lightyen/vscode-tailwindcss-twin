@@ -339,6 +339,24 @@ function shortcssCompletion(
 				entry,
 			},
 		}))
+
+		cssPropItems.push(
+			...state.twin.customProperties.map(label => ({
+				label,
+				sortText: "~~~~~" + label,
+				kind: lsp.CompletionItemKind.Field,
+				insertTextFormat: lsp.InsertTextFormat.Snippet,
+				insertText: label + "[$0]",
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+				data: {
+					type: "cssPropertyName",
+				},
+				documentation: "custom variable",
+			})),
+		)
 	}
 
 	if (suggestion.token) {

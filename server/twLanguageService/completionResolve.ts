@@ -40,7 +40,9 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 
 	if (type === "cssPropertyName" || type === "cssPropertyValue") {
 		if (type === "cssPropertyName") {
-			item.documentation = getEntryDescription(entry, true)
+			if (entry) {
+				item.documentation = getEntryDescription(entry, true)
+			}
 		}
 		return item
 	}

@@ -249,6 +249,7 @@ function getGeometryBoxProposals(range: lsp.Range): lsp.CompletionItem[] {
 		}
 	})
 }
+
 function getBoxProposals(range: lsp.Range): lsp.CompletionItem[] {
 	return Object.entries(languageFacts.boxKeywords).map<lsp.CompletionItem>(([keyword, desc]) => {
 		return {

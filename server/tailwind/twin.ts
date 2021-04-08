@@ -143,6 +143,7 @@ type DarkMode = false | "media" | "class"
 
 export type TailwindConfigJS = {
 	separator?: string
+	prefix: string
 	darkMode?: DarkMode
 	purge?: Purge
 	mode?: "jit"
@@ -181,6 +182,10 @@ export function preprocessConfig(config: any): any {
 	if (cfg?.darkMode !== "media" && cfg?.darkMode !== "class") {
 		console.info("Option: `darkMode` forced to be set 'media'.")
 		cfg.darkMode = "media"
+	}
+
+	if (typeof cfg?.prefix !== "string") {
+		cfg.prefix = ""
 	}
 
 	return cfg
