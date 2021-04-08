@@ -11,7 +11,7 @@ import type { Cache, ServiceOptions } from "~/twLanguageService"
 import { cssDataManager } from "./cssData"
 
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
-const csspropSearcher = new Fuse(cssProperties, { includeScore: true })
+const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSensitive: true })
 
 export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
 	const diagnostics: Diagnostic[] = []
@@ -353,7 +353,7 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 		if (text.startsWith("--")) {
 			return result
 		}
-		const ret = csspropSearcher.search(text)
+		const ret = csspropSearcher.search(item.prop.toKebab())
 		const score = ret?.[0]?.score
 		if (score == undefined) {
 			result.push({
