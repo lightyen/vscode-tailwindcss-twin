@@ -228,6 +228,7 @@ export class Twin {
 		// collection
 		this.variants = createMap(this.variantsMap)
 		this.classnames = createMap(this.classnamesMap)
+		this.customProperties = Array.from(this.customPropertiesSet)
 
 		this.screens = collectScreens(this.variants)
 		this.colors = collectColors(this.classnames)
@@ -332,6 +333,9 @@ export class Twin {
 				cur.push(decl.value)
 			} else {
 				decls[decl.prop] = [decl.value]
+				if (decl.prop.startsWith("--")) {
+					this.customPropertiesSet.add(decl.prop)
+				}
 			}
 		})
 
@@ -343,6 +347,8 @@ export class Twin {
 
 	private readonly variantsMap: Map<string, string[]> = new Map()
 	private readonly classnamesMap: Map<string, ClassNameItem> = new Map()
+	private readonly customPropertiesSet: Set<string> = new Set()
+	public readonly customProperties: string[] = []
 	readonly variants: IMap<VariantItem>
 	readonly classnames: IMap<ClassNameItem>
 	readonly colors: IMap<ColorItem>
