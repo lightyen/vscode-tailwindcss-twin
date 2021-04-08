@@ -1,7 +1,7 @@
 {
   "name": "server",
   "description": "Tailwind Twin Language Server",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "author": "lightyen",
   "license": "MIT",
   "engines": {

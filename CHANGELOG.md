@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.8.4
+
+- Target to Tailwind v2.1
+- Completion *custom* css variable
+
+### Enhances
+
+- Don't show error on **camelCase** short css
+
 ## 0.8.3
 
 show pixel value for **rem**
