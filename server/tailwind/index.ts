@@ -131,7 +131,11 @@ export class Tailwind {
 		if (!this.config) {
 			return undefined
 		}
-		return dlv(this.config.theme, keys)
+		let value = dlv(this.config.theme, keys)
+		if (value?.["DEFAULT"] != undefined) {
+			value = value["DEFAULT"]
+		}
+		return value
 	}
 
 	getConfig(keys: string[]) {
