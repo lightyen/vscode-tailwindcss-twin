@@ -70,31 +70,41 @@ export default function (): Configuration {
 		module: {
 			rules: [
 				{
-					test: /\.tsx?$/,
-					exclude: /node_modules|__tests?__|\.test\.tsx?$|\.worker\.ts$/,
-					use: [
-						"babel-loader",
-						{
-							loader: "ts-loader",
-							options: { context: path.join(workspaceFolder, "src"), happyPackMode: true },
-						},
-					],
-				},
-				{
-					test: /\.jsx?$/,
-					exclude: /node_modules|__tests?__|\.test\.jsx?$|\.worker\.js$/,
+					test: /\.(j|t)sx?$/,
+					exclude: /node_modules|__tests?__|\.test\.(j|t)sx?$|\.worker\.(j|t)s$/,
 					use: ["babel-loader"],
 				},
 				{
-					test: /\.worker\.ts$/,
-					exclude: /node_modules/,
-					use: ["worker-loader", "babel-loader", { loader: "ts-loader", options: { happyPackMode: true } }],
-				},
-				{
-					test: /\.worker\.js$/,
+					test: /\.worker\.(j|t)s$/,
 					exclude: /node_modules/,
 					use: ["worker-loader", "babel-loader"],
 				},
+				// {
+				// 	test: /\.tsx?$/,
+				// 	exclude: /node_modules|__tests?__|\.test\.tsx?$|\.worker\.ts$/,
+				// 	use: [
+				// 		"babel-loader",
+				// 		{
+				// 			loader: "ts-loader",
+				// 			options: { context: path.join(workspaceFolder, "src"), happyPackMode: true },
+				// 		},
+				// 	],
+				// },
+				// {
+				// 	test: /\.jsx?$/,
+				// 	exclude: /node_modules|__tests?__|\.test\.jsx?$|\.worker\.js$/,
+				// 	use: ["babel-loader"],
+				// },
+				// {
+				// 	test: /\.worker\.ts$/,
+				// 	exclude: /node_modules/,
+				// 	use: ["worker-loader", "babel-loader", { loader: "ts-loader", options: { happyPackMode: true } }],
+				// },
+				// {
+				// 	test: /\.worker\.js$/,
+				// 	exclude: /node_modules/,
+				// 	use: ["worker-loader", "babel-loader"],
+				// },
 				{
 					test: /\.(png|jpe?g|gif|ico)$/i,
 					use: [

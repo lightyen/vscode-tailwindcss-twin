@@ -41,6 +41,11 @@ rules:
         delimiter: semi
         requireLast: false
   "@typescript-eslint/explicit-module-boundary-types": "off"
+  "@typescript-eslint/ban-types":
+    - error
+    - extendDefaults: true
+      types:
+        "{}": false
   react/display-name: "off"
   react/prop-types: "off"
   react-hooks/rules-of-hooks: error
