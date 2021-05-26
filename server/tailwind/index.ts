@@ -107,7 +107,7 @@ export class Tailwind {
 		this.config = preprocessConfig(this.config)
 		const processer = this.postcss([this.tailwindcss(this.config)])
 		const results = await Promise.all([
-			processer.process(`@tailwind components;`, { from: undefined }),
+			processer.process(`@tailwind base;@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 		])
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

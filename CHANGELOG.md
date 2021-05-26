@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.8.5
+
+- Support twin.macro v2.4.2
+
 ## 0.8.4
 
 - Target to Tailwind v2.1
