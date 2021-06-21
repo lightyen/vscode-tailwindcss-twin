@@ -4,9 +4,8 @@ import type { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
-import { completeElement } from "~/common/findElement"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
-import * as tw from "~/common/token"
+import * as parser from "~/common/twin-parser"
 import type { Tailwind } from "~/tailwind"
 import type { ClassNameItem } from "~/tailwind/twin"
 import type { ServiceOptions } from "~/twLanguageService"
@@ -87,42 +86,52 @@ export default function completion(
 function twinCompletion(
 	document: TextDocument,
 	index: number,
-	match: tw.Token,
+	match: parser.Token,
 	kind: PatternKind,
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionList {
-	const [offset, , input] = match
+	const [offset, , text] = match
 	const position = index - offset
-	const suggestion = completeElement({ input, position, separator: state.separator })
+	const suggestion = parser.suggest({ text, position, separator: state.separator })
 	const isIncomplete = false
 
-	const variants = variantsCompletion(document, input, position, offset, kind, suggestion, state, options)
-	const utilties = utiltiesCompletion(document, input, position, offset, kind, suggestion, state, options)
-	const shortcss = shortcssCompletion(document, input, position, offset, kind, suggestion, state, options)
+	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const utilties = utiltiesCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
 
 	return lsp.CompletionList.create([...variants, ...utilties, ...shortcss], isIncomplete)
 }
 
 function variantsCompletion(
 	document: TextDocument,
-	input: string,
+	text: string,
 	position: number,
 	offset: number,
 	kind: PatternKind,
-	suggestion: ReturnType<typeof completeElement>,
+	suggestion: ReturnType<typeof parser.suggest>,
 	state: Tailwind,
 	{ preferVariantWithParentheses }: ServiceOptions,
 ) {
-	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
-	const nextCharacter = input.slice(position, position + 1)
-	const userVariants = suggestion.variants.texts
+	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
+	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
+	const nextCharacter = text.slice(position, position + 1)
+	const userVariants = suggestion?.variants.texts ?? []
 	let variantItems: lsp.CompletionItem[] = []
 	let variantEnabled = true
 
-	if (suggestion.token) {
-		switch (suggestion.token.kind) {
-			case tw.TokenKind.Comment:
+	if (suggestion.inComment) {
+		variantEnabled = false
+	}
+
+	if (suggestion.target) {
+		switch (suggestion.type) {
+			case parser.SuggestResultType.Variant:
+				b = b + state.separator.length
+				break
+			case parser.SuggestResultType.CssPropertyProp:
+			case parser.SuggestResultType.ArbitraryStyleProp:
+			case parser.SuggestResultType.CssValue:
 				variantEnabled = false
 				break
 		}
@@ -172,8 +181,8 @@ function variantsCompletion(
 			})
 	}
 
-	const next = input.slice(b, b + 1)
-	const nextNotSpace = next != "" && suggestion.token != undefined && next.match(/[\s)]/) == null
+	const next = text.slice(b, b + 1)
+	const nextNotSpace = next != "" && suggestion != undefined && next.match(/[\s)]/) == null
 
 	if (preferVariantWithParentheses) {
 		if (nextCharacter !== "(") {
@@ -185,30 +194,20 @@ function variantsCompletion(
 		}
 	}
 
-	if (suggestion.token) {
-		if (suggestion.token.kind === tw.TokenKind.Variant) {
-			const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
+	console.log(suggestion.type)
+	if (suggestion.target) {
+		if (suggestion.type === parser.SuggestResultType.Variant) {
+			const isVariantWord = state.twin.isVariant(value)
 			if (!isVariantWord || (position > a && position < b)) {
 				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
 		} else if (
-			suggestion.token.kind === tw.TokenKind.ClassName ||
-			suggestion.token.kind === tw.TokenKind.CssProperty
+			suggestion.type === parser.SuggestResultType.ClassName ||
+			suggestion.type === parser.SuggestResultType.CssPropertyProp ||
+			suggestion.type === parser.SuggestResultType.ArbitraryStyleProp
 		) {
 			if (position > a) {
 				doReplace(variantItems, document, offset, a, b, item => item.insertText || item.label)
-			}
-		} else if (suggestion.token.kind === tw.TokenKind.Unknown) {
-			if (position === a) {
-				if (nextCharacter === state.separator) {
-					doReplace(variantItems, document, offset, a, a + 1, item => item.label)
-				} else {
-					doInsert(variantItems, document, offset, a, item => item.label)
-				}
-			} else if (suggestion.token.token.text === state.separator) {
-				doReplace(variantItems, document, offset, a, a + 1, item => item.label)
-			} else {
-				variantItems.length = 0
 			}
 		}
 	}
@@ -218,35 +217,41 @@ function variantsCompletion(
 
 function utiltiesCompletion(
 	document: TextDocument,
-	input: string,
+	text: string,
 	position: number,
 	offset: number,
 	kind: PatternKind,
-	suggestion: ReturnType<typeof completeElement>,
+	suggestion: ReturnType<typeof parser.suggest>,
 	state: Tailwind,
 	_: ServiceOptions,
 ) {
-	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
-	const userVariants = suggestion.variants.texts
+	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
+	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
+	const userVariants = suggestion?.variants.texts ?? []
 	let classNameItems: lsp.CompletionItem[] = []
 	let classNameEnabled = true
 
 	if (kind === PatternKind.TwinCssProperty) {
 		classNameEnabled = false
 	}
-	if (suggestion.token) {
-		switch (suggestion.token.kind) {
-			case tw.TokenKind.Variant: {
-				const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
+
+	if (suggestion.inComment) {
+		classNameEnabled = false
+	}
+
+	if (suggestion.target) {
+		switch (suggestion.type) {
+			case parser.SuggestResultType.Variant: {
+				const isVariantWord = state.twin.isVariant(value)
+				b = b + state.separator.length
 				if (position === b && !isVariantWord) {
 					classNameEnabled = false
 				}
 				break
 			}
-			case tw.TokenKind.Comment:
-				classNameEnabled = false
-				break
-			case tw.TokenKind.CssProperty:
+			case parser.SuggestResultType.CssPropertyProp:
+			case parser.SuggestResultType.ArbitraryStyleProp:
+			case parser.SuggestResultType.CssValue:
 				classNameEnabled = false
 				break
 		}
@@ -259,18 +264,18 @@ function utiltiesCompletion(
 			.map(([label, rules]) => createCompletionItem({ label, rules, variants: userVariants, kind, state }))
 	}
 
-	const next = input.slice(b, b + 1)
+	const next = text.slice(b, b + 1)
 	const nextNotSpace = next !== "" && next.match(/[\s)]/) == null
 
-	if (suggestion.token) {
+	if (suggestion.target) {
 		if (position > a && position < b) {
 			doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
-			if (suggestion.token.kind === tw.TokenKind.ClassName || suggestion.token.token.text === state.separator) {
+			if (suggestion.type === parser.SuggestResultType.ClassName || suggestion.target.value === state.separator) {
 				doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
-			} else if (suggestion.token.kind === tw.TokenKind.Variant) {
+			} else if (suggestion.type === parser.SuggestResultType.Variant) {
 				doInsert(classNameItems, document, offset, b, item => item.label + (nextNotSpace ? " " : ""))
 			}
 		} else {
@@ -283,43 +288,40 @@ function utiltiesCompletion(
 
 function shortcssCompletion(
 	document: TextDocument,
-	input: string,
+	text: string,
 	position: number,
 	offset: number,
 	kind: PatternKind,
-	suggestion: ReturnType<typeof completeElement>,
+	suggestion: ReturnType<typeof parser.suggest>,
 	state: Tailwind,
 	_: ServiceOptions,
 ) {
-	const [a, b, value] = suggestion.token?.token ?? tw.createToken(0, 0, "")
+	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
+	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
 
 	let cssPropItems: lsp.CompletionItem[] = []
 	const cssValueItems: lsp.CompletionItem[] = []
 	let cssPropEnabled = true
 	let cssValueEnabled = false
 
-	if (suggestion.token) {
-		switch (suggestion.token.kind) {
-			case tw.TokenKind.Variant: {
-				const isVariantWord = state.twin.isVariant(value.slice(0, value.length - state.separator.length))
+	if (suggestion.inComment) {
+		cssPropEnabled = cssValueEnabled = false
+	}
+
+	if (suggestion.target) {
+		switch (suggestion.type) {
+			case parser.SuggestResultType.Variant: {
+				b = b + state.separator.length
+				const isVariantWord = state.twin.isVariant(value)
 				if (position === b && !isVariantWord) {
 					cssPropEnabled = false
 				}
 				break
 			}
-			case tw.TokenKind.Comment:
+			case parser.SuggestResultType.CssValue:
 				cssPropEnabled = false
+				cssValueEnabled = true
 				break
-			case tw.TokenKind.CssProperty: {
-				const { start, end } = suggestion.token.value
-				if (position >= start && position <= end) {
-					cssPropEnabled = false
-				}
-				if (position >= start && position <= end) {
-					cssValueEnabled = true
-				}
-				break
-			}
 		}
 	}
 
@@ -359,15 +361,15 @@ function shortcssCompletion(
 		)
 	}
 
-	if (suggestion.token) {
-		if (suggestion.token.kind === tw.TokenKind.CssProperty) {
-			const { start, end } = suggestion.token.key
+	if (suggestion.target) {
+		if (suggestion.type === parser.SuggestResultType.CssPropertyProp) {
+			const { start, end } = suggestion.target
 			if (position > start && position <= end) {
 				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
 			} else if (position === start) {
 				doInsert(cssPropItems, document, offset, a, item => item.label + "[$0] ")
 			}
-		} else if (suggestion.token.kind === tw.TokenKind.Variant) {
+		} else if (suggestion.type === parser.SuggestResultType.Variant) {
 			if (position > a && position < b) {
 				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
 			} else if (position === a) {
@@ -382,13 +384,14 @@ function shortcssCompletion(
 		}
 	}
 
-	if (cssValueEnabled && suggestion.token?.kind === tw.TokenKind.CssProperty) {
-		const prop = suggestion.token.key.toKebab()
-		const word = suggestion.token.value.getWord(position)
+	if (cssValueEnabled) {
+		const prop = suggestion.prop?.toKebab() ?? ""
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const word = suggestion.target!.getWord(position)
 		cssValueItems.push(
 			...getCompletionsForDeclarationValue(
 				prop,
-				word.text,
+				word.value,
 				lsp.Range.create(document.positionAt(offset + word.start), document.positionAt(offset + word.end)),
 			),
 		)
@@ -400,7 +403,7 @@ function shortcssCompletion(
 function twinThemeCompletion(
 	document: TextDocument,
 	index: number,
-	token: tw.Token,
+	token: parser.Token,
 	state: Tailwind,
 ): lsp.CompletionList {
 	const [offset, , text] = token

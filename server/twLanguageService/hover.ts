@@ -2,9 +2,8 @@ import { serializeError } from "serialize-error"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
-import { hoverElement } from "~/common/findElement"
 import parseThemeValue from "~/common/parseThemeValue"
-import * as tw from "~/common/token"
+import * as parser from "~/common/twin-parser"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 import { cssDataManager, getEntryDescription } from "./cssData"
@@ -30,30 +29,32 @@ export default function hover(
 			}
 			return resolveThemeValue({ kind, range, token, state, options })
 		} else {
-			const selection = hoverElement({
-				input: token.text,
+			const selection = parser.hover({
+				text: token.value,
 				position: document.offsetAt(position) - token.start,
 				separator: state.separator,
 			})
-			if (!selection.token) {
+			if (!selection) {
 				return undefined
 			}
 
-			const { start, end, text } = selection.token.token
+			const { start, end, value } = selection.target
 			const range = lsp.Range.create(
 				document.positionAt(token.start + start),
 				document.positionAt(token.start + end),
 			)
 
-			if (selection.token.kind === tw.TokenKind.CssProperty) {
-				const key = selection.token.key.toKebab()
-				const value = selection.token.value.text
+			if (selection.type === parser.HoverResultType.CssProperty) {
+				const key = selection.prop?.toKebab() ?? ""
+				const value = selection.value?.value ?? ""
 				const important = selection.important
 
 				const values = [
 					"```scss",
 					"& {",
-					`\t${key}: ${tw.formatCssValue(tw.removeComments(value))}${important ? " !important" : ""};`,
+					`\t${key}: ${parser.formatCssValue(parser.removeComments(value))}${
+						important ? " !important" : ""
+					};`,
 					"}",
 					"```\n",
 				]
@@ -73,8 +74,8 @@ export default function hover(
 			}
 
 			if (
-				selection.token.kind === tw.TokenKind.ClassName &&
-				!state.twin.isSuggestedClassName(selection.variants.texts, selection.token.token.text)
+				selection.type === parser.HoverResultType.ClassName &&
+				!state.twin.isSuggestedClassName(selection.variants.texts, selection.target.value)
 			) {
 				return undefined
 			}
@@ -90,7 +91,7 @@ export default function hover(
 				return undefined
 			}
 
-			const keyword = text.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
+			const keyword = value.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
 			let title = ""
 			if (options.references) {
 				const type = getDescription(keyword)
@@ -134,19 +135,15 @@ function getHoverTwinMarkdown({
 	options,
 }: {
 	kind: PatternKind
-	selection: ReturnType<typeof hoverElement>
+	selection: Exclude<ReturnType<typeof parser.hover>, undefined>
 	state: Tailwind
 	options: ServiceOptions
 }): lsp.MarkupContent | undefined {
 	const { important } = selection
 
-	if (selection.token == undefined) {
-		return undefined
-	}
+	const value = selection.target.value
 
-	const value = selection.token.token.text
-
-	if (selection.token.kind === tw.TokenKind.Variant) {
+	if (selection.type === parser.HoverResultType.Variant) {
 		const content = renderVariant({ state, key: value })
 		if (content) {
 			return { kind: lsp.MarkupKind.Markdown, value: content }
@@ -154,7 +151,7 @@ function getHoverTwinMarkdown({
 		return undefined
 	}
 
-	if (selection.token.kind !== tw.TokenKind.ClassName) {
+	if (selection.type !== parser.HoverResultType.ClassName) {
 		return undefined
 	}
 
@@ -172,11 +169,11 @@ function resolveThemeValue({
 }: {
 	kind: PatternKind
 	range: lsp.Range
-	token: tw.Token
+	token: parser.Token
 	state: Tailwind
 	options: ServiceOptions
 }): lsp.Hover | undefined {
-	const result = parseThemeValue(token.text)
+	const result = parseThemeValue(token.value)
 	if (result.errors.length > 0) {
 		return undefined
 	}

@@ -163,25 +163,31 @@
       }
     },
     "expression-classname": {
-      "match": "((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
+      "match": "(!?)((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
       "captures": {
         "1": {
-          "name": "support.constant.classname.twin"
+          "name": "support.function.important-bang.classname.twin"
         },
         "2": {
+          "name": "support.constant.classname.twin"
+        },
+        "3": {
           "name": "support.function.important-bang.classname.twin"
         }
       }
     },
     "expression-short-css": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "([\\w-]+)(\\[)",
+      "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {
-          "name": "support.type.css-prop.twin"
+          "name": "support.function.important-bang.short-css.twin"
         },
         "2": {
+          "name": "support.type.short-css.prop.twin"
+        },
+        "3": {
           "name": "punctuation.section.embedded.short-css.begin.twin"
         }
       },
@@ -191,6 +197,38 @@
         },
         "2": {
           "name": "support.function.important-bang.short-css.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#line-comment-end-double-quote"
+        },
+        {
+          "include": "#block-comment-end-double-quote"
+        }
+      ]
+    },
+    "expression-arbitrary-style": {
+      "name": "entity.name.variable.css-value.twin",
+      "begin": "(!?)((?:\\w+-)+)(\\[)",
+      "end": "(\\])(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.important-bang.arbitrary-style.twin"
+        },
+        "2": {
+          "name": "support.type.arbitrary-style.prop.twin"
+        },
+        "3": {
+          "name": "punctuation.section.embedded.arbitrary-style.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-style.end.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.arbitrary-style.twin"
         }
       },
       "patterns": [
@@ -267,6 +305,9 @@
         },
         {
           "include": "#expression-short-css"
+        },
+        {
+          "include": "#expression-arbitrary-style"
         },
         {
           "include": "#expression-classname"

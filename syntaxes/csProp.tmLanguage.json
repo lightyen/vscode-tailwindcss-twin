@@ -162,26 +162,18 @@
         }
       }
     },
-    "expression-classname": {
-      "match": "((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
-      "captures": {
-        "1": {
-          "name": "support.constant.classname.twin"
-        },
-        "2": {
-          "name": "support.function.important-bang.classname.twin"
-        }
-      }
-    },
     "expression-short-css": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "([\\w-]+)(\\[)",
+      "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {
-          "name": "support.type.css-prop.twin"
+          "name": "support.function.important-bang.short-css.twin"
         },
         "2": {
+          "name": "support.type.short-css.prop.twin"
+        },
+        "3": {
           "name": "punctuation.section.embedded.short-css.begin.twin"
         }
       },

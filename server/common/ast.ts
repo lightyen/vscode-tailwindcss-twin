@@ -1,7 +1,7 @@
 import ts from "typescript"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import * as tw from "./token"
+import * as tw from "./twin-parser"
 
 // https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"

@@ -77,7 +77,7 @@ Support ONLY `react` and `twin.macro`
           }
         },
         {
-          "scope": "support.type.css-prop.twin",
+          "scope": "support.type.short-css.prop.twin",
           "settings": {
             "foreground": "#5dbeff"
           }
@@ -87,6 +87,18 @@ Support ONLY `react` and `twin.macro`
           "settings": {
             "foreground": "#5dbeff"
           }
+        },
+        {
+          "scope": "support.type.arbitrary-style.prop.twin",
+            "settings": {
+              "foreground": "#8a88fc"
+            }
+        },
+        {
+          "scope": "punctuation.section.embedded.arbitrary-style",
+             "settings": {
+               "foreground": "#8a88fc"
+            }
         },
         {
           "scope": "entity.name.variable.css-value.twin",

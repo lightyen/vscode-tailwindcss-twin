@@ -3,9 +3,8 @@ import { ColorDecoration } from "shared"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { findAllMatch, PatternKind } from "~/common/ast"
-import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
-import * as tw from "~/common/token"
+import * as parser from "~/common/twin-parser"
 import { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "."
 
@@ -43,32 +42,30 @@ export function provideColorDecorations(
 
 		const c = cachedResult[value]
 		if (!c) {
-			const result = findAllElements({
-				input: value,
+			const result = parser.spread({
+				text: value,
 				separator: state.separator,
 			})
 			cachedResult[value] = result
 		}
 
-		const { elementList } = cachedResult[value]
-
-		for (const c of elementList) {
-			switch (c.kind) {
-				case tw.TokenKind.ClassName:
+		for (const c of cachedResult[value].items) {
+			switch (c.type) {
+				case parser.SpreadResultType.ClassName:
 					{
-						const classname = state.twin.classnames.get(c.token.text)
+						const classname = state.twin.classnames.get(c.target.value)
 						if (!classname) {
 							continue
 						}
 						if (classname.some(c => c.source === "components")) {
 							continue
 						}
-						const color = state.twin.colors.get(c.token.text)
+						const color = state.twin.colors.get(c.target.value)
 						if (color) {
 							colors.push({
 								range: {
-									start: document.positionAt(start + c.token.start),
-									end: document.positionAt(start + c.token.end),
+									start: document.positionAt(start + c.target.start),
+									end: document.positionAt(start + c.target.end),
 								},
 								...color,
 							})

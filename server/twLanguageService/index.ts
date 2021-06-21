@@ -2,8 +2,8 @@ import EventEmitter from "events"
 import { Settings } from "shared"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import findAllElements from "~/common/findAllElements"
 import idebounce from "~/common/idebounce"
+import * as parser from "~/common/twin-parser"
 import { LanguageService } from "~/LanguageService"
 import { Tailwind, TailwindOptions } from "~/tailwind"
 import completion from "./completion"
@@ -14,7 +14,7 @@ import { provideColorDecorations } from "./provideColor"
 
 export type ServiceOptions = TailwindOptions & Settings
 
-export type Cache = Record<string, Record<string, ReturnType<typeof findAllElements>>>
+export type Cache = Record<string, Record<string, ReturnType<typeof parser.spread>>>
 
 export class TailwindLanguageService implements LanguageService {
 	public state: Tailwind
@@ -75,12 +75,17 @@ export class TailwindLanguageService implements LanguageService {
 		return hover(document, params.position, this.state, this.options)
 	}
 	async validate(document: TextDocument) {
-		this.cache[document.uri] = {}
+		if (this.cache[document.uri] == undefined) {
+			this.cache[document.uri] = {}
+		}
 		if (!this.ready) return []
 		if (!this.options.diagnostics.enabled) return []
 		return await idebounce("validate" + document.uri, validate, document, this.state, this.options, this.cache)
 	}
 	async provideColorDecorations(document: TextDocument) {
+		if (this.cache[document.uri] == undefined) {
+			this.cache[document.uri] = {}
+		}
 		if (!this.ready) return []
 		if (!this.options.colorDecorators) return []
 		return await idebounce(

@@ -3,9 +3,8 @@ import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { DIAGNOSTICS_ID } from "~/../shared"
 import { findAllMatch, PatternKind } from "~/common/ast"
-import findAllElements from "~/common/findAllElements"
 import parseThemeValue from "~/common/parseThemeValue"
-import * as tw from "~/common/token"
+import * as parser from "~/common/twin-parser"
 import type { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "~/twLanguageService"
 import { cssDataManager } from "./cssData"
@@ -43,7 +42,7 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
 			const c = cache[uri][value]
 			if (!c) {
-				const result = findAllElements({ input: value, separator: state.separator })
+				const result = parser.spread({ text: value, separator: state.separator })
 				cache[uri][value] = result
 			}
 			diagnostics.push(
@@ -68,47 +67,45 @@ function validateTwin({
 	kind,
 	state,
 	diagnostics,
-	elementList,
-	emptyList,
-	error,
+	items,
+	emptyGroup,
+	emptyVariants,
+	notClosed,
 }: {
 	document: TextDocument
 	offset: number
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: ServiceOptions["diagnostics"]
-} & ReturnType<typeof findAllElements>): Diagnostic[] {
+} & ReturnType<typeof parser.spread>): Diagnostic[] {
 	const result: Diagnostic[] = []
 
-	if (error) {
+	for (const e of notClosed) {
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: error.message,
+			message: "Bracket is not closed.",
 			range: {
-				start: document.positionAt(offset + error.start),
-				end: document.positionAt(offset + error.end),
+				start: document.positionAt(offset + e.start),
+				end: document.positionAt(offset + e.end),
 			},
 			severity: DiagnosticSeverity.Error,
 		})
 	}
 
 	if (kind === PatternKind.Twin) {
-		elementList.forEach(c => {
-			switch (c.kind) {
-				case tw.TokenKind.ClassName:
+		items.forEach(c => {
+			switch (c.type) {
+				case parser.SpreadResultType.ClassName:
 					result.push(...checkTwinClassName(c, document, offset, state))
 					break
-				case tw.TokenKind.CssProperty:
+				case parser.SpreadResultType.CssProperty:
 					result.push(...checkTwinCssProperty(c, document, offset, state))
-					break
-				case tw.TokenKind.Unknown:
-					result.push(...checkTwinClassName(c, document, offset, state))
 					break
 			}
 		})
 	}
 
-	function travel(obj: Record<string, tw.TokenList>) {
+	function travel(obj: Record<string, parser.TokenList>) {
 		for (const k in obj) {
 			const t = obj[k]
 			const parts = k.split(".")
@@ -117,8 +114,8 @@ function validateTwin({
 				for (const token of t) {
 					const message =
 						diagnostics.conflict === "strict"
-							? `${token.text} is conflicted on property: ${prop}`
-							: `${token.text} is conflicted`
+							? `${token.value} is conflicted on property: ${prop}`
+							: `${token.value} is conflicted`
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message,
@@ -134,33 +131,33 @@ function validateTwin({
 	}
 
 	if (diagnostics.conflict !== "none") {
-		const map: Record<string, tw.TokenList> = {}
+		const map: Record<string, parser.TokenList> = {}
 
 		if (kind === PatternKind.Twin) {
-			for (let i = 0; i < elementList.length; i++) {
-				const item = elementList[i]
-				if (item.kind === tw.TokenKind.Comment) {
-					continue
-				}
-				const variants = item.variants.texts
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i]
 				if (item.important) {
 					continue
 				}
 
-				if (item.kind === tw.TokenKind.CssProperty) {
+				const variants = item.variants.texts
+				if (
+					item.type === parser.SpreadResultType.CssProperty ||
+					item.type === parser.SpreadResultType.ArbitraryStyle
+				) {
 					const twinKeys = variants.sort()
-					const property = item.prop.toKebab()
+					const property = item.target.toKebab()
 					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(elementList[i].token)
+						target.push(item.target)
 					} else {
-						map[key] = tw.createTokenList([elementList[i].token])
+						map[key] = parser.createTokenList([item.target])
 					}
 					continue
 				}
 
-				const label = item.token.text
+				const label = item.target.value
 				const data = state.twin.classnames.get(label)
 				if (!(data instanceof Array)) {
 					continue
@@ -189,9 +186,9 @@ function validateTwin({
 					const key = [...variants, Array.from(s).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(elementList[i].token)
+						target.push(item.target)
 					} else {
-						map[key] = tw.createTokenList([elementList[i].token])
+						map[key] = parser.createTokenList([item.target])
 					}
 				} else if (diagnostics.conflict === "strict") {
 					for (const d of data) {
@@ -200,9 +197,9 @@ function validateTwin({
 							const key = [...d.context, d.rest, ...d.pseudo, ...twinKeys, property].join(".")
 							const target = map[key]
 							if (target instanceof Array) {
-								target.push(item.token)
+								target.push(item.target)
 							} else {
-								map[key] = tw.createTokenList([item.token])
+								map[key] = parser.createTokenList([item.target])
 							}
 						}
 						if (d.source === "components") {
@@ -212,22 +209,20 @@ function validateTwin({
 				}
 			}
 		} else if (kind === PatternKind.TwinCssProperty) {
-			for (let i = 0; i < elementList.length; i++) {
-				const item = elementList[i]
-				if (item.kind === tw.TokenKind.Comment) {
-					continue
-				}
-				if (item.kind === tw.TokenKind.Unknown || item.kind === tw.TokenKind.ClassName) {
-					let message = `Invalid token '${item.token.text}'`
-					if (cssDataManager.getProperty(item.token.text)) {
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i]
+
+				if (item.type === parser.SpreadResultType.ClassName) {
+					let message = `Invalid token '${item.target.value}'`
+					if (cssDataManager.getProperty(item.target.value)) {
 						message += ", missing square brackets?"
 					}
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message,
 						range: {
-							start: document.positionAt(offset + item.token.start),
-							end: document.positionAt(offset + item.token.end),
+							start: document.positionAt(offset + item.target.start),
+							end: document.positionAt(offset + item.target.end),
 						},
 						severity: DiagnosticSeverity.Error,
 					})
@@ -235,13 +230,13 @@ function validateTwin({
 				}
 
 				const twinKeys = item.variants.texts.sort()
-				const property = item.prop.toKebab()
+				const property = item.target.toKebab()
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
-					target.push(elementList[i].token)
+					target.push(item.target)
 				} else {
-					map[key] = tw.createTokenList([elementList[i].token])
+					map[key] = parser.createTokenList([item.target])
 				}
 			}
 		}
@@ -249,74 +244,101 @@ function validateTwin({
 		travel(map)
 	}
 
-	for (let i = 0; i < emptyList.length; i++) {
-		const item = emptyList[i]
-		const searcher = state.twin.searchers
-		for (const [a, b, variant] of item.variants) {
-			if (!state.twin.isVariant(variant)) {
-				const ans = searcher.variants.search(variant)
-				if (ans?.length > 0) {
-					result.push({
-						source: DIAGNOSTICS_ID,
-						message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
-						range: {
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						data: { text: variant, newText: ans[0].item },
-						severity: DiagnosticSeverity.Error,
-					})
-				} else {
-					result.push({
-						source: DIAGNOSTICS_ID,
-						message: `Can't find '${variant}'`,
-						range: {
-							start: document.positionAt(offset + a),
-							end: document.positionAt(offset + b),
-						},
-						severity: DiagnosticSeverity.Error,
-					})
-				}
-			}
-		}
-
-		if (item.kind === tw.EmptyKind.Group && diagnostics.emptyGroup) {
+	for (let i = 0; i < emptyVariants.length; i++) {
+		const item = emptyVariants[i]
+		if (diagnostics.emptyClass) {
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `forgot something?`,
 				range: {
-					start: document.positionAt(offset + item.start),
-					end: document.positionAt(offset + item.end),
-				},
-				severity: DiagnosticSeverity.Warning,
-			})
-		} else if (item.kind === tw.EmptyKind.Classname && diagnostics.emptyClass) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `forgot something?`,
-				range: {
-					start: document.positionAt(offset + item.start),
-					end: document.positionAt(offset + item.start + 1),
-				},
-				severity: DiagnosticSeverity.Warning,
-			})
-		} else if (item.kind === tw.EmptyKind.CssProperty && diagnostics.emptyCssProperty) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `forgot something?`,
-				range: {
-					start: document.positionAt(offset + item.start),
-					end: document.positionAt(offset + item.end),
+					start: document.positionAt(offset + item.end),
+					end: document.positionAt(offset + item.end + 1),
 				},
 				severity: DiagnosticSeverity.Warning,
 			})
 		}
 	}
 
+	for (let i = 0; i < emptyGroup.length; i++) {
+		const item = emptyGroup[i]
+		// const searcher = state.twin.searchers
+		// for (const [a, b, variant] of item.variants) {
+		// 	if (!state.twin.isVariant(variant)) {
+		// 		const ans = searcher.variants.search(variant)
+		// 		if (ans?.length > 0) {
+		// 			result.push({
+		// 				source: DIAGNOSTICS_ID,
+		// 				message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
+		// 				range: {
+		// 					start: document.positionAt(offset + a),
+		// 					end: document.positionAt(offset + b),
+		// 				},
+		// 				data: { text: variant, newText: ans[0].item },
+		// 				severity: DiagnosticSeverity.Error,
+		// 			})
+		// 		} else {   adasasassasasas
+		// 			result.push({
+		// 				source: DIAGNOSTICS_ID,
+		// 				message: `Can't find '${variant}'`,
+		// 				range: {
+		// 					start: document.positionAt(offset + a),
+		// 					end: document.positionAt(offset + b),
+		// 				},
+		// 				severity: DiagnosticSeverity.Error,
+		// 			})
+		// 		}
+		// 	}
+		// }
+
+		if (diagnostics.emptyGroup) {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `forgot something?`,
+				range: {
+					start: document.positionAt(offset + item.start),
+					end: document.positionAt(offset + item.end),
+				},
+				severity: DiagnosticSeverity.Warning,
+			})
+		}
+
+		// if (item.kind === tw.EmptyKind.Group && diagnostics.emptyGroup) {
+		// 	result.push({
+		// 		source: DIAGNOSTICS_ID,
+		// 		message: `forgot something?`,
+		// 		range: {
+		// 			start: document.positionAt(offset + item.start),
+		// 			end: document.positionAt(offset + item.end),
+		// 		},
+		// 		severity: DiagnosticSeverity.Warning,
+		// 	})
+		// } else if (item.kind === tw.EmptyKind.Classname && diagnostics.emptyClass) {
+		// 	result.push({
+		// 		source: DIAGNOSTICS_ID,
+		// 		message: `forgot something?`,
+		// 		range: {
+		// 			start: document.positionAt(offset + item.start),
+		// 			end: document.positionAt(offset + item.start + 1),
+		// 		},
+		// 		severity: DiagnosticSeverity.Warning,
+		// 	})
+		// } else if (item.kind === tw.EmptyKind.CssProperty && diagnostics.emptyCssProperty) {
+		// 	result.push({
+		// 		source: DIAGNOSTICS_ID,
+		// 		message: `forgot something?`,
+		// 		range: {
+		// 			start: document.positionAt(offset + item.start),
+		// 			end: document.positionAt(offset + item.end),
+		// 		},
+		// 		severity: DiagnosticSeverity.Warning,
+		// 	})
+		// }
+	}
+
 	return result
 }
 
-function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinCssProperty(item: parser.SpreadDescription, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
 		if (state.twin.isVariant(variant)) {
@@ -348,40 +370,44 @@ function checkTwinCssProperty(item: tw.CssProperty, document: TextDocument, offs
 		}
 	}
 
-	if (item.token.text) {
-		const { text, start, end } = item.prop
-		if (text.startsWith("--")) {
-			return result
-		}
-		const ret = csspropSearcher.search(item.prop.toKebab())
-		const score = ret?.[0]?.score
-		if (score == undefined) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Can't find '${text}'`,
-				range: {
-					start: document.positionAt(offset + start),
-					end: document.positionAt(offset + end),
-				},
-				severity: DiagnosticSeverity.Error,
-			})
-		} else if (score > 0) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Can't find '${text}', did you mean '${ret[0].item}'?`,
-				range: {
-					start: document.positionAt(offset + start),
-					end: document.positionAt(offset + end),
-				},
-				data: { text, newText: ret[0].item },
-				severity: DiagnosticSeverity.Error,
-			})
-		}
+	if (item.type !== parser.SpreadResultType.CssProperty) {
+		return result
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const prop = item.prop!
+	const { value, start, end } = prop
+	if (value.startsWith("--")) {
+		return result
+	}
+	const ret = csspropSearcher.search(prop.toKebab())
+	const score = ret?.[0]?.score
+	if (score == undefined) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `Can't find '${value}'`,
+			range: {
+				start: document.positionAt(offset + start),
+				end: document.positionAt(offset + end),
+			},
+			severity: DiagnosticSeverity.Error,
+		})
+	} else if (score > 0) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `Can't find '${value}', did you mean '${ret[0].item}'?`,
+			range: {
+				start: document.positionAt(offset + start),
+				end: document.positionAt(offset + end),
+			},
+			data: { text: value, newText: ret[0].item },
+			severity: DiagnosticSeverity.Error,
+		})
 	}
 	return result
 }
 
-function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(item: parser.SpreadDescription, document: TextDocument, offset: number, state: Tailwind) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
 		if (state.twin.isVariant(variant)) {
@@ -413,17 +439,17 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 		}
 	}
 
-	if (item.token.text) {
+	if (item.target.value) {
 		const variants = item.variants.texts
-		const { start, end, text } = item.token
-		if (!state.twin.isSuggestedClassName(variants, text)) {
-			const ret = guess(state, variants, text)
+		const { start, end, value } = item.target
+		if (!state.twin.isSuggestedClassName(variants, value)) {
+			const ret = guess(state, variants, value)
 			if (ret.score === 0) {
 				switch (ret.kind) {
 					case PredictionKind.CssProperty:
 						result.push({
 							source: DIAGNOSTICS_ID,
-							message: `Invalid token '${text}', missing square brackets?`,
+							message: `Invalid token '${value}', missing square brackets?`,
 							range: {
 								start: document.positionAt(offset + start),
 								end: document.positionAt(offset + end),
@@ -434,7 +460,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 					case PredictionKind.Variant:
 						result.push({
 							source: DIAGNOSTICS_ID,
-							message: `Invalid token '${text}', missing separator?`,
+							message: `Invalid token '${value}', missing separator?`,
 							range: {
 								start: document.positionAt(offset + start),
 								end: document.positionAt(offset + end),
@@ -445,7 +471,7 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 					default:
 						result.push({
 							source: DIAGNOSTICS_ID,
-							message: `Can't find '${text}'`,
+							message: `Can't find '${value}'`,
 							range: {
 								start: document.positionAt(offset + start),
 								end: document.positionAt(offset + end),
@@ -456,12 +482,12 @@ function checkTwinClassName(item: tw.ClassName | tw.Unknown, document: TextDocum
 			} else {
 				result.push({
 					source: DIAGNOSTICS_ID,
-					message: `Can't find '${text}', did you mean '${ret.value}'?`,
+					message: `Can't find ddd'${value}', did you mean '${ret.value}'?`,
 					range: {
 						start: document.positionAt(offset + start),
 						end: document.positionAt(offset + end),
 					},
-					data: { text, newText: ret.value },
+					data: { text: value, newText: ret.value },
 					severity: DiagnosticSeverity.Error,
 				})
 			}

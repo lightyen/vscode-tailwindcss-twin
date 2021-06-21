@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import { Node, NodeKind, Semantic } from "~/common/parseSemanticTokens"
 import parseThemeValue, { TwThemeElementKind } from "~/common/parseThemeValue"
-import * as tw from "~/common/token"
+import * as parser from "~/common/twin-parser"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 
@@ -141,13 +141,13 @@ function parseColor(value: unknown): string | undefined {
 }
 
 function renderThemeValue(
-	token: tw.Token,
+	token: parser.Token,
 	getPosition: (offset: number) => lsp.Position,
 	builder: lsp.SemanticTokensBuilder,
 	state: Tailwind,
 	colorDecorators: boolean,
 ) {
-	const result = parseThemeValue(token.text)
+	const result = parseThemeValue(token.value)
 
 	const value = state.getTheme(result.keys())
 	const c = parseColor(value)
