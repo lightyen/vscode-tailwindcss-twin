@@ -52,7 +52,7 @@ export default function hover(
 				const values = [
 					"```scss",
 					"& {",
-					`\t${key}: ${parser.formatCssValue(parser.removeComments(value))}${
+					`\t${key}: ${parser.formatCssValue(parser.removeCommentsInCss(value))}${
 						important ? " !important" : ""
 					};`,
 					"}",

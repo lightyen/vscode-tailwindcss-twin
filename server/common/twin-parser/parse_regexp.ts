@@ -169,8 +169,23 @@ export function parse({
 					}),
 				)
 			} else {
-				const node = parse({ text, start: match.index + variant.length, end: regexp.lastIndex })
-				console.log(variantNode, nodes.NodeKind[node.kind])
+				const lb = text.slice(match.index + variant.length, regexp.lastIndex).indexOf("[")
+				let _end = regexp.lastIndex
+				if (lb >= 0) {
+					const rb = findRightBracket({
+						text,
+						start: match.index + variant.length + lb,
+						end,
+						brackets: ["[", "]"],
+					})
+					_end = rb !== undefined ? rb + 1 : end
+					while (text[_end] != undefined && /^\S$/.test(text[_end])) {
+						_end++
+					}
+				}
+
+				const node = parse({ text, start: match.index + variant.length, end: _end })
+
 				if (node.kind !== nodes.NodeKind.Declaration) {
 					children.push(
 						nodes.createVariantSpanNode({
@@ -183,7 +198,22 @@ export function parse({
 							child: node,
 						}),
 					)
+				} else {
+					// empty
+					children.push(
+						nodes.createVariantSpanNode({
+							token: createToken(
+								match.index,
+								regexp.lastIndex,
+								text.slice(match.index, regexp.lastIndex),
+							),
+							variant: variantNode,
+							child: undefined,
+						}),
+					)
 				}
+
+				regexp.lastIndex = _end
 			}
 		} else if (classnames) {
 			let exclamationLeft: nodes.IdentifierNode | undefined
@@ -299,10 +329,6 @@ export function parse({
 		if (regexp.lastIndex > breac) {
 			break
 		}
-	}
-
-	if (children.length === 0) {
-		return nodes.createClassNameNode({ token: decl, child: nodes.createIdentifierNode(decl) })
 	}
 
 	if (children.length === 1) {

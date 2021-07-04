@@ -20,6 +20,36 @@
     }
   ],
   "repository": {
+    "qstring-double": {
+      "name": "string.quoted.double.twin",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.twin"
+        }
+      },
+      "end": "(\")",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.twin"
+        }
+      }
+    },
+    "qstring-single": {
+      "name": "string.quoted.single.twin",
+      "begin": "'",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.twin"
+        }
+      },
+      "end": "(')",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.twin"
+        }
+      }
+    },
     "line-comment-end-backtick": {
       "match": "(//)[^`]*",
       "captures": {
@@ -71,6 +101,29 @@
         }
       }
     },
+    "css-function": {
+      "begin": "([\\w-]+)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.url.css.twin"
+        }
+      },
+      "end": "\\)",
+      "patterns": [
+        {
+          "include": "#qstring-double"
+        },
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
+        }
+      ]
+    },
     "expression-short-css": {
       "name": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
@@ -96,7 +149,19 @@
       },
       "patterns": [
         {
+          "include": "#qstring-double"
+        },
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#css-function"
+        },
+        {
           "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
         }
       ]
     },
@@ -125,7 +190,19 @@
       },
       "patterns": [
         {
+          "include": "#qstring-double"
+        },
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#css-function"
+        },
+        {
           "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
         }
       ]
     },

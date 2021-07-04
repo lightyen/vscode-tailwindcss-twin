@@ -178,7 +178,7 @@ export function createDeclarationNode(params: { token: Token; children: NodeList
 export function createVariantSpanNode(params: {
 	token: Token
 	variant: VariantNode
-	child: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode
+	child?: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode | undefined
 }) {
 	const { token, variant, child } = params
 	return new Proxy(token, {
