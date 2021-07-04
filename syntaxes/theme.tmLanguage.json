@@ -4,8 +4,7 @@
   "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "contentName": "entity.name.string.tagged-template.twin-theme",
-      "begin": "(theme)(`)",
+      "begin": "theme(`)",
       "beginCaptures": {
         "2": {
           "name": "punctuation.definition.string.template.begin.twin-theme"

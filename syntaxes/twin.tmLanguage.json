@@ -4,9 +4,16 @@
   "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "begin": "tw(?:(?:\\.\\w+)?|\\(\\w*\\))(`)",
+      "name": "meta.tag.twin",
+      "begin": "(tw)(?:(?:\\.(\\w+))?|\\(\\w*\\))(`)",
       "beginCaptures": {
         "1": {
+          "name": "entity.name.function.twin"
+        },
+        "2": {
+          "name": "entity.name.function.tagged-template.twin"
+        },
+        "3": {
           "name": "punctuation.definition.string.template.begin.twin"
         }
       },
