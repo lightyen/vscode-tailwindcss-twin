@@ -194,7 +194,6 @@ function variantsCompletion(
 		}
 	}
 
-	console.log(suggestion.type)
 	if (suggestion.target) {
 		if (suggestion.type === parser.SuggestResultType.Variant) {
 			const isVariantWord = state.twin.isVariant(value)

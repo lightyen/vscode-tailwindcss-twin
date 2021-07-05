@@ -4,7 +4,27 @@
   "injectionSelector": "L:meta.tag.attributes -comment",
   "patterns": [
     {
-      "begin": "\\s*(tw)(=)('|{')",
+      "begin": "\\s*(tw)(=){",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.other.attribute-name.twin"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.twin"
+        }
+      },
+      "end": "}",
+      "patterns": [
+        {
+          "include": "#expression-single-quote"
+        },
+        {
+          "include": "#expression-double-quote"
+        }
+      ]
+    },
+    {
+      "begin": "\\s*(tw)(=)(')",
       "beginCaptures": {
         "1": {
           "name": "entity.other.attribute-name.twin"
@@ -13,35 +33,13 @@
           "name": "keyword.operator.assignment.twin"
         },
         "3": {
-          "name": "string.quoted.single",
-          "patterns": [
-            {
-              "match": "({)?(')",
-              "captures": {
-                "1": {
-                  "name": "punctuation.section.embedded.twProp.begin.twin"
-                },
-                "2": {
-                  "name": "punctuation.definition.string.twProp.begin.twin"
-                }
-              }
-            }
-          ]
+          "name": "string.quoted.single"
         }
       },
-      "end": "(')(})?",
+      "end": "(')",
       "endCaptures": {
         "1": {
-          "name": "string.quoted.single",
-          "patterns": [
-            {
-              "match": "'",
-              "name": "punctuation.definition.string.twProp.end.twin"
-            }
-          ]
-        },
-        "2": {
-          "name": "punctuation.definition.embedded.twProp.end.twin"
+          "name": "string.quoted.single"
         }
       },
       "patterns": [
@@ -52,7 +50,7 @@
     },
     {
       "name": "meta.tag.twin",
-      "begin": "\\s*?(tw)(=)({)?(\")",
+      "begin": "\\s*?(tw)(=)(\")",
       "beginCaptures": {
         "1": {
           "name": "entity.other.attribute-name.twin"
@@ -61,31 +59,13 @@
           "name": "keyword.operator.assignment.twin"
         },
         "3": {
-          "name": "punctuation.section.embedded.twProp.begin.twin"
-        },
-        "4": {
-          "name": "string.quoted.double",
-          "patterns": [
-            {
-              "match": "\"",
-              "name": "punctuation.definition.string.twProp.begin.twin"
-            }
-          ]
+          "name": "string.quoted.double"
         }
       },
-      "end": "(\")(})?",
+      "end": "(\")",
       "endCaptures": {
         "1": {
-          "name": "string.quoted.double",
-          "patterns": [
-            {
-              "match": "\"",
-              "name": "punctuation.definition.string.twProp.end.twin"
-            }
-          ]
-        },
-        "2": {
-          "name": "punctuation.definition.embedded.twProp.end.twin"
+          "name": "string.quoted.double"
         }
       },
       "patterns": [

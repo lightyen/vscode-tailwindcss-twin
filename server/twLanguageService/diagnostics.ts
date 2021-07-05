@@ -146,7 +146,7 @@ function validateTwin({
 					item.type === parser.SpreadResultType.ArbitraryStyle
 				) {
 					const twinKeys = variants.sort()
-					const property = item.target.toKebab()
+					const property = item.prop?.toKebab()
 					const key = [undefined, ...twinKeys, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {

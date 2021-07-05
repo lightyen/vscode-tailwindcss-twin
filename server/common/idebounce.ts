@@ -2,7 +2,7 @@ const m: Record<string, NodeJS.Timeout | null> = {}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function idebounce<T>(key: string, callback: (...args: any[]) => T, ...args: any[]) {
-	const timeout = 33
+	const timeout = 16
 	const h = m[key]
 	if (h) {
 		clearTimeout(h)

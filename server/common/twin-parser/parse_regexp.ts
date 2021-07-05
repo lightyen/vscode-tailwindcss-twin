@@ -101,7 +101,7 @@ export function parse({
 	const decl = createToken(start, end, text.slice(start, end))
 	const _separator = separator.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 	const regexp = new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})\\S*|([^\\s\\[]+)\\[|((?:(?!\\/\\/|\\/\\*)\\S)+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})[^\\s(]*|(!?[\\w-]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 
@@ -110,8 +110,7 @@ export function parse({
 	text = text.slice(0, end)
 
 	while ((match = regexp.exec(text))) {
-		const [, , blockComment, variant, arbitrary] = match
-		let classnames = match[5]
+		const [, , blockComment, variant, arbitrary, classnames, group, others] = match
 		let exclamationLeft: nodes.IdentifierNode | undefined
 		start = match.index
 
@@ -121,7 +120,6 @@ export function parse({
 		}
 
 		if (variant) {
-			const separator = ":"
 			start += variant.length
 
 			const variantNode = nodes.createVariantNode({
@@ -137,6 +135,11 @@ export function parse({
 					createToken(start - separator.length, start, text.slice(start - separator.length, start)),
 				),
 			})
+
+			if (text[start] === "!") {
+				exclamationLeft = nodes.createIdentifierNode(createToken(start, start + 1, "!"))
+				start += 1
+			}
 
 			if (text[start] === "(") {
 				const rb = findRightBracket({ text, start, end })
@@ -216,56 +219,21 @@ export function parse({
 				regexp.lastIndex = _end
 			}
 		} else if (classnames) {
-			let exclamationLeft: nodes.IdentifierNode | undefined
-
-			if (text.slice(start, start + 1) === "!") {
-				classnames = classnames.slice(1)
-				exclamationLeft = nodes.createIdentifierNode(createToken(start, start + 1, "!"))
-				start += 1
-			}
-
 			let exclamationRight: nodes.IdentifierNode | undefined
-			if (text.slice(start, start + 1) === "(") {
-				const rb = findRightBracket({ text, start, end })
-				start += 1
-				if (rb != undefined) {
-					regexp.lastIndex = rb + 1
-					if (text[rb + 1] === "!") {
-						exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
-						regexp.lastIndex += 1
-					}
-				} else {
-					regexp.lastIndex = end
-				}
-
-				const _end = rb != undefined ? rb : end
-
-				children.push(
-					nodes.createGroupNode({
-						token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
-						closed: rb != undefined,
-						child: parse({ text, start, end: _end }),
-					}),
-				)
-			} else {
-				let _end = regexp.lastIndex
-				if (text[regexp.lastIndex - 1] === "!") {
-					exclamationRight = nodes.createIdentifierNode(
-						createToken(regexp.lastIndex - 1, regexp.lastIndex, "!"),
-					)
-					classnames = classnames.slice(0, -1)
-					_end -= 1
-				}
-
-				children.push(
-					nodes.createClassNameNode({
-						token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
-						exclamationLeft,
-						exclamationRight,
-						child: nodes.createIdentifierNode(createToken(start, _end, text.slice(start, _end))),
-					}),
-				)
+			let _end = regexp.lastIndex
+			if (text[regexp.lastIndex - 1] === "!") {
+				exclamationRight = nodes.createIdentifierNode(createToken(regexp.lastIndex - 1, regexp.lastIndex, "!"))
+				_end -= 1
 			}
+
+			children.push(
+				nodes.createClassNameNode({
+					token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
+					exclamationLeft,
+					exclamationRight,
+					child: nodes.createIdentifierNode(createToken(start, _end, text.slice(start, _end))),
+				}),
+			)
 		} else if (arbitrary) {
 			const rb = findRightBracket({ text, start: regexp.lastIndex - 1, end, brackets: ["[", "]"] })
 			let content: Token
@@ -324,6 +292,39 @@ export function parse({
 			} else {
 				regexp.lastIndex = end
 			}
+		} else if (group) {
+			let exclamationRight: nodes.IdentifierNode | undefined
+			const rb = findRightBracket({ text, start, end })
+			if (rb != undefined) {
+				regexp.lastIndex = rb + 1
+				if (text[rb + 1] === "!") {
+					exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
+					regexp.lastIndex += 1
+				}
+			} else {
+				regexp.lastIndex = end
+			}
+
+			const _end = rb != undefined ? rb : end
+
+			children.push(
+				nodes.createGroupNode({
+					token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
+					closed: rb != undefined,
+					child: parse({ text, start: start + 1, end: _end }),
+					exclamationLeft,
+					exclamationRight,
+				}),
+			)
+		} else if (others) {
+			children.push(
+				nodes.createClassNameNode({
+					token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
+					child: nodes.createIdentifierNode(
+						createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
+					),
+				}),
+			)
 		}
 
 		if (regexp.lastIndex > breac) {
