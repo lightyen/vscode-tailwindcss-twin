@@ -482,7 +482,7 @@ function createKeyValuePair<T>(record: [string, T]) {
 }
 
 function createMap<T>(m: Map<string, T>) {
-	return (new Proxy(Array.from(m).map(createKeyValuePair), {
+	return new Proxy(Array.from(m).map(createKeyValuePair), {
 		get: function (target, prop) {
 			switch (prop) {
 				case "keys":
@@ -497,7 +497,7 @@ function createMap<T>(m: Map<string, T>) {
 					return Reflect.get(target, prop)
 			}
 		},
-	}) as unknown) as IMap<T>
+	}) as unknown as IMap<T>
 }
 
 function collectScreens(variants: IMap<VariantItem>) {
@@ -570,7 +570,8 @@ function collectColors(utilities: IMap<ClassNameItem>) {
 				continue
 			}
 
-			const reg = /^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba?\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})/
+			const reg =
+				/^[a-z]+$|#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b|rgba?\(\s*(?<r>\d{1,3})\s*,\s*(?<g>\d{1,3})\s*,\s*(?<b>\d{1,3})/
 			const m = value.replace(/,\s*var\(\s*[\w-]+\s*\)/g, ", 1").match(reg)
 			if (m == null) {
 				continue

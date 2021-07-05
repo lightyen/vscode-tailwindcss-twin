@@ -399,11 +399,14 @@
       ]
     },
     "variant-group-expression": {
-      "begin": "(\\()",
+      "begin": "(!?)(\\()",
       "end": "(\\))(!?)",
       "name": "meta.block.variant-group.twin",
       "beginCaptures": {
         "1": {
+          "name": "support.function.important-bang.variant-group.twin"
+        },
+        "2": {
           "name": "punctuation.definition.bracket.variant-group.begin.twin"
         }
       },

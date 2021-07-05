@@ -54,8 +54,8 @@ function find<T>(
 			return undefined
 		}
 	}
-	if (cb((node as unknown) as T)) {
-		return (node as unknown) as T
+	if (cb(node as unknown as T)) {
+		return node as unknown as T
 	}
 	return ts.forEachChild(node, child => find(source, child, cb, position))
 }
