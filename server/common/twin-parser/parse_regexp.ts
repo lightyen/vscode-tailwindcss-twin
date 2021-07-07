@@ -69,12 +69,50 @@ function findRightBracket({
 }
 
 function findRightBlockComment(text: string, start = 0, end = text.length): number | undefined {
-	for (let index = start + 2; index < end; index++) {
-		if (text.slice(index, index + 2) === "*/") {
-			return index + 1
+	for (let i = start + 2; i < end; i++) {
+		if (text.slice(i, i + 2) === "*/") {
+			return i + 1
 		}
 	}
 	return undefined
+}
+
+function findTerminal(text: string, start = 0, end = text.length): number {
+	let state = 0
+	for (let i = start; i < end; i++) {
+		const char = text[i]
+		switch (state) {
+			case 0:
+				if (/\s/.test(char)) return i
+				if (char === "(") return i
+				if (char === "[") state = 1
+				break
+			case 1:
+				switch (char) {
+					case "]":
+						state = 4
+						break
+					case "'":
+						state = 2
+						break
+					case '"':
+						state = 3
+						break
+				}
+				break
+			case 2:
+				if (char === "'") state = 1
+				break
+			case 3:
+				if (char === '"') state = 1
+				break
+			case 4:
+				if (/\s/.test(char)) return i
+				if (char === "!") return i + 1
+				return i
+		}
+	}
+	return end
 }
 
 type ItemNode =
@@ -101,7 +139,7 @@ export function parse({
 	const decl = createToken(start, end, text.slice(start, end))
 	const _separator = separator.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 	const regexp = new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})[^\\s(]*|(!?[\\w-]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?[\\w-]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 
@@ -172,31 +210,13 @@ export function parse({
 					}),
 				)
 			} else {
-				const lb = text.slice(match.index + variant.length, regexp.lastIndex).indexOf("[")
-				let _end = regexp.lastIndex
-				if (lb >= 0) {
-					const rb = findRightBracket({
-						text,
-						start: match.index + variant.length + lb,
-						end,
-						brackets: ["[", "]"],
-					})
-					_end = rb !== undefined ? rb + 1 : end
-					while (text[_end] != undefined && /^\S$/.test(text[_end])) {
-						_end++
-					}
-				}
-
+				const _end = findTerminal(text, match.index + variant.length, end)
 				const node = parse({ text, start: match.index + variant.length, end: _end })
 
 				if (node.kind !== nodes.NodeKind.Declaration) {
 					children.push(
 						nodes.createVariantSpanNode({
-							token: createToken(
-								match.index,
-								regexp.lastIndex,
-								text.slice(match.index, regexp.lastIndex),
-							),
+							token: createToken(match.index, _end, text.slice(match.index, _end)),
 							variant: variantNode,
 							child: node,
 						}),
