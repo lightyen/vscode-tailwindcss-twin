@@ -12,12 +12,14 @@ export enum PatternKind {
 	Twin = "tw",
 	TwinTheme = "theme",
 	TwinCssProperty = "cs",
+	TwinScreen = "screen",
 }
 
 interface Features {
 	jsxProp: boolean
 	twTemplate: Set<string>
 	themeTemplate: Set<string>
+	screenTemplate: Set<string>
 }
 
 export type TokenResult = { token: tw.Token; kind: PatternKind }
@@ -156,6 +158,16 @@ function findNode(
 			} else {
 				return undefined
 			}
+		} else if (features.screenTemplate.has(id)) {
+			const token = getLiteral(node)
+			if (token) {
+				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+					return undefined
+				}
+				return { token, kind: PatternKind.TwinScreen }
+			} else {
+				return undefined
+			}
 		} else {
 			const expr = find(source, node, ts.isTemplateExpression)
 			if (!expr) {
@@ -183,6 +195,22 @@ function findNode(
 					return undefined
 				}
 				return { token, kind: PatternKind.TwinTheme }
+			}
+
+			if (features.screenTemplate.has(first.getText(source))) {
+				const token = ts.forEachChild(node, c => {
+					if (ts.isStringLiteral(c)) {
+						return c
+					}
+					return undefined
+				})
+				if (!token) {
+					return undefined
+				}
+				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
+					return undefined
+				}
+				return { token, kind: PatternKind.TwinScreen }
 			}
 		}
 	}
@@ -247,6 +275,13 @@ function findAllNode(
 			} else {
 				return undefined
 			}
+		} else if (features.screenTemplate.has(id)) {
+			const literal = getLiteral(node)
+			if (literal) {
+				return [{ token: literal, kind: PatternKind.TwinScreen }]
+			} else {
+				return undefined
+			}
 		} else {
 			const expr = find(source, node, ts.isTemplateExpression)
 			if (!expr) {
@@ -268,6 +303,19 @@ function findAllNode(
 				}
 				return [{ token, kind: PatternKind.TwinTheme }]
 			}
+
+			if (features.screenTemplate.has(first.getText(source))) {
+				const token = ts.forEachChild(node, c => {
+					if (ts.isStringLiteral(c)) {
+						return c
+					}
+					return undefined
+				})
+				if (!token) {
+					return undefined
+				}
+				return [{ token, kind: PatternKind.TwinScreen }]
+			}
 		}
 	}
 	return node
@@ -281,6 +329,8 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 	let jsxProp = !jsxPropChecking
 	const twTemplate = new Set<string>()
 	const themeTemplate = new Set<string>()
+	const screenTemplate = new Set<string>()
+
 	source.forEachChild(node => {
 		if (ts.isImportDeclaration(node)) {
 			const token = find(source, node, ts.isStringLiteral)
@@ -314,6 +364,19 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 											themeTemplate.add(identifier)
 										}
 									}
+								} else if (node.getFirstToken(source)?.getText(source) === PatternKind.TwinScreen) {
+									const count = node.getChildCount(source)
+									if (count === 1) {
+										const identifier = node.getFirstToken(source)?.getText(source)
+										if (identifier && !screenTemplate.has(identifier)) {
+											screenTemplate.add(identifier)
+										}
+									} else if (count === 3) {
+										const identifier = node.getLastToken(source)?.getText(source)
+										if (identifier && !screenTemplate.has(identifier)) {
+											screenTemplate.add(identifier)
+										}
+									}
 								}
 							}
 						})
@@ -322,7 +385,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 			}
 		}
 	})
-	return { jsxProp, twTemplate, themeTemplate }
+	return { jsxProp, twTemplate, themeTemplate, screenTemplate }
 }
 
 export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): TokenResult | undefined {

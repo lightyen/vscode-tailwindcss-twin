@@ -28,6 +28,12 @@ export default function hover(
 				end: document.positionAt(token.end),
 			}
 			return resolveThemeValue({ kind, range, token, state, options })
+		} else if (kind === PatternKind.TwinScreen) {
+			const range = {
+				start: document.positionAt(token.start),
+				end: document.positionAt(token.end),
+			}
+			return resolveScreenValue({ kind, range, token, state, options })
 		} else {
 			const selection = parser.hover({
 				text: token.value,
@@ -179,6 +185,41 @@ function resolveThemeValue({
 	}
 
 	const value = state.getTheme(result.keys())
+
+	const markdown: lsp.MarkupContent = {
+		kind: lsp.MarkupKind.Markdown,
+		value: "",
+	}
+
+	if (typeof value === "string") {
+		markdown.value = `\`\`\`txt\n${value}\n\`\`\``
+	} else if (value instanceof Array) {
+		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
+	} else if (value) {
+		markdown.value = `\`\`\`js\n${value.toString?.() ?? typeof value}\n\`\`\``
+	}
+
+	return {
+		range,
+		contents: markdown,
+	}
+}
+
+function resolveScreenValue({
+	range,
+	token,
+	state,
+}: {
+	kind: PatternKind
+	range: lsp.Range
+	token: parser.Token
+	state: Tailwind
+	options: ServiceOptions
+}): lsp.Hover | undefined {
+	const value = state.getTheme(["screens", token.value])
+	if (value == undefined) {
+		return
+	}
 
 	const markdown: lsp.MarkupContent = {
 		kind: lsp.MarkupKind.Markdown,

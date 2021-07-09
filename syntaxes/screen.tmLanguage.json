@@ -1,0 +1,70 @@
+{
+  "name": "source.twin-screen",
+  "scopeName": "source.twin-screen",
+  "injectionSelector": "L:source -comment",
+  "patterns": [
+    {
+      "name": "meta.tag.twin-screen",
+      "begin": "screen(`)",
+      "beginCaptures": {
+        "2": {
+          "name": "punctuation.definition.string.template.begin.twin-screen"
+        }
+      },
+      "end": "(`)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.template.end.twin-screen"
+        }
+      }
+    },
+    {
+      "contentName": "entity.name.string.double-quote.twin-screen",
+      "begin": "(screen)(\\()(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.function"
+        },
+        "2": {
+          "name": "meta.brace.round"
+        },
+        "3": {
+          "name": "punctuation.definition.string.double-quote.begin.twin"
+        }
+      },
+      "end": "(\")(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.double-quote.end.twin"
+        },
+        "2": {
+          "name": "meta.brace.round"
+        }
+      }
+    },
+    {
+      "contentName": "entity.name.string.single-quote.twin-screen",
+      "begin": "(screen)(\\()(')",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.function"
+        },
+        "2": {
+          "name": "meta.brace.round"
+        },
+        "3": {
+          "name": "punctuation.definition.string.single-quote.begin.twin"
+        }
+      },
+      "end": "(')(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.single-quote.end.twin"
+        },
+        "2": {
+          "name": "meta.brace.round"
+        }
+      }
+    }
+  ]
+}

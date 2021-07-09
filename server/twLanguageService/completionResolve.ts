@@ -11,7 +11,7 @@ export default function completionResolve(
 	state: Tailwind,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
-	if (item.data.type === "theme") {
+	if (item.data.type == undefined || item.data.type === "theme") {
 		return item
 	}
 

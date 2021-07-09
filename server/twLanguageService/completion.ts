@@ -70,6 +70,12 @@ export default function completion(
 				list.items[i].data.uri = document.uri
 			}
 			return list
+		} else if (kind === PatternKind.TwinScreen) {
+			const list = twinScreenCompletion(document, index, token, state)
+			for (let i = 0; i < list.items.length; i++) {
+				list.items[i].data.uri = document.uri
+			}
+			return list
 		} else {
 			const list = twinCompletion(document, index, token, kind, state, options)
 			for (let i = 0; i < list.items.length; i++) {
@@ -510,6 +516,97 @@ function twinThemeCompletion(
 			} else {
 				item.textEdit = lsp.TextEdit.insert(document.positionAt(index), newText)
 			}
+
+			return item
+		}),
+	}
+}
+
+function twinScreenCompletion(
+	document: TextDocument,
+	index: number,
+	token: parser.Token,
+	state: Tailwind,
+): lsp.CompletionList {
+	const value = state.getTheme(["screens"])
+	if (typeof value !== "object") {
+		return { isIncomplete: false, items: [] }
+	}
+
+	const candidates = Object.keys(value)
+
+	function formatCandidates(label: string) {
+		let prefix = ""
+		if (label.slice(0, 1) === "-") {
+			prefix = "~~~"
+			label = label.slice(1)
+		}
+		try {
+			const val = eval(label)
+			if (typeof val !== "number") {
+				return prefix + label
+			}
+			return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
+		} catch {
+			return prefix + label
+		}
+	}
+
+	return {
+		isIncomplete: false,
+		items: candidates.map(label => {
+			const bp = state.twin.screens.get(label)
+			const item: lsp.CompletionItem = {
+				label,
+				sortText: bp?.toString().padStart(5, " ") ?? formatCandidates(label),
+			}
+			const value = state.getTheme(["screens", label])
+			item.data = {}
+			if (typeof value === "object") {
+				item.kind = lsp.CompletionItemKind.Module
+				item.documentation = {
+					kind: lsp.MarkupKind.Markdown,
+					value: `\`\`\`text\nobject\n\`\`\``,
+				}
+				item.detail = label
+			} else if (typeof value === "function") {
+				item.kind = lsp.CompletionItemKind.Function
+				item.documentation = {
+					kind: lsp.MarkupKind.Markdown,
+					value: `\`\`\`text\nfunction\n\`\`\``,
+				}
+				item.detail = label
+			} else {
+				if (typeof value === "string") {
+					try {
+						if (value === "transparent") {
+							item.kind = lsp.CompletionItemKind.Color
+							item.documentation = "rgba(0, 0, 0, 0.0)"
+							item.data.type = "color"
+							return item
+						}
+						chroma(value)
+						item.kind = lsp.CompletionItemKind.Color
+						item.documentation = value
+						item.data.type = "color"
+					} catch {
+						item.kind = lsp.CompletionItemKind.Constant
+						item.documentation = {
+							kind: lsp.MarkupKind.Markdown,
+							value: `\`\`\`txt\n${value}\n\`\`\``,
+						}
+						item.detail = label
+					}
+				}
+			}
+
+			item.textEdit = lsp.TextEdit.replace(
+				{
+					start: document.positionAt(token.start),
+					end: document.positionAt(token.end),
+				},
+				label,
+			)
 
 			return item
 		}),

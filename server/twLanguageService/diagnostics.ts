@@ -39,6 +39,18 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 					severity: DiagnosticSeverity.Error,
 				})
 			}
+		} else if (kind === PatternKind.TwinScreen) {
+			if (value) {
+				const result = state.getTheme(["screens", value])
+				if (result == undefined) {
+					diagnostics.push({
+						range: { start: document.positionAt(start), end: document.positionAt(end) },
+						source: DIAGNOSTICS_ID,
+						message: "value is undefined",
+						severity: DiagnosticSeverity.Error,
+					})
+				}
+			}
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
 			const c = cache[uri][value]
 			if (!c) {

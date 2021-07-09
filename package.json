@@ -131,6 +131,16 @@
           "source.ts",
           "source.js"
         ],
+        "scopeName": "source.twin-screen",
+        "path": "./syntaxes/screen.tmLanguage.json"
+      },
+      {
+        "injectTo": [
+          "source.tsx",
+          "source.jsx",
+          "source.ts",
+          "source.js"
+        ],
         "scopeName": "source.twin-prop",
         "path": "./syntaxes/twProp.tmLanguage.json"
       },
