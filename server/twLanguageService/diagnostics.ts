@@ -494,7 +494,7 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 			} else {
 				result.push({
 					source: DIAGNOSTICS_ID,
-					message: `Can't find ddd'${value}', did you mean '${ret.value}'?`,
+					message: `Can't find '${value}', did you mean '${ret.value}'?`,
 					range: {
 						start: document.positionAt(offset + start),
 						end: document.positionAt(offset + end),
