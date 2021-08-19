@@ -6,10 +6,11 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
+import * as nodes from "~/common/twin-parser/twNodes"
 import type { Tailwind } from "~/tailwind"
 import type { ClassNameItem } from "~/tailwind/twin"
 import type { ServiceOptions } from "~/twLanguageService"
-import { getCompletionsForDeclarationValue } from "./completionCssPropertyValue"
+import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
 import { cssDataManager } from "./cssData"
 
 export interface InnerData {
@@ -105,8 +106,9 @@ function twinCompletion(
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilties = utiltiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const arbitraryValue = arbitraryValueCompletion(document, text, position, offset, kind, suggestion, state, options)
 
-	return lsp.CompletionList.create([...variants, ...utilties, ...shortcss], isIncomplete)
+	return lsp.CompletionList.create([...variants, ...utilties, ...shortcss, ...arbitraryValue], isIncomplete)
 }
 
 function variantsCompletion(
@@ -135,9 +137,8 @@ function variantsCompletion(
 			case parser.SuggestResultType.Variant:
 				b = b + state.separator.length
 				break
-			case parser.SuggestResultType.CssPropertyProp:
-			case parser.SuggestResultType.ArbitraryStyleProp:
-			case parser.SuggestResultType.CssValue:
+			case parser.SuggestResultType.CssProperty:
+			case parser.SuggestResultType.ArbitraryStyle:
 				variantEnabled = false
 				break
 		}
@@ -208,8 +209,8 @@ function variantsCompletion(
 			}
 		} else if (
 			suggestion.type === parser.SuggestResultType.ClassName ||
-			suggestion.type === parser.SuggestResultType.CssPropertyProp ||
-			suggestion.type === parser.SuggestResultType.ArbitraryStyleProp
+			suggestion.type === parser.SuggestResultType.CssProperty ||
+			suggestion.type === parser.SuggestResultType.ArbitraryStyle
 		) {
 			if (position > a) {
 				doReplace(variantItems, document, offset, a, b, item => item.insertText || item.label)
@@ -254,9 +255,7 @@ function utiltiesCompletion(
 				}
 				break
 			}
-			case parser.SuggestResultType.CssPropertyProp:
-			case parser.SuggestResultType.ArbitraryStyleProp:
-			case parser.SuggestResultType.CssValue:
+			case parser.SuggestResultType.CssProperty:
 				classNameEnabled = false
 				break
 		}
@@ -274,12 +273,23 @@ function utiltiesCompletion(
 
 	if (suggestion.target) {
 		if (position > a && position < b) {
-			doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
+			const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(suggestion.target.value)
+			if (isColorShorthandOpacity) {
+				doReplace(classNameItems, document, offset, a, a + name.length, item => item.label)
+			} else {
+				doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
+			}
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
-			if (suggestion.type === parser.SuggestResultType.ClassName || suggestion.target.value === state.separator) {
-				doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
+			if (
+				suggestion.type === parser.SuggestResultType.ClassName ||
+				suggestion.type === parser.SuggestResultType.ArbitraryStyle ||
+				suggestion.target.value === state.separator
+			) {
+				doReplace(classNameItems, document, offset, a, b, item => {
+					return item.label + (nextNotSpace ? " " : "")
+				})
 			} else if (suggestion.type === parser.SuggestResultType.Variant) {
 				doInsert(classNameItems, document, offset, b, item => item.label + (nextNotSpace ? " " : ""))
 			}
@@ -314,19 +324,18 @@ function shortcssCompletion(
 	}
 
 	if (suggestion.target) {
-		switch (suggestion.type) {
-			case parser.SuggestResultType.Variant: {
-				b = b + state.separator.length
-				const isVariantWord = state.twin.isVariant(value)
-				if (position === b && !isVariantWord) {
-					cssPropEnabled = false
-				}
-				break
+		if (suggestion.type === parser.SuggestResultType.Variant) {
+			b = b + state.separator.length
+			const isVariantWord = state.twin.isVariant(value)
+			if (position === b && !isVariantWord) {
+				cssPropEnabled = false
 			}
-			case parser.SuggestResultType.CssValue:
+		} else if (nodes.isCssProperty(suggestion.target)) {
+			const [a, b] = suggestion.target.content
+			if (position >= a && position <= b) {
 				cssPropEnabled = false
 				cssValueEnabled = true
-				break
+			}
 		}
 	}
 
@@ -367,7 +376,7 @@ function shortcssCompletion(
 	}
 
 	if (suggestion.target) {
-		if (suggestion.type === parser.SuggestResultType.CssPropertyProp) {
+		if (suggestion.type === parser.SuggestResultType.CssProperty) {
 			const { start, end } = suggestion.target
 			if (position > start && position <= end) {
 				doReplace(cssPropItems, document, offset, a, b, item => item.label + "[$0]")
@@ -389,8 +398,8 @@ function shortcssCompletion(
 		}
 	}
 
-	if (cssValueEnabled) {
-		const prop = suggestion.prop?.toKebab() ?? ""
+	if (cssValueEnabled && suggestion.target && nodes.isCssProperty(suggestion.target)) {
+		const prop = suggestion.target.prop?.toKebab() ?? ""
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const word = suggestion.target!.getWord(position)
 		cssValueItems.push(
@@ -403,6 +412,120 @@ function shortcssCompletion(
 	}
 
 	return [...cssPropItems, ...cssValueItems]
+}
+
+const fromCssProp = (cssprop: string) => (currentWord: string, range: lsp.Range) =>
+	getCompletionsForDeclarationValue(cssprop, currentWord, range)
+const fromRestrictions =
+	(...restrictions: string[]) =>
+	(currentWord: string, range: lsp.Range) =>
+		getCompletionsFromRestrictions(restrictions, currentWord, range)
+
+const mappingArbitraryPropToCssProp: Record<
+	string,
+	Array<(currentWord: string, range: lsp.Range) => lsp.CompletionItem[]>
+> = {
+	"divide-": [fromCssProp("border-color")],
+	"bg-": [fromCssProp("background-color")],
+	"from-": [fromRestrictions("color")],
+	"via-": [fromRestrictions("color")],
+	"to-": [fromRestrictions("color")],
+	"space-x-": [fromRestrictions("length", "percentage")],
+	"space-y-": [fromRestrictions("length", "percentage")],
+	"w-": [fromCssProp("width")],
+	"h-": [fromCssProp("height")],
+	"leading-": [fromCssProp("line-height")],
+	"m-": [fromCssProp("margin")],
+	"mx-": [fromCssProp("margin-left")],
+	"my-": [fromCssProp("margin-top")],
+	"mt-": [fromCssProp("margin-top")],
+	"mr-": [fromCssProp("margin-right")],
+	"mb-": [fromCssProp("margin-bottom")],
+	"ml-": [fromCssProp("margin-left")],
+	"p-": [fromCssProp("padding")],
+	"px-": [fromCssProp("padding-left")],
+	"py-": [fromCssProp("padding-top")],
+	"pt-": [fromCssProp("padding-top")],
+	"pr-": [fromCssProp("padding-right")],
+	"pb-": [fromCssProp("padding-bottom")],
+	"pl-": [fromCssProp("padding-left")],
+	"max-w-": [fromCssProp("max-width")],
+	"max-h-": [fromCssProp("max-height")],
+	"inset-": [fromCssProp("top")],
+	"inset-x-": [fromCssProp("top")],
+	"inset-y-": [fromCssProp("left")],
+	"top-": [fromCssProp("top")],
+	"right-": [fromCssProp("right")],
+	"bottom-": [fromCssProp("bottom")],
+	"left-": [fromCssProp("left")],
+	"gap-": [fromCssProp("gap")],
+	"translate-x-": [fromRestrictions("length", "percentage")],
+	"translate-y-": [fromRestrictions("length", "percentage")],
+	"blur-": [fromRestrictions("length")],
+	"backdrop-blur": [fromRestrictions("length")],
+	"order-": [fromCssProp("order")],
+	"rotate-": [fromRestrictions("angle")],
+	"skew-x-": [fromRestrictions("angle")],
+	"skew-y-": [fromRestrictions("angle")],
+	"hue-rotate-": [fromRestrictions("angle")],
+	"backdrop-hue-rotate-": [fromRestrictions("angle")],
+	"duration-": [fromCssProp("transition-duration")],
+	"delay-": [fromCssProp("transition-delay")],
+	"ease-": [fromCssProp("transition-timing-function")],
+	"grid-cols-": [fromCssProp("grid-template-columns")],
+	"grid-rows-": [fromCssProp("grid-template-rows")],
+	"border-": [fromCssProp("border-width"), fromCssProp("border-color")],
+	"border-t-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
+	"border-r-": [fromCssProp("border-right-width"), fromCssProp("border-right-color")],
+	"border-b-": [fromCssProp("border-bottom-width"), fromCssProp("border-bottom-color")],
+	"border-l-": [fromCssProp("border-left-width"), fromCssProp("border-left-color")],
+	"text-": [fromRestrictions("color", "length", "percentage")],
+	"ring-": [fromRestrictions("length", "color")],
+	"stroke-": [fromCssProp("stroke-width"), fromCssProp("stroke")],
+}
+
+function arbitraryValueCompletion(
+	document: TextDocument,
+	text: string,
+	position: number,
+	offset: number,
+	kind: PatternKind,
+	suggestion: ReturnType<typeof parser.suggest>,
+	state: Tailwind,
+	_: ServiceOptions,
+) {
+	const cssValueItems: lsp.CompletionItem[] = []
+
+	if (suggestion.target == undefined) {
+		return cssValueItems
+	}
+
+	if (suggestion.inComment) {
+		return cssValueItems
+	}
+
+	if (!nodes.isArbitraryStyle(suggestion.target)) {
+		return cssValueItems
+	}
+
+	if (position < suggestion.target.content.start || position > suggestion.target.content.end) {
+		return cssValueItems
+	}
+
+	const prop = suggestion.target.prop.value
+	if (mappingArbitraryPropToCssProp[prop]) {
+		const word = suggestion.target.getWord(position)
+		for (const fn of mappingArbitraryPropToCssProp[prop]) {
+			cssValueItems.push(
+				...fn(
+					word.value,
+					lsp.Range.create(document.positionAt(offset + word.start), document.positionAt(offset + word.end)),
+				),
+			)
+		}
+	}
+
+	return cssValueItems
 }
 
 function twinThemeCompletion(

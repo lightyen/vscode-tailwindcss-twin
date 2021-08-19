@@ -3,10 +3,9 @@ import { createTokenList, Token, TokenList } from "./token"
 import * as nodes from "./twNodes"
 
 export interface SuggestionResult {
+	target?: nodes.Node | undefined
 	word?: Token
-	target?: Token | undefined
 	type?: SuggestResultType | undefined
-	prop?: nodes.CssPropertyPropNode | nodes.ArbitraryStyleNode | undefined
 	variants: TokenList
 	inComment: boolean
 }
@@ -15,9 +14,8 @@ export enum SuggestResultType {
 	Unknown,
 	Variant,
 	ClassName,
-	CssPropertyProp,
-	ArbitraryStyleProp,
-	CssValue,
+	CssProperty,
+	ArbitraryStyle,
 }
 
 function suggestResultType(node: nodes.Node) {
@@ -26,12 +24,10 @@ function suggestResultType(node: nodes.Node) {
 			return SuggestResultType.Variant
 		case nodes.NodeKind.ClassName:
 			return SuggestResultType.ClassName
-		case nodes.NodeKind.CssPropertyProp:
-			return SuggestResultType.CssPropertyProp
-		case nodes.NodeKind.ArbitraryStyleProp:
-			return SuggestResultType.ArbitraryStyleProp
-		case nodes.NodeKind.CssValue:
-			return SuggestResultType.CssValue
+		case nodes.NodeKind.CssProperty:
+			return SuggestResultType.CssProperty
+		case nodes.NodeKind.ArbitraryStyle:
+			return SuggestResultType.ArbitraryStyle
 		default:
 			return SuggestResultType.Unknown
 	}
@@ -101,7 +97,7 @@ export function suggest({
 		ctx: Context,
 	):
 		| {
-				target: Token
+				target: nodes.Node
 				type: SuggestResultType
 				variants: TokenList
 		  }
@@ -126,20 +122,7 @@ export function suggest({
 			}
 
 			if (nodes.isCssProperty(node) || nodes.isArbitraryStyle(node)) {
-				if (node.prop && inRange(node.prop)) {
-					return { target: node.prop, type: suggestResultType(node.prop), variants: ctx.variants }
-				}
-
-				if (node.content && inRange(node.content)) {
-					return {
-						prop: node.prop,
-						target: node.content,
-						type: suggestResultType(node.content),
-						variants: ctx.variants,
-					}
-				}
-
-				return undefined
+				return { target: node, type: suggestResultType(node), variants: ctx.variants }
 			}
 
 			if (nodes.isClassName(node)) {

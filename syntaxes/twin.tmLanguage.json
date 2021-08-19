@@ -174,7 +174,7 @@
     },
     "expression-arbitrary-style": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+-)+)(\\[)",
+      "begin": "(!?)((?:\\w+/|\\w+-)+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {

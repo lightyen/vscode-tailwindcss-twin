@@ -153,10 +153,7 @@ function validateTwin({
 				}
 
 				const variants = item.variants.texts
-				if (
-					item.type === parser.SpreadResultType.CssProperty ||
-					item.type === parser.SpreadResultType.ArbitraryStyle
-				) {
+				if (item.type === parser.SpreadResultType.CssProperty) {
 					const twinKeys = variants.sort()
 					const property = item.prop?.toKebab()
 					const key = [undefined, ...twinKeys, property].join(".")
@@ -430,7 +427,7 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 		if (ans) {
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `Can't find '${variant}', did you mean '${ans}'?`,
+				message: `Unknown variant: ${variant}, did you mean '${ans}'?`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
@@ -441,7 +438,7 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 		} else {
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `Can't find '${variant}'`,
+				message: `Unknown variant: ${variant}`,
 				range: {
 					start: document.positionAt(offset + a),
 					end: document.positionAt(offset + b),
@@ -453,7 +450,12 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 
 	if (item.target.value) {
 		const variants = item.variants.texts
-		const { start, end, value } = item.target
+		const { start, end } = item.target
+		let value = item.target.value
+		const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(value)
+		if (isColorShorthandOpacity) {
+			value = name
+		}
 		if (!state.twin.isSuggestedClassName(variants, value)) {
 			const ret = guess(state, variants, value)
 			if (ret.score === 0) {
@@ -483,7 +485,7 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 					default:
 						result.push({
 							source: DIAGNOSTICS_ID,
-							message: `Can't find '${value}'`,
+							message: `Unknown: ${value}`,
 							range: {
 								start: document.positionAt(offset + start),
 								end: document.positionAt(offset + end),
@@ -494,7 +496,7 @@ function checkTwinClassName(item: parser.SpreadDescription, document: TextDocume
 			} else {
 				result.push({
 					source: DIAGNOSTICS_ID,
-					message: `Can't find '${value}', did you mean '${ret.value}'?`,
+					message: `Unknown: ${value}, did you mean ${ret.value}?`,
 					range: {
 						start: document.positionAt(offset + start),
 						end: document.positionAt(offset + end),
@@ -569,6 +571,10 @@ function isIgnored(label: string) {
 	}
 
 	if (label.match(/^rounded-(?:t|r|b|l)(?:-\d?[a-z]+)?/)) {
+		return true
+	}
+
+	if (label.match(/^border-(?:t|r|b|l)-/)) {
 		return true
 	}
 

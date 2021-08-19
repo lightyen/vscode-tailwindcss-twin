@@ -7,15 +7,15 @@ import * as parser from "~/common/twin-parser"
 import { Tailwind } from "~/tailwind"
 import type { ServiceOptions } from "~/twLanguageService"
 import { cssDataManager, getEntryDescription } from "./cssData"
-import { renderClassname, renderVariant } from "./markdown"
+import { renderClassname, renderClassnameJIT, renderVariant } from "./markdown"
 import { getDescription, getReferenceLinks } from "./referenceLink"
 
-export default function hover(
+export default async function hover(
 	document: TextDocument,
 	position: lsp.Position,
 	state: Tailwind,
 	options: ServiceOptions,
-): lsp.Hover | undefined {
+): Promise<lsp.Hover | undefined> {
 	try {
 		const result = canMatch(document, position, true, options.jsxPropImportChecking)
 		if (!result) {
@@ -44,7 +44,8 @@ export default function hover(
 				return undefined
 			}
 
-			const { start, end, value } = selection.target
+			const { start, end } = selection.target
+			let value = selection.target.value
 			const range = lsp.Range.create(
 				document.positionAt(token.start + start),
 				document.positionAt(token.start + end),
@@ -79,15 +80,73 @@ export default function hover(
 				}
 			}
 
+			if (selection.type === parser.HoverResultType.ArbitraryStyle) {
+				const twin = await state.jit(value)
+				let content = renderClassnameJIT({
+					key: value.replace(/\s/g, ""),
+					twin,
+					important: selection.important,
+					options,
+				})
+
+				if (!content) {
+					return
+				}
+
+				let title = ""
+				if (options.references) {
+					const [isColorArbitraryOpacity, colorName] = state.twin.isColorArbitraryOpacity(value)
+					let name = colorName
+					if (!isColorArbitraryOpacity) {
+						if (selection.prop && selection.value) {
+							const prop = selection.prop.value.slice(0, -1)
+							name = state.twin.getSampleArbitraryName(prop, selection.value.value)
+						}
+					}
+
+					if (name) {
+						const type = getDescription(name)
+						if (type) {
+							title = type + "\n"
+						}
+
+						const refs = getReferenceLinks(name)
+						if (refs.length > 0) {
+							title += "\n" + refs.map(ref => `[Reference](${ref.url}) `).join("\n") + "\n"
+						}
+					}
+				}
+
+				if (title) {
+					content = `${title}\n---\n\n` + content
+				}
+
+				return {
+					range,
+					contents: {
+						kind: lsp.MarkupKind.Markdown,
+						value: content,
+					},
+				}
+			}
+
+			const [isColorShorthandOpacity, colorName] = state.twin.isColorShorthandOpacity(value)
+			let useJIT = false
+			if (isColorShorthandOpacity) {
+				value = colorName
+				useJIT = true
+			}
+
 			if (
 				selection.type === parser.HoverResultType.ClassName &&
-				!state.twin.isSuggestedClassName(selection.variants.texts, selection.target.value)
+				!state.twin.isSuggestedClassName(selection.variants.texts, value)
 			) {
 				return undefined
 			}
 
-			const markdown = getHoverTwinMarkdown({
+			const markdown = await getHoverTwinMarkdown({
 				kind,
+				useJIT,
 				selection,
 				state,
 				options,
@@ -120,7 +179,8 @@ export default function hover(
 			}
 
 			if (!title && options.references) {
-				markdown.value = "custom\n" + "\n---\n\n" + markdown.value
+				// TODO: classify jit utilities
+				// markdown.value = "custom\n" + "\n---\n\n" + markdown.value
 			}
 
 			return {
@@ -134,19 +194,20 @@ export default function hover(
 	return undefined
 }
 
-function getHoverTwinMarkdown({
+async function getHoverTwinMarkdown({
 	kind,
+	useJIT,
 	selection,
 	state,
 	options,
 }: {
 	kind: PatternKind
+	useJIT: boolean
 	selection: Exclude<ReturnType<typeof parser.hover>, undefined>
 	state: Tailwind
 	options: ServiceOptions
-}): lsp.MarkupContent | undefined {
+}): Promise<lsp.MarkupContent | undefined> {
 	const { important } = selection
-
 	const value = selection.target.value
 
 	if (selection.type === parser.HoverResultType.Variant) {
@@ -159,6 +220,19 @@ function getHoverTwinMarkdown({
 
 	if (selection.type !== parser.HoverResultType.ClassName) {
 		return undefined
+	}
+
+	if (useJIT) {
+		const twin = await state.jit(value)
+		const content = renderClassnameJIT({
+			key: value,
+			twin,
+			important: selection.important,
+			options,
+		})
+		if (content) {
+			return { kind: lsp.MarkupKind.Markdown, value: content }
+		}
 	}
 
 	const content = renderClassname({ state, key: value, important, options })

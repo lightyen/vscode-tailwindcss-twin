@@ -3558,30 +3558,6 @@ animate-pulse: "https://tailwindcss.com/docs/animation"
 animate-bounce: "https://tailwindcss.com/docs/animation"
 group: "https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover"
 
-# variants
-hover: "https://tailwindcss.com/docs/hover-focus-and-other-states#hover"
-focus: "https://tailwindcss.com/docs/hover-focus-and-other-states#focus"
-group-hover: "https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover"
-focus-within: "https://tailwindcss.com/docs/hover-focus-and-other-states#focus-within"
-active: "https://tailwindcss.com/docs/hover-focus-and-other-states#active"
-group-focus: "https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus"
-focus-visible: "https://tailwindcss.com/docs/hover-focus-and-other-states#focus-visible"
-motion-safe: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-safe"
-motion-reduce: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-reduce"
-disabled: "https://tailwindcss.com/docs/hover-focus-and-other-states#disabled"
-visited: "https://tailwindcss.com/docs/hover-focus-and-other-states#visited"
-checked: "https://tailwindcss.com/docs/hover-focus-and-other-states#checked"
-first: "https://tailwindcss.com/docs/hover-focus-and-other-states#first-child"
-last: "https://tailwindcss.com/docs/hover-focus-and-other-states#last-child"
-odd: "https://tailwindcss.com/docs/hover-focus-and-other-states#odd-child"
-even: "https://tailwindcss.com/docs/hover-focus-and-other-states#even-child"
-dark: "https://tailwindcss.com/docs/dark-mode"
-sm: "https://tailwindcss.com/docs/responsive-design"
-md: "https://tailwindcss.com/docs/responsive-design"
-lg: "https://tailwindcss.com/docs/responsive-design"
-xl: "https://tailwindcss.com/docs/responsive-design"
-2xl: "https://tailwindcss.com/docs/responsive-design"
-
 # more color
 divide-rose-50: "https://tailwindcss.com/docs/divide-color"
 divide-rose-100: "https://tailwindcss.com/docs/divide-color"
@@ -5139,47 +5115,26 @@ backdrop-saturate-150: "https://tailwindcss.com/docs/backdrop-saturate"
 backdrop-saturate-200: "https://tailwindcss.com/docs/backdrop-saturate"
 backdrop-sepia-0: "https://tailwindcss.com/docs/backdrop-sepia"
 backdrop-sepia: "https://tailwindcss.com/docs/backdrop-sepia"
+bg-origin-border: "https://tailwindcss.com/docs/background-origin"
+bg-origin-padding: "https://tailwindcss.com/docs/background-origin"
+bg-origin-content: "https://tailwindcss.com/docs/background-origin"
+
+# variants
+dark: "https://tailwindcss.com/docs/dark-mode"
+sm: "https://tailwindcss.com/docs/responsive-design"
+md: "https://tailwindcss.com/docs/responsive-design"
+lg: "https://tailwindcss.com/docs/responsive-design"
+xl: "https://tailwindcss.com/docs/responsive-design"
+2xl: "https://tailwindcss.com/docs/responsive-design"
+
+motion-safe: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-safe"
+motion-reduce: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-reduce"
+group-focus: "https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus"
+group-hover: "https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover"
 
 # twin.macro
-tw.before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
-tw.after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after
-tw.hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-tw.link: https://developer.mozilla.org/en-US/docs/Web/CSS/:link
-tw.target: https://developer.mozilla.org/en-US/docs/Web/CSS/:target
-tw.not-checked: https://developer.mozilla.org/en-US/docs/Web/CSS/:checked
-tw.default: https://developer.mozilla.org/en-US/docs/Web/CSS/:default
-tw.enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
-tw.indeterminate: https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate
-tw.invalid: https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid
-tw.valid: https://developer.mozilla.org/en-US/docs/Web/CSS/:valid
-tw.optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
-tw.required: https://developer.mozilla.org/en-US/docs/Web/CSS/:required
-tw.placeholder-shown: https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown
-tw.read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
-tw.read-write: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-write
-tw.not-disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
-tw.first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
-tw.not-first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
-tw.last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
-tw.not-last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
-tw.not-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
-tw.not-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
-tw.only-child: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
-tw.not-only-child: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
-tw.only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
-tw.not-only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
-tw.even-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
-tw.odd-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
-tw.svg: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
-tw.all: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
-tw.all-child: https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator
-tw.sibling: https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator
-tw.group-hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-tw.group-active: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-tw.group-visited: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
 tw.light: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-tw.content: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
-tw.placeholder: https://developer.mozilla.org/en-US/docs/Web/CSS/::placeholder
+tw.content: https://developer.mozilla.org/en-US/docs/Web/CSS/content
 tw.screen: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
 tw.print: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
 tw.landscape: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
@@ -5194,6 +5149,131 @@ tw.any-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover
 tw.any-hover-none: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover
 tw.can-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover
 tw.cant-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover
+
+tw.all: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
+tw.svg: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
+tw.sibling: https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator
+tw.all-child: https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator
+
+tw.not-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
+tw.not-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
+tw.not-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.not-first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
+tw.not-last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
+tw.not-only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
+tw.not-checked: https://developer.mozilla.org/en-US/docs/Web/CSS/:checked
+tw.not-disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
+
+first-letter: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-letter
+first-line: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-line
+marker: https://developer.mozilla.org/en-US/docs/Web/CSS/::marker
+selection: https://developer.mozilla.org/en-US/docs/Web/CSS/::selection
+tw.before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
+tw.after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after
+
+tw.first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
+tw.last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
+tw.only: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.even: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.odd: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
+tw.last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
+tw.only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
+tw.hover: https://developer.mozilla.org/en-US/docs/Web/CSS/:hover
+tw.focus: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus
+tw.disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
+tw.active: https://developer.mozilla.org/en-US/docs/Web/CSS/:active
+tw.target: https://developer.mozilla.org/en-US/docs/Web/CSS/:target
+tw.visited: https://developer.mozilla.org/en-US/docs/Web/CSS/:visited
+tw.default: https://developer.mozilla.org/en-US/docs/Web/CSS/:default
+tw.checked: https://developer.mozilla.org/en-US/docs/Web/CSS/:checked
+tw.indeterminate: https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate
+tw.placeholder-shown: https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown
+tw.autofill: https://developer.mozilla.org/en-US/docs/Web/CSS/:autofill
+tw.focus-within: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within
+tw.focus-visible: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible
+tw.required: https://developer.mozilla.org/en-US/docs/Web/CSS/:required
+tw.valid: https://developer.mozilla.org/en-US/docs/Web/CSS/:valid
+tw.invalid: https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid
+tw.in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
+tw.out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
+tw.read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
+tw.empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+
+tw.group-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
+tw.group-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
+tw.group-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.group-even: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.group-odd: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.group-first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
+tw.group-last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
+tw.group-only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
+# tw.group-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/:hover
+# tw.group-focus: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus
+tw.group-disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
+tw.group-active: https://developer.mozilla.org/en-US/docs/Web/CSS/:active
+tw.group-target: https://developer.mozilla.org/en-US/docs/Web/CSS/:target
+tw.group-visited: https://developer.mozilla.org/en-US/docs/Web/CSS/:visited
+tw.group-default: https://developer.mozilla.org/en-US/docs/Web/CSS/:default
+tw.group-checked: https://developer.mozilla.org/en-US/docs/Web/CSS/:checked
+tw.group-indeterminate: https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate
+tw.group-placeholder-shown: https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown
+tw.group-autofill: https://developer.mozilla.org/en-US/docs/Web/CSS/:autofill
+tw.group-focus-within: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within
+tw.group-focus-visible: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible
+tw.group-required: https://developer.mozilla.org/en-US/docs/Web/CSS/:required
+tw.group-valid: https://developer.mozilla.org/en-US/docs/Web/CSS/:valid
+tw.group-invalid: https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid
+tw.group-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
+tw.group-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
+tw.group-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
+tw.group-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+
+tw.peer-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
+tw.peer-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
+tw.peer-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.peer-even: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.peer-odd: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child
+tw.peer-first-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type
+tw.peer-last-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type
+tw.peer-only-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type
+tw.peer-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/:hover
+tw.peer-focus: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus
+tw.peer-disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
+tw.peer-active: https://developer.mozilla.org/en-US/docs/Web/CSS/:active
+tw.peer-target: https://developer.mozilla.org/en-US/docs/Web/CSS/:target
+tw.peer-visited: https://developer.mozilla.org/en-US/docs/Web/CSS/:visited
+tw.peer-default: https://developer.mozilla.org/en-US/docs/Web/CSS/:default
+tw.peer-checked: https://developer.mozilla.org/en-US/docs/Web/CSS/:checked
+tw.peer-indeterminate: https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate
+tw.peer-placeholder-shown: https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown
+tw.peer-autofill: https://developer.mozilla.org/en-US/docs/Web/CSS/:autofill
+tw.peer-focus-within: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within
+tw.peer-focus-visible: https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible
+tw.peer-required: https://developer.mozilla.org/en-US/docs/Web/CSS/:required
+tw.peer-valid: https://developer.mozilla.org/en-US/docs/Web/CSS/:valid
+tw.peer-invalid: https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid
+tw.peer-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
+tw.peer-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
+tw.peer-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
+tw.peer-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+
+tw.even-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
+tw.odd-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
+tw.enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
+tw.link: https://developer.mozilla.org/en-US/docs/Web/CSS/:link
+tw.optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
+tw.read-write: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-write
+tw.placeholder: https://developer.mozilla.org/en-US/docs/Web/CSS/::placeholder
+
+tw.hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
+tw.group-hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
+tw.peer-hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
+
+tw.only-child: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.not-only-child: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+tw.peer-only-child: https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child
+
 tw.group: https://github.com/ben-rogerson/twin.macro/blob/master/docs/group.md
 tw.container: https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md
 # tw.animate-none: https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles

@@ -8,7 +8,7 @@ import * as parser from "~/common/twin-parser"
 import { Tailwind } from "~/tailwind"
 import type { Cache, ServiceOptions } from "."
 
-export function provideColorDecorations(
+export async function provideColorDecorations(
 	document: TextDocument,
 	state: Tailwind,
 	options: ServiceOptions,
@@ -53,14 +53,21 @@ export function provideColorDecorations(
 			switch (c.type) {
 				case parser.SpreadResultType.ClassName:
 					{
-						const classname = state.twin.classnames.get(c.target.value)
+						let value = c.target.value
+
+						const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(value)
+						if (isColorShorthandOpacity) {
+							value = name
+						}
+
+						const classname = state.twin.classnames.get(value)
 						if (!classname) {
 							continue
 						}
 						if (classname.some(c => c.source === "components")) {
 							continue
 						}
-						const color = state.twin.colors.get(c.target.value)
+						const color = state.twin.colors.get(value)
 						if (color) {
 							colors.push({
 								range: {
@@ -70,6 +77,40 @@ export function provideColorDecorations(
 								...color,
 							})
 						}
+					}
+					break
+				case parser.SpreadResultType.ArbitraryStyle:
+					{
+						const [isColorArbitraryOpacity, value] = state.twin.isColorArbitraryOpacity(c.target.value)
+						if (isColorArbitraryOpacity) {
+							const color = state.twin.colors.get(value)
+							if (color) {
+								colors.push({
+									range: {
+										start: document.positionAt(start + c.target.start),
+										end: document.positionAt(start + c.target.end),
+									},
+									...color,
+								})
+							}
+						}
+						// NOTE: conflict with vscode-styled-components
+						// else if (c.prop && c.content) {
+						// 	const prop = c.prop.value.slice(0, -1)
+						// 	if (state.twin.isArbitraryColor(prop, c.content.value)) {
+						// 		const tw = await state.jitColor(c.target.value)
+						// 		if (tw.colors[0]) {
+						// 			const color = tw.colors[0][1]
+						// 			colors.push({
+						// 				range: {
+						// 					start: document.positionAt(start + c.target.start),
+						// 					end: document.positionAt(start + c.target.end),
+						// 				},
+						// 				...color,
+						// 			})
+						// 		}
+						// 	}
+						// }
 					}
 					break
 			}

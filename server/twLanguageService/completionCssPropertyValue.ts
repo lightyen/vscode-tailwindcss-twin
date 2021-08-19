@@ -58,7 +58,7 @@ export function getCompletionsForDeclarationValue(
 
 		items.push(...getValueEnumProposals(range, entry))
 		items.push(...getCSSWideKeywordProposals(range))
-		items.push(...getUnitProposals(currentWord, range, entry))
+		items.push(...getUnitProposals(currentWord, range, entry.restrictions))
 	}
 
 	// TODO: apply context
@@ -69,6 +69,58 @@ export function getCompletionsForDeclarationValue(
 		items[i].data = {
 			type: "cssPropertyValue",
 			entry,
+		}
+	}
+
+	return items
+}
+
+export function getCompletionsFromRestrictions(
+	restrictions: string[],
+	currentWord: string,
+	range: lsp.Range,
+): lsp.CompletionItem[] {
+	const items: lsp.CompletionItem[] = []
+	for (const restriction of restrictions) {
+		switch (restriction) {
+			case "color":
+				items.push(...getColorProposals(range))
+				break
+			case "position":
+				items.push(...getPositionProposals(range))
+				break
+			case "repeat":
+				items.push(...getRepeatStyleProposals(range))
+				break
+			case "line-style":
+				items.push(...getLineStyleProposals(range))
+				break
+			case "line-width":
+				items.push(...getLineWidthProposals(range))
+				break
+			case "geometry-box":
+				items.push(...getGeometryBoxProposals(range))
+				break
+			case "box":
+				items.push(...getBoxProposals(range))
+				break
+			case "image":
+				items.push(...getImageProposals(range))
+				break
+			case "timing-function":
+				items.push(...getTimingFunctionProposals(range))
+				break
+			case "shape":
+				items.push(...getBasicShapeProposals(range))
+				break
+		}
+	}
+
+	items.push(...getUnitProposals(currentWord, range, restrictions))
+
+	for (let i = 0; i < items.length; i++) {
+		items[i].data = {
+			type: "cssPropertyValue",
 		}
 	}
 
@@ -172,12 +224,12 @@ function getCSSWideKeywordProposals(range: lsp.Range): lsp.CompletionItem[] {
 	})
 }
 
-function getUnitProposals(value: string, range: lsp.Range, entry: IPropertyData): lsp.CompletionItem[] {
+function getUnitProposals(value: string, range: lsp.Range, restrictions?: string[]): lsp.CompletionItem[] {
 	const items: lsp.CompletionItem[] = []
 	const numMatch = value.match(/^-?\d[.\d+]*/)
 	const currentWord = numMatch?.[0] ?? "0"
 
-	for (const restriction of entry.restrictions ?? []) {
+	for (const restriction of restrictions ?? []) {
 		for (const unit of units[restriction] ?? []) {
 			const insertText = currentWord + unit
 			items.push({
@@ -229,10 +281,9 @@ function getLineStyleProposals(range: lsp.Range): lsp.CompletionItem[] {
 }
 
 function getLineWidthProposals(range: lsp.Range): lsp.CompletionItem[] {
-	return Object.entries(languageFacts.lineWidthKeywords).map<lsp.CompletionItem>(([keyword, desc]) => {
+	return languageFacts.lineWidthKeywords.map<lsp.CompletionItem>(keyword => {
 		return {
 			label: keyword,
-			documentation: desc,
 			textEdit: lsp.TextEdit.replace(range, keyword),
 			kind: lsp.CompletionItemKind.Value,
 		}

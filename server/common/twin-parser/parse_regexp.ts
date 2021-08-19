@@ -139,7 +139,7 @@ export function parse({
 	const decl = createToken(start, end, text.slice(start, end))
 	const _separator = separator.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 	const regexp = new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?[\\w-]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?[\\w-/]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 
@@ -280,7 +280,7 @@ export function parse({
 				text.slice(start, match.index + arbitrary.length),
 			)
 
-			if (prop.value.endsWith("-")) {
+			if (/(-|\/)$/.test(prop.value)) {
 				children.push(
 					nodes.createArbitraryStyleNode({
 						token,

@@ -8,6 +8,7 @@ export type SpreadDescription = {
 	variants: TokenList
 	important: boolean
 	prop?: nodes.CssPropertyPropNode | nodes.ArbitraryStylePropNode | undefined
+	content?: nodes.CssValueNode | undefined
 }
 
 export enum SpreadResultType {
@@ -94,6 +95,7 @@ export function spread({
 				target: node.child,
 				type: spreadResultType(node),
 				prop: node.prop,
+				content: node.content,
 				...ctx,
 				important: ctx.important || node.important,
 			})

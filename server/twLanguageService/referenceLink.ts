@@ -7,7 +7,7 @@ export interface Reference {
 }
 
 export function getReferenceLinks(keyword: string) {
-	const value = keyword.replace(":", "")
+	const value = keyword.replace(":", "").replace(/^border-(t|r|b|l)-/, "border-")
 	const originUrl = references[value]
 	const twinUrl = references["tw." + value]
 	const links: Reference[] = []
@@ -28,7 +28,7 @@ export function getReferenceLinks(keyword: string) {
 }
 
 export function getName(keyword: string) {
-	const value = keyword.replace(":", "")
+	const value = keyword.replace(":", "").replace(/^border-(t|r|b|l)-/, "border-")
 	const originUrl = references[value]
 	const twinUrl = references["tw." + value]
 	const url = originUrl || twinUrl
@@ -50,6 +50,7 @@ export function getName(keyword: string) {
 }
 
 export function getDescription(keyword: string): string | undefined {
+	keyword = keyword.replace(/^border-(t|r|b|l)-/, "border-")
 	const originUrl = references[keyword]
 	const twinUrl = references["tw." + keyword]
 	const url = originUrl || twinUrl

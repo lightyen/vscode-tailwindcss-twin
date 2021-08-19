@@ -3,63 +3,12 @@ import chroma from "chroma-js"
 import Fuse from "fuse.js"
 import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
+import { getValueType, ValueType } from "./cssValue"
 
 const twinVariants: Array<[string, string[]]> = [
+	// @media
 	["dark", ["@media (prefers-color-scheme: dark)"]],
 	["light", ["@media (prefers-color-scheme: light)"]],
-	["active", [":active"]],
-	["after", ["::after"]],
-	["all", ["*"]],
-	["all-child", ["> *"]],
-	["before", ["::before"]],
-	["checked", [":checked"]],
-	["default", [":default"]],
-	["disabled", [":disabled"]],
-	["enabled", [":enabled"]],
-	["even", [":nth-child(even)"]],
-	["even-of-type", [":nth-of-type(even)"]],
-	["first", [":first-child"]],
-	["first-of-type", [":first-of-type"]],
-	["focus", [":focus"]],
-	["focus-visible", [":focus-visible"]],
-	["focus-within", [":focus-within"]],
-	["group-active", [".group:active"]],
-	["group-focus", [".group:focus"]],
-	["group-hocus", [".group:hover", ".group:focus"]],
-	["group-hover", [".group:hover"]],
-	["group-visited", [".group:visited"]],
-	["hocus", [":hover", ":focus"]],
-	["hover", [":hover"]],
-	["indeterminate", [":indeterminate"]],
-	["invalid", [":invalid"]],
-	["last", [":last-child"]],
-	["last-of-type", [":last-of-type"]],
-	["link", [":link"]],
-	["motion-reduce", ["@media (prefers-reduced-motion: reduce)"]],
-	["motion-safe", ["@media (prefers-reduced-motion: no-preference)"]],
-	["not-checked", [":not(:checked)"]],
-	["not-disabled", [":not(:disabled)"]],
-	["not-first", [":not(:first-child)"]],
-	["not-first-of-type", [":not(:first-of-type)"]],
-	["not-last", [":not(:last-child)"]],
-	["not-last-of-type", [":not(:last-of-type)"]],
-	["not-only-child", [":not(:only-child)"]],
-	["not-only-of-type", [":not(:only-of-type)"]],
-	["odd", [":nth-child(odd)"]],
-	["odd-of-type", [":nth-of-type(odd)"]],
-	["only-child", [":only-child"]],
-	["only-of-type", [":only-of-type"]],
-	["optional", [":optional"]],
-	["placeholder-shown", [":placeholder-shown"]],
-	["read-only", [":read-only"]],
-	["read-write", [":read-write"]],
-	["required", [":required"]],
-	["sibling", ["~ *"]],
-	["svg", ["svg"]],
-	["target", [":target"]],
-	["valid", [":valid"]],
-	["visited", [":visited"]],
-	["placeholder", ["::placeholder"]],
 	["screen", ["@media screen"]],
 	["print", ["@media print"]],
 	["landscape", ["@media (orientation: landscape)"]],
@@ -74,6 +23,137 @@ const twinVariants: Array<[string, string[]]> = [
 	["any-hover-none", ["@media (any-hover: none)"]],
 	["can-hover", ["@media (hover: hover)"]],
 	["cant-hover", ["@media (hover: none)"]],
+	["motion-reduce", ["@media (prefers-reduced-motion: reduce)"]],
+	["motion-safe", ["@media (prefers-reduced-motion: no-preference)"]],
+
+	// selector
+	["all", ["*"]],
+	["svg", ["svg"]],
+	["sibling", ["~ *"]],
+	["all-child", ["> *"]],
+
+	// not
+	["not-first", [":not(:first-child)"]],
+	["not-last", [":not(:last-child)"]],
+	["not-only", [":not(:only-child)"]], // NOTE: maybe not supported
+	["not-first-of-type", [":not(:first-of-type)"]],
+	["not-last-of-type", [":not(:last-of-type)"]],
+	["not-only-of-type", [":not(:only-of-type)"]],
+	["not-checked", [":not(:checked)"]],
+	["not-disabled", [":not(:disabled)"]],
+
+	// Basic pseudo variants
+	["first", [":first-child"]],
+	["last", [":last-child"]],
+	["only", [":only-child"]], // NOTE: duplicate with "only-child:"
+	["even", [":nth-child(even)"]],
+	["odd", [":nth-child(odd)"]],
+	["first-of-type", [":first-of-type"]],
+	["last-of-type", [":last-of-type"]],
+	["only-of-type", [":only-of-type"]],
+	["hover", [":hover"]],
+	["focus", [":focus"]],
+	["disabled", [":disabled"]],
+	["active", [":active"]],
+	["target", [":target"]],
+	["visited", [":visited"]],
+	["default", [":default"]],
+	["checked", [":checked"]],
+	["indeterminate", [":indeterminate"]],
+	["placeholder-shown", [":placeholder-shown"]],
+	["autofill", [":autofill"]],
+	["focus-within", [":focus-within"]],
+	["focus-visible", [":focus-visible"]],
+	["required", [":required"]],
+	["valid", [":valid"]],
+	["invalid", [":invalid"]],
+	["in-range", [":in-range"]],
+	["out-of-range", [":out-of-range"]],
+	["read-only", [":read-only"]],
+	["empty", [":empty"]],
+
+	// Pseudo-element variants
+	["first-letter", ["::first-letter"]],
+	["first-line", ["::first-line"]],
+	["marker", ["::marker"]],
+	["selection", ["::selection"]],
+	["before", ["::before"]],
+	["after", ["::after"]],
+
+	// Group variants
+	["group-first", [".group:first-child"]], // NOTE: maybe not supported
+	["group-last", [".group:last-child"]], // NOTE: maybe not supported
+	["group-only", [".group:only-child"]], // NOTE: maybe not supported
+	["group-even", [".group:nth-child(even)"]], // NOTE: maybe not supported
+	["group-odd", [".group:nth-child(odd)"]], // NOTE: maybe not supported
+	["group-first-of-type", [".group:first-of-type"]], // NOTE: maybe not supported
+	["group-last-of-type", [".group:last-of-type"]], // NOTE: maybe not supported
+	["group-only-of-type", [".group:only-of-type"]], // NOTE: maybe not supported
+	["group-hover", [".group:hover"]],
+	["group-focus", [".group:focus"]],
+	["group-disabled", [".group:disabled"]], // NOTE: maybe not supported
+	["group-active", [".group:active"]],
+	["group-target", [".group:target"]], // NOTE: maybe not supported
+	["group-visited", [".group:visited"]],
+	["group-default", [".group:default"]], // NOTE: maybe not supported
+	["group-checked", [".group:checked"]], // NOTE: maybe not supported
+	["group-indeterminate", [".group:indeterminate"]], // NOTE: maybe not supported
+	["group-placeholder-shown", [".group:placeholder-shown"]], // NOTE: maybe not supported
+	["group-autofill", [".group:autofill"]], // NOTE: maybe not supported
+	["group-focus-within", [".group:focus-within"]], // NOTE: maybe not supported
+	["group-focus-visible", [".group:focus-visible"]], // NOTE: maybe not supported
+	["group-required", [".group:required"]], // NOTE: maybe not supported
+	["group-valid", [".group:valid"]], // NOTE: maybe not supported
+	["group-invalid", [".group:invalid"]], // NOTE: maybe not supported
+	["group-in-range", [".group:in-range"]], // NOTE: maybe not supported
+	["group-out-of-range", [".group:out-of-range"]], // NOTE: maybe not supported
+	["group-read-only", [".group:read-only"]], // NOTE: maybe not supported
+	["group-empty", [".group:empty"]], // NOTE: maybe not supported
+
+	// Peer variants
+	["peer-first", [".peer:first-child ~"]],
+	["peer-last", [".peer:last-child ~"]],
+	["peer-only", [".peer:only-child ~"]],
+	["peer-even", [".peer:nth-child(even) ~"]],
+	["peer-odd", [".peer:nth-child(odd) ~"]],
+	["peer-first-of-type", [".peer:first-of-type ~"]],
+	["peer-last-of-type", [".peer:last-of-type ~"]],
+	["peer-only-of-type", [".peer:only-of-type ~"]],
+	["peer-hover", [".peer:hover ~"]],
+	["peer-focus", [".peer:focus ~"]],
+	["peer-disabled", [".peer:disabled ~"]],
+	["peer-active", [".peer:active ~"]],
+	["peer-target", [".peer:target ~"]],
+	["peer-visited", [".peer:visited ~"]],
+	["peer-default", [".peer:default ~"]],
+	["peer-checked", [".peer:checked ~"]],
+	["peer-indeterminate", [".peer:indeterminate ~"]],
+	["peer-placeholder-shown", [".peer:placeholder-shown ~"]],
+	["peer-autofill", [".peer:autofill ~"]],
+	["peer-focus-within", [".peer:focus-within ~"]],
+	["peer-focus-visible", [".peer:focus-visible ~"]],
+	["peer-required", [".peer:required ~"]],
+	["peer-valid", [".peer:valid ~"]],
+	["peer-invalid", [".peer:invalid ~"]],
+	["peer-in-range", [".peer:in-range ~"]],
+	["peer-out-of-range", [".peer:out-of-range ~"]],
+	["peer-read-only", [".peer:read-only ~"]],
+	["peer-empty", [".peer:empty ~"]],
+
+	// others
+	["even-of-type", [":nth-of-type(even)"]],
+	["odd-of-type", [":nth-of-type(odd)"]],
+	["enabled", [":enabled"]],
+	["link", [":link"]],
+	["optional", [":optional"]],
+	["read-write", [":read-write"]],
+	["placeholder", ["::placeholder"]],
+	["hocus", [":hover", ":focus"]],
+	["only-child", [":only-child"]],
+	["not-only-child", [":not(:only-child)"]],
+	["group-hocus", [".group:hover", ".group:focus"]],
+	["peer-hocus", [".peer:hover ~", ".peer:focus ~"]], // NOTE: maybe not supported
+	["peer-only-child", [".peer:only-child ~"]], // NOTE: maybe not supported
 ]
 
 interface ClassNameMetaItem {
@@ -111,12 +191,6 @@ enum Flag {
 	CommonVariant = 1 << 3,
 }
 
-export interface Options {
-	separator: string
-	prefix?: string | false | null | undefined
-	darkMode?: "media" | "class" | false | null | undefined
-}
-
 export const __INNER_TAILWIND_SEPARATOR__ = "_twsp_"
 
 type _KeyValuePair<T = unknown> = [string, T]
@@ -132,12 +206,11 @@ interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
 	get(key: string): T | undefined
 }
 
-type Purge =
-	| {
-			enabled: boolean
-			content: string[]
-	  }
-	| string[]
+type Purge = {
+	enabled: boolean
+	content: string[]
+	safelist?: string[]
+}
 
 type DarkMode = false | "media" | "class"
 
@@ -145,32 +218,27 @@ export type TailwindConfigJS = {
 	separator?: string
 	prefix: string
 	darkMode?: DarkMode
-	purge?: Purge
+	purge: Purge
 	mode?: "jit" | "aot"
 	important?: boolean
-	theme?: unknown
+	theme: {
+		colors: unknown
+		opacity: Record<string, unknown>
+	}
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function preprocessConfig(config: any): any {
+export function preprocessConfig(config: any, silent?: boolean): any {
 	const cfg = { ...config } as TailwindConfigJS
 	cfg.separator = cfg.separator ?? ":"
 	if (cfg.separator !== ":") {
-		console.info("Option: `separator` forced to be set ':'.")
+		if (!silent) console.info("Option: `separator` forced to be set ':'.")
 	}
 	cfg.separator = __INNER_TAILWIND_SEPARATOR__
-
-	if (cfg.purge instanceof Array) {
-		if (cfg.purge.length > 0) {
-			console.info("Option: `purge` is ignored.")
-		}
-	} else if (cfg?.purge?.content != null || cfg?.purge?.enabled) {
-		console.info("Option: `purge` is ignored.")
-	}
 	cfg.purge = { enabled: false, content: [] }
 
 	if (cfg?.mode === "jit") {
-		console.info("Option: `mode` forced to be set 'aot'.")
+		if (!silent) console.info("Option: `mode` forced to be set 'aot'.")
 		cfg.mode = "aot"
 	}
 
@@ -180,7 +248,7 @@ export function preprocessConfig(config: any): any {
 	}
 
 	if (cfg?.darkMode !== "media" && cfg?.darkMode !== "class") {
-		console.info("Option: `darkMode` forced to be set 'media'.")
+		if (!silent) console.info("Option: `darkMode` forced to be set 'media'.")
 		cfg.darkMode = "media"
 	}
 
@@ -190,22 +258,47 @@ export function preprocessConfig(config: any): any {
 
 	return cfg
 }
-
 export class Twin {
 	static selectorProcessor = parser()
-
+	readonly config: TailwindConfigJS
 	readonly separator: string
 	readonly prefix: string
 	readonly darkMode: string
-
-	constructor(
-		{ separator, prefix = "", darkMode = "media" }: Options,
-		...results: Array<{ result: Result; source?: string }>
-	) {
+	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
+	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
+	readonly isArbitraryStyle: (value: string) => [boolean, string]
+	constructor(options: TailwindConfigJS, ...results: Array<{ result: Result; source?: string }>) {
+		this.config = options
+		const { separator = ":", prefix = "", darkMode = "media", theme } = options
 		this.separator = separator
 		this.prefix = prefix || ""
 		this.darkMode = darkMode || "media" // always enable dark mode
+		const colors = this.getColorNames(theme.colors)
+		const opacity = Object.keys(theme.opacity)
 		results.forEach(a => this.parseResult(a))
+		const regexp_isColorShorthandOpacity = new RegExp(`(.*(?:${colors.join("|")}))\\/(?:${opacity.join("|")})$`)
+		const regexp_isColorArbitraryOpacity = new RegExp(`(.*(?:${colors.join("|")}))\\/\\[.*?]$`)
+		this.isColorShorthandOpacity = (value: string) => {
+			const match = regexp_isColorShorthandOpacity.exec(value)
+			if (!match) {
+				return [false, ""]
+			}
+			return [match[1] !== value, match[1]]
+		}
+		this.isColorArbitraryOpacity = (value: string) => {
+			const match = regexp_isColorArbitraryOpacity.exec(value)
+			if (!match) {
+				return [false, ""]
+			}
+			return [match[1] !== value, match[1]]
+		}
+		this.isArbitraryStyle = (value: string) => {
+			const match = /(.*?)(?:-|\/)\[.*?\]$/.exec(value)
+			if (!match) {
+				return [false, ""]
+			}
+			return [true, match[1]]
+		}
 
 		// post processing
 		for (let i = 0; i < twinVariants.length; i++) {
@@ -218,17 +311,19 @@ export class Twin {
 			this.variantsMap.set("light", ["." + "light"])
 		}
 		this.classnamesMap.delete(this.prefix + "group")
-		this.classnamesMap.set(this.prefix + "content", [
-			{
-				name: this.prefix + "content",
-				source: "utilities",
-				variants: [],
-				context: [],
-				pseudo: [],
-				rest: "",
-				decls: { content: ['""'] },
-			},
-		])
+		if (this.config.mode !== "jit") {
+			this.classnamesMap.set(this.prefix + "content", [
+				{
+					name: this.prefix + "content",
+					source: "utilities",
+					variants: [],
+					context: [],
+					pseudo: [],
+					rest: "",
+					decls: { content: ['""'] },
+				},
+			])
+		}
 
 		// collection
 		this.variants = createMap(this.variantsMap)
@@ -248,6 +343,34 @@ export class Twin {
 				{ includeScore: true },
 			),
 		}
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private getColorNames(colors: any) {
+		const names: string[] = []
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		function traversal(c: any, prefix = "") {
+			for (const key in c) {
+				if (key === "DEFAULT") {
+					names.push(prefix.slice(0, -1))
+					continue
+				}
+
+				if (typeof c[key] === "string" || typeof c[key] === "number" || typeof c[key] === "function") {
+					if (prefix) {
+						names.push(`${prefix}${key}`)
+					} else {
+						names.push(key)
+					}
+				} else if (c[key] instanceof Array) {
+					//
+				} else if (typeof c[key] === "object") {
+					traversal(c[key], key + "-")
+				}
+			}
+		}
+		traversal(colors)
+		return names
 	}
 
 	private getRuleMetaItem(rule: Rule, separator: string): RuleMetaItem {
@@ -463,6 +586,280 @@ export class Twin {
 			}
 			return true
 		}
+	}
+
+	getSampleArbitraryName(prop: string, content: string): string {
+		if (this.colors[prop]) {
+			return prop
+		}
+
+		// *-[color]
+		switch (prop) {
+			case "bg":
+				return "bg-black"
+			case "divide":
+				return "divide-black"
+			case "from":
+				return "from-black"
+			case "via":
+				return "via-black"
+			case "to":
+				return "to-black"
+			case "ring-offset":
+				return "ring-offset-black"
+			case "placeholder":
+				return "placeholder-black"
+		}
+
+		// *-[len]
+		switch (prop) {
+			case "space-x":
+				return "space-x-0"
+			case "space-y":
+				return "space-y-0"
+			case "divide-x":
+				return "divide-x-0"
+			case "divide-y":
+				return "divide-y-0"
+			case "w":
+				return "w-0"
+			case "h":
+				return "h-0"
+			case "leading":
+				return "leading-0"
+			case "m":
+				return "m-0"
+			case "mx":
+				return "mx-0"
+			case "my":
+				return "my-0"
+			case "mt":
+				return "mt-0"
+			case "mr":
+				return "mr-0"
+			case "mb":
+				return "mb-0"
+			case "ml":
+				return "ml-0"
+			case "p":
+				return "p-0"
+			case "px":
+				return "px-0"
+			case "py":
+				return "py-0"
+			case "pt":
+				return "pt-0"
+			case "pr":
+				return "pr-0"
+			case "pb":
+				return "pb-0"
+			case "pl":
+				return "pl-0"
+			case "max-w":
+				return "max-w-0"
+			case "max-h":
+				return "max-h-0"
+			case "inset":
+				return "inset-0"
+			case "inset-x":
+				return "inset-x-0"
+			case "inset-y":
+				return "inset-y-0"
+			case "top":
+				return "top-0"
+			case "right":
+				return "right-0"
+			case "bottom":
+				return "bottom-0"
+			case "left":
+				return "left-0"
+			case "gap":
+				return "gap-0"
+			case "translate-x":
+				return "translate-x-0"
+			case "translate-y":
+				return "translate-y-0"
+			case "blur":
+				return "blur-none"
+			case "backdrop-blur":
+				return "backdrop-blur-none"
+		}
+
+		// *-[number]
+		switch (prop) {
+			case "bg-opacity":
+				return "bg-opacity-0"
+			case "text-opacity":
+				return "text-opacity-0"
+			case "divide-opacity":
+				return "divide-opacity-0"
+			case "border-opacity":
+				return "border-opacity-0"
+			case "placeholder-opacity":
+				return "placeholder-opacity-0"
+			case "ring-opacity":
+				return "ring-opacity-0"
+			case "order":
+				return "order-1"
+			case "scale":
+				return "scale-0"
+			case "scale-x":
+				return "scale-x-0"
+			case "scale-y":
+				return "scale-y-0"
+			case "opacity":
+				return "opacity-0"
+			case "brightness":
+				return "brightness-0"
+			case "contrast":
+				return "contrast-0"
+			case "grayscale":
+				return "grayscale-0"
+			case "saturate":
+				return "saturate-0"
+			case "sepia":
+				return "sepia-0"
+			case "backdrop-opacity":
+				return "backdrop-opacity-0"
+			case "backdrop-brightness":
+				return "backdrop-brightness-0"
+			case "backdrop-contrast":
+				return "backdrop-contrast-0"
+			case "backdrop-grayscale":
+				return "backdrop-grayscale-0"
+			case "backdrop-saturate":
+				return "backdrop-saturate-0"
+			case "backdrop-sepia":
+				return "backdrop-sepia-0"
+			case "rotate":
+				return "rotate-0"
+			case "skew":
+				return "skew-0"
+			case "hue-rotate":
+				return "hue-rotate-0"
+			case "backdrop-hue-rotate":
+				return "backdrop-hue-rotate-0"
+			case "duration":
+				return "duration-100"
+			case "delay":
+				return "delay-100"
+			case "ease":
+				return "ease-in"
+			case "grid-cols":
+				return "grid-cols-1"
+			case "grid-rows":
+				return "grid-rows-1"
+			case "col-span":
+				return "col-span-1"
+			case "col-start":
+				return "col-start-1"
+			case "col-end":
+				return "col-end-1"
+		}
+
+		content = content.trim()
+		let t = ValueType.Any
+
+		if (content.startsWith("length:")) {
+			content = content.slice(7)
+			t = ValueType.Length
+		} else if (content.startsWith("color:")) {
+			content = content.slice(6)
+			t = ValueType.Color
+		} else if (content === "transparent") {
+			t = ValueType.Color
+		}
+
+		if (t === ValueType.Any) {
+			t = getValueType(content)
+		}
+
+		if (t === ValueType.Color) {
+			switch (prop) {
+				case "border":
+					return "border-black"
+				case "border-t":
+					return "border-t-black"
+				case "border-r":
+					return "border-r-black"
+				case "border-b":
+					return "border-b-black"
+				case "border-l":
+					return "border-l-black"
+				case "text":
+					return "text-black"
+				case "ring":
+					return "ring-black"
+				case "stroke":
+					return "stroke-current"
+			}
+		} else if (t === ValueType.Length) {
+			switch (prop) {
+				case "border":
+					return "border-0"
+				case "border-t":
+					return "border-t-0"
+				case "border-r":
+					return "border-r-0"
+				case "border-b":
+					return "border-b-0"
+				case "border-l":
+					return "border-l-0"
+				case "text":
+					return "text-base"
+				case "ring":
+					return "ring-0"
+				case "stroke":
+					return "stroke-0"
+			}
+		}
+
+		return ""
+	}
+
+	isArbitraryColor(prop: string, content: string): boolean {
+		switch (prop) {
+			case "bg":
+			case "divide":
+			case "from":
+			case "via":
+			case "to":
+			case "ring-offset":
+			case "placeholder":
+				return true
+		}
+
+		switch (prop) {
+			case "border":
+			case "border-t":
+			case "border-r":
+			case "border-b":
+			case "border-l":
+			case "text":
+			case "ring":
+			case "stroke":
+				break
+			default:
+				return false
+		}
+
+		content = content.trim()
+		let t = ValueType.Any
+
+		if (content.startsWith("color:")) {
+			content = content.slice(6)
+			t = ValueType.Color
+		}
+
+		if (t === ValueType.Any) {
+			t = getValueType(content)
+		}
+
+		if (t === ValueType.Color) {
+			return true
+		}
+
+		return false
 	}
 }
 
