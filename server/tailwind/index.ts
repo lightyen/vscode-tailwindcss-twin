@@ -141,7 +141,9 @@ export class Tailwind {
 		const resolved = this.resolveConfig(this.config)
 		const bs = ["border-t", "border-b", "border-l", "border-r", "caret"]
 		resolved.mode = "jit"
-		resolved.purge.safelist = bs.map(b => this.getColorNames(resolved).map(c => `${b}-${c}`)).flat()
+		resolved.purge.safelist = bs
+			.map(b => this.getColorNames(resolved).map(c => `${resolved.prefix}${b}-${c}`))
+			.flat()
 		const processerJIT = this.postcss([this.tailwindcss(resolved)])
 
 		const results = await Promise.all([
@@ -150,6 +152,7 @@ export class Tailwind {
 			processerJIT.process(`@tailwind utilities;`, { from: undefined }),
 		])
 
+		resolved.mode = undefined
 		resolved.purge.safelist = undefined
 		this.config = resolved
 

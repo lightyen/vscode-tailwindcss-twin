@@ -126,8 +126,8 @@ function validateTwin({
 				for (const token of t) {
 					const message =
 						diagnostics.conflict === "strict"
-							? `${token.value} is conflicted on property: ${prop}`
-							: `${token.value} is conflicted`
+							? `${token.value} is duplicated on property: ${prop}`
+							: `${token.value} is duplicated`
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message,

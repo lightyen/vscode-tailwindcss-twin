@@ -301,7 +301,7 @@ function resolveScreenValue({
 	}
 
 	if (typeof value === "string") {
-		markdown.value = `\`\`\`txt\n${value}\n\`\`\``
+		markdown.value = `\`\`\`scss\n@media (min-width: ${value})\n\`\`\``
 	} else if (value instanceof Array) {
 		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
 	} else if (value) {

@@ -3,7 +3,7 @@ import chroma from "chroma-js"
 import Fuse from "fuse.js"
 import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
-import { getValueType, ValueType } from "./cssValue"
+import { getValueType, ValueType } from "~/common/cssValue"
 
 const twinVariants: Array<[string, string[]]> = [
 	// @media
@@ -26,6 +26,10 @@ const twinVariants: Array<[string, string[]]> = [
 	["motion-reduce", ["@media (prefers-reduced-motion: reduce)"]],
 	["motion-safe", ["@media (prefers-reduced-motion: no-preference)"]],
 
+	// direction
+	["ltr", ["[dir='ltr']"]],
+	["rtl", ["[dir='rtl']"]],
+
 	// selector
 	["all", ["*"]],
 	["svg", ["svg"]],
@@ -35,7 +39,7 @@ const twinVariants: Array<[string, string[]]> = [
 	// not
 	["not-first", [":not(:first-child)"]],
 	["not-last", [":not(:last-child)"]],
-	["not-only", [":not(:only-child)"]], // NOTE: maybe not supported
+	["not-only", [":not(:only-child)"]],
 	["not-first-of-type", [":not(:first-of-type)"]],
 	["not-last-of-type", [":not(:last-of-type)"]],
 	["not-only-of-type", [":not(:only-of-type)"]],
@@ -45,7 +49,7 @@ const twinVariants: Array<[string, string[]]> = [
 	// Basic pseudo variants
 	["first", [":first-child"]],
 	["last", [":last-child"]],
-	["only", [":only-child"]], // NOTE: duplicate with "only-child:"
+	["only", [":only-child"]],
 	["even", [":nth-child(even)"]],
 	["odd", [":nth-child(odd)"]],
 	["first-of-type", [":first-of-type"]],
@@ -81,34 +85,34 @@ const twinVariants: Array<[string, string[]]> = [
 	["after", ["::after"]],
 
 	// Group variants
-	["group-first", [".group:first-child"]], // NOTE: maybe not supported
-	["group-last", [".group:last-child"]], // NOTE: maybe not supported
-	["group-only", [".group:only-child"]], // NOTE: maybe not supported
-	["group-even", [".group:nth-child(even)"]], // NOTE: maybe not supported
-	["group-odd", [".group:nth-child(odd)"]], // NOTE: maybe not supported
-	["group-first-of-type", [".group:first-of-type"]], // NOTE: maybe not supported
-	["group-last-of-type", [".group:last-of-type"]], // NOTE: maybe not supported
-	["group-only-of-type", [".group:only-of-type"]], // NOTE: maybe not supported
+	["group-first", [".group:first-child"]],
+	["group-last", [".group:last-child"]],
+	["group-only", [".group:only-child"]],
+	["group-even", [".group:nth-child(even)"]],
+	["group-odd", [".group:nth-child(odd)"]],
+	["group-first-of-type", [".group:first-of-type"]],
+	["group-last-of-type", [".group:last-of-type"]],
+	["group-only-of-type", [".group:only-of-type"]],
 	["group-hover", [".group:hover"]],
 	["group-focus", [".group:focus"]],
-	["group-disabled", [".group:disabled"]], // NOTE: maybe not supported
+	["group-disabled", [".group:disabled"]],
 	["group-active", [".group:active"]],
-	["group-target", [".group:target"]], // NOTE: maybe not supported
+	["group-target", [".group:target"]],
 	["group-visited", [".group:visited"]],
-	["group-default", [".group:default"]], // NOTE: maybe not supported
-	["group-checked", [".group:checked"]], // NOTE: maybe not supported
-	["group-indeterminate", [".group:indeterminate"]], // NOTE: maybe not supported
-	["group-placeholder-shown", [".group:placeholder-shown"]], // NOTE: maybe not supported
-	["group-autofill", [".group:autofill"]], // NOTE: maybe not supported
-	["group-focus-within", [".group:focus-within"]], // NOTE: maybe not supported
-	["group-focus-visible", [".group:focus-visible"]], // NOTE: maybe not supported
-	["group-required", [".group:required"]], // NOTE: maybe not supported
-	["group-valid", [".group:valid"]], // NOTE: maybe not supported
-	["group-invalid", [".group:invalid"]], // NOTE: maybe not supported
-	["group-in-range", [".group:in-range"]], // NOTE: maybe not supported
-	["group-out-of-range", [".group:out-of-range"]], // NOTE: maybe not supported
-	["group-read-only", [".group:read-only"]], // NOTE: maybe not supported
-	["group-empty", [".group:empty"]], // NOTE: maybe not supported
+	["group-default", [".group:default"]],
+	["group-checked", [".group:checked"]],
+	["group-indeterminate", [".group:indeterminate"]],
+	["group-placeholder-shown", [".group:placeholder-shown"]],
+	["group-autofill", [".group:autofill"]],
+	["group-focus-within", [".group:focus-within"]],
+	["group-focus-visible", [".group:focus-visible"]],
+	["group-required", [".group:required"]],
+	["group-valid", [".group:valid"]],
+	["group-invalid", [".group:invalid"]],
+	["group-in-range", [".group:in-range"]],
+	["group-out-of-range", [".group:out-of-range"]],
+	["group-read-only", [".group:read-only"]],
+	["group-empty", [".group:empty"]],
 
 	// Peer variants
 	["peer-first", [".peer:first-child ~"]],
@@ -149,11 +153,8 @@ const twinVariants: Array<[string, string[]]> = [
 	["read-write", [":read-write"]],
 	["placeholder", ["::placeholder"]],
 	["hocus", [":hover", ":focus"]],
-	["only-child", [":only-child"]],
-	["not-only-child", [":not(:only-child)"]],
 	["group-hocus", [".group:hover", ".group:focus"]],
 	["peer-hocus", [".peer:hover ~", ".peer:focus ~"]], // NOTE: maybe not supported
-	["peer-only-child", [".peer:only-child ~"]], // NOTE: maybe not supported
 ]
 
 interface ClassNameMetaItem {
@@ -266,7 +267,6 @@ export class Twin {
 	readonly darkMode: string
 	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
 	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
-	readonly isArbitraryStyle: (value: string) => [boolean, string]
 	constructor(options: TailwindConfigJS, ...results: Array<{ result: Result; source?: string }>) {
 		this.config = options
 		const { separator = ":", prefix = "", darkMode = "media", theme } = options
@@ -276,8 +276,13 @@ export class Twin {
 		const colors = this.getColorNames(theme.colors)
 		const opacity = Object.keys(theme.opacity)
 		results.forEach(a => this.parseResult(a))
-		const regexp_isColorShorthandOpacity = new RegExp(`(.*(?:${colors.join("|")}))\\/(?:${opacity.join("|")})$`)
-		const regexp_isColorArbitraryOpacity = new RegExp(`(.*(?:${colors.join("|")}))\\/\\[.*?]$`)
+		const escapeRegexp = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+		const regexp_isColorShorthandOpacity = new RegExp(
+			`^(${escapeRegexp(this.prefix)}.*(?:${colors.join("|")}))\\/(?:${opacity.join("|")})$`,
+		)
+		const regexp_isColorArbitraryOpacity = new RegExp(
+			`^(${escapeRegexp(this.prefix)}.*(?:${colors.join("|")}))\\/\\[`,
+		)
 		this.isColorShorthandOpacity = (value: string) => {
 			const match = regexp_isColorShorthandOpacity.exec(value)
 			if (!match) {
@@ -292,13 +297,6 @@ export class Twin {
 			}
 			return [match[1] !== value, match[1]]
 		}
-		this.isArbitraryStyle = (value: string) => {
-			const match = /(.*?)(?:-|\/)\[.*?\]$/.exec(value)
-			if (!match) {
-				return [false, ""]
-			}
-			return [true, match[1]]
-		}
 
 		// post processing
 		for (let i = 0; i < twinVariants.length; i++) {
@@ -311,6 +309,7 @@ export class Twin {
 			this.variantsMap.set("light", ["." + "light"])
 		}
 		this.classnamesMap.delete(this.prefix + "group")
+
 		if (this.config.mode !== "jit") {
 			this.classnamesMap.set(this.prefix + "content", [
 				{
@@ -321,6 +320,29 @@ export class Twin {
 					pseudo: [],
 					rest: "",
 					decls: { content: ['""'] },
+				},
+			])
+
+			this.classnamesMap.set(this.prefix + "transform-cpu", [
+				{
+					name: this.prefix + "transform-cpu",
+					source: "utilities",
+					variants: [],
+					context: [],
+					pseudo: [],
+					rest: "",
+					decls: {
+						"--tw-translate-x": ["0"],
+						"--tw-translate-y": ["0"],
+						"--tw-rotate": ["0"],
+						"--tw-skew-x": ["0"],
+						"--tw-skew-y": ["0"],
+						"--tw-scale-x": ["1"],
+						"--tw-scale-y": ["1"],
+						transform: [
+							"translateX(var(--tw-translate-x)) translateY(var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))",
+						],
+					},
 				},
 			])
 		}
@@ -589,8 +611,12 @@ export class Twin {
 	}
 
 	getSampleArbitraryName(prop: string, content: string): string {
-		if (this.colors[prop]) {
+		if (this.colors.get(prop)) {
 			return prop
+		}
+
+		if (prop.startsWith(this.prefix)) {
+			prop = prop.slice(this.prefix.length)
 		}
 
 		// *-[color]
@@ -609,6 +635,10 @@ export class Twin {
 				return "ring-offset-black"
 			case "placeholder":
 				return "placeholder-black"
+			case "fill":
+				return "fill-current"
+			case "caret":
+				return "caret-gray-100"
 		}
 
 		// *-[len]
@@ -626,7 +656,7 @@ export class Twin {
 			case "h":
 				return "h-0"
 			case "leading":
-				return "leading-0"
+				return "leading-none"
 			case "m":
 				return "m-0"
 			case "mx":
@@ -657,8 +687,22 @@ export class Twin {
 				return "pl-0"
 			case "max-w":
 				return "max-w-0"
+			case "min-w":
+				return "min-w-0"
 			case "max-h":
 				return "max-h-0"
+			case "min-h":
+				return "min-h-0"
+			case "rounded":
+			case "rounded-t":
+			case "rounded-r":
+			case "rounded-b":
+			case "rounded-l":
+			case "rounded-tl":
+			case "rounded-tr":
+			case "rounded-bl":
+			case "rounded-br":
+				return "rounded"
 			case "inset":
 				return "inset-0"
 			case "inset-x":
@@ -675,6 +719,10 @@ export class Twin {
 				return "left-0"
 			case "gap":
 				return "gap-0"
+			case "gap-x":
+				return "gap-x-0"
+			case "gap-y":
+				return "gap-y-0"
 			case "translate-x":
 				return "translate-x-0"
 			case "translate-y":
@@ -683,10 +731,22 @@ export class Twin {
 				return "blur-none"
 			case "backdrop-blur":
 				return "backdrop-blur-none"
+			case "tracking":
+				return "tracking-normal"
+			case "auto-cols":
+				return "auto-cols-auto"
+			case "auto-rows":
+				return "auto-rows-auto"
 		}
 
 		// *-[number]
 		switch (prop) {
+			case "z":
+				return "z-0"
+			case "flex-grow":
+				return "flex-grow-0"
+			case "flex-shrink":
+				return "flex-shrink-0"
 			case "bg-opacity":
 				return "bg-opacity-0"
 			case "text-opacity":
@@ -733,12 +793,18 @@ export class Twin {
 				return "backdrop-sepia-0"
 			case "rotate":
 				return "rotate-0"
-			case "skew":
-				return "skew-0"
+			case "skew-x":
+				return "skew-x-0"
+			case "skew-y":
+				return "skew-y-0"
 			case "hue-rotate":
 				return "hue-rotate-0"
+			case "invert":
+				return "invert"
 			case "backdrop-hue-rotate":
 				return "backdrop-hue-rotate-0"
+			case "backdrop-invert":
+				return "backdrop-invert"
 			case "duration":
 				return "duration-100"
 			case "delay":
@@ -755,6 +821,12 @@ export class Twin {
 				return "col-start-1"
 			case "col-end":
 				return "col-end-1"
+		}
+
+		// *-[label]
+		switch (prop) {
+			case "cursor":
+				return "cursor-default"
 		}
 
 		content = content.trim()
@@ -818,6 +890,10 @@ export class Twin {
 	}
 
 	isArbitraryColor(prop: string, content: string): boolean {
+		if (prop.startsWith(this.prefix)) {
+			prop = prop.slice(this.prefix.length)
+		}
+
 		switch (prop) {
 			case "bg":
 			case "divide":

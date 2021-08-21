@@ -104,7 +104,7 @@ function twinCompletion(
 	const isIncomplete = false
 
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
-	const utilties = utiltiesCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const utilties = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const arbitraryValue = arbitraryValueCompletion(document, text, position, offset, kind, suggestion, state, options)
 
@@ -221,7 +221,7 @@ function variantsCompletion(
 	return variantItems
 }
 
-function utiltiesCompletion(
+function utilitiesCompletion(
 	document: TextDocument,
 	text: string,
 	position: number,
@@ -482,6 +482,7 @@ const mappingArbitraryPropToCssProp: Record<
 	"text-": [fromRestrictions("color", "length", "percentage")],
 	"ring-": [fromRestrictions("length", "color")],
 	"stroke-": [fromCssProp("stroke-width"), fromCssProp("stroke")],
+	"caret-": [fromCssProp("caret-color")],
 }
 
 function arbitraryValueCompletion(
