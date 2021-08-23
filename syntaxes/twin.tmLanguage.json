@@ -133,7 +133,7 @@
     },
     "expression-short-css": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
+      "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {

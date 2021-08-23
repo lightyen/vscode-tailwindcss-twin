@@ -228,7 +228,7 @@
     },
     "expression-short-css-single-quote": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
+      "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {
@@ -266,7 +266,7 @@
     },
     "expression-short-css-double-quote": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+-)*\\w+)(\\[)",
+      "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": {
