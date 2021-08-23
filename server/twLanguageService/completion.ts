@@ -724,13 +724,16 @@ function twinScreenCompletion(
 				}
 			}
 
-			item.textEdit = lsp.TextEdit.replace(
-				{
-					start: document.positionAt(token.start),
-					end: document.positionAt(token.end),
-				},
-				label,
-			)
+			const w = token.value.trim()
+			if (w !== "") {
+				item.textEdit = lsp.TextEdit.replace(
+					{
+						start: document.positionAt(token.start),
+						end: document.positionAt(token.start + w.length),
+					},
+					label,
+				)
+			}
 
 			return item
 		}),
