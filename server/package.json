@@ -8,9 +8,9 @@
     "node": "*"
   },
   "devDependencies": {
-    "@formatjs/intl": "1.14.0",
+    "@formatjs/intl": "1.14.1",
     "@types/chroma-js": "^2.1.3",
-    "@types/node": "^16.6.2",
+    "@types/node": "^16.7.1",
     "@types/semver": "^7.3.8",
     "@types/webpack-env": "^1.16.2",
     "chroma-js": "^2.1.2",
