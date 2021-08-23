@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.9.0
+
+- Support twin.macro v2.7.0
+- Refactor parser
+- Remove variant: `only-child:`
+
 ## 0.8.5
 
 - Support twin.macro v2.4.2
