@@ -2,7 +2,7 @@ import { createToken, Token } from "./token"
 import * as nodes from "./twNodes"
 
 /** Try to find right bracket from left bracket, return `undefind` if not found. */
-function findRightBracket({
+export function findRightBracket({
 	text,
 	start = 0,
 	end = text.length,

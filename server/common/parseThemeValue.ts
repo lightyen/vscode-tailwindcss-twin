@@ -1,5 +1,5 @@
-import findRightBracket from "./findRightBracket"
-import * as tw from "./token"
+import { findRightBracket } from "./twin-parser/parse_regexp"
+import * as tw from "./twin-parser/token"
 
 export enum TwThemeElementKind {
 	Unknown,
@@ -34,6 +34,12 @@ interface TwThemeBracketElement {
 	token: tw.Token
 }
 
+export interface Error {
+	message: string
+	start: number
+	end: number
+}
+
 type Block =
 	| TwThemeUnknownElement
 	| TwThemeIdentifierElement
@@ -43,7 +49,7 @@ type Block =
 
 interface Result {
 	blocks: Block[]
-	errors: tw.Error[]
+	errors: Error[]
 	keys(): string[]
 	hit(index: number): Block | undefined
 }
@@ -52,7 +58,7 @@ export default function parseThemeValue(input: string): Result {
 	let init = false
 
 	const blocks: Block[] = []
-	const errors: tw.Error[] = []
+	const errors: Error[] = []
 
 	const reg = /(\.[\w-/]*)|(\[[\w-./]*)|([\w-/]+)/g
 	const start = 0
@@ -136,7 +142,7 @@ export default function parseThemeValue(input: string): Result {
 				token: tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1)),
 			})
 
-			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: ["[", "]"] })
 			if (typeof closedBracket !== "number") {
 				errors.push({
 					message: "except to find a ']' to match the '['",
@@ -259,7 +265,7 @@ export function findThemeValueKeys(
 				break
 			}
 		} else if (bracId) {
-			const closedBracket = findRightBracket({ input, start: match.index, end, brackets: ["[", "]"] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: ["[", "]"] })
 			if (typeof closedBracket !== "number") {
 				if (position === match.index + 1) {
 					hit = tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1))

@@ -625,7 +625,7 @@ function twinThemeCompletion(
 
 			item.filterText = newText
 			if (keys.length > 0) {
-				item.filterText = hit?.text.slice(0, 1) + item.filterText
+				item.filterText = hit?.value.slice(0, 1) + item.filterText
 			}
 
 			if (hit) {
