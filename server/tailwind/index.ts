@@ -33,7 +33,7 @@ export class Tailwind {
 			result = this.findConfig(configPath)
 		}
 		if (result.config && result.configPath) {
-			this.config = result.config
+			this.config = result.config as ResolvedTailwindConfigJS
 			this.distConfigPath = result.configPath
 			this.hasConfig = true
 		} else {
@@ -89,7 +89,7 @@ export class Tailwind {
 	distConfigPath = ""
 	workspaceFolder = ""
 	hasConfig = false
-	config!: TailwindConfigJS | ResolvedTailwindConfigJS
+	config!: ResolvedTailwindConfigJS
 	fallbackDefaultConfig = false
 
 	private findConfig(configPath: string) {
@@ -167,15 +167,13 @@ export class Tailwind {
 		className = className.replace(/\s/g, "")
 		const tmp = { ...this.config }
 		tmp.mode = "jit"
-		tmp.purge = { content: [] }
-		tmp.purge.safelist = [className]
+		tmp.purge = { enabled: false, content: [], safelist: [className] }
 		const processer = this.postcss([this.tailwindcss(tmp)])
 		const results = await Promise.all([
 			processer.process("@tailwind base;@tailwind components;", { from: undefined }),
 			processer.process("@tailwind utilities;", { from: undefined }),
 		])
 
-		tmp.purge.safelist = undefined
 		return new Twin(
 			tmp as ResolvedTailwindConfigJS,
 			{ result: results[0], source: "components" },
@@ -187,12 +185,9 @@ export class Tailwind {
 		className = className.replace(/\s/g, "")
 		const tmp = { ...this.config }
 		tmp.mode = "jit"
-		tmp.purge = { content: [] }
-		tmp.purge.safelist = [className]
+		tmp.purge = { enabled: false, content: [], safelist: [className] }
 		const processer = this.postcss([this.tailwindcss(tmp)])
 		const result = await processer.process("@tailwind utilities;", { from: undefined })
-
-		tmp.purge.safelist = undefined
 		return new Twin(tmp as ResolvedTailwindConfigJS, { result, source: "utilities" })
 	}
 
@@ -203,12 +198,12 @@ export class Tailwind {
 	 * @param keys
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	getTheme(keys: string[]): any {
+	getTheme(keys: string[], useDefault = false): any {
 		if (!this.config) {
 			return undefined
 		}
 		let value = dlv(this.config.theme, keys)
-		if (value?.["DEFAULT"] != undefined) {
+		if (useDefault && value?.["DEFAULT"] != undefined) {
 			value = value["DEFAULT"]
 		}
 		return value

@@ -27,7 +27,7 @@ export function getReferenceLinks(keyword: string) {
 	return links
 }
 
-export function getName(keyword: string) {
+export function getName(keyword: string): string | undefined {
 	const value = keyword.replace(":", "").replace(/^border-(t|r|b|l)-/, "border-")
 	const originUrl = references[value]
 	const twinUrl = references["tw." + value]

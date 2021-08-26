@@ -31,7 +31,7 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 					severity: DiagnosticSeverity.Error,
 				})
 			}
-			if (!state.getTheme(result.keys())) {
+			if (!state.getTheme(result.keys(), true)) {
 				diagnostics.push({
 					range: { start: document.positionAt(start), end: document.positionAt(end) },
 					source: DIAGNOSTICS_ID,

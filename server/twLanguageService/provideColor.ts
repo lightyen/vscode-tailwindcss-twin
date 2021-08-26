@@ -125,7 +125,7 @@ function getThemeDecoration(text: string, state: Tailwind): string | undefined {
 	if (result.errors.length > 0) {
 		return undefined
 	}
-	const value = state.getTheme(result.keys())
+	const value = state.getTheme(result.keys(), true)
 	if (typeof value === "string") {
 		if (value === "transparent") {
 			return value

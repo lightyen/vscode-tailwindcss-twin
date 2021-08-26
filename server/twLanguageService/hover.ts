@@ -258,7 +258,7 @@ function resolveThemeValue({
 		return undefined
 	}
 
-	const value = state.getTheme(result.keys())
+	const value = state.getTheme(result.keys(), true)
 
 	const markdown: lsp.MarkupContent = {
 		kind: lsp.MarkupKind.Markdown,

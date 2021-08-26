@@ -598,13 +598,13 @@ function twinThemeCompletion(
 						if (value === "transparent") {
 							item.kind = lsp.CompletionItemKind.Color
 							item.documentation = "rgba(0, 0, 0, 0.0)"
-							item.data.type = "color"
+							item.data.type = "theme"
 							return item
 						}
 						chroma(value)
 						item.kind = lsp.CompletionItemKind.Color
 						item.documentation = value
-						item.data.type = "color"
+						item.data.type = "theme"
 					} catch {
 						item.kind = lsp.CompletionItemKind.Constant
 						item.documentation = {
