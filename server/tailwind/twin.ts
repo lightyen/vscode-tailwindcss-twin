@@ -5,6 +5,9 @@ import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
 import { getValueType, ValueType } from "~/common/cssValue"
 
+type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> }
+type ResolvedTailwindConfigJS = DeepRequired<TailwindConfigJS>
+
 const twinVariants: Array<[string, string[]]> = [
 	// @media
 	["dark", ["@media (prefers-color-scheme: dark)"]],
@@ -207,27 +210,6 @@ interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
 	get(key: string): T | undefined
 }
 
-type Purge = {
-	enabled: boolean
-	content: string[]
-	safelist?: string[]
-}
-
-type DarkMode = false | "media" | "class"
-
-export type TailwindConfigJS = {
-	separator?: string
-	prefix: string
-	darkMode?: DarkMode
-	purge: Purge
-	mode?: "jit" | "aot"
-	important?: boolean
-	theme: {
-		colors: unknown
-		opacity: Record<string, unknown>
-	}
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function preprocessConfig(config: any, silent?: boolean): any {
 	const cfg = { ...config } as TailwindConfigJS
@@ -261,13 +243,13 @@ export function preprocessConfig(config: any, silent?: boolean): any {
 }
 export class Twin {
 	static selectorProcessor = parser()
-	readonly config: TailwindConfigJS
+	readonly config: ResolvedTailwindConfigJS
 	readonly separator: string
 	readonly prefix: string
 	readonly darkMode: string
 	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
 	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
-	constructor(options: TailwindConfigJS, ...results: Array<{ result: Result; source?: string }>) {
+	constructor(options: ResolvedTailwindConfigJS, ...results: Array<{ result: Result; source?: string }>) {
 		this.config = options
 		const { separator = ":", prefix = "", darkMode = "media", theme } = options
 		this.separator = separator
@@ -367,8 +349,7 @@ export class Twin {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private getColorNames(colors: any) {
+	private getColorNames(colors: ResolvedTailwindConfigJS["theme"]["colors"]) {
 		const names: string[] = []
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		function traversal(c: any, prefix = "") {

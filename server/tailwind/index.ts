@@ -2,7 +2,10 @@ import path from "path"
 import type { Plugin, Postcss } from "postcss"
 import { dlv } from "~/common/get_set"
 import { requireModule, resolveModule } from "~/common/module"
-import { preprocessConfig, TailwindConfigJS, Twin } from "./twin"
+import { preprocessConfig, Twin } from "./twin"
+
+type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> }
+type ResolvedTailwindConfigJS = DeepRequired<TailwindConfigJS>
 
 export interface TailwindOptions {
 	workspaceFolder: string
@@ -59,10 +62,10 @@ export class Tailwind {
 	jsonTwin?: { config?: string }
 
 	// tailwindcss
-	tailwindcss!: (config: string | TailwindConfigJS) => Plugin
+	tailwindcss!: (config: string | TailwindConfigJS | ResolvedTailwindConfigJS) => Plugin
 	tailwindcssVersion!: string
-	resolveConfig!: (config: TailwindConfigJS) => TailwindConfigJS
-	defaultConfig!: TailwindConfigJS
+	resolveConfig!: (config: TailwindConfigJS | ResolvedTailwindConfigJS) => ResolvedTailwindConfigJS
+	defaultConfig!: ResolvedTailwindConfigJS
 	defaultConfigPath!: string
 	separator!: string
 
@@ -86,7 +89,7 @@ export class Tailwind {
 	distConfigPath = ""
 	workspaceFolder = ""
 	hasConfig = false
-	config!: TailwindConfigJS
+	config!: TailwindConfigJS | ResolvedTailwindConfigJS
 	fallbackDefaultConfig = false
 
 	private findConfig(configPath: string) {
@@ -102,7 +105,7 @@ export class Tailwind {
 
 	twin!: Twin
 
-	private getColorNames(resloved: TailwindConfigJS): string[] {
+	private getColorNames(resloved: ResolvedTailwindConfigJS): string[] {
 		const c = resloved.theme.colors
 		const names: string[] = []
 
@@ -140,24 +143,20 @@ export class Tailwind {
 
 		const resolved = this.resolveConfig(this.config)
 		const bs = ["border-t", "border-b", "border-l", "border-r", "caret"]
-		resolved.mode = "jit"
-		resolved.purge.safelist = bs
-			.map(b => this.getColorNames(resolved).map(c => `${resolved.prefix}${b}-${c}`))
-			.flat()
-		const processerJIT = this.postcss([this.tailwindcss(resolved)])
-
+		const tmp: TailwindConfigJS = { ...(resolved as TailwindConfigJS) }
+		tmp.mode = "jit"
+		tmp.purge = { content: [] }
+		tmp.purge.safelist = bs.map(b => this.getColorNames(resolved).map(c => `${resolved.prefix}${b}-${c}`)).flat()
+		const processerJIT = this.postcss([this.tailwindcss(tmp)])
 		const results = await Promise.all([
 			processer.process(`@tailwind base;@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),
 			processerJIT.process(`@tailwind utilities;`, { from: undefined }),
 		])
 
-		resolved.mode = undefined
-		resolved.purge.safelist = undefined
 		this.config = resolved
-
 		this.twin = new Twin(
-			this.config,
+			resolved,
 			{ result: results[0], source: "components" },
 			{ result: results[1], source: "utilities" },
 			{ result: results[2], source: "utilities" },
@@ -166,29 +165,35 @@ export class Tailwind {
 
 	async jit(className: string) {
 		className = className.replace(/\s/g, "")
-		const cfg = { ...this.config }
-		cfg.mode = "jit"
-		cfg.purge.safelist = [className]
-		const processer = this.postcss([this.tailwindcss(cfg)])
+		const tmp = { ...this.config }
+		tmp.mode = "jit"
+		tmp.purge = { content: [] }
+		tmp.purge.safelist = [className]
+		const processer = this.postcss([this.tailwindcss(tmp)])
 		const results = await Promise.all([
 			processer.process("@tailwind base;@tailwind components;", { from: undefined }),
 			processer.process("@tailwind utilities;", { from: undefined }),
 		])
 
-		cfg.purge.safelist = undefined
-		return new Twin(cfg, { result: results[0], source: "components" }, { result: results[1], source: "utilities" })
+		tmp.purge.safelist = undefined
+		return new Twin(
+			tmp as ResolvedTailwindConfigJS,
+			{ result: results[0], source: "components" },
+			{ result: results[1], source: "utilities" },
+		)
 	}
 
 	async jitColor(className: string) {
 		className = className.replace(/\s/g, "")
-		const cfg = { ...this.config }
-		cfg.mode = "jit"
-		cfg.purge.safelist = [className]
-		const processer = this.postcss([this.tailwindcss(cfg)])
+		const tmp = { ...this.config }
+		tmp.mode = "jit"
+		tmp.purge = { content: [] }
+		tmp.purge.safelist = [className]
+		const processer = this.postcss([this.tailwindcss(tmp)])
 		const result = await processer.process("@tailwind utilities;", { from: undefined })
 
-		cfg.purge.safelist = undefined
-		return new Twin(cfg, { result, source: "utilities" })
+		tmp.purge.safelist = undefined
+		return new Twin(tmp as ResolvedTailwindConfigJS, { result, source: "utilities" })
 	}
 
 	/**
