@@ -610,3 +610,6 @@
 "https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color":
   name: twin.macro
   desc: "The **caret-color** CSS property sets the color of the **insertion caret**, the visible marker where the next character typed will be inserted. This is sometimes referred to as the **text input cursor**. The caret appears in elements such as `<input>` or those with the `contenteditable` attribute. The caret is typically a thin vertical line that flashes to help make it more noticeable. By default, it is black, but its color can be altered with this property."
+"https://github.com/ben-rogerson/twin.macro/releases/tag/2.7.0":
+  name: twin.macro
+  desc: ""

@@ -5,9 +5,6 @@ import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
 import { getValueType, ValueType } from "~/common/cssValue"
 
-type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> }
-type ResolvedTailwindConfigJS = DeepRequired<TailwindConfigJS>
-
 const twinVariants: Array<[string, string[]]> = [
 	// @media
 	["dark", ["@media (prefers-color-scheme: dark)"]],
@@ -210,46 +207,15 @@ interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
 	get(key: string): T | undefined
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function preprocessConfig(config: any, silent?: boolean): any {
-	const cfg = { ...config } as TailwindConfigJS
-	cfg.separator = cfg.separator ?? ":"
-	if (cfg.separator !== ":") {
-		if (!silent) console.info("Option: `separator` forced to be set ':'.")
-	}
-	cfg.separator = __INNER_TAILWIND_SEPARATOR__
-	cfg.purge = { enabled: false, content: [] }
-
-	if (cfg?.mode === "jit") {
-		if (!silent) console.info("Option: `mode` forced to be set 'aot'.")
-		cfg.mode = "aot"
-	}
-
-	if (cfg?.important) {
-		console.info("Option: `important` forced to be set false.")
-		cfg.important = false
-	}
-
-	if (cfg?.darkMode !== "media" && cfg?.darkMode !== "class") {
-		if (!silent) console.info("Option: `darkMode` forced to be set 'media'.")
-		cfg.darkMode = "media"
-	}
-
-	if (typeof cfg?.prefix !== "string") {
-		cfg.prefix = ""
-	}
-
-	return cfg
-}
 export class Twin {
 	static selectorProcessor = parser()
-	readonly config: ResolvedTailwindConfigJS
+	readonly config: Tailwind.ResolvedConfigJS
 	readonly separator: string
 	readonly prefix: string
 	readonly darkMode: string
 	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
 	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
-	constructor(options: ResolvedTailwindConfigJS, ...results: Array<{ result: Result; source?: string }>) {
+	constructor(options: Tailwind.ResolvedConfigJS, ...results: Array<{ result: Result; source?: string }>) {
 		this.config = options
 		const { separator = ":", prefix = "", darkMode = "media", theme } = options
 		this.separator = separator
@@ -292,43 +258,6 @@ export class Twin {
 		}
 		this.classnamesMap.delete(this.prefix + "group")
 
-		if (this.config.mode !== "jit") {
-			this.classnamesMap.set(this.prefix + "content", [
-				{
-					name: this.prefix + "content",
-					source: "utilities",
-					variants: [],
-					context: [],
-					pseudo: [],
-					rest: "",
-					decls: { content: ['""'] },
-				},
-			])
-
-			this.classnamesMap.set(this.prefix + "transform-cpu", [
-				{
-					name: this.prefix + "transform-cpu",
-					source: "utilities",
-					variants: [],
-					context: [],
-					pseudo: [],
-					rest: "",
-					decls: {
-						"--tw-translate-x": ["0"],
-						"--tw-translate-y": ["0"],
-						"--tw-rotate": ["0"],
-						"--tw-skew-x": ["0"],
-						"--tw-skew-y": ["0"],
-						"--tw-scale-x": ["1"],
-						"--tw-scale-y": ["1"],
-						transform: [
-							"translateX(var(--tw-translate-x)) translateY(var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))",
-						],
-					},
-				},
-			])
-		}
-
 		// collection
 		this.variants = createMap(this.variantsMap)
 		this.classnames = createMap(this.classnamesMap)
@@ -349,7 +278,7 @@ export class Twin {
 		}
 	}
 
-	private getColorNames(colors: ResolvedTailwindConfigJS["theme"]["colors"]) {
+	private getColorNames(colors: Tailwind.ResolvedConfigJS["theme"]["colors"]) {
 		const names: string[] = []
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		function traversal(c: any, prefix = "") {

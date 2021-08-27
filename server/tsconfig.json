@@ -16,7 +16,6 @@
     "noFallthroughCasesInSwitch": true,
     "removeComments": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,

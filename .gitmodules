@@ -1,0 +1,3 @@
+[submodule "server/typings/tailwindcss"]
+	path = server/typings/tailwindcss
+	url = git@github.com:lightyen/tailwind-types
