@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.9.1
+
+- Fix shortcss syntax parsing ([#15](https://github.com/lightyen/vscode-tailwindcss-twin/issues/15))
+- Enhance theme function completion
+- Enhance screen function completion
+- Bump tailwindcss to 2.2.8
+
 ## 0.9.0
 
 - Support twin.macro v2.7.0
