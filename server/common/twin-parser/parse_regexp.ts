@@ -79,18 +79,28 @@ function findRightBlockComment(text: string, start = 0, end = text.length): numb
 
 function findTerminal(text: string, start = 0, end = text.length): number {
 	let state = 0
+	let stack = 0
 	for (let i = start; i < end; i++) {
 		const char = text[i]
 		switch (state) {
 			case 0:
 				if (/\s/.test(char)) return i
 				if (char === "(") return i
-				if (char === "[") state = 1
+				if (char === "[") {
+					state = 1
+					stack += 1
+				}
 				break
 			case 1:
 				switch (char) {
+					case "[":
+						stack += 1
+						break
 					case "]":
-						state = 4
+						stack -= 1
+						if (stack <= 0) {
+							state = 4
+						}
 						break
 					case "'":
 						state = 2

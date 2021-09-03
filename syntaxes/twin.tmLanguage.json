@@ -132,7 +132,7 @@
       ]
     },
     "expression-short-css": {
-      "name": "entity.name.variable.css-value.twin",
+      "contentName": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
@@ -156,6 +156,9 @@
       },
       "patterns": [
         {
+          "include": "#css-value-content-bracket"
+        },
+        {
           "include": "#qstring-double"
         },
         {
@@ -169,6 +172,26 @@
         },
         {
           "include": "#block-comment-end-backtick"
+        }
+      ]
+    },
+    "css-value-content-bracket": {
+      "contentName": "string.twin",
+      "begin": "(\\[)",
+      "end": "(\\])",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.begin.bracket.square.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.end.bracket.square.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#css-value-content-bracket"
         }
       ]
     },

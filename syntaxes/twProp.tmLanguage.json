@@ -227,7 +227,7 @@
       ]
     },
     "expression-short-css-single-quote": {
-      "name": "entity.name.variable.css-value.twin",
+      "contentName": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
@@ -250,6 +250,9 @@
         }
       },
       "patterns": [
+        {
+          "include": "#css-value-content-bracket"
+        },
         {
           "include": "#qstring-double"
         },
@@ -265,7 +268,7 @@
       ]
     },
     "expression-short-css-double-quote": {
-      "name": "entity.name.variable.css-value.twin",
+      "contentName": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:--)?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
@@ -289,6 +292,9 @@
       },
       "patterns": [
         {
+          "include": "#css-value-content-bracket"
+        },
+        {
           "include": "#qstring-single"
         },
         {
@@ -299,6 +305,26 @@
         },
         {
           "include": "#block-comment-end-double-quote"
+        }
+      ]
+    },
+    "css-value-content-bracket": {
+      "contentName": "string.twin",
+      "begin": "(\\[)",
+      "end": "(\\])",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.begin.bracket.square.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.end.bracket.square.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#css-value-content-bracket"
         }
       ]
     },

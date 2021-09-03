@@ -103,7 +103,7 @@ Support ONLY `react` and `twin.macro`
         {
           "scope": "entity.name.variable.css-value.twin",
           "settings": {
-            "foreground": "#c2bb76"
+            "foreground": "#abb2bb"
           }
         }
       ]
