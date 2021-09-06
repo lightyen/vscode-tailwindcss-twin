@@ -132,6 +132,7 @@ export class Tailwind {
 	private getColorNames(resloved: Tailwind.ResolvedConfigJS): string[] {
 		const colors = resloved.theme.colors
 		const names: string[] = []
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		function pr(c: any, prefix = "") {
 			for (const key in c) {
 				if (key === "DEFAULT") {
@@ -160,7 +161,7 @@ export class Tailwind {
 		this.separator = ":"
 		const processer = this.postcss([this.tailwindcss(this.config)])
 
-		const bs = ["border-t", "border-b", "border-l", "border-r", "caret"]
+		const bs = ["border-t", "border-b", "border-l", "border-r"]
 		const tmp = { ...this.config }
 		tmp.mode = "jit"
 		tmp.purge = { content: [] }
