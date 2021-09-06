@@ -63,11 +63,15 @@ class Server {
 			progress.begin(`Initializing ${NAME}`)
 
 			console.log(
-				`tailwindcss ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+				`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+				requireModule("typescript").version,
+			)
+			console.log(
+				`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 				requireModule("tailwindcss/package.json").version,
 			)
 			console.log(
-				`postcss ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+				`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 				requireModule("postcss/package.json").version,
 			)
 
