@@ -220,6 +220,9 @@
       },
       "patterns": [
         {
+          "include": "#css-value-content-bracket"
+        },
+        {
           "include": "#qstring-double"
         },
         {

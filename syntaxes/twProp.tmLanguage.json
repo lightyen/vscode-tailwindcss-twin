@@ -353,6 +353,9 @@
       },
       "patterns": [
         {
+          "include": "#css-value-content-bracket"
+        },
+        {
           "include": "#qstring-double"
         },
         {
@@ -390,6 +393,9 @@
         }
       },
       "patterns": [
+        {
+          "include": "#css-value-content-bracket"
+        },
         {
           "include": "#qstring-single"
         },
