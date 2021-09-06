@@ -436,6 +436,9 @@
 "https://tailwindcss.com/docs/background-origin":
   name: Background Origin
   desc: Utilities for controlling how an element's background is positioned relative to borders, padding, and content.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/content":
+  name: Content
+  desc: "The **content** CSS property replaces an element with a generated value. Objects inserted using the `content` property are **anonymous** replaced elements*.*"
 
 ###### twin.macro
 

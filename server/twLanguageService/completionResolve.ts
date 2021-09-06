@@ -15,9 +15,13 @@ export default function completionResolve(
 		return item
 	}
 
-	const keyword = item.label.slice(state.config.prefix.length)
+	let keyword = item.label.slice(state.config.prefix.length)
+	const plugin = state.twin.getPluginByName(keyword)
+	if (plugin) {
+		keyword = plugin.name
+	}
 
-	item = resolve(item, state, options)
+	item = resolve(item, keyword, state, options)
 
 	if (options.references && item.documentation) {
 		if (typeof item.documentation === "object") {
@@ -32,7 +36,12 @@ export default function completionResolve(
 	return item
 }
 
-function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOptions): lsp.CompletionItem {
+function resolve(
+	item: lsp.CompletionItem,
+	keyword: string,
+	state: Tailwind,
+	options: ServiceOptions,
+): lsp.CompletionItem {
 	const { type, entry } = item.data as {
 		type: string
 		entry: IPropertyData
@@ -48,7 +57,7 @@ function resolve(item: lsp.CompletionItem, state: Tailwind, options: ServiceOpti
 	}
 
 	if (options.references) {
-		item.detail = getName(item.label.slice(state.config.prefix.length))
+		item.detail = getName(keyword)
 		if (!item.detail) {
 			if (type === "components") {
 				item.detail = "custom component"

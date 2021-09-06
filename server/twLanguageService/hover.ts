@@ -81,29 +81,9 @@ export default async function hover(
 			}
 
 			if (selection.type === parser.HoverResultType.ArbitraryStyle) {
-				const twin = await state.jit(value)
-				let content = renderClassnameJIT({
-					key: value.replace(/\s/g, ""),
-					twin,
-					important: selection.important,
-					options,
-				})
-
-				if (!content) {
-					return
-				}
-
 				let title = ""
 				if (options.references) {
-					const [isColorArbitraryOpacity, colorName] = state.twin.isColorArbitraryOpacity(value)
-					let name = colorName
-					if (!isColorArbitraryOpacity) {
-						if (selection.prop && selection.value) {
-							const prop = selection.prop.value.slice(0, -1)
-							name = state.twin.getSampleArbitraryName(prop, selection.value.value)
-						}
-					}
-
+					const name = state.twin.getPluginByName(value)?.name
 					if (name) {
 						const type = getDescription(name)
 						if (type) {
@@ -116,6 +96,19 @@ export default async function hover(
 						}
 					}
 				}
+
+				if (!title) {
+					return
+				}
+
+				const twin = await state.jit(value)
+				let content =
+					renderClassnameJIT({
+						key: value.replace(/\s/g, ""),
+						twin,
+						important: selection.important,
+						options,
+					}) ?? ""
 
 				if (title) {
 					content = `${title}\n---\n\n` + content
@@ -156,10 +149,18 @@ export default async function hover(
 				return undefined
 			}
 
-			const keyword = value.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
+			let keyword = value.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
 			let title = ""
 			if (options.references) {
-				const type = getDescription(keyword)
+				let type = getDescription(keyword)
+				if (!type) {
+					const plugin = state.twin.getPluginByName(keyword)
+					if (plugin) {
+						keyword = plugin.name
+						type = getDescription(keyword)
+					}
+				}
+
 				if (type) {
 					title = type + "\n"
 				}

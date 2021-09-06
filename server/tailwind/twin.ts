@@ -3,6 +3,7 @@ import chroma from "chroma-js"
 import Fuse from "fuse.js"
 import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
+import { createGetPluginByName } from "~/common/corePlugins"
 import { getValueType, ValueType } from "~/common/cssValue"
 
 const twinVariants: Array<[string, string[]]> = [
@@ -215,9 +216,10 @@ export class Twin {
 	readonly darkMode: string
 	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
 	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
-	constructor(options: Tailwind.ResolvedConfigJS, ...results: Array<{ result: Result; source?: string }>) {
-		this.config = options
-		const { separator = ":", prefix = "", darkMode = "media", theme } = options
+	readonly getPluginByName: ReturnType<typeof createGetPluginByName>
+	constructor(resolved: Tailwind.ResolvedConfigJS, ...results: Array<{ result: Result; source?: string }>) {
+		this.config = resolved
+		const { separator = ":", prefix = "", darkMode = "media", theme } = resolved
 		this.separator = separator
 		this.prefix = prefix || ""
 		this.darkMode = darkMode || "media" // always enable dark mode
@@ -276,6 +278,8 @@ export class Twin {
 				{ includeScore: true },
 			),
 		}
+
+		this.getPluginByName = createGetPluginByName(resolved)
 	}
 
 	private getColorNames(colors: Tailwind.ResolvedConfigJS["theme"]["colors"]) {
@@ -518,285 +522,6 @@ export class Twin {
 			}
 			return true
 		}
-	}
-
-	getSampleArbitraryName(prop: string, content: string): string {
-		if (this.colors.get(prop)) {
-			return prop
-		}
-
-		if (prop.startsWith(this.prefix)) {
-			prop = prop.slice(this.prefix.length)
-		}
-
-		// *-[color]
-		switch (prop) {
-			case "bg":
-				return "bg-black"
-			case "divide":
-				return "divide-black"
-			case "from":
-				return "from-black"
-			case "via":
-				return "via-black"
-			case "to":
-				return "to-black"
-			case "ring-offset":
-				return "ring-offset-black"
-			case "placeholder":
-				return "placeholder-black"
-			case "fill":
-				return "fill-current"
-			case "caret":
-				return "caret-gray-100"
-		}
-
-		// *-[len]
-		switch (prop) {
-			case "space-x":
-				return "space-x-0"
-			case "space-y":
-				return "space-y-0"
-			case "divide-x":
-				return "divide-x-0"
-			case "divide-y":
-				return "divide-y-0"
-			case "w":
-				return "w-0"
-			case "h":
-				return "h-0"
-			case "leading":
-				return "leading-none"
-			case "m":
-				return "m-0"
-			case "mx":
-				return "mx-0"
-			case "my":
-				return "my-0"
-			case "mt":
-				return "mt-0"
-			case "mr":
-				return "mr-0"
-			case "mb":
-				return "mb-0"
-			case "ml":
-				return "ml-0"
-			case "p":
-				return "p-0"
-			case "px":
-				return "px-0"
-			case "py":
-				return "py-0"
-			case "pt":
-				return "pt-0"
-			case "pr":
-				return "pr-0"
-			case "pb":
-				return "pb-0"
-			case "pl":
-				return "pl-0"
-			case "max-w":
-				return "max-w-0"
-			case "min-w":
-				return "min-w-0"
-			case "max-h":
-				return "max-h-0"
-			case "min-h":
-				return "min-h-0"
-			case "rounded":
-			case "rounded-t":
-			case "rounded-r":
-			case "rounded-b":
-			case "rounded-l":
-			case "rounded-tl":
-			case "rounded-tr":
-			case "rounded-bl":
-			case "rounded-br":
-				return "rounded"
-			case "inset":
-				return "inset-0"
-			case "inset-x":
-				return "inset-x-0"
-			case "inset-y":
-				return "inset-y-0"
-			case "top":
-				return "top-0"
-			case "right":
-				return "right-0"
-			case "bottom":
-				return "bottom-0"
-			case "left":
-				return "left-0"
-			case "gap":
-				return "gap-0"
-			case "gap-x":
-				return "gap-x-0"
-			case "gap-y":
-				return "gap-y-0"
-			case "translate-x":
-				return "translate-x-0"
-			case "translate-y":
-				return "translate-y-0"
-			case "blur":
-				return "blur-none"
-			case "backdrop-blur":
-				return "backdrop-blur-none"
-			case "tracking":
-				return "tracking-normal"
-			case "auto-cols":
-				return "auto-cols-auto"
-			case "auto-rows":
-				return "auto-rows-auto"
-		}
-
-		// *-[number]
-		switch (prop) {
-			case "z":
-				return "z-0"
-			case "flex-grow":
-				return "flex-grow-0"
-			case "flex-shrink":
-				return "flex-shrink-0"
-			case "bg-opacity":
-				return "bg-opacity-0"
-			case "text-opacity":
-				return "text-opacity-0"
-			case "divide-opacity":
-				return "divide-opacity-0"
-			case "border-opacity":
-				return "border-opacity-0"
-			case "placeholder-opacity":
-				return "placeholder-opacity-0"
-			case "ring-opacity":
-				return "ring-opacity-0"
-			case "order":
-				return "order-1"
-			case "scale":
-				return "scale-0"
-			case "scale-x":
-				return "scale-x-0"
-			case "scale-y":
-				return "scale-y-0"
-			case "opacity":
-				return "opacity-0"
-			case "brightness":
-				return "brightness-0"
-			case "contrast":
-				return "contrast-0"
-			case "grayscale":
-				return "grayscale-0"
-			case "saturate":
-				return "saturate-0"
-			case "sepia":
-				return "sepia-0"
-			case "backdrop-opacity":
-				return "backdrop-opacity-0"
-			case "backdrop-brightness":
-				return "backdrop-brightness-0"
-			case "backdrop-contrast":
-				return "backdrop-contrast-0"
-			case "backdrop-grayscale":
-				return "backdrop-grayscale-0"
-			case "backdrop-saturate":
-				return "backdrop-saturate-0"
-			case "backdrop-sepia":
-				return "backdrop-sepia-0"
-			case "rotate":
-				return "rotate-0"
-			case "skew-x":
-				return "skew-x-0"
-			case "skew-y":
-				return "skew-y-0"
-			case "hue-rotate":
-				return "hue-rotate-0"
-			case "invert":
-				return "invert"
-			case "backdrop-hue-rotate":
-				return "backdrop-hue-rotate-0"
-			case "backdrop-invert":
-				return "backdrop-invert"
-			case "duration":
-				return "duration-100"
-			case "delay":
-				return "delay-100"
-			case "ease":
-				return "ease-in"
-			case "grid-cols":
-				return "grid-cols-1"
-			case "grid-rows":
-				return "grid-rows-1"
-			case "col-span":
-				return "col-span-1"
-			case "col-start":
-				return "col-start-1"
-			case "col-end":
-				return "col-end-1"
-		}
-
-		// *-[label]
-		switch (prop) {
-			case "cursor":
-				return "cursor-default"
-		}
-
-		content = content.trim()
-		let t = ValueType.Any
-
-		if (content.startsWith("length:")) {
-			content = content.slice(7)
-			t = ValueType.Length
-		} else if (content.startsWith("color:")) {
-			content = content.slice(6)
-			t = ValueType.Color
-		} else if (content === "transparent") {
-			t = ValueType.Color
-		}
-
-		if (t === ValueType.Any) {
-			t = getValueType(content)
-		}
-
-		if (t === ValueType.Color) {
-			switch (prop) {
-				case "border":
-					return "border-black"
-				case "border-t":
-					return "border-t-black"
-				case "border-r":
-					return "border-r-black"
-				case "border-b":
-					return "border-b-black"
-				case "border-l":
-					return "border-l-black"
-				case "text":
-					return "text-black"
-				case "ring":
-					return "ring-black"
-				case "stroke":
-					return "stroke-current"
-			}
-		} else if (t === ValueType.Length) {
-			switch (prop) {
-				case "border":
-					return "border-0"
-				case "border-t":
-					return "border-t-0"
-				case "border-r":
-					return "border-r-0"
-				case "border-b":
-					return "border-b-0"
-				case "border-l":
-					return "border-l-0"
-				case "text":
-					return "text-base"
-				case "ring":
-					return "ring-0"
-				case "stroke":
-					return "stroke-0"
-			}
-		}
-
-		return ""
 	}
 
 	isArbitraryColor(prop: string, content: string): boolean {

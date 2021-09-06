@@ -9,17 +9,6 @@ const twinPlugin: Tailwind.Plugin = ({ addUtilities }) => {
 		".content": {
 			content: '""',
 		},
-		".transform-cpu": {
-			"--tw-translate-x": "0",
-			"--tw-translate-y": "0",
-			"--tw-rotate": "0",
-			"--tw-skew-x": "0",
-			"--tw-skew-y": "0",
-			"--tw-scale-x": "1",
-			"--tw-scale-y": "1",
-			transform:
-				"translateX(var(--tw-translate-x)) translateY(var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))",
-		},
 	})
 }
 
@@ -143,20 +132,27 @@ export class Tailwind {
 	private getColorNames(resloved: Tailwind.ResolvedConfigJS): string[] {
 		const colors = resloved.theme.colors
 		const names: string[] = []
-		for (const prop in colors) {
-			const v = colors[prop]
-			if (typeof v === "object") {
-				for (const k in v) {
-					if (k === "DEFAULT") {
-						names.push(prop)
-						continue
-					}
-					names.push(`${prop}-${k}`)
+		function pr(c: any, prefix = "") {
+			for (const key in c) {
+				if (key === "DEFAULT") {
+					names.push(prefix.slice(0, -1))
+					continue
 				}
-			} else if (typeof v === "string" || typeof v === "number") {
-				names.push(`${prop}`)
+
+				if (typeof c[key] === "string" || typeof c[key] === "number" || typeof c[key] === "function") {
+					if (prefix) {
+						names.push(`${prefix}${key}`)
+					} else {
+						names.push(key)
+					}
+				} else if (c[key] instanceof Array) {
+					//
+				} else if (typeof c[key] === "object") {
+					pr(c[key], key + "-")
+				}
 			}
 		}
+		pr(colors)
 		return names
 	}
 
@@ -171,7 +167,9 @@ export class Tailwind {
 		tmp.purge.safelist = bs
 			.map(b => this.getColorNames(this.config).map(c => `${this.config.prefix}${b}-${c}`))
 			.flat()
-		const processerJIT = this.postcss([this.tailwindcss(this.config)])
+		tmp.purge.safelist.push("transform-cpu")
+
+		const processerJIT = this.postcss([this.tailwindcss(tmp)])
 		const results = await Promise.all([
 			processer.process(`@tailwind base;@tailwind components;`, { from: undefined }),
 			processer.process(`@tailwind utilities;`, { from: undefined }),
@@ -182,6 +180,7 @@ export class Tailwind {
 			this.config,
 			{ result: results[0], source: "components" },
 			{ result: results[1], source: "utilities" },
+			{ result: results[2], source: "utilities" },
 		)
 	}
 
