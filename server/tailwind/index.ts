@@ -4,14 +4,6 @@ import { dlv } from "~/common/get_set"
 import { requireModule, resolveModule } from "~/common/module"
 import { Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
 
-const twinPlugin: Tailwind.Plugin = ({ addUtilities }) => {
-	addUtilities({
-		".content": {
-			content: '""',
-		},
-	})
-}
-
 function preprocessConfig(config: Tailwind.ConfigJS): Tailwind.ConfigJS {
 	const cfg = { ...config } as Tailwind.ConfigJS
 	cfg.separator = __INNER_TAILWIND_SEPARATOR__
@@ -54,7 +46,15 @@ export class Tailwind {
 		if (result.config && result.configPath) {
 			const config = preprocessConfig(result.config)
 			if (!(config.plugins instanceof Array)) config.plugins = []
-			config.plugins.push(this.plugin(twinPlugin))
+			config.plugins.push(
+				this.plugin(({ addUtilities }) => {
+					addUtilities({
+						".content": {
+							content: '""',
+						},
+					})
+				}),
+			)
 			this.config = this.resolveConfig(config)
 			this.distConfigPath = result.configPath
 			this.hasConfig = true
@@ -84,10 +84,10 @@ export class Tailwind {
 	jsonTwin?: { config?: string }
 
 	// tailwindcss
-	tailwindcss!: (config: string | Tailwind.ConfigJS) => Plugin
+	tailwindcss!: (configOrPath: string | Tailwind.ConfigJS) => Plugin
 	tailwindcssVersion!: string
-	resolveConfig!: (config: Tailwind.ConfigJS) => Tailwind.ResolvedConfigJS
-	plugin!: (plugin: Tailwind.Plugin) => Tailwind.Plugin
+	resolveConfig!: (...config: Tailwind.ConfigJS[]) => Tailwind.ResolvedConfigJS
+	plugin!: (plugin: Tailwind.PluginFunction) => Tailwind.Plugin
 	defaultConfig!: Tailwind.DefaultConfig
 	defaultConfigPath!: string
 	separator!: string
