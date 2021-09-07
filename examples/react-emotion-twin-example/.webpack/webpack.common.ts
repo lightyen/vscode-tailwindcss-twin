@@ -79,44 +79,26 @@ export default function (): Configuration {
 					exclude: /node_modules/,
 					use: ["worker-loader", "babel-loader"],
 				},
-				// {
-				// 	test: /\.tsx?$/,
-				// 	exclude: /node_modules|__tests?__|\.test\.tsx?$|\.worker\.ts$/,
-				// 	use: [
-				// 		"babel-loader",
-				// 		{
-				// 			loader: "ts-loader",
-				// 			options: { context: path.join(workspaceFolder, "src"), happyPackMode: true },
-				// 		},
-				// 	],
-				// },
-				// {
-				// 	test: /\.jsx?$/,
-				// 	exclude: /node_modules|__tests?__|\.test\.jsx?$|\.worker\.js$/,
-				// 	use: ["babel-loader"],
-				// },
-				// {
-				// 	test: /\.worker\.ts$/,
-				// 	exclude: /node_modules/,
-				// 	use: ["worker-loader", "babel-loader", { loader: "ts-loader", options: { happyPackMode: true } }],
-				// },
-				// {
-				// 	test: /\.worker\.js$/,
-				// 	exclude: /node_modules/,
-				// 	use: ["worker-loader", "babel-loader"],
-				// },
 				{
 					test: /\.(png|jpe?g|gif|ico)$/i,
-					use: [
-						{
-							loader: "url-loader",
-							options: {
-								name: join_network("img", "[name].[ext]?[fullhash]"),
-								limit: 8192,
-							},
+					type: "asset",
+					parser: {
+						dataUrlCondition: {
+							maxSize: 4 << 10,
 						},
-					],
+					},
+					generator: {
+						filename: join_network("img", "[hash][ext]"),
+					},
 				},
+				{
+					test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,
+					type: "asset/resource",
+					generator: {
+						filename: join_network("fonts", "[hash][ext]"),
+					},
+				},
+
 				{
 					test: /\.svg$/,
 					use: ["babel-loader", "@svgr/webpack"],
@@ -124,17 +106,6 @@ export default function (): Configuration {
 				{
 					test: /\.ya?ml$/,
 					use: "js-yaml-loader",
-				},
-				{
-					test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,
-					use: [
-						{
-							loader: "file-loader",
-							options: {
-								name: join_network("fonts", "[name].[ext]?[fullhash]"),
-							},
-						},
-					],
 				},
 				// For user space:
 				{

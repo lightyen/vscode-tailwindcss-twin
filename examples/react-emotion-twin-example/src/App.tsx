@@ -36,7 +36,7 @@ export default function App() {
 			<Global styles={globalStyle} />
 			<div
 				css={[
-					tw`flex flex-col items-center justify-center h-screen`,
+					tw`flex flex-col items-center justify-center h-screen font-family[Fira Code]`,
 					tw`bg-gradient-to-b from-blue-900 to-blue-400`,
 				]}
 			>

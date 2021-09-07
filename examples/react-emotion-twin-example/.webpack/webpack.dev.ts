@@ -19,7 +19,7 @@ const config: Configuration = {
 	},
 	performance: {
 		hints: false,
-		assetFilter: filename => {
+		assetFilter: (filename: string) => {
 			return filename.endsWith(".css") || filename.endsWith(".js")
 		},
 	},
@@ -38,10 +38,6 @@ const config: Configuration = {
 		hot: true,
 		compress: true,
 		open: true,
-		host: "localhost",
-		clientLogLevel: "none",
-		contentBase: false,
-		noInfo: true,
 		historyApiFallback: true,
 	},
 }

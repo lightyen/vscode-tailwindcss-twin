@@ -13,11 +13,14 @@ process.env.NODE_ENV = "production"
 const config: Configuration = {
 	mode: "production",
 	devtool: "source-map",
+	output: {
+		clean: true,
+	},
 	performance: {
 		hints: "warning",
 		maxEntrypointSize: 1 << 20,
 		maxAssetSize: 1 << 20,
-		assetFilter: filename => {
+		assetFilter: (filename: string) => {
 			const ext = path.extname(filename)
 			return ext === "css" || ext === ".js"
 		},
