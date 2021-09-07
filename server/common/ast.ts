@@ -62,30 +62,22 @@ function find<T>(
 	return ts.forEachChild(node, child => find(source, child, cb, position))
 }
 
-function getJsxPropFirstStringLiteral(node: ts.Node, source: ts.SourceFile): ts.StringLiteral | undefined {
+function getJsxPropFirstStringLiteral(node: ts.JsxAttribute, source: ts.SourceFile): ts.StringLiteral | undefined {
 	if (node.getChildCount(source) < 3) {
 		return undefined
 	}
 	const target = node.getChildAt(2, source)
-	let token: ts.Node | undefined
+	let token: ts.StringLiteral | undefined
 	if (ts.isStringLiteral(target)) {
 		token = target
 	} else if (ts.isJsxExpression(target)) {
 		for (let i = 0; i < target.getChildCount(source); i++) {
 			const t = target.getChildAt(i, source)
-			if (!t) {
-				break
-			}
 			if (ts.isStringLiteral(t)) {
 				token = t
+				break
 			}
 		}
-	}
-	if (!token) {
-		return undefined
-	}
-	if (!ts.isStringLiteral(token)) {
-		return undefined
 	}
 	return token
 }
