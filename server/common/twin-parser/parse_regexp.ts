@@ -77,15 +77,30 @@ function findRightBlockComment(text: string, start = 0, end = text.length): numb
 	return undefined
 }
 
-function findTerminal(text: string, start = 0, end = text.length): number {
+function findTerminal(text: string, start = 0, end = text.length, sep = ":"): number {
 	let state = 0
 	let stack = 0
+	let _stack = 0
 	for (let i = start; i < end; i++) {
 		const char = text[i]
 		switch (state) {
 			case 0:
 				if (/\s/.test(char)) return i
-				if (char === "(") return i
+				if (char === "(") {
+					let isSep = true
+					for (let k = 0; k < sep.length; k++) {
+						if (sep[k] !== text[i - k - 1]) {
+							isSep = false
+							break
+						}
+					}
+					if (isSep) {
+						state = 5
+						_stack += 1
+					} else {
+						return i
+					}
+				}
 				if (char === "[") {
 					state = 1
 					stack += 1
@@ -120,6 +135,14 @@ function findTerminal(text: string, start = 0, end = text.length): number {
 				if (/\s/.test(char)) return i
 				if (char === "!") return i + 1
 				return i
+			case 5:
+				if (char === ")") {
+					_stack -= 1
+					if (_stack <= 0) {
+						state = 4
+					}
+				}
+				break
 		}
 	}
 	return end
@@ -191,6 +214,7 @@ export function parse({
 
 			if (text[start] === "(") {
 				const rb = findRightBracket({ text, start, end })
+				const _a = start
 				start += 1
 				let exclamationRight: nodes.IdentifierNode | undefined
 				if (rb != undefined) {
@@ -204,14 +228,14 @@ export function parse({
 				}
 
 				const _end = rb != undefined ? rb : end
-				const inner = createToken(match.index, _end, text.slice(match.index, _end))
+				const _b = rb != undefined ? rb + 1 : end
 
 				children.push(
 					nodes.createVariantSpanNode({
 						token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
 						variant: variantNode,
 						child: nodes.createGroupNode({
-							token: inner,
+							token: createToken(_a, _b, text.slice(_a, _b)),
 							child: parse({ text, start, end: _end }),
 							exclamationLeft,
 							exclamationRight,
@@ -220,7 +244,7 @@ export function parse({
 					}),
 				)
 			} else {
-				const _end = findTerminal(text, match.index + variant.length, end)
+				const _end = findTerminal(text, match.index + variant.length, end, separator)
 				const node = parse({ text, start: match.index + variant.length, end: _end })
 
 				if (node.kind !== nodes.NodeKind.Declaration) {

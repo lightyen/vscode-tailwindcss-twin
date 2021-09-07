@@ -39,7 +39,7 @@ export interface NodeList extends Array<Node> {
 
 export function createNodeList(nodes: Node[]) {
 	return new Proxy(nodes, {
-		get: function (target, prop) {
+		get: function (target, prop, ...rest) {
 			switch (prop) {
 				case "texts":
 					return target.map(t => t.value)
@@ -48,7 +48,7 @@ export function createNodeList(nodes: Node[]) {
 						return createNodeList(target.slice(start, end))
 					}
 				default:
-					return target[prop]
+					return Reflect.get(target, prop, ...rest)
 			}
 		},
 	}) as NodeList
