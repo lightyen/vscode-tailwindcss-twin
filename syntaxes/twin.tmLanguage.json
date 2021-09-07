@@ -124,6 +124,12 @@
           "include": "#qstring-single"
         },
         {
+          "include": "#css-function"
+        },
+        {
+          "include": "#css-value-content-val"
+        },
+        {
           "include": "#line-comment-end-backtick"
         },
         {
@@ -168,6 +174,9 @@
           "include": "#css-function"
         },
         {
+          "include": "#css-value-content-val"
+        },
+        {
           "include": "#line-comment-end-backtick"
         },
         {
@@ -192,6 +201,22 @@
       "patterns": [
         {
           "include": "#css-value-content-bracket"
+        }
+      ]
+    },
+    "css-value-content-val": {
+      "match": "([-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.decimal.twin"
+        },
+        "2": {
+          "name": "keyword.other.unit.px.twin"
+        }
+      },
+      "patterns": [
+        {
+          "name": "keyword.other.unit.twin"
         }
       ]
     },
@@ -230,6 +255,9 @@
         },
         {
           "include": "#css-function"
+        },
+        {
+          "include": "#css-value-content-val"
         },
         {
           "include": "#line-comment-end-backtick"

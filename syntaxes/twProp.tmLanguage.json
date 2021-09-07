@@ -199,6 +199,12 @@
           "include": "#qstring-double"
         },
         {
+          "include": "#css-function-single-quote"
+        },
+        {
+          "include": "#css-value-content-val"
+        },
+        {
           "include": "#line-comment-end-single-quote"
         },
         {
@@ -217,6 +223,12 @@
       "patterns": [
         {
           "include": "#qstring-single"
+        },
+        {
+          "include": "#css-function-double-quote"
+        },
+        {
+          "include": "#css-value-content-val"
         },
         {
           "include": "#line-comment-end-double-quote"
@@ -260,6 +272,9 @@
           "include": "#css-function-single-quote"
         },
         {
+          "include": "#css-value-content-val"
+        },
+        {
           "include": "#line-comment-end-single-quote"
         },
         {
@@ -301,6 +316,9 @@
           "include": "#css-function-double-quote"
         },
         {
+          "include": "#css-value-content-val"
+        },
+        {
           "include": "#line-comment-end-double-quote"
         },
         {
@@ -325,6 +343,22 @@
       "patterns": [
         {
           "include": "#css-value-content-bracket"
+        }
+      ]
+    },
+    "css-value-content-val": {
+      "match": "([-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.decimal.twin"
+        },
+        "2": {
+          "name": "keyword.other.unit.px.twin"
+        }
+      },
+      "patterns": [
+        {
+          "name": "keyword.other.unit.twin"
         }
       ]
     },
