@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.9.2
+
+- Bump tailwindcss to 2.2.9
+- Enhance syntaxes
+
 ## 0.9.1
 
 - Fix shortcss syntax parsing ([#15](https://github.com/lightyen/vscode-tailwindcss-twin/issues/15))
