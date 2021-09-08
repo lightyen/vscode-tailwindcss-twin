@@ -5,6 +5,7 @@ import path from "path"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
 import { ExternalsPlugin } from "webpack"
+import WebpackBar from "webpackbar"
 
 class ExternalsVendorPlugin {
 	externals: Record<string, string>
@@ -40,10 +41,10 @@ const configClient: Configuration = {
 				exclude: /node_modules|\.test\.ts$/,
 				use: [
 					{
-						loader: "ts-loader",
+						loader: "babel-loader",
 						options: {
-							transpileOnly: true,
-							context: clientWorkspaceFolder,
+							presets: [["@babel/preset-env", { targets: "node 10" }], "@babel/preset-typescript"],
+							plugins: ["@babel/plugin-transform-runtime"],
 						},
 					},
 				],
@@ -84,8 +85,11 @@ const configServer: Configuration = {
 				exclude: /node_modules|\.test\.ts$/,
 				use: [
 					{
-						loader: "ts-loader",
-						options: { transpileOnly: true, context: serverWorkspaceFolder },
+						loader: "babel-loader",
+						options: {
+							presets: [["@babel/preset-env", { targets: "node 10" }], "@babel/preset-typescript"],
+							plugins: ["@babel/plugin-transform-runtime"],
+						},
 					},
 				],
 			},
@@ -108,6 +112,7 @@ const configServer: Configuration = {
 		new ExternalsVendorPlugin("typescript"),
 		new ESLintPlugin({ extensions: ["ts"] }),
 		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["server*"] }),
+		new WebpackBar({ color: "blue" }),
 	],
 }
 
