@@ -28,9 +28,9 @@ export function getReferenceLinks(keyword: string) {
 }
 
 export function getName(keyword: string): string | undefined {
-	const value = keyword.replace(":", "")
-	const originUrl = references[value]
-	const twinUrl = references["tw." + value]
+	keyword = keyword.replace(":", "")
+	const originUrl = references[keyword]
+	const twinUrl = references["tw." + keyword]
 	const url = originUrl || twinUrl
 	if (url) {
 		if (docs[twinUrl]) {
@@ -50,6 +50,7 @@ export function getName(keyword: string): string | undefined {
 }
 
 export function getDescription(keyword: string): string | undefined {
+	keyword = keyword.replace(":", "")
 	const originUrl = references[keyword]
 	const twinUrl = references["tw." + keyword]
 	const url = originUrl || twinUrl

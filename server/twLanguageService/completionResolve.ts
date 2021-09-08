@@ -99,6 +99,8 @@ function resolve(
 			return item
 		}
 
+		const desc = getDescription(item.label)
+
 		if (data instanceof Array) {
 			const text: string[] = []
 			if (data.length === 0) {
@@ -109,6 +111,9 @@ function resolve(
 			item.documentation = {
 				kind: lsp.MarkupKind.Markdown,
 				value: ["```scss", ...text, "```"].join("\n"),
+			}
+			if (desc) {
+				item.documentation.value = desc + "\n" + item.documentation.value
 			}
 		}
 		return item
