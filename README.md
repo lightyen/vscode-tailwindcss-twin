@@ -1,6 +1,8 @@
 # Tailwind Twin IntelliSense
 
-This is a Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro) features.
+This is a VSCode Tailwind IntelliSense Extension which supports [twin.macro](https://github.com/ben-rogerson/twin.macro)
+
+[Install via the Marketplace](https://marketplace.visualstudio.com/items?itemName=lightyen.tailwindcss-intellisense-twin)
 
 ## Features
 
@@ -10,9 +12,7 @@ This is a Tailwind CSS IntelliSense VSCode Extension which supports [twin.macro]
 - document references
 - diagnostics
 
-## Supported
-
-Support ONLY `react` and `twin.macro`
+Support ONLY `*.tsx` and `*.jsx`
 
 ## VSCode Settings
 
