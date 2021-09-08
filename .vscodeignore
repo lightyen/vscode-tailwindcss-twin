@@ -14,6 +14,7 @@ extension/**
 client/**/*
 server/**/*
 tests/**
+references
 .github/**
 examples
 media/icon.svg

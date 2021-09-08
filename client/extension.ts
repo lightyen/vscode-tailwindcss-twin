@@ -1,4 +1,3 @@
-import path from "path"
 import { NAME, SECTION_ID, Settings } from "shared"
 import vscode from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
@@ -16,15 +15,15 @@ interface InitializationOptions extends Settings {
 	configs: string[]
 }
 
-async function addClient(serverModule: string, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
+async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
 	if (clients.has(ws.uri.toString())) {
 		return
 	}
 
 	const serverOptions: ServerOptions = {
-		run: { module: serverModule, transport: TransportKind.ipc },
+		run: { module: serverModule.fsPath, transport: TransportKind.ipc },
 		debug: {
-			module: serverModule,
+			module: serverModule.fsPath,
 			transport: TransportKind.ipc,
 			options: { execArgv: ["--nolazy", "--inspect=6009"] },
 		},
@@ -73,12 +72,9 @@ async function addClient(serverModule: string, outputChannel: vscode.OutputChann
 	client.start()
 }
 
-let outputChannel: vscode.OutputChannel
-let serverModule: string
-
 export async function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel(NAME)
-	serverModule = context.asAbsolutePath(path.join("dist", "server", "server.js"))
+	const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel(NAME)
+	const serverModuleUri = vscode.Uri.joinPath(vscode.Uri.file(context.extensionPath), "dist", "server", "server.js")
 	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []
 		for (const ws of e.removed) {
@@ -89,14 +85,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 		for (const ws of e.added) {
-			promises.push(addClient(serverModule, outputChannel, ws))
+			promises.push(addClient(serverModuleUri, outputChannel, ws))
 		}
 		return Promise.all(promises)
 	})
 
 	if (vscode.workspace.workspaceFolders instanceof Array) {
 		for (const ws of vscode.workspace.workspaceFolders) {
-			await addClient(serverModule, outputChannel, ws)
+			await addClient(serverModuleUri, outputChannel, ws)
 		}
 	}
 }
