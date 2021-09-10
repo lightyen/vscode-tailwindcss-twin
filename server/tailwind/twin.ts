@@ -4,7 +4,6 @@ import Fuse from "fuse.js"
 import type { AtRule, Node, Result, Rule } from "postcss"
 import parser from "postcss-selector-parser"
 import { createGetPluginByName } from "~/common/corePlugins"
-import { getValueType, ValueType } from "~/common/cssValue"
 
 const twinVariants: Array<[string, string[]]> = [
 	// @media
@@ -524,53 +523,18 @@ export class Twin {
 		}
 	}
 
-	isArbitraryColor(prop: string, content: string): boolean {
-		if (prop.startsWith(this.prefix)) {
-			prop = prop.slice(this.prefix.length)
+	isArbitraryColor(classname: string): boolean {
+		if (classname.startsWith(this.prefix)) {
+			classname = classname.slice(this.prefix.length)
 		}
 
-		switch (prop) {
-			case "bg":
-			case "divide":
-			case "from":
-			case "via":
-			case "to":
-			case "ring-offset":
-			case "placeholder":
-				return true
+		const plugin = this.getPluginByName(classname)
+
+		if (!plugin) {
+			return false
 		}
 
-		switch (prop) {
-			case "border":
-			case "border-t":
-			case "border-r":
-			case "border-b":
-			case "border-l":
-			case "text":
-			case "ring":
-			case "stroke":
-				break
-			default:
-				return false
-		}
-
-		content = content.trim()
-		let t = ValueType.Any
-
-		if (content.startsWith("color:")) {
-			content = content.slice(6)
-			t = ValueType.Color
-		}
-
-		if (t === ValueType.Any) {
-			t = getValueType(content)
-		}
-
-		if (t === ValueType.Color) {
-			return true
-		}
-
-		return false
+		return /Color$/i.test(plugin.name)
 	}
 }
 

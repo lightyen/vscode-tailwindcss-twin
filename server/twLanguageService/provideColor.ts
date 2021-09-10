@@ -95,20 +95,17 @@ export async function provideColorDecorations(
 							}
 						}
 						// NOTE: conflict with vscode-styled-components
-						// else if (c.prop && c.content) {
-						// 	const prop = c.prop.value.slice(0, -1)
-						// 	if (state.twin.isArbitraryColor(prop, c.content.value)) {
-						// 		const tw = await state.jitColor(c.target.value)
-						// 		if (tw.colors[0]) {
-						// 			const color = tw.colors[0][1]
-						// 			colors.push({
-						// 				range: {
-						// 					start: document.positionAt(start + c.target.start),
-						// 					end: document.positionAt(start + c.target.end),
-						// 				},
-						// 				...color,
-						// 			})
-						// 		}
+						// else if (state.twin.isArbitraryColor(c.target.value)) {
+						// 	const tw = await state.jitColor(c.target.value)
+						// 	if (tw.colors[0]) {
+						// 		const color = tw.colors[0][1]
+						// 		colors.push({
+						// 			range: {
+						// 				start: document.positionAt(start + c.target.start),
+						// 				end: document.positionAt(start + c.target.end),
+						// 			},
+						// 			...color,
+						// 		})
 						// 	}
 						// }
 					}
