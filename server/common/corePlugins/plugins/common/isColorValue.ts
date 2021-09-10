@@ -158,6 +158,10 @@ export default function isColorValue(value: string) {
 		return true
 	}
 
+	if (/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/.test(value)) {
+		return true
+	}
+
 	if (value === "currentColor" || value === "transparent") {
 		return true
 	}

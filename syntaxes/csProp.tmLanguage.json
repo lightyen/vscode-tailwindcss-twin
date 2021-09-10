@@ -353,7 +353,7 @@
       ]
     },
     "css-value-content-val": {
-      "match": "([-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
+      "match": "(\\b(?<!#)[-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
       "captures": {
         "1": {
           "name": "constant.numeric.decimal.twin"
