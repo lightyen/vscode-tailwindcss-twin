@@ -104,7 +104,7 @@ export default async function hover(
 				const twin = await state.jit(value)
 				let content =
 					renderClassnameJIT({
-						key: value.replace(/\s/g, ""),
+						raw: value,
 						twin,
 						important: selection.important,
 						options,
@@ -226,7 +226,7 @@ async function getHoverTwinMarkdown({
 	if (useJIT) {
 		const twin = await state.jit(value)
 		const content = renderClassnameJIT({
-			key: value,
+			raw: value,
 			twin,
 			important: selection.important,
 			options,

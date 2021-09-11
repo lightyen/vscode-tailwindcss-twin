@@ -96,18 +96,21 @@ export function renderClassname({
 }
 
 export function renderClassnameJIT({
-	key,
+	raw,
 	twin,
 	important = false,
 	options,
 }: {
-	key: string
+	raw: string
 	twin: Twin
 	important?: boolean
 	options: ServiceOptions
 }): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const key = raw.replace(/\s/g, "")
 	const rules = twin.classnames.get(key)
+	if (!rules) {
+		return undefined
+	}
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
