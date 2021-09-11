@@ -109,10 +109,10 @@
       }
     },
     "css-function": {
-      "begin": "([\\w-]+)(\\()",
+      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
       "beginCaptures": {
         "1": {
-          "name": "support.function.url.css.twin"
+          "name": "support.function.css.twin"
         }
       },
       "end": "\\)",
@@ -127,6 +127,9 @@
           "include": "#css-function"
         },
         {
+          "include": "#css-url"
+        },
+        {
           "include": "#css-value-content-val"
         },
         {
@@ -134,6 +137,27 @@
         },
         {
           "include": "#block-comment-end-backtick"
+        }
+      ]
+    },
+    "css-url": {
+      "begin": "\\b(url)\\(",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.css.twin"
+        }
+      },
+      "end": "\\)",
+      "patterns": [
+        {
+          "include": "#qstring-double"
+        },
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "match": "[^\"'\\s\\(\\)]+",
+          "name": "variable.parameter.url.css.twin"
         }
       ]
     },
@@ -172,6 +196,9 @@
         },
         {
           "include": "#css-function"
+        },
+        {
+          "include": "#css-url"
         },
         {
           "include": "#css-value-content-val"
@@ -255,6 +282,9 @@
         },
         {
           "include": "#css-function"
+        },
+        {
+          "include": "#css-url"
         },
         {
           "include": "#css-value-content-val"

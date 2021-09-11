@@ -187,10 +187,10 @@
       }
     },
     "css-function-single-quote": {
-      "begin": "([\\w-]+)(\\()",
+      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
       "beginCaptures": {
         "1": {
-          "name": "support.function.url.css.twin"
+          "name": "support.function.css.twin"
         }
       },
       "end": "\\)",
@@ -200,6 +200,9 @@
         },
         {
           "include": "#css-function-single-quote"
+        },
+        {
+          "include": "#css-url-single-quote"
         },
         {
           "include": "#css-value-content-val"
@@ -213,10 +216,10 @@
       ]
     },
     "css-function-double-quote": {
-      "begin": "([\\w-]+)(\\()",
+      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
       "beginCaptures": {
         "1": {
-          "name": "support.function.url.css.twin"
+          "name": "support.function.css.twin"
         }
       },
       "end": "\\)",
@@ -228,6 +231,9 @@
           "include": "#css-function-double-quote"
         },
         {
+          "include": "#css-url-double-quote"
+        },
+        {
           "include": "#css-value-content-val"
         },
         {
@@ -235,6 +241,42 @@
         },
         {
           "include": "#block-comment-end-double-quote"
+        }
+      ]
+    },
+    "css-url-single-quote": {
+      "begin": "\\b(url)\\(",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.css.twin"
+        }
+      },
+      "end": "\\)",
+      "patterns": [
+        {
+          "include": "#qstring-double"
+        },
+        {
+          "match": "[^\"'\\s\\(\\)]+",
+          "name": "variable.parameter.url.css.twin"
+        }
+      ]
+    },
+    "css-url-double-quote": {
+      "begin": "\\b(url)\\(",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.css.twin"
+        }
+      },
+      "end": "\\)",
+      "patterns": [
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "match": "[^\"'\\s\\(\\)]+",
+          "name": "variable.parameter.url.css.twin"
         }
       ]
     },
@@ -270,6 +312,9 @@
         },
         {
           "include": "#css-function-single-quote"
+        },
+        {
+          "include": "#css-url-single-quote"
         },
         {
           "include": "#css-value-content-val"
@@ -314,6 +359,9 @@
         },
         {
           "include": "#css-function-double-quote"
+        },
+        {
+          "include": "#css-url-double-quote"
         },
         {
           "include": "#css-value-content-val"
@@ -396,6 +444,9 @@
           "include": "#css-function-single-quote"
         },
         {
+          "include": "#css-url-single-quote"
+        },
+        {
           "include": "#css-value-content-val"
         },
         {
@@ -438,6 +489,9 @@
         },
         {
           "include": "#css-function-double-quote"
+        },
+        {
+          "include": "#css-url-double-quote"
         },
         {
           "include": "#css-value-content-val"

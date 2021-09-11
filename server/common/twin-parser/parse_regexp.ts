@@ -18,6 +18,7 @@ export function findRightBracket({
 	const [lbrac, rbrac] = brackets
 	let comment = 0
 	let string = 0
+	let url = 0
 
 	for (let i = start; i < end; i++) {
 		if (text[i] === lbrac) {
@@ -36,7 +37,19 @@ export function findRightBracket({
 			}
 		}
 
-		if (comment === 0) {
+		if (string === 0 && comment === 0) {
+			if (url === 0 && text[i] === "u" && /\W/.test(text[i - 1] || " ")) {
+				url = 1
+			} else if (url === 1 && text[i] === "r") {
+				url = 2
+			} else if (url === 2 && text[i] === "l") {
+				url = 3
+			} else if (url < 3 || (url === 3 && text[i] === ")")) {
+				url = 0
+			}
+		}
+
+		if (url < 3 && comment === 0) {
 			if (string === 0) {
 				if (text.slice(i, i + 2) === "//") {
 					comment = 1
