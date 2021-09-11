@@ -80,7 +80,7 @@ export default async function hover(
 				}
 			}
 
-			if (selection.type === parser.HoverResultType.ArbitraryStyle) {
+			if (kind === PatternKind.Twin && selection.type === parser.HoverResultType.ArbitraryStyle) {
 				let title = ""
 				if (options.references) {
 					const name = state.twin.getPluginByName(value)?.name
