@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.9.3
+
+- Disable comments in css value type `url()`
+- hover arbitrary value: Disable in `cs` prop
+- hover arbitrary value: Accept hex color
+- completion resolve: Add detail to variants
+- Enhance syntaxes
+- Fix parser
+
 ## 0.9.2
 
 - Bump tailwindcss to 2.2.9
