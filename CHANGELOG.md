@@ -8,6 +8,8 @@
 - completion resolve: Add detail to variants
 - Enhance syntaxes
 - Fix parser
+- Bump tailwindcss to 2.2.15
+- Bump typescript to 4.4.3
 
 ## 0.9.2
 

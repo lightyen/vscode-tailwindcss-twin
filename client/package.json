@@ -11,7 +11,7 @@
   "devDependencies": {
     "@formatjs/intl": "1.14.1",
     "@types/chroma-js": "^2.1.3",
-    "@types/node": "^16.7.13",
+    "@types/node": "^16.9.1",
     "@types/vscode": "^1.59.0",
     "chroma-js": "^2.1.2",
     "vscode-languageclient": "^7.0.0"
