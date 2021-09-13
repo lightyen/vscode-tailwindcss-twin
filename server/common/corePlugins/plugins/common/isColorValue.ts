@@ -150,6 +150,9 @@ const colors: Record<string, string> = {
 }
 
 export default function isColorValue(value: string) {
+	if (value.startsWith("color:")) {
+		return true
+	}
 	if (/^(?:rgba|rgb|hsla|hsl)\(/.test(value)) {
 		return true
 	}
