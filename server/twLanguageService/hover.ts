@@ -57,8 +57,8 @@ export default async function hover(
 				const important = selection.important
 
 				const values = [
-					"```scss",
-					"& {",
+					"```css",
+					"#el {",
 					`\t${key}: ${parser.formatCssValue(parser.removeCommentsInCss(value))}${
 						important ? " !important" : ""
 					};`,
@@ -302,7 +302,7 @@ function resolveScreenValue({
 	}
 
 	if (typeof value === "string") {
-		markdown.value = `\`\`\`scss\n@media (min-width: ${value})\n\`\`\``
+		markdown.value = `\`\`\`css\n@media (min-width: ${value})\n\`\`\``
 	} else if (value instanceof Array) {
 		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
 	} else if (value) {

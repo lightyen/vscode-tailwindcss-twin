@@ -94,7 +94,8 @@ function resolve(
 	}
 
 	if (type === "variant" || type === "screen") {
-		const data = state.twin.variants.get(item.label.replace(new RegExp(`${state.separator}$`), ""))
+		const key = item.label.replace(new RegExp(`${state.separator}$`), "")
+		const data = state.twin.variants.get(key)
 		if (!(data instanceof Array)) {
 			return item
 		}
@@ -110,7 +111,11 @@ function resolve(
 			}
 			item.documentation = {
 				kind: lsp.MarkupKind.Markdown,
-				value: ["```scss", ...text, "```"].join("\n"),
+				value: "",
+			}
+			const content = md.renderVariant({ state, key })
+			if (content) {
+				item.documentation.value = content
 			}
 			if (desc) {
 				item.documentation.value = desc + "\n" + item.documentation.value

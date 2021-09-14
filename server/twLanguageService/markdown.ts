@@ -1,3 +1,4 @@
+import { escape } from "~/common/escape"
 import { Tailwind } from "~/tailwind"
 import type { RuleItem, Twin } from "~/tailwind/twin"
 import { ServiceOptions } from "."
@@ -37,7 +38,7 @@ export function renderVariant({ key, state }: { key: string; state: Tailwind }):
 			text.push(`${data.join(", ")}`)
 		}
 
-		return ["```scss", ...text, "```", newline].join(newline)
+		return ["```css", ...text, "```", newline].join(newline)
 	}
 
 	return undefined
@@ -60,7 +61,7 @@ export function renderClassname({
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
-		const lines: string[] = [`.${rule.name}${rule.pseudo.join("")}${rule.rest} {`.replace(/\//g, "\\/")]
+		const lines: string[] = [`.${escape(rule.name)}${rule.pseudo.join("")}${escape(rule.rest)} {`]
 		for (const key in rule.decls) {
 			for (const value of rule.decls[key]) {
 				lines.push(
@@ -89,7 +90,7 @@ export function renderClassname({
 			ls[ls.length - 1] += newline
 			lines.push(...ls)
 		}
-		return ["```scss", ...lines, "```", newline].join(newline)
+		return ["```css", ...lines, "```", newline].join(newline)
 	}
 
 	return undefined
@@ -114,7 +115,7 @@ export function renderClassnameJIT({
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
-		const lines: string[] = [`.${rule.name}${rule.pseudo.join("")}${rule.rest} {`.replace(/\//g, "\\/")]
+		const lines: string[] = [`.${escape(raw)}${rule.pseudo.join("")}${escape(rule.rest)} {`]
 		for (const key in rule.decls) {
 			for (const value of rule.decls[key]) {
 				lines.push(
@@ -143,7 +144,7 @@ export function renderClassnameJIT({
 			ls[ls.length - 1] += newline
 			lines.push(...ls)
 		}
-		return ["```scss", ...lines, "```", newline].join(newline)
+		return ["```css", ...lines, "```", newline].join(newline)
 	}
 
 	return undefined
