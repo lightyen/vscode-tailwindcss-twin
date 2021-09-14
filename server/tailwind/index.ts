@@ -189,6 +189,7 @@ export class Tailwind {
 		className = className.replace(/\s/g, "")
 		const tmp = { ...this.config }
 		tmp.mode = "jit"
+		tmp.separator = __INNER_TAILWIND_SEPARATOR__
 		tmp.purge = { enabled: false, content: [], safelist: [className] }
 		const processer = this.postcss([this.tailwindcss(tmp)])
 		const results = await Promise.all([
@@ -203,6 +204,7 @@ export class Tailwind {
 		className = className.replace(/\s/g, "")
 		const tmp = { ...this.config }
 		tmp.mode = "jit"
+		tmp.separator = __INNER_TAILWIND_SEPARATOR__
 		tmp.purge = { enabled: false, content: [], safelist: [className] }
 		const processer = this.postcss([this.tailwindcss(tmp)])
 		const result = await processer.process("@tailwind utilities;", { from: undefined })
