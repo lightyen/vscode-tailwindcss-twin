@@ -12,8 +12,37 @@ import { cssDataManager } from "./cssData"
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
 const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSensitive: true })
 
+function createDiagnosticArray() {
+	const arr: Diagnostic[] = []
+	const MAXSZIE = 10
+	return new Proxy(arr, {
+		get(target, prop, ...rest) {
+			switch (prop) {
+				case "push":
+					return function (item: Diagnostic) {
+						if (item.severity === DiagnosticSeverity.Warning && target.length >= 2 * MAXSZIE) {
+							return 0
+						}
+						if (target.length >= MAXSZIE) {
+							return 0
+						}
+						return target.push(item)
+					}
+				default:
+					return Reflect.get(target, prop, ...rest)
+			}
+		},
+		set(target, prop, value, ...rest) {
+			switch (prop) {
+				default:
+					return Reflect.set(target, prop, value, ...rest)
+			}
+		},
+	}) as Diagnostic[]
+}
+
 export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
-	const diagnostics: Diagnostic[] = []
+	const diagnostics = createDiagnosticArray()
 	const uri = document.uri.toString()
 	const tokens = findAllMatch(document, options.jsxPropImportChecking)
 	for (const { token, kind } of tokens) {
@@ -21,34 +50,46 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 		if (kind === PatternKind.TwinTheme) {
 			const result = parseThemeValue(value)
 			for (const err of result.errors) {
-				diagnostics.push({
-					range: {
-						start: document.positionAt(start + err.start),
-						end: document.positionAt(start + err.end),
-					},
-					source: DIAGNOSTICS_ID,
-					message: err.message,
-					severity: DiagnosticSeverity.Error,
-				})
+				if (
+					!diagnostics.push({
+						range: {
+							start: document.positionAt(start + err.start),
+							end: document.positionAt(start + err.end),
+						},
+						source: DIAGNOSTICS_ID,
+						message: err.message,
+						severity: DiagnosticSeverity.Error,
+					})
+				) {
+					return diagnostics
+				}
 			}
 			if (!state.getTheme(result.keys(), true)) {
-				diagnostics.push({
-					range: { start: document.positionAt(start), end: document.positionAt(end) },
-					source: DIAGNOSTICS_ID,
-					message: "value is undefined",
-					severity: DiagnosticSeverity.Error,
-				})
-			}
-		} else if (kind === PatternKind.TwinScreen) {
-			if (value) {
-				const result = state.getTheme(["screens", value])
-				if (result == undefined) {
-					diagnostics.push({
+				if (
+					!diagnostics.push({
 						range: { start: document.positionAt(start), end: document.positionAt(end) },
 						source: DIAGNOSTICS_ID,
 						message: "value is undefined",
 						severity: DiagnosticSeverity.Error,
 					})
+				) {
+					return diagnostics
+				}
+			}
+		} else if (kind === PatternKind.TwinScreen) {
+			if (value) {
+				const result = state.getTheme(["screens", value])
+				if (result == undefined) {
+					if (
+						!diagnostics.push({
+							range: { start: document.positionAt(start), end: document.positionAt(end) },
+							source: DIAGNOSTICS_ID,
+							message: "value is undefined",
+							severity: DiagnosticSeverity.Error,
+						})
+					) {
+						return diagnostics
+					}
 				}
 			}
 		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
@@ -57,19 +98,17 @@ export function validate(document: TextDocument, state: Tailwind, options: Servi
 				const result = parser.spread({ text: value, separator: state.separator })
 				cache[uri][value] = result
 			}
-			diagnostics.push(
-				...validateTwin({
-					document,
-					offset: start,
-					kind,
-					diagnostics: options.diagnostics,
-					state,
-					...cache[uri][value],
-				}),
-			)
+			validateTwin({
+				document,
+				offset: start,
+				kind,
+				diagnostics: options.diagnostics,
+				state,
+				result: diagnostics,
+				...cache[uri][value],
+			})
 		}
 	}
-
 	return diagnostics
 }
 
@@ -83,38 +122,55 @@ function validateTwin({
 	emptyGroup,
 	emptyVariants,
 	notClosed,
+	result,
 }: {
 	document: TextDocument
 	offset: number
 	kind: PatternKind
 	state: Tailwind
 	diagnostics: ServiceOptions["diagnostics"]
-} & ReturnType<typeof parser.spread>): Diagnostic[] {
-	const result: Diagnostic[] = []
-
+	result: Diagnostic[]
+} & ReturnType<typeof parser.spread>): void {
 	for (const e of notClosed) {
-		result.push({
-			source: DIAGNOSTICS_ID,
-			message: "Bracket is not closed.",
-			range: {
-				start: document.positionAt(offset + e.start),
-				end: document.positionAt(offset + e.end),
-			},
-			severity: DiagnosticSeverity.Error,
-		})
+		if (
+			!result.push({
+				source: DIAGNOSTICS_ID,
+				message: "Bracket is not closed.",
+				range: {
+					start: document.positionAt(offset + e.start),
+					end: document.positionAt(offset + e.end),
+				},
+				severity: DiagnosticSeverity.Error,
+			})
+		) {
+			return
+		}
 	}
 
 	if (kind === PatternKind.Twin) {
-		items.forEach(c => {
+		for (let i = 0; i < items.length; i++) {
+			const c = items[i]
 			switch (c.type) {
-				case parser.SpreadResultType.ClassName:
-					result.push(...checkTwinClassName(c, document, offset, state))
+				case parser.SpreadResultType.ClassName: {
+					const ans = checkTwinClassName(c, document, offset, state)
+					for (let k = 0; k < ans.length; k++) {
+						if (!result.push(ans[k])) {
+							return
+						}
+					}
 					break
-				case parser.SpreadResultType.CssProperty:
-					result.push(...checkTwinCssProperty(c, document, offset, state))
+				}
+				case parser.SpreadResultType.CssProperty: {
+					const ans = checkTwinCssProperty(c, document, offset, state)
+					for (let k = 0; k < ans.length; k++) {
+						if (!result.push(ans[k])) {
+							return
+						}
+					}
 					break
+				}
 			}
-		})
+		}
 	}
 
 	function travel(obj: Record<string, parser.TokenList>) {
@@ -128,15 +184,19 @@ function validateTwin({
 						diagnostics.conflict === "strict"
 							? `${token.value} is duplicated on property: ${prop}`
 							: `${token.value} is duplicated`
-					result.push({
-						source: DIAGNOSTICS_ID,
-						message,
-						range: {
-							start: document.positionAt(offset + token.start),
-							end: document.positionAt(offset + token.end),
-						},
-						severity: DiagnosticSeverity.Warning,
-					})
+					if (
+						!result.push({
+							source: DIAGNOSTICS_ID,
+							message,
+							range: {
+								start: document.positionAt(offset + token.start),
+								end: document.positionAt(offset + token.end),
+							},
+							severity: DiagnosticSeverity.Warning,
+						})
+					) {
+						return
+					}
 				}
 			}
 		}
@@ -256,95 +316,40 @@ function validateTwin({
 	for (let i = 0; i < emptyVariants.length; i++) {
 		const item = emptyVariants[i]
 		if (diagnostics.emptyClass) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `forgot something?`,
-				range: {
-					start: document.positionAt(offset + item.end),
-					end: document.positionAt(offset + item.end + 1),
-				},
-				severity: DiagnosticSeverity.Warning,
-			})
+			if (
+				!result.push({
+					source: DIAGNOSTICS_ID,
+					message: `forgot something?`,
+					range: {
+						start: document.positionAt(offset + item.end),
+						end: document.positionAt(offset + item.end + 1),
+					},
+					severity: DiagnosticSeverity.Warning,
+				})
+			) {
+				return
+			}
 		}
 	}
 
 	for (let i = 0; i < emptyGroup.length; i++) {
 		const item = emptyGroup[i]
-		// const searcher = state.twin.searchers
-		// for (const [a, b, variant] of item.variants) {
-		// 	if (!state.twin.isVariant(variant)) {
-		// 		const ans = searcher.variants.search(variant)
-		// 		if (ans?.length > 0) {
-		// 			result.push({
-		// 				source: DIAGNOSTICS_ID,
-		// 				message: `Can't find '${variant}', did you mean '${ans[0].item}'?`,
-		// 				range: {
-		// 					start: document.positionAt(offset + a),
-		// 					end: document.positionAt(offset + b),
-		// 				},
-		// 				data: { text: variant, newText: ans[0].item },
-		// 				severity: DiagnosticSeverity.Error,
-		// 			})
-		// 		} else {   adasasassasasas
-		// 			result.push({
-		// 				source: DIAGNOSTICS_ID,
-		// 				message: `Can't find '${variant}'`,
-		// 				range: {
-		// 					start: document.positionAt(offset + a),
-		// 					end: document.positionAt(offset + b),
-		// 				},
-		// 				severity: DiagnosticSeverity.Error,
-		// 			})
-		// 		}
-		// 	}
-		// }
-
 		if (diagnostics.emptyGroup) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `forgot something?`,
-				range: {
-					start: document.positionAt(offset + item.start),
-					end: document.positionAt(offset + item.end),
-				},
-				severity: DiagnosticSeverity.Warning,
-			})
+			if (
+				!result.push({
+					source: DIAGNOSTICS_ID,
+					message: `forgot something?`,
+					range: {
+						start: document.positionAt(offset + item.start),
+						end: document.positionAt(offset + item.end),
+					},
+					severity: DiagnosticSeverity.Warning,
+				})
+			) {
+				return
+			}
 		}
-
-		// if (item.kind === tw.EmptyKind.Group && diagnostics.emptyGroup) {
-		// 	result.push({
-		// 		source: DIAGNOSTICS_ID,
-		// 		message: `forgot something?`,
-		// 		range: {
-		// 			start: document.positionAt(offset + item.start),
-		// 			end: document.positionAt(offset + item.end),
-		// 		},
-		// 		severity: DiagnosticSeverity.Warning,
-		// 	})
-		// } else if (item.kind === tw.EmptyKind.Classname && diagnostics.emptyClass) {
-		// 	result.push({
-		// 		source: DIAGNOSTICS_ID,
-		// 		message: `forgot something?`,
-		// 		range: {
-		// 			start: document.positionAt(offset + item.start),
-		// 			end: document.positionAt(offset + item.start + 1),
-		// 		},
-		// 		severity: DiagnosticSeverity.Warning,
-		// 	})
-		// } else if (item.kind === tw.EmptyKind.CssProperty && diagnostics.emptyCssProperty) {
-		// 	result.push({
-		// 		source: DIAGNOSTICS_ID,
-		// 		message: `forgot something?`,
-		// 		range: {
-		// 			start: document.positionAt(offset + item.start),
-		// 			end: document.positionAt(offset + item.end),
-		// 		},
-		// 		severity: DiagnosticSeverity.Warning,
-		// 	})
-		// }
 	}
-
-	return result
 }
 
 function checkTwinCssProperty(item: parser.SpreadDescription, document: TextDocument, offset: number, state: Tailwind) {
