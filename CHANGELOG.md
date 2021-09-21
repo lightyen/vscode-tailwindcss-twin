@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.9.4
+
+- Fix arbitrary value: ambiguous value type
+- Change markdown preview: using css systax
+- Enhance systaxes: css prop name starts with hyphen
+- Enhance performance: reduce diagnostics count
+
 ## 0.9.3
 
 - Disable comments in css value type `url()`
