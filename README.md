@@ -28,7 +28,7 @@ Support ONLY `*.tsx` and `*.jsx`
 
 ```json5
 {
-  "tailwindcss.colorDecorators": null, // inherit from "editor.colorDecorators"
+  "tailwindcss.colorDecorators": "inherit", // inherit from "editor.colorDecorators"
   "tailwindcss.references": true,
   "tailwindcss.diagnostics": {
     "enabled": true,
@@ -41,7 +41,7 @@ Support ONLY `*.tsx` and `*.jsx`
   "tailwindcss.fallbackDefaultConfig": true,
   "tailwindcss.enabled": true,
   "tailwindcss.jsxPropImportChecking": true,
-  "tailwindcss.rootFontSize": true // false, true or number (default is 16)
+  "tailwindcss.rootFontSize": 16
 }
 ```
 

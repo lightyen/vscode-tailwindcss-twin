@@ -32,10 +32,9 @@ async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputC
 	const userSettings = vscode.workspace.getConfiguration("", ws)
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const initOptions: Partial<InitializationOptions> = userSettings.get(SECTION_ID)!
-	if (typeof initOptions.colorDecorators !== "boolean") {
-		initOptions.colorDecorators = userSettings.get("editor.colorDecorators")
+	if (initOptions.colorDecorators === "inherit") {
+		initOptions.colorDecorators = userSettings.get("editor.colorDecorators") ? "on" : "off"
 	}
-
 	const configs = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
 		new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),

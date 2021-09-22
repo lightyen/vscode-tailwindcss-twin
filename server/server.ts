@@ -60,6 +60,14 @@ class Server {
 			this.workspaceFolder = workspaceFolder
 			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
 			this.settings = settings
+			// backward compatibility
+			if (typeof this.settings.rootFontSize === "boolean") {
+				this.settings.rootFontSize = this.settings.rootFontSize ? 16 : 0
+			}
+			if (typeof this.settings.colorDecorators === "boolean") {
+				this.settings.colorDecorators = this.settings.colorDecorators ? "on" : "off"
+			}
+
 			progress.begin(`Initializing ${NAME}`)
 
 			console.log(
@@ -163,15 +171,7 @@ class Server {
 		connection.onDidChangeConfiguration(async params => {
 			console.log(`[setting changes were detected]`)
 			if (this.hasConfigurationCapability) {
-				interface EditorConfig {
-					colorDecorators: boolean
-				}
-				const configs = await connection.workspace.getConfiguration([
-					{ section: SECTION_ID },
-					{ section: "editor" },
-				])
-				const extSettings: Settings = configs[0]
-				const editor: EditorConfig = configs[1]
+				const extSettings: Settings = await connection.workspace.getConfiguration({ section: SECTION_ID })
 
 				let needToUpdate = false
 				let needToReload = false
@@ -202,15 +202,26 @@ class Server {
 					console.log(`jsxPropImportChecking = ${this.settings.jsxPropImportChecking}`)
 				}
 
+				// backward compatibility
+				if (typeof extSettings.rootFontSize === "boolean") {
+					extSettings.rootFontSize = extSettings.rootFontSize ? 16 : 0
+				}
 				if (this.settings.rootFontSize !== extSettings.rootFontSize) {
 					this.settings.rootFontSize = extSettings.rootFontSize
 					needToUpdate = true
 					console.log(`rootFontSize = ${this.settings.rootFontSize}`)
 				}
 
-				const colorDecorators = extSettings.colorDecorators ?? editor.colorDecorators
-				if (this.settings.colorDecorators !== colorDecorators) {
-					this.settings.colorDecorators = colorDecorators
+				// backward compatibility
+				if (typeof extSettings.colorDecorators === "boolean") {
+					extSettings.colorDecorators = extSettings.colorDecorators ? "on" : "off"
+				}
+				if (extSettings.colorDecorators === "inherit") {
+					const editor = await connection.workspace.getConfiguration({ section: "editor" })
+					extSettings.colorDecorators = editor.colorDecorators ? "on" : "off"
+				}
+				if (this.settings.colorDecorators !== extSettings.colorDecorators) {
+					this.settings.colorDecorators = extSettings.colorDecorators
 					needToUpdate = true
 					needToRenderColors = true
 					console.log(`codeDecorators = ${this.settings.colorDecorators}`)

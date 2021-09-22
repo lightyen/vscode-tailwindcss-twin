@@ -3,17 +3,14 @@ import { Tailwind } from "~/tailwind"
 import type { RuleItem, Twin } from "~/tailwind/twin"
 import { ServiceOptions } from "."
 
-function toPixelUnit(value: string, rootFontSize: number | boolean) {
-	if (rootFontSize === false) {
+function toPixelUnit(value: string, rootFontSize: number) {
+	if (rootFontSize <= 0) {
 		return value
 	}
 	const reg = /(-?\d[.\d+e]*)rem/
 	const match = reg.exec(value)
 	if (!match) {
 		return value
-	}
-	if (rootFontSize === true) {
-		rootFontSize = 16
 	}
 	const [text, n] = match
 	const val = parseFloat(n)

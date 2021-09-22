@@ -155,17 +155,13 @@ function resolve(
 	return item
 }
 
-function getRemUnit(key: string, rootFontSize: boolean | number, state: Tailwind) {
-	if (rootFontSize === false) {
+function getRemUnit(key: string, rootFontSize: number, state: Tailwind) {
+	if (rootFontSize <= 0) {
 		return ""
 	}
 
 	const rules = state.twin.classnames.get(key)
 	if (!rules) return ""
-
-	if (rootFontSize === true) {
-		rootFontSize = 16
-	}
 
 	const reg = /(-?\d[.\d+e]*)rem/
 

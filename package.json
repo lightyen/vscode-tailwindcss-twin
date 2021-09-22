@@ -1,7 +1,7 @@
 {
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind Twin IntelliSense",
-  "description": "Tailwind VSCode Extension for twin.macro",
+  "markdownDescription": "Tailwind VSCode Extension for twin.macro",
   "version": "0.9.4",
   "author": "lightyen",
   "license": "MIT",
@@ -165,24 +165,27 @@
       "title": "Tailwind Twin IntelliSense",
       "properties": {
         "tailwindcss.colorDecorators": {
-          "description": "%ext.settings.colorDecorators%",
-          "type": [
-            "boolean",
-            "null"
+          "markdownDescription": "%ext.settings.colorDecorators%",
+          "additionalItems": false,
+          "type": "string",
+          "enum": [
+            "on",
+            "off",
+            "inherit"
           ],
-          "default": null
+          "default": "inherit"
         },
         "tailwindcss.references": {
-          "description": "%ext.settings.references%",
+          "markdownDescription": "%ext.settings.references%",
           "type": "boolean",
           "default": true
         },
         "tailwindcss.diagnostics": {
-          "description": "%ext.settings.diagnostics%",
+          "markdownDescription": "%ext.settings.diagnostics%",
           "type": "object",
           "properties": {
             "enabled": {
-              "description": "%ext.settings.diagnostics.enabled%",
+              "markdownDescription": "%ext.settings.diagnostics.enabled%",
               "type": "boolean",
               "default": true
             },
@@ -194,7 +197,7 @@
                 "strict"
               ],
               "default": "strict",
-              "enumDescriptions": [
+              "enummarkdownDescriptions": [
                 "%ext.settings.diagnostics.conflict.none%",
                 "%ext.settings.diagnostics.conflict.loose%",
                 "%ext.settings.diagnostics.conflict.strict%"
@@ -230,21 +233,18 @@
           "default": true
         },
         "tailwindcss.enabled": {
-          "description": "%ext.settings.enabled%",
+          "markdownDescription": "%ext.settings.enabled%",
           "type": "boolean",
           "default": true
         },
         "tailwindcss.jsxPropImportChecking": {
-          "description": "%ext.settings.jsxPropImportChecking%",
+          "markdownDescription": "%ext.settings.jsxPropImportChecking%",
           "type": "boolean",
           "default": true
         },
         "tailwindcss.rootFontSize": {
-          "type": [
-            "number",
-            "boolean"
-          ],
-          "default": true
+          "type": "number",
+          "default": 16
         }
       }
     },

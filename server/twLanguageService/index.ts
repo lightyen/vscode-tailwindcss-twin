@@ -87,7 +87,9 @@ export class TailwindLanguageService implements LanguageService {
 			this.cache[document.uri] = {}
 		}
 		if (!this.ready) return []
-		if (!this.options.colorDecorators) return []
+		if (this.options.colorDecorators !== "on") {
+			return []
+		}
 		return await idebounce(
 			"provideColorDecorations" + document.uri,
 			provideColorDecorations,

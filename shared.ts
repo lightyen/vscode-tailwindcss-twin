@@ -4,7 +4,7 @@ export const DIAGNOSTICS_ID = "tailwindcss"
 
 export interface Settings {
 	enabled: boolean
-	colorDecorators: boolean | null
+	colorDecorators: "inherit" | "on" | "off"
 	references: boolean
 	preferVariantWithParentheses: boolean
 	fallbackDefaultConfig: boolean
@@ -16,7 +16,7 @@ export interface Settings {
 		emptyCssProperty: boolean
 	}
 	jsxPropImportChecking: boolean
-	rootFontSize: boolean | number
+	rootFontSize: number
 }
 
 export interface ColorDecoration {

@@ -1,6 +1,6 @@
 {
   "ext.settings.enabled": "Enable tailwind twin extension.",
-  "ext.settings.colorDecorators": "Controls whether the extension should render the inline color decorators.",
+  "ext.settings.colorDecorators": "Controls whether the extension should render the inline color decorators.\n- **inherit**: Inherit from `editor.colorDecorators`.\n- **on**: Enabled.\n- **off**: Disabled.",
   "ext.settings.references": "Controls whether the extension should show references when completion/hover.",
   "ext.settings.diagnostics": "Diagnostics",
   "ext.settings.diagnostics.enabled": "Controls whether diagnostics enabled.",
