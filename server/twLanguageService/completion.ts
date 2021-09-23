@@ -1,10 +1,10 @@
 import chroma from "chroma-js"
-import { serializeError } from "serialize-error"
 import type { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
+import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
 import * as nodes from "~/common/twin-parser/twNodes"
 import type { TailwindLoader } from "~/tailwind"
@@ -84,10 +84,13 @@ export default function completion(
 			}
 			return list
 		}
-	} catch (err) {
-		console.log(serializeError(err))
-		return undefined
+	} catch (error) {
+		const err = error as Error
+		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+		console.error(`[${new Date().toLocaleString()}]`, err)
+		console.error("build completions failed.")
 	}
+	return undefined
 }
 
 function twinCompletion(

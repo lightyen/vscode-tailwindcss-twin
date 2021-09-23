@@ -1,8 +1,8 @@
-import { serializeError } from "serialize-error"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import parseThemeValue from "~/common/parseThemeValue"
+import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
 import type { TailwindLoader } from "~/tailwind"
 import { cssDataManager, getEntryDescription } from "./cssData"
@@ -188,8 +188,11 @@ export default async function hover(
 				contents: markdown,
 			}
 		}
-	} catch (err) {
-		console.log(serializeError(err))
+	} catch (error) {
+		const err = error as Error
+		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+		console.error(`[${new Date().toLocaleString()}]`, err)
+		console.error("hover failed.")
 	}
 	return undefined
 }

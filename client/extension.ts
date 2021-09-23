@@ -17,6 +17,8 @@ interface InitializationOptions extends Settings {
 	extensionFolder: string
 
 	extensionMode: vscode.ExtensionMode
+	/** uri */
+	serverSourceMapUri: string
 }
 
 async function addClient(
@@ -52,6 +54,12 @@ async function addClient(
 	initOptions.extensionFolder = context.extensionUri.toString()
 	initOptions.workspaceFolder = ws.uri.toString()
 	initOptions.configs = configs.map(c => c.toString())
+	initOptions.serverSourceMapUri = vscode.Uri.joinPath(
+		vscode.Uri.file(context.extensionPath),
+		"dist",
+		"server",
+		"server.js.map",
+	).toString()
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: DEFAULT_SUPPORT_LANGUAGES.map(language => ({

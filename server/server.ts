@@ -20,6 +20,8 @@ interface InitializationOptions extends Settings {
 	configs: string[]
 	/** uri */
 	extensionFolder: string
+	/** uri */
+	serverSourceMapUri: string
 }
 
 function matchService(uri: string, services: Map<string, ReturnType<typeof createTailwindLanguageService>>) {
@@ -46,6 +48,7 @@ function connectLsp() {
 	let extensionMode: ExtensionMode
 	let defaultServiceRunning = false
 	let settings: Settings
+	let serverSourceMapUri: URI
 	let extensionUri: URI
 
 	connection.listen()
@@ -64,6 +67,7 @@ function connectLsp() {
 		hasDiagnosticRelatedInformationCapability =
 			capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
 		const options = params.initializationOptions as InitializationOptions
+		serverSourceMapUri = URI.parse(options.serverSourceMapUri)
 		extensionUri = URI.parse(options.extensionFolder)
 		workspaceFolder = URI.parse(options.workspaceFolder)
 		extensionMode = options.extensionMode
@@ -294,6 +298,7 @@ function connectLsp() {
 
 		const srv = createTailwindLanguageService(documents, {
 			...settings,
+			serverSourceMapUri,
 			extensionUri,
 			workspaceFolder,
 			extensionMode,
@@ -324,6 +329,7 @@ function connectLsp() {
 			const srv = createTailwindLanguageService(documents, {
 				...settings,
 				configPath,
+				serverSourceMapUri,
 				extensionUri,
 				workspaceFolder,
 				extensionMode,
@@ -337,6 +343,7 @@ function connectLsp() {
 				const s = createTailwindLanguageService(documents, {
 					...settings,
 					configPath,
+					serverSourceMapUri,
 					extensionUri,
 					workspaceFolder,
 					extensionMode,
@@ -369,6 +376,7 @@ function connectLsp() {
 					const srv = createTailwindLanguageService(documents, {
 						...settings,
 						configPath,
+						serverSourceMapUri,
 						extensionUri,
 						workspaceFolder,
 						extensionMode,

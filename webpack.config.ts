@@ -26,13 +26,13 @@ const serverWorkspaceFolder = path.resolve(__dirname, "server")
 const configClient: Configuration = {
 	target: "node",
 	mode: process.env.NODE_ENV === "production" ? "production" : "development",
-	devtool: process.env.NODE_ENV === "production" ? "inline-source-map" : "source-map",
+	devtool: "source-map",
 	entry: path.join(clientWorkspaceFolder, "extension.ts"),
 	output: {
 		path: path.resolve(__dirname, "dist"),
 		filename: "extension.js",
 		libraryTarget: "commonjs2",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
+		devtoolModuleFilenameTemplate: "webpack://[resource-path]",
 	},
 	module: {
 		rules: [
@@ -70,13 +70,13 @@ const configClient: Configuration = {
 const configServer: Configuration = {
 	target: "node",
 	mode: process.env.NODE_ENV === "production" ? "production" : "development",
-	devtool: process.env.NODE_ENV === "production" ? "inline-source-map" : "source-map",
+	devtool: "source-map",
 	entry: path.join(serverWorkspaceFolder, "server.ts"),
 	output: {
 		path: path.resolve(__dirname, "dist"),
 		filename: "server.js",
 		libraryTarget: "commonjs2",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
+		devtoolModuleFilenameTemplate: "webpack://[resource-path]",
 	},
 	module: {
 		rules: [

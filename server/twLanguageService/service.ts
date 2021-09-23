@@ -5,6 +5,7 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
 import idebounce from "~/common/idebounce"
+import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
 import { createTailwindLoader, defaultConfigUri, ExtensionMode } from "~/tailwind"
 import completion from "./completion"
@@ -16,6 +17,7 @@ import { provideColorDecorations } from "./provideColor"
 interface Environment {
 	configPath?: URI
 	extensionUri: URI
+	serverSourceMapUri: URI
 	workspaceFolder: URI
 	extensionMode: ExtensionMode
 }
@@ -30,12 +32,13 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 	const configPath = options.configPath ?? defaultConfigUri
 	const state = createTailwindLoader(configPath, options.extensionUri, options.extensionMode)
 	const isDefault = options.configPath == undefined
-	const configStr = isDefault ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
+	const configPathString = isDefault ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
 
 	return {
 		get configPath() {
 			return configPath
 		},
+		configPathString,
 		start,
 		getColors,
 		reload,
@@ -63,31 +66,41 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 	async function start(): Promise<void> {
 		if (ready()) return
 		try {
-			await state.readTailwindConfig()
-			console.info("loading:", configStr)
+			console.info(`[${new Date().toLocaleString()}]`, "loading:", configPathString)
 			const start = process.hrtime.bigint()
+			await state.readTailwindConfig()
 			await state.runPostCSS()
 			const end = process.hrtime.bigint()
-			console.info(`activated: ${configStr} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			console.info(
+				`[${new Date().toLocaleString()}]`,
+				`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`,
+			)
 			emitter.emit("ready")
 		} catch (error) {
-			console.error(error)
-			console.error("failed:", configStr)
+			const err = error as Error
+			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+			console.error(`[${new Date().toLocaleString()}]`, err)
+			console.error("load failed: " + configPathString + "\n")
 		}
 	}
 
 	/** Reoad tailwind.config and run PostCSS. */
 	async function reload() {
 		try {
-			await state.readTailwindConfig()
-			console.info("reloading:", configStr)
+			console.info(`[${new Date().toLocaleString()}]`, "reloading:", configPathString)
 			const start = process.hrtime.bigint()
+			await state.readTailwindConfig()
 			await state.runPostCSS()
 			const end = process.hrtime.bigint()
-			console.info(`activated: ${configStr} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			console.info(
+				`[${new Date().toLocaleString()}]`,
+				`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`,
+			)
 		} catch (error) {
-			console.error(error)
-			console.error("failed:", configStr)
+			const err = error as Error
+			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+			console.error(`[${new Date().toLocaleString()}]`, err)
+			console.error("reload failed: " + configPathString + "\n")
 		}
 	}
 
