@@ -1824,10 +1824,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.35.tgz#42c953a4e2b18ab931f72477e7012172f4ffa313"
   integrity sha512-Lt+wj8NVPx0zUmUwumiVXapmaLUcAk3yPuHCFVXras9k5VT9TdhJqKqGVUQCD60OTMCl0qxJ57OiTL0Mic3Iag==
 
-"@types/node@^16.9.4":
-  version "16.9.4"
-  resolved "https://registry.npmjs.org/@types/node/-/node-16.9.4.tgz#a12f0ee7847cf17a97f6fdf1093cb7a9af23cca4"
-  integrity sha512-KDazLNYAGIuJugdbULwFZULF9qQ13yNWEBFnfVpqlpgAAo6H/qnM9RjBgh0A0kmHf3XxAKLdN5mTIng9iUvVLA==
+"@types/node@^16.9.6":
+  version "16.9.6"
+  resolved "https://registry.npmjs.org/@types/node/-/node-16.9.6.tgz#040a64d7faf9e5d9e940357125f0963012e66f04"
+  integrity sha512-YHUZhBOMTM3mjFkXVcK+WwAcYmyhe1wL4lfqNtzI0b3qAy7yuSetnM7QJazgE5PFmgVTNGiLOgRFfJMqW7XpSQ==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -4765,10 +4765,20 @@ mute-stream@~0.0.4:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
+nanocolors@^0.1.5:
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/nanocolors/-/nanocolors-0.1.6.tgz#bc2350d3edfdbfadd7ac018c855ae7c13905a6ad"
+  integrity sha512-2pvTw6vYRaBLGir2xR7MxaJtyWkrn+C53EpW8yPotG+pdAwBvt0Xwk4VJ6VHLY0aLthVZPvDfm9TdZvrvAm5UQ==
+
 nanoid@^3.1.23:
   version "3.1.23"
   resolved "https://registry.npmjs.org/nanoid/-/nanoid-3.1.23.tgz#f744086ce7c2bc47ee0a8472574d5c78e4183a81"
   integrity sha512-FiB0kzdP0FFVGDKlRLEQ1BgDzU87dy5NnzjeW9YZNt+/c3+q82EQDUwniSAUxp/F0gFNI1ZhKU1FqYsMuqZVnw==
+
+nanoid@^3.1.25:
+  version "3.1.25"
+  resolved "https://registry.npmjs.org/nanoid/-/nanoid-3.1.25.tgz#09ca32747c0e543f0e1814b7d3793477f9c8e152"
+  integrity sha512-rdwtIXaXCLFAQbnfqDRnI6jaRHp9fTcYBjtFKE8eezcZ7LuLjhUaQGNeMXf1HmRoCH32CLz6XwX0TtxEOS/A3Q==
 
 natural-compare@^1.4.0:
   version "1.4.0"
@@ -5112,13 +5122,13 @@ postcss-value-parser@^4.1.0:
   resolved "https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.1.0.tgz#443f6a20ced6481a2bda4fa8532a6e55d789a2cb"
   integrity sha512-97DXOFbQJhk71ne5/Mt6cOu6yxsSfM0QGQyl0L25Gca4yGWEGJaig7l7gbCX623VqTBNGLRLaVUCnNkcedlRSQ==
 
-postcss@8.3.6:
-  version "8.3.6"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.3.6.tgz#2730dd76a97969f37f53b9a6096197be311cc4ea"
-  integrity sha512-wG1cc/JhRgdqB6WHEuyLTedf3KIRuD0hG6ldkFEZNCjRxiC+3i6kkWUUbiJQayP28iwG35cEmAbe98585BYV0A==
+postcss@8.3.7:
+  version "8.3.7"
+  resolved "https://registry.npmjs.org/postcss/-/postcss-8.3.7.tgz#ec88563588c8da8e58e7226f7633b51ae221eeda"
+  integrity sha512-9SaY7nnyQ63/WittqZYAvkkYPyKxchMKH71UDzeTmWuLSvxTRpeEeABZAzlCi55cuGcoFyoV/amX2BdsafQidQ==
   dependencies:
-    colorette "^1.2.2"
-    nanoid "^3.1.23"
+    nanocolors "^0.1.5"
+    nanoid "^3.1.25"
     source-map-js "^0.6.2"
 
 postcss@^8.1.6, postcss@^8.2.1:
@@ -5869,12 +5879,10 @@ ts-node@10.2.1:
     make-error "^1.1.1"
     yn "3.1.1"
 
-ts-paths-resolve-plugin@5.3.12:
-  version "5.3.12"
-  resolved "https://registry.npmjs.org/ts-paths-resolve-plugin/-/ts-paths-resolve-plugin-5.3.12.tgz#6a50ddeb6b4fd2add093e4c7dadf35b1de35db75"
-  integrity sha512-FRn4S6LgzurwyjehB8DsiiH59cjpRlxN2RqKC9xhQi3/M7i1lzFyW2aF5sy6FpWDcbKlPtDsY9N0rrylL7KA4Q==
-  dependencies:
-    typescript-paths "1.1.0"
+ts-paths-resolve-plugin@5.3.15:
+  version "5.3.15"
+  resolved "https://registry.npmjs.org/ts-paths-resolve-plugin/-/ts-paths-resolve-plugin-5.3.15.tgz#2f24cbf65b528d0f1d524714dea728a058552bbb"
+  integrity sha512-N2367sY4DDkwn7u70aqBWHj7dIWkxdZ0Pc4e3+U74gqLLU6wuNfGo0oTVeTo2yPfugy9ix+Gmi2VCCFeFVA+fQ==
 
 tslib@^1.8.1, tslib@^1.9.0:
   version "1.14.1"
@@ -5947,11 +5955,6 @@ typedarray-to-buffer@^3.1.5:
   integrity sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==
   dependencies:
     is-typedarray "^1.0.0"
-
-typescript-paths@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/typescript-paths/-/typescript-paths-1.1.0.tgz#249389da6121202a6cc0a0930e356423c6d2df1d"
-  integrity sha512-QM5Qgg4gvv0Lw0q9jfYCGuE4cw9gkJDIheScG6UT0MkuZotWKK6A5YzoRDKCTDcT9R77KctTMKkBskwF88NzhQ==
 
 typescript@4.4.3:
   version "4.4.3"
@@ -6037,10 +6040,10 @@ v8-to-istanbul@^8.0.0:
     convert-source-map "^1.6.0"
     source-map "^0.7.3"
 
-vsce@1.99.0:
-  version "1.99.0"
-  resolved "https://registry.npmjs.org/vsce/-/vsce-1.99.0.tgz#ae27e32cb16a4eaa38adf431003f75c7ef0fefdc"
-  integrity sha512-fyzOLcmcgBmA+CYg0NyYU3JMmcOBcf94ZzZZYi83mIoXBRU391mYByoJEPnkl8xZGa3/OW5lH438/JOThlYPNA==
+vsce@1.100.0:
+  version "1.100.0"
+  resolved "https://registry.npmjs.org/vsce/-/vsce-1.100.0.tgz#82818b69fbfc8697e087b6bc7c5084306cdee7ea"
+  integrity sha512-sY1NVSZkesioir/1w04igdSPKKHb4QAn7AngOQIKvNTvtFUFuEE/KrcURcld9Gai9W5167zaeifW5rWUsX3rLg==
   dependencies:
     azure-devops-node-api "^11.0.1"
     chalk "^2.4.2"

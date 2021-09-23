@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.9.5
+
+- Change configuration value type
+- Fix darkMode `"class"`
+
 ## 0.9.4
 
 - Fix arbitrary value: ambiguous value type
