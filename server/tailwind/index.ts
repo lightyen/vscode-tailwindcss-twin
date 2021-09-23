@@ -10,7 +10,7 @@ function preprocessConfig(config: Tailwind.ConfigJS): Tailwind.ConfigJS {
 	cfg.purge = { enabled: false, content: [] }
 	cfg.mode = "aot"
 	cfg.important = false
-	cfg.darkMode = "media"
+	if (cfg.darkMode !== "media" && cfg.darkMode !== "class") cfg.darkMode = "media"
 	if (typeof cfg?.prefix !== "string") {
 		cfg.prefix = ""
 	}
