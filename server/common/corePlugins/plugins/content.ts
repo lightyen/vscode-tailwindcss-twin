@@ -7,19 +7,18 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	return [hasDefault, values]
 }
 
-export const content: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "content"
-		if (!this.context.resolved.corePlugins.some(c => c === "content")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.content)
+export const content: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "content")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.content)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "content"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^content(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -27,7 +26,7 @@ export const content: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
@@ -35,6 +34,7 @@ export const content: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+content.canArbitraryValue = true

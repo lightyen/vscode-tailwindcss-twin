@@ -5,12 +5,12 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import parseThemeValue from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
-import { Tailwind } from "~/tailwind"
-import type { Cache, ServiceOptions } from "."
+import type { TailwindLoader } from "~/tailwind"
+import type { Cache, ServiceOptions } from "./service"
 
 export async function provideColorDecorations(
 	document: TextDocument,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 	cache: Cache,
 ) {
@@ -117,7 +117,7 @@ export async function provideColorDecorations(
 	return colors
 }
 
-function getThemeDecoration(text: string, state: Tailwind): string | undefined {
+function getThemeDecoration(text: string, state: TailwindLoader): string | undefined {
 	const result = parseThemeValue(text)
 	if (result.errors.length > 0) {
 		return undefined

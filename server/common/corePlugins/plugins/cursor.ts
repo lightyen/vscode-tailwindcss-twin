@@ -1,18 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const cursor: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "cursor"
-		if (!this.context.resolved.corePlugins.some(c => c === "cursor")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.cursor)
+export const cursor: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "cursor")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.cursor)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "cursor"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^cursor-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -24,6 +24,7 @@ export const cursor: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+cursor.canArbitraryValue = true

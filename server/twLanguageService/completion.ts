@@ -7,11 +7,11 @@ import { canMatch, PatternKind } from "~/common/ast"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
 import * as nodes from "~/common/twin-parser/twNodes"
-import type { Tailwind } from "~/tailwind"
+import type { TailwindLoader } from "~/tailwind"
 import type { ClassNameItem } from "~/tailwind/twin"
-import type { ServiceOptions } from "~/twLanguageService"
 import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
 import { cssDataManager } from "./cssData"
+import type { ServiceOptions } from "./service"
 
 export interface InnerData {
 	type: "screen" | "utilities" | "components" | "color" | "variant" | "theme" | "cssPropertyName" | "cssPropertyValue"
@@ -55,7 +55,7 @@ function doInsert(
 export default function completion(
 	document: TextDocument,
 	position: lsp.Position,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionList | undefined {
 	try {
@@ -95,7 +95,7 @@ function twinCompletion(
 	index: number,
 	match: parser.Token,
 	kind: PatternKind,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionList {
 	const [offset, , text] = match
@@ -118,7 +118,7 @@ function variantsCompletion(
 	offset: number,
 	kind: PatternKind,
 	suggestion: ReturnType<typeof parser.suggest>,
-	state: Tailwind,
+	state: TailwindLoader,
 	{ preferVariantWithParentheses }: ServiceOptions,
 ) {
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
@@ -228,7 +228,7 @@ function utilitiesCompletion(
 	offset: number,
 	kind: PatternKind,
 	suggestion: ReturnType<typeof parser.suggest>,
-	state: Tailwind,
+	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
@@ -308,7 +308,7 @@ function shortcssCompletion(
 	offset: number,
 	kind: PatternKind,
 	suggestion: ReturnType<typeof parser.suggest>,
-	state: Tailwind,
+	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
@@ -492,7 +492,7 @@ function arbitraryValueCompletion(
 	offset: number,
 	kind: PatternKind,
 	suggestion: ReturnType<typeof parser.suggest>,
-	state: Tailwind,
+	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
 	const cssValueItems: lsp.CompletionItem[] = []
@@ -533,7 +533,7 @@ function twinThemeCompletion(
 	document: TextDocument,
 	index: number,
 	token: parser.Token,
-	state: Tailwind,
+	state: TailwindLoader,
 ): lsp.CompletionList {
 	const [offset, , text] = token
 	const position = index - offset
@@ -650,7 +650,7 @@ function twinScreenCompletion(
 	document: TextDocument,
 	index: number,
 	token: parser.Token,
-	state: Tailwind,
+	state: TailwindLoader,
 ): lsp.CompletionList {
 	const value = state.getTheme(["screens"])
 	if (typeof value !== "object") {
@@ -749,7 +749,7 @@ function createCompletionItem({
 	rules: ClassNameItem
 	variants: string[]
 	kind: PatternKind
-	state: Tailwind
+	state: TailwindLoader
 }): lsp.CompletionItem {
 	const item: lsp.CompletionItem = {
 		label,

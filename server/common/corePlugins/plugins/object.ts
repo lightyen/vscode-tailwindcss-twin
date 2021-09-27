@@ -1,16 +1,17 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const objectFit: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "objectFit"
-		if (!this.context.resolved.corePlugins.some(c => c === "objectFit")) {
-			throw ErrorNotEnable
-		}
+export const objectFit: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "objectFit")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "objectFit"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "object-contain" ||
 			value === "object-cover" ||
@@ -20,20 +21,20 @@ export const objectFit: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+objectFit.canArbitraryValue = false
 
-export const objectPosition: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "objectPosition"
-		if (!this.context.resolved.corePlugins.some(c => c === "objectPosition")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.objectPosition)
+export const objectPosition: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "objectPosition")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.objectPosition)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "objectPosition"
+		},
 	}
 
-	isMatch(value: string) {
+	function isMatch(value: string) {
 		const match = /^object-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -45,6 +46,7 @@ export const objectPosition: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+objectPosition.canArbitraryValue = true

@@ -1,17 +1,17 @@
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const fontFamily: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "fontFamily"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontFamily")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.fontFamily)
+export const fontFamily: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontFamily")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.fontFamily)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontFamily"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^font-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -19,22 +19,23 @@ export const fontFamily: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+fontFamily.canArbitraryValue = false
 
-export const fontWeight: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "fontWeight"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontWeight")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.fontWeight)
+export const fontWeight: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontWeight")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.fontWeight)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontWeight"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^font-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -42,34 +43,38 @@ export const fontWeight: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+fontWeight.canArbitraryValue = false
 
-export const fontStyle: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "fontStyle"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontStyle")) {
-			throw ErrorNotEnable
-		}
+export const fontStyle: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontStyle")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontStyle"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "italic" || value === "not-italic"
 	}
 }
+fontStyle.canArbitraryValue = false
 
-export const fontVariantNumeric: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "fontVariantNumeric"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontVariantNumeric")) {
-			throw ErrorNotEnable
-		}
+export const fontVariantNumeric: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontVariantNumeric")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontVariantNumeric"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "normal-nums" ||
 			value === "ordinal" ||
@@ -83,17 +88,20 @@ export const fontVariantNumeric: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+fontVariantNumeric.canArbitraryValue = false
 
-export const fontSmoothing: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "fontSmoothing"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontSmoothing")) {
-			throw ErrorNotEnable
-		}
+export const fontSmoothing: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontSmoothing")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontSmoothing"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "antialiased" || value === "subpixel-antialiased"
 	}
 }
+fontSmoothing.canArbitraryValue = false

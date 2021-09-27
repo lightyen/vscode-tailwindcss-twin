@@ -1,46 +1,50 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const filter: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "filter"
-		if (!this.context.resolved.corePlugins.some(c => c === "filter")) {
-			throw ErrorNotEnable
-		}
+export const filter: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "filter")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "filter"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "filter" || value === "filter-none"
 	}
 }
+filter.canArbitraryValue = false
 
-export const backdropFilter: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backdropFilter"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropFilter")) {
-			throw ErrorNotEnable
-		}
+export const backdropFilter: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropFilter")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropFilter"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "backdrop-filter" || value === "backdrop-filter-none"
 	}
 }
+backdropFilter.canArbitraryValue = false
 
-export const brightness: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "brightness"
-		if (!this.context.resolved.corePlugins.some(c => c === "brightness")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.brightness)
+export const brightness: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "brightness")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.brightness)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "brightness"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^brightness-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -52,22 +56,23 @@ export const brightness: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+brightness.canArbitraryValue = true
 
-export const backdropBrightness: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backdropBrightness"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropBrightness")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backdropBrightness)
+export const backdropBrightness: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropBrightness")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backdropBrightness)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropBrightness"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-brightness-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -79,22 +84,23 @@ export const backdropBrightness: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backdropBrightness.canArbitraryValue = true
 
-export const contrast: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "contrast"
-		if (!this.context.resolved.corePlugins.some(c => c === "contrast")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.contrast)
+export const contrast: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "contrast")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.contrast)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "contrast"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^contrast-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -106,22 +112,23 @@ export const contrast: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+contrast.canArbitraryValue = true
 
-export const backdropContrast: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backdropContrast"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropContrast")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backdropContrast)
+export const backdropContrast: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropContrast")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backdropContrast)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropContrast"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-contrast-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -133,22 +140,23 @@ export const backdropContrast: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backdropContrast.canArbitraryValue = true
 
-export const hueRotate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "hueRotate"
-		if (!this.context.resolved.corePlugins.some(c => c === "hueRotate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.hueRotate)
+export const hueRotate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "hueRotate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.hueRotate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "hueRotate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^-?hue-rotate-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -165,22 +173,23 @@ export const hueRotate: PluginConstructor = class implements Plugin {
 			val = "-" + val
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+hueRotate.canArbitraryValue = true
 
-export const backdropHueRotate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backdropHueRotate"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropHueRotate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backdropHueRotate)
+export const backdropHueRotate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropHueRotate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backdropHueRotate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropHueRotate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^-?backdrop-hue-rotate-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -197,22 +206,23 @@ export const backdropHueRotate: PluginConstructor = class implements Plugin {
 			val = "-" + val
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backdropHueRotate.canArbitraryValue = true
 
-export const saturate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "saturate"
-		if (!this.context.resolved.corePlugins.some(c => c === "saturate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.saturate)
+export const saturate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "saturate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.saturate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "saturate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^saturate-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -224,22 +234,23 @@ export const saturate: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+saturate.canArbitraryValue = true
 
-export const backdropSaturate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backdropSaturate"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropSaturate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backdropSaturate)
+export const backdropSaturate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropSaturate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backdropSaturate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropSaturate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-saturate-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -251,9 +262,10 @@ export const backdropSaturate: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backdropSaturate.canArbitraryValue = true
 
 function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	const hasDefault = Object.prototype.hasOwnProperty.call(obj, "DEFAULT")
@@ -261,19 +273,18 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	return [hasDefault, values]
 }
 
-export const grayscale: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "grayscale"
-		if (!this.context.resolved.corePlugins.some(c => c === "grayscale")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.grayscale)
+export const grayscale: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "grayscale")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.grayscale)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "grayscale"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^grayscale(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -281,30 +292,30 @@ export const grayscale: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+grayscale.canArbitraryValue = true
 
-export const backdropGrayscale: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "backdropGrayscale"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropGrayscale")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.backdropGrayscale)
+export const backdropGrayscale: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropGrayscale")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.backdropGrayscale)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropGrayscale"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-grayscale(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -312,30 +323,30 @@ export const backdropGrayscale: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+backdropGrayscale.canArbitraryValue = true
 
-export const invert: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "invert"
-		if (!this.context.resolved.corePlugins.some(c => c === "invert")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.invert)
+export const invert: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "invert")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.invert)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "invert"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^invert(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -343,30 +354,30 @@ export const invert: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+invert.canArbitraryValue = true
 
-export const backdropInvert: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "backdropInvert"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropInvert")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.backdropInvert)
+export const backdropInvert: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropInvert")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.backdropInvert)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropInvert"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-invert(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -374,30 +385,30 @@ export const backdropInvert: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+backdropInvert.canArbitraryValue = true
 
-export const sepia: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "sepia"
-		if (!this.context.resolved.corePlugins.some(c => c === "sepia")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.sepia)
+export const sepia: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "sepia")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.sepia)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "sepia"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^sepia(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -405,30 +416,30 @@ export const sepia: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+sepia.canArbitraryValue = true
 
-export const backdropSepia: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	size: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "backdropSepia"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropSepia")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.size] = getDefault(this.context.resolved.theme.backdropSepia)
+export const backdropSepia: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropSepia")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.resolved.theme.backdropSepia)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropSepia"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-sepia(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -436,13 +447,14 @@ export const backdropSepia: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.size.some(c => c === val)
+		return size.some(c => c === val)
 	}
 }
+backdropSepia.canArbitraryValue = true

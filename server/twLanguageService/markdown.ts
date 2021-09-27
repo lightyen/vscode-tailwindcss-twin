@@ -1,7 +1,7 @@
 import { escape } from "~/common/escape"
-import { Tailwind } from "~/tailwind"
+import type { TailwindLoader } from "~/tailwind"
 import type { RuleItem, Twin } from "~/tailwind/twin"
-import { ServiceOptions } from "."
+import { ServiceOptions } from "./service"
 
 function toPixelUnit(value: string, rootFontSize: number) {
 	if (rootFontSize <= 0) {
@@ -21,9 +21,7 @@ function toPixelUnit(value: string, rootFontSize: number) {
 	return value.replace(reg, text + `/** ${(rootFontSize * val).toFixed(0)}px */`)
 }
 
-export function renderVariant({ key, state }: { key: string; state: Tailwind }): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	// const key = selection.token!.token.text
+export function renderVariant({ key, state }: { key: string; state: TailwindLoader }): string | undefined {
 	const data = state.twin.variants.get(key)
 	const newline = "\n"
 
@@ -48,7 +46,7 @@ export function renderClassname({
 	options,
 }: {
 	key: string
-	state: Tailwind
+	state: TailwindLoader
 	important?: boolean
 	options: ServiceOptions
 }): string | undefined {

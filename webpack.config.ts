@@ -74,7 +74,7 @@ const configServer: Configuration = {
 	entry: path.join(serverWorkspaceFolder, "server.ts"),
 	output: {
 		path: path.resolve(__dirname, "dist"),
-		filename: "server/server.js",
+		filename: "server.js",
 		libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},

@@ -4,14 +4,13 @@ export interface Context {
 }
 
 export interface Plugin {
-	name: keyof Tailwind.CorePluginFeatures
 	isMatch(value: string): boolean
+	get name(): keyof Tailwind.CorePluginFeatures
 }
 
 export interface PluginConstructor {
 	canArbitraryValue: boolean
-	new (context: Context): Plugin
-	readonly prototype: Plugin
+	(context: Context): Plugin
 }
 
 export const ErrorNotEnable = new Error("not an enabled plugin")

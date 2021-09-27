@@ -2,18 +2,18 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import isLengthValue from "./common/isLengthValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const fontSize: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "fontSize"
-		if (!this.context.resolved.corePlugins.some(c => c === "fontSize")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.fontSize)
+export const fontSize: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "fontSize")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.fontSize)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "fontSize"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^text-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -26,22 +26,23 @@ export const fontSize: PluginConstructor = class implements Plugin {
 			return isLengthValue(val)
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+fontSize.canArbitraryValue = true
 
-export const lineHeight: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "lineHeight"
-		if (!this.context.resolved.corePlugins.some(c => c === "lineHeight")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.lineHeight)
+export const lineHeight: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "lineHeight")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.lineHeight)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "lineHeight"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^leading-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -53,22 +54,23 @@ export const lineHeight: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+lineHeight.canArbitraryValue = true
 
-export const strokeWidth: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "strokeWidth"
-		if (!this.context.resolved.corePlugins.some(c => c === "strokeWidth")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.strokeWidth)
+export const strokeWidth: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "strokeWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.strokeWidth)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "strokeWidth"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^stroke-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -81,22 +83,23 @@ export const strokeWidth: PluginConstructor = class implements Plugin {
 			return isLengthValue(val)
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+strokeWidth.canArbitraryValue = true
 
-export const ringOffsetWidth: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "ringOffsetWidth"
-		if (!this.context.resolved.corePlugins.some(c => c === "ringOffsetWidth")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.ringOffsetWidth)
+export const ringOffsetWidth: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "ringOffsetWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.ringOffsetWidth)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "ringOffsetWidth"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^ring-offset-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -109,9 +112,10 @@ export const ringOffsetWidth: PluginConstructor = class implements Plugin {
 			return isLengthValue(val)
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+ringOffsetWidth.canArbitraryValue = true
 
 function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	const hasDefault = Object.prototype.hasOwnProperty.call(obj, "DEFAULT")
@@ -119,19 +123,18 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	return [hasDefault, values]
 }
 
-export const borderRadius: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "borderRadius"
-		if (!this.context.resolved.corePlugins.some(c => c === "borderRadius")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.borderRadius)
+export const borderRadius: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "borderRadius")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.borderRadius)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "borderRadius"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^rounded(?:-tl\b|-tr\b|-br\b|-bl\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -139,28 +142,28 @@ export const borderRadius: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+borderRadius.canArbitraryValue = false
 
-export const boxShadow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "boxShadow"
-		if (!this.context.resolved.corePlugins.some(c => c === "boxShadow")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.boxShadow)
+export const boxShadow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "boxShadow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.boxShadow)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "boxShadow"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -171,28 +174,28 @@ export const boxShadow: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+boxShadow.canArbitraryValue = false
 
-export const dropShadow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "dropShadow"
-		if (!this.context.resolved.corePlugins.some(c => c === "dropShadow")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.dropShadow)
+export const dropShadow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "dropShadow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.dropShadow)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "dropShadow"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -203,28 +206,28 @@ export const dropShadow: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+dropShadow.canArbitraryValue = false
 
-export const blur: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "blur"
-		if (!this.context.resolved.corePlugins.some(c => c === "blur")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.blur)
+export const blur: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "blur")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.blur)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "blur"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -235,31 +238,31 @@ export const blur: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+blur.canArbitraryValue = true
 
-export const backdropBlur: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "backdropBlur"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropBlur")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.backdropBlur)
+export const backdropBlur: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropBlur")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.backdropBlur)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropBlur"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -270,31 +273,31 @@ export const backdropBlur: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backdropBlur.canArbitraryValue = true
 
-export const borderWidth: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "borderWidth"
-		if (!this.context.resolved.corePlugins.some(c => c === "borderWidth")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.borderWidth)
+export const borderWidth: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "borderWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.borderWidth)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "borderWidth"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -305,7 +308,7 @@ export const borderWidth: PluginConstructor = class implements Plugin {
 
 		let val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
@@ -313,24 +316,24 @@ export const borderWidth: PluginConstructor = class implements Plugin {
 			val = val.slice(1, -1).trim()
 			return isLengthValue(val)
 		}
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+borderWidth.canArbitraryValue = true
 
-export const divideWidth: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "divideWidth"
-		if (!this.context.resolved.corePlugins.some(c => c === "divideWidth")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.divideWidth)
+export const divideWidth: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "divideWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.divideWidth)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "divideWidth"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -341,31 +344,31 @@ export const divideWidth: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.values.some(c => c === val) || value === "divide-y-reverse" || value === "divide-x-reverse"
+		return values.some(c => c === val) || value === "divide-y-reverse" || value === "divide-x-reverse"
 	}
 }
+divideWidth.canArbitraryValue = true
 
-export const ringWidth: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "ringWidth"
-		if (!this.context.resolved.corePlugins.some(c => c === "ringWidth")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.ringWidth)
+export const ringWidth: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "ringWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.ringWidth)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "ringWidth"
+		},
 	}
-	isMatch(value: string) {
-		if (this.values == undefined) {
+
+	function isMatch(value: string) {
+		if (values == undefined) {
 			return false
 		}
 
@@ -376,7 +379,7 @@ export const ringWidth: PluginConstructor = class implements Plugin {
 
 		let val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
@@ -384,6 +387,7 @@ export const ringWidth: PluginConstructor = class implements Plugin {
 			val = val.slice(1, -1).trim()
 			return isLengthValue(val)
 		}
-		return this.values.some(c => c === val) || value === "ring-inset"
+		return values.some(c => c === val) || value === "ring-inset"
 	}
 }
+ringWidth.canArbitraryValue = true

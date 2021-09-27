@@ -146,14 +146,14 @@ width: "https://tailwindcss.com/docs/width"
 wordBreak: "https://tailwindcss.com/docs/word-break"
 zIndex: "https://tailwindcss.com/docs/z-index"
 
+# customs
+
+screens: "https://tailwindcss.com/docs/responsive-design"
+colors: "https://tailwindcss.com/docs/customizing-colors"
+
 # variants
 
 dark: "https://tailwindcss.com/docs/dark-mode"
-sm: "https://tailwindcss.com/docs/responsive-design"
-md: "https://tailwindcss.com/docs/responsive-design"
-lg: "https://tailwindcss.com/docs/responsive-design"
-xl: "https://tailwindcss.com/docs/responsive-design"
-2xl: "https://tailwindcss.com/docs/responsive-design"
 
 motion-safe: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-safe"
 motion-reduce: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-reduce"

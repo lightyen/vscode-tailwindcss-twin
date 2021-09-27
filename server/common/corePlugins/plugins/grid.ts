@@ -1,18 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const gridTemplateColumns: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridTemplateColumns"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridTemplateColumns")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridTemplateColumns)
+export const gridTemplateColumns: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridTemplateColumns")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridTemplateColumns)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridTemplateColumns"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^grid-cols-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -24,22 +24,23 @@ export const gridTemplateColumns: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridTemplateColumns.canArbitraryValue = true
 
-export const gridTemplateRows: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridTemplateRows"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridTemplateRows")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridTemplateRows)
+export const gridTemplateRows: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridTemplateRows")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridTemplateRows)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridTemplateRows"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^grid-rows-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -51,20 +52,22 @@ export const gridTemplateRows: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridTemplateRows.canArbitraryValue = true
 
-export const gridAutoFlow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "gridAutoFlow"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridAutoFlow")) {
-			throw ErrorNotEnable
-		}
+export const gridAutoFlow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridAutoFlow")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridAutoFlow"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "grid-flow-row" ||
 			value === "grid-flow-col" ||
@@ -73,19 +76,20 @@ export const gridAutoFlow: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+gridAutoFlow.canArbitraryValue = false
 
-export const gridAutoColumns: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridAutoColumns"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridAutoColumns")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridAutoColumns)
+export const gridAutoColumns: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridAutoColumns")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridAutoColumns)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridAutoColumns"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^auto-cols-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -97,22 +101,23 @@ export const gridAutoColumns: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridAutoColumns.canArbitraryValue = true
 
-export const gridAutoRows: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridAutoRows"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridAutoRows")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridAutoRows)
+export const gridAutoRows: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridAutoRows")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridAutoRows)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridAutoRows"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^auto-rows-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -124,22 +129,23 @@ export const gridAutoRows: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridAutoRows.canArbitraryValue = true
 
-export const gridColumn: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridColumn"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridColumn")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridColumn)
+export const gridColumn: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridColumn")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridColumn)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridColumn"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^col-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -151,22 +157,23 @@ export const gridColumn: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridColumn.canArbitraryValue = true
 
-export const gridColumnStart: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridColumnStart"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridColumnStart")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridColumnStart)
+export const gridColumnStart: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridColumnStart")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridColumnStart)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridColumnStart"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^col-start-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -178,22 +185,23 @@ export const gridColumnStart: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridColumnStart.canArbitraryValue = true
 
-export const gridColumnEnd: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridColumnEnd"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridColumnEnd")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridColumnEnd)
+export const gridColumnEnd: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridColumnEnd")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridColumnEnd)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridColumnEnd"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^col-end-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -205,22 +213,23 @@ export const gridColumnEnd: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridColumnEnd.canArbitraryValue = true
 
-export const gridRow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridRow"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridRow")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridRow)
+export const gridRow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridRow")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridRow)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridRow"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^row-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -232,22 +241,23 @@ export const gridRow: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridRow.canArbitraryValue = true
 
-export const gridRowStart: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridRowStart"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridRowStart")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridRowStart)
+export const gridRowStart: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridRowStart")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridRowStart)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridRowStart"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^row-start-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -259,22 +269,23 @@ export const gridRowStart: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridRowStart.canArbitraryValue = true
 
-export const gridRowEnd: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "gridRowEnd"
-		if (!this.context.resolved.corePlugins.some(c => c === "gridRowEnd")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.gridRowEnd)
+export const gridRowEnd: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "gridRowEnd")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.gridRowEnd)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "gridRowEnd"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^row-end-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -286,6 +297,7 @@ export const gridRowEnd: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+gridRowEnd.canArbitraryValue = true

@@ -127,16 +127,6 @@ export function getCompletionsFromRestrictions(
 	return items
 }
 
-// class Set {
-// 	private entries: { [key: string]: boolean } = {}
-// 	public add(entry: string): void {
-// 		this.entries[entry] = true
-// 	}
-// 	public getEntries(): string[] {
-// 		return Object.keys(this.entries)
-// 	}
-// }
-
 function getColorProposals(range: lsp.Range): lsp.CompletionItem[] {
 	const items: lsp.CompletionItem[] = []
 	for (const color in languageFacts.colors) {
@@ -155,15 +145,7 @@ function getColorProposals(range: lsp.Range): lsp.CompletionItem[] {
 			kind: lsp.CompletionItemKind.Value,
 		})
 	}
-	// const colorValues = new Set()
-	// this.styleSheet.acceptVisitor(new ColorValueCollector(colorValues, this.offset))
-	// for (const color of colorValues.getEntries()) {
-	// 	items.push({
-	// 		label: color,
-	// 		textEdit: lsp.TextEdit.replace(range, color),
-	// 		kind: lsp.CompletionItemKind.Color,
-	// 	})
-	// }
+
 	for (const p of languageFacts.colorFunctions) {
 		let tabStop = 1
 		const replaceFunction = (_match: string, p1: string) => "${" + tabStop++ + ":" + p1 + "}"

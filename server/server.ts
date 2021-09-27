@@ -1,388 +1,442 @@
 import { deepStrictEqual } from "assert"
+import Module from "module"
 import path from "path"
 import { DIAGNOSTICS_ID, NAME, SECTION_ID, Settings } from "shared"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver/node"
 import { FileChangeType } from "vscode-languageserver/node"
-import { URI } from "vscode-uri"
+import { URI, Utils } from "vscode-uri"
 import { requireModule } from "~/common/module"
-import { LanguageService } from "./LanguageService"
+import packageInfo from "../package.json"
 import { intl } from "./locale"
-import { TailwindLanguageService } from "./twLanguageService"
+import { ExtensionMode } from "./tailwind"
+import { createTailwindLanguageService } from "./twLanguageService/service"
 
 interface InitializationOptions extends Settings {
+	extensionMode: ExtensionMode
 	/** uri */
 	workspaceFolder: string
 	/** uri */
 	configs: string[]
+	/** uri */
+	extensionFolder: string
 }
 
-function matchService(uri: string, services: Map<string, LanguageService>) {
+function matchService(uri: string, services: Map<string, ReturnType<typeof createTailwindLanguageService>>) {
 	const arr = Array.from(services)
-		.filter(([cfg]) => {
-			const rel = path.relative(path.dirname(cfg), uri)
+		.filter(([workingDir]) => {
+			const rel = path.relative(workingDir, uri)
 			return !rel.startsWith("..")
 		})
 		.sort((a, b) => b[0].localeCompare(a[0]))
 	return arr[0]?.[1]
 }
 
-class Server {
-	services: Map<string, LanguageService>
-	connection: lsp.Connection
-	documents: lsp.TextDocuments<TextDocument>
-	hasConfigurationCapability = false
-	hasDiagnosticRelatedInformationCapability = false
-	/** uri */
-	configs: string[] = []
-	defaultConfigUri!: string
-	/** uri */
-	workspaceFolder!: string
-	settings!: Settings
+const priority = [".ts", ".js", ".cjs"]
 
-	constructor() {
-		this.services = new Map()
-		const connection = lsp.createConnection(lsp.ProposedFeatures.all)
-		this.connection = connection
-		connection.listen()
-		const documents = new lsp.TextDocuments(TextDocument)
-		this.documents = documents
-		documents.listen(this.connection)
+function connectLsp() {
+	const connection: lsp.Connection = lsp.createConnection(lsp.ProposedFeatures.all)
+	const documents = new lsp.TextDocuments(TextDocument)
 
-		connection.onInitialize(async (params, _cancel, progress) => {
-			const { capabilities } = params
-			this.hasConfigurationCapability = capabilities.workspace?.configuration ?? false
-			this.hasDiagnosticRelatedInformationCapability =
-				capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
+	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
+	const configFolders: Map<string, URI[]> = new Map()
+	let hasConfigurationCapability = false
+	let hasDiagnosticRelatedInformationCapability = false
+	let workspaceFolder: URI
+	let extensionMode: ExtensionMode
+	let defaultServiceRunning = false
+	let settings: Settings
+	let extensionUri: URI
 
-			const { configs, workspaceFolder, ...settings } = params.initializationOptions as InitializationOptions
-			this.configs = configs
-			this.workspaceFolder = workspaceFolder
-			this.defaultConfigUri = URI.parse(path.join(workspaceFolder, "tailwind.config.js")).toString()
-			this.settings = settings
-			// backward compatibility
-			if (typeof this.settings.rootFontSize === "boolean") {
-				this.settings.rootFontSize = this.settings.rootFontSize ? 16 : 0
-			}
-			if (typeof this.settings.colorDecorators === "boolean") {
-				this.settings.colorDecorators = this.settings.colorDecorators ? "on" : "off"
-			}
+	connection.listen()
+	documents.listen(connection)
 
-			progress.begin(`Initializing ${NAME}`)
+	const prioritySorter = (a: URI, b: URI) => {
+		if (a.toString().length === b.toString().length) {
+			return priority.indexOf(Utils.extname(a)) - priority.indexOf(Utils.extname(b))
+		}
+		return b.toString().length - a.toString().length
+	}
 
-			console.log(
-				`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-				requireModule("typescript").version,
-			)
-			console.log(
-				`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-				requireModule("tailwindcss/package.json").version,
-			)
-			console.log(
-				`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-				requireModule("postcss/package.json").version,
-			)
+	connection.onInitialize(async (params, _cancel, progress) => {
+		const { capabilities } = params
+		hasConfigurationCapability = capabilities.workspace?.configuration ?? false
+		hasDiagnosticRelatedInformationCapability =
+			capabilities.textDocument?.publishDiagnostics?.relatedInformation ?? false
+		const options = params.initializationOptions as InitializationOptions
+		extensionUri = URI.parse(options.extensionFolder)
+		workspaceFolder = URI.parse(options.workspaceFolder)
+		extensionMode = options.extensionMode
+		const configs = options.configs.map(c => URI.parse(c)).sort(prioritySorter)
 
-			for (const configUri of configs) {
-				this.addService(configUri, workspaceFolder, settings)
-			}
-			if (configs.length === 0) {
-				console.log("add default service...")
-				this.addService(this.defaultConfigUri, workspaceFolder, settings)
-			}
+		settings = options
+		delete settings["workspaceFolder"]
+		delete settings["configs"]
 
-			documents.all().forEach(document => {
-				matchService(document.uri, this.services)?.init()
-			})
+		// backward compatibility
+		if (typeof settings.rootFontSize === "boolean") {
+			settings.rootFontSize = settings.rootFontSize ? 16 : 0
+		}
+		if (typeof settings.colorDecorators === "boolean") {
+			settings.colorDecorators = settings.colorDecorators ? "on" : "off"
+		}
 
-			this.bind()
+		progress.begin(`Initializing ${NAME}`)
 
-			progress.done()
+		function getLibVersion(lib: string) {
+			return packageInfo.dependencies[lib]
+		}
 
-			return {
-				capabilities: {
-					workspace: {
-						workspaceFolders: {
-							supported: true,
-						},
+		console.info(
+			`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+			requireModule("typescript", { paths: Module["_nodeModulePaths"](extensionUri.fsPath) }).version,
+		)
+		console.info(
+			`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+			getLibVersion("tailwindcss"),
+		)
+		console.info(`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("postcss"))
+
+		for (const configPath of configs) {
+			addService(configPath, settings)
+		}
+
+		addDefaultService(settings)
+
+		documents.all().forEach(document => {
+			matchService(document.uri, services)?.start()
+		})
+
+		bind()
+
+		progress.done()
+
+		return {
+			capabilities: {
+				workspace: {
+					workspaceFolders: {
+						supported: true,
 					},
-					textDocumentSync: {
-						openClose: true,
-						change: lsp.TextDocumentSyncKind.Incremental, // trigger validate
-					},
-					colorProvider: true,
-					completionProvider: {
-						resolveProvider: true,
-						triggerCharacters: [
-							'"',
-							"'",
-							"`",
-							" ",
-							"(",
-							":",
-							"-",
-							"/",
-							".",
-							"0",
-							"1",
-							"2",
-							"3",
-							"4",
-							"5",
-							"6",
-							"7",
-							"8",
-							"9",
-							"[",
-						],
-					},
-					hoverProvider: true,
-					codeActionProvider: true,
 				},
+				textDocumentSync: {
+					openClose: true,
+					change: lsp.TextDocumentSyncKind.Incremental, // trigger validate
+				},
+				colorProvider: true,
+				completionProvider: {
+					resolveProvider: true,
+					triggerCharacters: [
+						'"',
+						"'",
+						"`",
+						" ",
+						"(",
+						":",
+						"-",
+						"/",
+						".",
+						"0",
+						"1",
+						"2",
+						"3",
+						"4",
+						"5",
+						"6",
+						"7",
+						"8",
+						"9",
+						"[",
+					],
+				},
+				hoverProvider: true,
+				codeActionProvider: true,
+			},
+		}
+	})
+
+	connection.onInitialized(async e => {
+		if (hasConfigurationCapability) {
+			connection.client.register(lsp.DidChangeConfigurationNotification.type)
+		}
+	})
+
+	// when tailwind.config changed
+	connection.onDidChangeWatchedFiles(async ({ changes }) => {
+		for (const change of changes) {
+			switch (change.type) {
+				case FileChangeType.Created:
+					addService(URI.parse(change.uri), settings, true)
+					break
+				case FileChangeType.Deleted:
+					removeService(URI.parse(change.uri), settings, true)
+					break
+				case FileChangeType.Changed:
+					await reloadService(URI.parse(change.uri))
+					break
 			}
-		})
+		}
+		documents.all().forEach(document => matchService(document.uri, services)?.validate(document))
+	})
 
-		connection.onInitialized(async e => {
-			if (this.hasConfigurationCapability) {
-				connection.client.register(lsp.DidChangeConfigurationNotification.type)
+	connection.onDidChangeConfiguration(async params => {
+		console.info(`[setting changes were detected]`)
+		if (hasConfigurationCapability) {
+			const extSettings: Settings = await connection.workspace.getConfiguration({ section: SECTION_ID })
+
+			let needToUpdate = false
+			let needToRenderColors = false
+			let needToDiagnostics = false
+
+			if (settings.enabled !== extSettings.enabled) {
+				settings.enabled = extSettings.enabled
+				needToUpdate = true
+				console.info(`enabled = ${settings.enabled}`)
 			}
-		})
 
-		// when changed tailwind.config.js
-		connection.onDidChangeWatchedFiles(async ({ changes }) => {
-			console.log(`[changes were detected]`)
-			for (const change of changes) {
-				switch (change.type) {
-					case FileChangeType.Created:
-						this.addService(change.uri, this.workspaceFolder, this.settings)
-						break
-					case FileChangeType.Deleted:
-						this.removeService(change.uri)
-						break
-					case FileChangeType.Changed:
-						await this.reloadService(change.uri)
-						break
-				}
+			if (settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
+				settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
+				needToUpdate = true
+				console.info(`preferVariantWithParentheses = ${settings.preferVariantWithParentheses}`)
 			}
-			this.configs = Array.from(this.services).map(([cfg]) => cfg)
-			documents.all().forEach(document => matchService(document.uri, this.services)?.validate(document))
-		})
 
-		connection.onDidChangeConfiguration(async params => {
-			console.log(`[setting changes were detected]`)
-			if (this.hasConfigurationCapability) {
-				const extSettings: Settings = await connection.workspace.getConfiguration({ section: SECTION_ID })
+			if (settings.references !== extSettings.references) {
+				settings.references = extSettings.references
+				needToUpdate = true
+				console.info(`references = ${settings.references}`)
+			}
 
-				let needToUpdate = false
-				let needToReload = false
-				let needToRenderColors = false
-				let needToDiagnostics = false
+			if (settings.jsxPropImportChecking !== extSettings.jsxPropImportChecking) {
+				settings.jsxPropImportChecking = extSettings.jsxPropImportChecking
+				needToUpdate = true
+				console.info(`jsxPropImportChecking = ${settings.jsxPropImportChecking}`)
+			}
 
-				if (this.settings.enabled !== extSettings.enabled) {
-					this.settings.enabled = extSettings.enabled
-					needToUpdate = true
-					console.log(`enabled = ${this.settings.enabled}`)
-				}
+			// backward compatibility
+			if (typeof extSettings.rootFontSize === "boolean") {
+				extSettings.rootFontSize = extSettings.rootFontSize ? 16 : 0
+			}
+			if (settings.rootFontSize !== extSettings.rootFontSize) {
+				settings.rootFontSize = extSettings.rootFontSize
+				needToUpdate = true
+				console.info(`rootFontSize = ${settings.rootFontSize}`)
+			}
 
-				if (this.settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
-					this.settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
-					needToUpdate = true
-					console.log(`preferVariantWithParentheses = ${this.settings.preferVariantWithParentheses}`)
-				}
+			// backward compatibility
+			if (typeof extSettings.colorDecorators === "boolean") {
+				extSettings.colorDecorators = extSettings.colorDecorators ? "on" : "off"
+			}
+			if (extSettings.colorDecorators === "inherit") {
+				const editor = await connection.workspace.getConfiguration({ section: "editor" })
+				extSettings.colorDecorators = editor.colorDecorators ? "on" : "off"
+			}
+			if (settings.colorDecorators !== extSettings.colorDecorators) {
+				settings.colorDecorators = extSettings.colorDecorators
+				needToUpdate = true
+				needToRenderColors = true
+				console.info(`codeDecorators = ${settings.colorDecorators}`)
+			}
 
-				if (this.settings.references !== extSettings.references) {
-					this.settings.references = extSettings.references
-					needToUpdate = true
-					console.log(`references = ${this.settings.references}`)
-				}
+			// if (settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
+			// 	settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
+			// 	needToReload = true
+			// 	console.info(`fallbackDefaultConfig = ${settings.fallbackDefaultConfig}`)
+			// }
 
-				if (this.settings.jsxPropImportChecking !== extSettings.jsxPropImportChecking) {
-					this.settings.jsxPropImportChecking = extSettings.jsxPropImportChecking
-					needToUpdate = true
-					console.log(`jsxPropImportChecking = ${this.settings.jsxPropImportChecking}`)
-				}
+			try {
+				deepStrictEqual(settings.diagnostics, extSettings.diagnostics)
+			} catch {
+				settings.diagnostics = extSettings.diagnostics
+				needToUpdate = true
+				needToDiagnostics = true
+				console.info(`diagnostics = ${JSON.stringify(settings.diagnostics)}`)
+			}
 
-				// backward compatibility
-				if (typeof extSettings.rootFontSize === "boolean") {
-					extSettings.rootFontSize = extSettings.rootFontSize ? 16 : 0
-				}
-				if (this.settings.rootFontSize !== extSettings.rootFontSize) {
-					this.settings.rootFontSize = extSettings.rootFontSize
-					needToUpdate = true
-					console.log(`rootFontSize = ${this.settings.rootFontSize}`)
-				}
-
-				// backward compatibility
-				if (typeof extSettings.colorDecorators === "boolean") {
-					extSettings.colorDecorators = extSettings.colorDecorators ? "on" : "off"
-				}
-				if (extSettings.colorDecorators === "inherit") {
-					const editor = await connection.workspace.getConfiguration({ section: "editor" })
-					extSettings.colorDecorators = editor.colorDecorators ? "on" : "off"
-				}
-				if (this.settings.colorDecorators !== extSettings.colorDecorators) {
-					this.settings.colorDecorators = extSettings.colorDecorators
-					needToUpdate = true
-					needToRenderColors = true
-					console.log(`codeDecorators = ${this.settings.colorDecorators}`)
-				}
-
-				if (this.settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
-					this.settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
-					needToReload = true
-					console.log(`fallbackDefaultConfig = ${this.settings.fallbackDefaultConfig}`)
-				}
-
-				try {
-					deepStrictEqual(this.settings.diagnostics, extSettings.diagnostics)
-				} catch {
-					this.settings.diagnostics = extSettings.diagnostics
-					needToUpdate = true
-					needToDiagnostics = true
-					console.log(`diagnostics = ${JSON.stringify(this.settings.diagnostics)}`)
-				}
-
-				if (needToReload) {
-					for (const [, service] of this.services) {
-						service.reload(this.settings)
+			if (needToUpdate) {
+				for (const document of documents.all()) {
+					const service = matchService(document.uri, services)
+					if (service) {
+						service.updateSettings(settings)
 					}
-				} else if (needToUpdate) {
-					for (const document of documents.all()) {
-						const service = matchService(document.uri, this.services)
+				}
+			}
+
+			if (needToRenderColors) {
+				await Promise.all(documents.all().map(document => colorDecorations(document)))
+			}
+
+			if (needToDiagnostics) {
+				await Promise.all(
+					documents.all().map(async document => {
+						const service = matchService(document.uri, services)
 						if (service) {
-							service.updateSettings(this.settings)
+							service.updateSettings(settings)
+							await diagnostics(document)
 						}
-					}
-				}
-
-				if (needToRenderColors) {
-					await Promise.all(documents.all().map(document => this.colorDecorations(document)))
-				}
-
-				if (needToDiagnostics) {
-					await Promise.all(
-						documents.all().map(async document => {
-							const service = matchService(document.uri, this.services)
-							if (service) {
-								service.updateSettings(this.settings)
-								await this.diagnostics(document)
-							}
-						}),
-					)
-				}
-			}
-		})
-	}
-
-	private addService(configUri: string, workspaceFolder: string, settings: Settings) {
-		if (configUri === this.defaultConfigUri) {
-			const srv = this.services.get(configUri)
-			if (srv) {
-				console.log("remove default service...")
-				this.services.delete(configUri)
+					}),
+				)
 			}
 		}
-		if (!this.services.has(configUri)) {
-			try {
-				const configPath = URI.parse(configUri).fsPath
-				console.log("loading:", configPath)
-				const srv = new TailwindLanguageService(this.documents, {
-					...settings,
-					workspaceFolder: URI.parse(workspaceFolder).fsPath,
-					configPath,
-				})
-				this.services.set(configUri, srv)
-				if (srv.state) {
-					console.log(`config = ${srv.state.hasConfig}`)
-					console.log(`target = ${srv.state.distConfigPath}\n`)
-				}
-			} catch {}
-		}
-	}
+	})
 
-	private removeService(configUri: string) {
-		const srv = this.services.get(configUri)
-		if (srv) {
-			this.services.delete(configUri)
-			console.log("remove:", URI.parse(configUri).fsPath)
-		}
-		if (this.services.size === 0) {
-			console.log("add default service...")
-			try {
-				const configPath = URI.parse(this.defaultConfigUri).fsPath
-				const srv = new TailwindLanguageService(this.documents, {
-					...this.settings,
-					workspaceFolder: URI.parse(this.workspaceFolder).fsPath,
-					configPath,
-				})
-				this.services.set(configUri, srv)
-				if (srv.state) {
-					console.log(`config = ${srv.state.hasConfig}`)
-					console.log(`target = ${srv.state.distConfigPath}\n`)
-				}
-			} catch {}
-		}
-	}
+	return
 
-	private async reloadService(configUri: string) {
-		const srv = this.services.get(configUri)
-		console.log("reloading:", URI.parse(configUri).fsPath)
-		await srv?.reload()
-		if (srv) {
-			console.log(`config = ${srv.hasConfig}`)
-			console.log(`target = ${srv.targetConfig}\n`)
-		}
-	}
-
-	private async colorDecorations(document: TextDocument) {
-		if (!this.settings.colorDecorators) {
+	function addDefaultService(settings: Settings, startNow = false) {
+		if (!settings.fallbackDefaultConfig) {
 			return
 		}
-		const service = matchService(document.uri, this.services)
+		if (services.size > 0) {
+			return
+		}
+		if (defaultServiceRunning) {
+			console.info("Default service is ready.")
+			return
+		}
+
+		const srv = createTailwindLanguageService(documents, {
+			...settings,
+			extensionUri,
+			workspaceFolder,
+			extensionMode,
+		})
+		services.set(workspaceFolder.toString(), srv)
+		if (startNow) srv.start()
+		defaultServiceRunning = true
+	}
+
+	function addService(configPath: URI, settings: Settings, startNow = false) {
+		if (defaultServiceRunning) {
+			services.clear()
+			defaultServiceRunning = false
+		}
+
+		const folder = Utils.dirname(configPath).toString()
+		const set = configFolders.get(folder)
+		if (!set) {
+			configFolders.set(folder, [configPath])
+		} else {
+			configFolders.set(folder, [...set, configPath])
+		}
+
+		const key = Utils.dirname(configPath).toString()
+		const srv = services.get(key)
+
+		if (!srv) {
+			const srv = createTailwindLanguageService(documents, {
+				...settings,
+				configPath,
+				extensionUri,
+				workspaceFolder,
+				extensionMode,
+			})
+			services.set(key, srv)
+			if (startNow) srv.start()
+		} else {
+			const ext = Utils.extname(configPath)
+			const srvExt = Utils.extname(srv.configPath)
+			if (priority.indexOf(ext) < priority.indexOf(srvExt)) {
+				const s = createTailwindLanguageService(documents, {
+					...settings,
+					configPath,
+					extensionUri,
+					workspaceFolder,
+					extensionMode,
+				})
+				console.info("remove:", path.relative(workspaceFolder.path, srv.configPath.path))
+				services.delete(key)
+				services.set(key, s)
+				if (startNow) s.start()
+			} else {
+				console.info("abort:", path.relative(workspaceFolder.path, configPath.path))
+			}
+		}
+	}
+
+	function removeService(configPath: URI, settings: Settings, startNow = false) {
+		const folder = Utils.dirname(configPath).toString()
+		const srv = services.get(folder)
+		if (srv && srv.configPath.toString() === configPath.toString()) {
+			console.info("remove:", path.relative(workspaceFolder.path, srv.configPath.path))
+			services.delete(folder)
+			const set = configFolders.get(folder)
+			if (set) {
+				const index = set.findIndex(p => p.toString() === configPath.toString())
+				if (index >= 0) {
+					set.splice(index, 1)
+					configFolders.set(folder, set)
+				}
+				if (set.length > 0) {
+					const configPath = set.sort(prioritySorter)[0]
+					const srv = createTailwindLanguageService(documents, {
+						...settings,
+						configPath,
+						extensionUri,
+						workspaceFolder,
+						extensionMode,
+					})
+					services.set(folder, srv)
+					if (startNow) srv.start()
+				}
+			}
+		}
+
+		if (services.size === 0) {
+			addDefaultService(settings, true)
+		}
+	}
+
+	async function reloadService(configPath: URI) {
+		const key = Utils.dirname(configPath).toString()
+		const srv = services.get(key)
+		if (srv && srv.configPath.toString() === configPath.toString()) {
+			await srv.reload()
+		}
+	}
+
+	async function colorDecorations(document: TextDocument) {
+		if (!settings.colorDecorators) {
+			return
+		}
+		const service = matchService(document.uri, services)
 		if (service) {
-			this.connection.sendNotification("tailwindcss/documentColors", {
+			connection.sendNotification("tailwindcss/documentColors", {
 				uri: document.uri,
 				colors: await service.provideColorDecorations(document),
 			})
 		}
 	}
 
-	private async diagnostics(document: TextDocument) {
-		if (!this.hasDiagnosticRelatedInformationCapability) {
+	async function diagnostics(document: TextDocument) {
+		if (!hasDiagnosticRelatedInformationCapability) {
 			return
 		}
-		if (!this.settings.diagnostics.enabled) {
+		if (!settings.diagnostics.enabled) {
 			return
 		}
-		const service = matchService(document.uri, this.services)
+		const service = matchService(document.uri, services)
 		if (service) {
-			this.connection.sendDiagnostics({
+			connection.sendDiagnostics({
 				uri: document.uri,
 				diagnostics: await service.validate(document),
 			})
 		}
 	}
 
-	bind() {
-		const { documents, connection } = this
-
+	function bind() {
 		documents.onDidOpen(async params => {
-			const service = matchService(params.document.uri, this.services)
-			await service?.init()
-			this.diagnostics(params.document)
+			const service = matchService(params.document.uri, services)
+			await service?.start()
+			diagnostics(params.document)
 		})
 
 		documents.onDidChangeContent(async params => {
-			this.diagnostics(params.document)
+			diagnostics(params.document)
 		})
 
-		connection.onCompletion(params => matchService(params.textDocument.uri, this.services)?.onCompletion(params))
+		connection.onCompletion(params => matchService(params.textDocument.uri, services)?.onCompletion(params))
 
-		connection.onCompletionResolve(params =>
-			matchService(params.data.uri, this.services)?.onCompletionResolve(params),
-		)
+		connection.onCompletionResolve(params => matchService(params.data.uri, services)?.onCompletionResolve(params))
 
-		connection.onHover(params => matchService(params.textDocument.uri, this.services)?.onHover(params))
+		connection.onHover(params => matchService(params.textDocument.uri, services)?.onHover(params))
 
 		connection.onCodeAction(params => {
 			type Data = { text: string; newText: string }
@@ -418,18 +472,19 @@ class Server {
 			if (!document) {
 				return undefined
 			}
-			this.colorDecorations(document)
-			return matchService(params.textDocument.uri, this.services)?.onDocumentColor(params)
+			colorDecorations(document)
+			return matchService(params.textDocument.uri, services)?.onDocumentColor(params)
 		})
 
 		connection.onColorPresentation(params =>
-			matchService(params.textDocument.uri, this.services)?.onColorPresentation(params),
+			matchService(params.textDocument.uri, services)?.onColorPresentation(params),
 		)
 
-		connection.onRequest("tailwindcss/colors", async ({ uri }) => {
-			return matchService(uri, this.services)?.getColors()
+		connection.onRequest("tw/colors", async ({ uri }) => {
+			return matchService(uri, services)?.getColors()
 		})
 	}
 }
 
-new Server()
+process.setMaxListeners(Infinity)
+connectLsp()

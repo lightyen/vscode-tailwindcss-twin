@@ -7,19 +7,18 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	return [hasDefault, values]
 }
 
-export const transitionProperty: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "transitionProperty"
-		if (!this.context.resolved.corePlugins.some(c => c === "transitionProperty")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.transitionProperty)
+export const transitionProperty: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transitionProperty")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.transitionProperty)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transitionProperty"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^transition(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -27,7 +26,7 @@ export const transitionProperty: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
@@ -35,22 +34,23 @@ export const transitionProperty: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+transitionProperty.canArbitraryValue = true
 
-export const transitionDelay: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "transitionDelay"
-		if (!this.context.resolved.corePlugins.some(c => c === "transitionDelay")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.transitionDelay)
+export const transitionDelay: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transitionDelay")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.transitionDelay)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transitionDelay"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^delay-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -62,22 +62,23 @@ export const transitionDelay: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+transitionDelay.canArbitraryValue = true
 
-export const transitionDuration: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "transitionDuration"
-		if (!this.context.resolved.corePlugins.some(c => c === "transitionDuration")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.transitionDuration)
+export const transitionDuration: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transitionDuration")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.transitionDuration)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transitionDuration"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^duration-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -89,22 +90,23 @@ export const transitionDuration: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+transitionDuration.canArbitraryValue = true
 
-export const transitionTimingFunction: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "transitionTimingFunction"
-		if (!this.context.resolved.corePlugins.some(c => c === "transitionTimingFunction")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.transitionTimingFunction)
+export const transitionTimingFunction: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transitionTimingFunction")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.transitionTimingFunction)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transitionTimingFunction"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^ease-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -116,6 +118,7 @@ export const transitionTimingFunction: PluginConstructor = class implements Plug
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+transitionTimingFunction.canArbitraryValue = true

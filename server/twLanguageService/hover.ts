@@ -4,16 +4,16 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
 import parseThemeValue from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
-import { Tailwind } from "~/tailwind"
-import type { ServiceOptions } from "~/twLanguageService"
+import type { TailwindLoader } from "~/tailwind"
 import { cssDataManager, getEntryDescription } from "./cssData"
 import { renderClassname, renderClassnameJIT, renderVariant } from "./markdown"
 import { getDescription, getReferenceLinks } from "./referenceLink"
+import type { ServiceOptions } from "./service"
 
 export default async function hover(
 	document: TextDocument,
 	position: lsp.Position,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 ): Promise<lsp.Hover | undefined> {
 	try {
@@ -152,6 +152,10 @@ export default async function hover(
 			let keyword = value.replace(new RegExp(`^${state.config.prefix}`), "").replace(state.separator, "")
 			let title = ""
 			if (options.references) {
+				if (selection.type === parser.HoverResultType.Variant && state.twin.isResponsive(keyword)) {
+					keyword = "screens"
+				}
+
 				let type = getDescription(keyword)
 				if (!type) {
 					const plugin = state.twin.getPluginByName(keyword)
@@ -179,11 +183,6 @@ export default async function hover(
 				markdown.value = `${title}\n---\n\n` + markdown.value
 			}
 
-			if (!title && options.references) {
-				// TODO: classify jit utilities
-				// markdown.value = "custom\n" + "\n---\n\n" + markdown.value
-			}
-
 			return {
 				range,
 				contents: markdown,
@@ -205,7 +204,7 @@ async function getHoverTwinMarkdown({
 	kind: PatternKind
 	useJIT: boolean
 	selection: Exclude<ReturnType<typeof parser.hover>, undefined>
-	state: Tailwind
+	state: TailwindLoader
 	options: ServiceOptions
 }): Promise<lsp.MarkupContent | undefined> {
 	const { important } = selection
@@ -251,7 +250,7 @@ function resolveThemeValue({
 	kind: PatternKind
 	range: lsp.Range
 	token: parser.Token
-	state: Tailwind
+	state: TailwindLoader
 	options: ServiceOptions
 }): lsp.Hover | undefined {
 	const result = parseThemeValue(token.value)
@@ -288,7 +287,7 @@ function resolveScreenValue({
 	kind: PatternKind
 	range: lsp.Range
 	token: parser.Token
-	state: Tailwind
+	state: TailwindLoader
 	options: ServiceOptions
 }): lsp.Hover | undefined {
 	const value = state.getTheme(["screens", token.value])

@@ -13,9 +13,18 @@ interface InitializationOptions extends Settings {
 	workspaceFolder: string
 	/** uri */
 	configs: string[]
+	/** uri */
+	extensionFolder: string
+
+	extensionMode: vscode.ExtensionMode
 }
 
-async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputChannel, ws: vscode.WorkspaceFolder) {
+async function addClient(
+	context: vscode.ExtensionContext,
+	serverModule: vscode.Uri,
+	outputChannel: vscode.OutputChannel,
+	ws: vscode.WorkspaceFolder,
+) {
 	if (clients.has(ws.uri.toString())) {
 		return
 	}
@@ -36,9 +45,11 @@ async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputC
 		initOptions.colorDecorators = userSettings.get("editor.colorDecorators") ? "on" : "off"
 	}
 	const configs = await vscode.workspace.findFiles(
-		new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
+		new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
 		new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),
 	)
+	initOptions.extensionMode = context.extensionMode
+	initOptions.extensionFolder = context.extensionUri.toString()
 	initOptions.workspaceFolder = ws.uri.toString()
 	initOptions.configs = configs.map(c => c.toString())
 
@@ -50,7 +61,7 @@ async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputC
 		})),
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher(
-				new vscode.RelativePattern(ws, "**/{tailwind.js,tailwind.config.js}"),
+				new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
 			),
 		},
 		diagnosticCollectionName: NAME,
@@ -73,7 +84,7 @@ async function addClient(serverModule: vscode.Uri, outputChannel: vscode.OutputC
 
 export async function activate(context: vscode.ExtensionContext) {
 	const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel(NAME)
-	const serverModuleUri = vscode.Uri.joinPath(vscode.Uri.file(context.extensionPath), "dist", "server", "server.js")
+	const serverModuleUri = vscode.Uri.joinPath(vscode.Uri.file(context.extensionPath), "dist", "server.js")
 	vscode.workspace.onDidChangeWorkspaceFolders(async e => {
 		const promises: Array<Promise<void>> = []
 		for (const ws of e.removed) {
@@ -84,14 +95,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 		for (const ws of e.added) {
-			promises.push(addClient(serverModuleUri, outputChannel, ws))
+			promises.push(addClient(context, serverModuleUri, outputChannel, ws))
 		}
 		return Promise.all(promises)
 	})
 
 	if (vscode.workspace.workspaceFolders instanceof Array) {
 		for (const ws of vscode.workspace.workspaceFolders) {
-			await addClient(serverModuleUri, outputChannel, ws)
+			await addClient(context, serverModuleUri, outputChannel, ws)
 		}
 	}
 }
@@ -120,7 +131,7 @@ export class ColorNamesProvider implements vscode.TreeDataProvider<ColorElement>
 			return
 		}
 		const document = vscode.window.activeTextEditor.document
-		return await this.client.sendRequest<string[]>("tailwindcss/colors", { uri: document.uri.toString() })
+		return await this.client.sendRequest<string[]>("tw/colors", { uri: document.uri.toString() })
 	}
 	getTreeItem(name: ColorElement): vscode.TreeItem {
 		return {

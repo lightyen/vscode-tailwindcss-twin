@@ -1,18 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const listStyleType: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "listStyleType"
-		if (!this.context.resolved.corePlugins.some(c => c === "listStyleType")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.listStyleType)
+export const listStyleType: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "listStyleType")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.listStyleType)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "listStyleType"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^list-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -24,20 +24,23 @@ export const listStyleType: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+listStyleType.canArbitraryValue = true
 
-export const listStylePosition: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "listStylePosition"
-		if (!this.context.resolved.corePlugins.some(c => c === "listStylePosition")) {
-			throw ErrorNotEnable
-		}
+export const listStylePosition: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "listStylePosition")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "listStylePosition"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "list-inside" || value === "list-outside"
 	}
 }
+listStylePosition.canArbitraryValue = false

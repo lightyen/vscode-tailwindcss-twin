@@ -201,87 +201,122 @@ interface KeyValuePair<T> extends _KeyValuePair<T> {
 	value: T
 }
 
-interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
+export interface IMap<T> extends Omit<Array<KeyValuePair<T>>, "keys" | "get"> {
 	[Symbol.iterator](): IterableIterator<KeyValuePair<T>>
 	keys(): IterableIterator<string>
 	get(key: string): T | undefined
 }
 
-export class Twin {
-	static selectorProcessor = parser()
-	readonly config: Tailwind.ResolvedConfigJS
-	readonly separator: string
-	readonly prefix: string
-	readonly darkMode: string
-	readonly isColorShorthandOpacity: (value: string) => [boolean, string]
-	readonly isColorArbitraryOpacity: (value: string) => [boolean, string]
-	readonly getPluginByName: ReturnType<typeof createGetPluginByName>
-	constructor(resolved: Tailwind.ResolvedConfigJS, ...results: Array<{ result: Result; source?: string }>) {
-		this.config = resolved
-		const { separator = ":", prefix = "", darkMode = "media", theme } = resolved
-		this.separator = separator
-		this.prefix = prefix || ""
-		this.darkMode = darkMode || "media" // always enable dark mode
-		const colors = this.getColorNames(theme.colors)
-		const opacity = Object.keys(theme.opacity)
-		results.forEach(a => this.parseResult(a))
-		const escapeRegexp = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
-		const regexp_isColorShorthandOpacity = new RegExp(
-			`^(${escapeRegexp(this.prefix)}.*(?:${colors.join("|")}))\\/(?:${opacity.join("|")})$`,
-		)
-		const regexp_isColorArbitraryOpacity = new RegExp(
-			`^(${escapeRegexp(this.prefix)}.*(?:${colors.join("|")}))\\/\\[`,
-		)
-		this.isColorShorthandOpacity = (value: string) => {
-			const match = regexp_isColorShorthandOpacity.exec(value)
-			if (!match) {
-				return [false, ""]
-			}
-			return [match[1] !== value, match[1]]
-		}
-		this.isColorArbitraryOpacity = (value: string) => {
-			const match = regexp_isColorArbitraryOpacity.exec(value)
-			if (!match) {
-				return [false, ""]
-			}
-			return [match[1] !== value, match[1]]
-		}
+const selectorProcessor = parser()
 
-		// post processing
-		for (let i = 0; i < twinVariants.length; i++) {
-			const [key, value] = twinVariants[i]
-			this.variantsMap.set(key, value)
-		}
-		if (this.darkMode === "class") {
-			this.classnamesMap.delete(this.prefix + "dark")
-			this.variantsMap.set("dark", ["." + "dark"])
-			this.variantsMap.set("light", ["." + "light"])
-		}
-		this.classnamesMap.delete(this.prefix + "group")
+export type Twin = ReturnType<typeof createTwin>
 
-		// collection
-		this.variants = createMap(this.variantsMap)
-		this.classnames = createMap(this.classnamesMap)
-		this.customProperties = Array.from(this.customPropertiesSet)
+export function createTwin(config: Tailwind.ResolvedConfigJS, ...results: Array<{ result: Result; source?: string }>) {
+	const { theme } = config
+	const separator = config.separator || ":"
+	const prefix = config.prefix || ""
+	const darkMode = config.darkMode || "media"
 
-		this.screens = collectScreens(this.variants)
-		this.colors = collectColors(this.classnames)
+	const themeColors = getColorNames(theme.colors)
+	const opacity = Object.keys(theme.opacity)
 
-		this.searchers = {
-			variants: new Fuse(
-				this.variants.map(v => v[0]),
-				{ includeScore: true },
-			),
-			classnames: new Fuse(
-				this.classnames.map(v => v[0]),
-				{ includeScore: true },
-			),
-		}
+	const escapeRegexp = (value: string) => value.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+	const regexp_isColorShorthandOpacity = new RegExp(
+		`^(${escapeRegexp(prefix)}.*(?:${themeColors.join("|")}))\\/(?:${opacity.join("|")})$`,
+	)
+	const regexp_isColorArbitraryOpacity = new RegExp(`^(${escapeRegexp(prefix)}.*(?:${themeColors.join("|")}))\\/\\[`)
 
-		this.getPluginByName = createGetPluginByName(resolved)
+	const variantsMap: Map<string, string[]> = new Map()
+	const classnamesMap: Map<string, ClassNameItem> = new Map()
+	const customPropertiesSet: Set<string> = new Set()
+
+	results.forEach(a => parseResult(a))
+
+	// post processing
+	for (let i = 0; i < twinVariants.length; i++) {
+		const [key, value] = twinVariants[i]
+		variantsMap.set(key, value)
+	}
+	if (darkMode === "class") {
+		classnamesMap.delete(prefix + "dark")
+		variantsMap.set("dark", ["." + "dark"])
+		variantsMap.set("light", ["." + "light"])
+	}
+	classnamesMap.delete(prefix + "group")
+
+	// collection
+	const variants = createMap(variantsMap)
+	const classnames = createMap(classnamesMap)
+	const customProperties = Array.from(customPropertiesSet)
+
+	const colors = collectColors(classnames)
+	const screens = collectScreens(variants)
+
+	const searchers = {
+		variants: new Fuse(
+			variants.map(v => v[0]),
+			{ includeScore: true },
+		),
+		classnames: new Fuse(
+			classnames.map(v => v[0]),
+			{ includeScore: true },
+		),
 	}
 
-	private getColorNames(colors: Tailwind.ResolvedConfigJS["theme"]["colors"]) {
+	const getPluginByName = createGetPluginByName(config)
+
+	return {
+		get colors() {
+			return colors
+		},
+		get screens() {
+			return screens
+		},
+		get variants() {
+			return variants
+		},
+		get classnames() {
+			return classnames
+		},
+		get customProperties() {
+			return customProperties
+		},
+		get searchers() {
+			return searchers
+		},
+		getPluginByName,
+		isColorShorthandOpacity,
+		isColorArbitraryOpacity,
+		isDarkLightMode,
+		isResponsive,
+		isVariant,
+		hasDarkLightMode,
+		hasScreen,
+		isCommonVariant,
+		isClassName,
+		isSuggestedClassName,
+		getSuggestedClassNameFilter,
+		getSuggestedVariantFilter,
+		isArbitraryColor,
+	}
+
+	function isColorShorthandOpacity(value: string): [boolean, string] {
+		const match = regexp_isColorShorthandOpacity.exec(value)
+		if (!match) {
+			return [false, ""]
+		}
+		return [match[1] !== value, match[1]]
+	}
+
+	function isColorArbitraryOpacity(value: string): [boolean, string] {
+		const match = regexp_isColorArbitraryOpacity.exec(value)
+		if (!match) {
+			return [false, ""]
+		}
+		return [match[1] !== value, match[1]]
+	}
+
+	function getColorNames(colors: Tailwind.ResolvedConfigJS["theme"]["colors"]) {
 		const names: string[] = []
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		function traversal(c: any, prefix = "") {
@@ -308,9 +343,9 @@ export class Twin {
 		return names
 	}
 
-	private getRuleMetaItem(rule: Rule, separator: string): RuleMetaItem {
+	function getRuleMetaItem(rule: Rule, separator: string): RuleMetaItem {
 		const classname: ClassNameMetaItem[] = []
-		const { nodes } = Twin.selectorProcessor.astSync(rule.selector)
+		const { nodes } = selectorProcessor.astSync(rule.selector)
 
 		// get context, ex: "@media (min-width: 1024px)"
 		function getContext(rule: Rule) {
@@ -397,7 +432,7 @@ export class Twin {
 			} else {
 				decls[decl.prop] = [decl.value]
 				if (decl.prop.startsWith("--")) {
-					this.customPropertiesSet.add(decl.prop)
+					customPropertiesSet.add(decl.prop)
 				}
 			}
 		})
@@ -408,114 +443,104 @@ export class Twin {
 		}
 	}
 
-	private readonly variantsMap: Map<string, string[]> = new Map()
-	private readonly classnamesMap: Map<string, ClassNameItem> = new Map()
-	private readonly customPropertiesSet: Set<string> = new Set()
-	public readonly customProperties: string[] = []
-	readonly variants: IMap<VariantItem>
-	readonly classnames: IMap<ClassNameItem>
-	readonly colors: IMap<ColorItem>
-	readonly screens: IMap<ScreenItem>
-	readonly searchers!: { variants: Fuse<string>; classnames: Fuse<string> }
-
-	private parseResult({ result, source = "" }: { result: Result; source?: string }) {
+	function parseResult({ result, source = "" }: { result: Result; source?: string }) {
 		result.root.walkRules(rule => {
-			const item = this.getRuleMetaItem(rule, this.separator)
+			const item = getRuleMetaItem(rule, separator)
 			if (item) {
 				const { classname, decls } = item
 				for (const c of classname) {
 					if (c.variants.length > 0) {
 						const [key] = c.variants
-						if (!this.variantsMap.has(key)) {
+						if (!variantsMap.has(key)) {
 							if (c.context.length > 0) {
-								this.variantsMap.set(key, c.context)
+								variantsMap.set(key, c.context)
 							} else if (c.pseudo.length > 0) {
-								this.variantsMap.set(key, c.pseudo)
+								variantsMap.set(key, c.pseudo)
 							} else {
-								this.variantsMap.set(key, [])
+								variantsMap.set(key, [])
 							}
 						}
 						continue
 					}
 
-					let items = this.classnamesMap.get(c.name)
+					let items = classnamesMap.get(c.name)
 					if (!(items instanceof Array)) {
-						this.classnamesMap.set(c.name, [])
+						classnamesMap.set(c.name, [])
 					}
-					items = this.classnamesMap.get(c.name)!
+					items = classnamesMap.get(c.name)!
 					items.push({ ...c, source, decls })
 				}
 			}
 		})
 	}
 
-	isDarkLightMode(key: string) {
+	function isDarkLightMode(key: string) {
 		return key === "dark" || key === "light"
 	}
 
-	isResponsive(key: string) {
-		return this.screens.get(key) != undefined
+	function isResponsive(key: string) {
+		return screens.get(key) != undefined
 	}
 
-	isVariant(key: string) {
-		return this.variantsMap.get(key) != undefined
+	function isVariant(key: string) {
+		return variantsMap.get(key) != undefined
 	}
 
-	hasDarkLightMode(keys: string[]) {
-		return keys.some(v => this.isDarkLightMode(v))
+	function hasDarkLightMode(keys: string[]) {
+		return keys.some(v => isDarkLightMode(v))
 	}
 
-	hasScreen(keys: string[]) {
-		return keys.some(v => this.screens.get(v) != undefined)
+	function hasScreen(keys: string[]) {
+		return keys.some(v => screens.get(v) != undefined)
 	}
 
-	isCommonVariant(key: string) {
-		if (this.isResponsive(key)) {
+	function isCommonVariant(key: string) {
+		if (isResponsive(key)) {
 			return false
 		}
-		if (this.isDarkLightMode(key)) {
+		if (isDarkLightMode(key)) {
 			return false
 		}
-		return this.isVariant(key)
+		return isVariant(key)
 	}
 
-	isClassName(key: string) {
-		return this.classnamesMap.has(key)
+	function isClassName(key: string) {
+		return classnamesMap.has(key)
 	}
 
-	isSuggestedClassName(variants: string[], key: string) {
-		if (this.getSuggestedClassNameFilter(variants)(key)) {
-			return this.isClassName(key)
+	function isSuggestedClassName(variants: string[], key: string) {
+		if (getSuggestedClassNameFilter(variants)(key)) {
+			return isClassName(key)
 		}
 		return false
 	}
 
-	getSuggestedClassNameFilter(variants: string[]): (key: string) => boolean {
+	function getSuggestedClassNameFilter(variants: string[]): (key: string) => boolean {
 		return key => {
 			switch (key) {
-				case this.prefix + "container":
+				case prefix + "container":
 					return variants.length === 0
 			}
 			return true
 		}
 	}
 
-	getSuggestedVariantFilter(variants: string[]): (key: string) => boolean {
+	function getSuggestedVariantFilter(variants: string[]): (key: string) => boolean {
 		const flags: Flag =
-			(this.hasScreen(variants) ? Flag.Responsive : Flag.None) |
-			(this.hasDarkLightMode(variants) ? Flag.DarkLightMode : Flag.None) |
-			(variants.some(v => this.isCommonVariant(v)) ? Flag.CommonVariant : Flag.None)
+			(hasScreen(variants) ? Flag.Responsive : Flag.None) |
+			(hasDarkLightMode(variants) ? Flag.DarkLightMode : Flag.None) |
+			(variants.some(v => isCommonVariant(v)) ? Flag.CommonVariant : Flag.None)
 		return key => {
 			if (variants.some(v => v === key)) {
 				return false
 			}
 			if (flags & Flag.Responsive) {
-				if (this.isResponsive(key)) {
+				if (isResponsive(key)) {
 					return false
 				}
 			}
 			if (flags & Flag.DarkLightMode) {
-				if (this.isDarkLightMode(key)) {
+				if (isDarkLightMode(key)) {
 					return false
 				}
 			}
@@ -523,12 +548,12 @@ export class Twin {
 		}
 	}
 
-	isArbitraryColor(classname: string): boolean {
-		if (classname.startsWith(this.prefix)) {
-			classname = classname.slice(this.prefix.length)
+	function isArbitraryColor(classname: string): boolean {
+		if (classname.startsWith(prefix)) {
+			classname = classname.slice(prefix.length)
 		}
 
-		const plugin = this.getPluginByName(classname)
+		const plugin = getPluginByName(classname)
 
 		if (!plugin) {
 			return false

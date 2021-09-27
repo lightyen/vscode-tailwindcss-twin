@@ -1,18 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const flex: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "flex"
-		if (!this.context.resolved.corePlugins.some(c => c === "flex")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.flex)
+export const flex: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "flex")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.flex)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flex"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^flex-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -24,39 +24,44 @@ export const flex: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+flex.canArbitraryValue = true
 
-export const flexDirection: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "flexDirection"
-		if (!this.context.resolved.corePlugins.some(c => c === "flexDirection")) {
-			throw ErrorNotEnable
-		}
+export const flexDirection: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "flexDirection")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flexDirection"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "flex-row" || value === "flex-row-reverse" || value === "flex-col" || value === "flex-col-reverse"
 		)
 	}
 }
+flexDirection.canArbitraryValue = false
 
-export const flexWrap: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "flexWrap"
-		if (!this.context.resolved.corePlugins.some(c => c === "flexWrap")) {
-			throw ErrorNotEnable
-		}
+export const flexWrap: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "flexWrap")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flexWrap"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "flex-wrap" || value === "flex-nowrap" || value === "flex-wrap-reverse"
 	}
 }
+flexWrap.canArbitraryValue = false
 
 function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	const hasDefault = Object.prototype.hasOwnProperty.call(obj, "DEFAULT")
@@ -64,19 +69,18 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 	return [hasDefault, values]
 }
 
-export const flexGrow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "flexGrow"
-		if (!this.context.resolved.corePlugins.some(c => c === "flexGrow")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.flexGrow)
+export const flexGrow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "flexGrow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.flexGrow)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flexGrow"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^flex-grow(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -84,30 +88,30 @@ export const flexGrow: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+flexGrow.canArbitraryValue = true
 
-export const flexShrink: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	hasDefault: boolean
-	constructor(private context: Context) {
-		this.name = "flexShrink"
-		if (!this.context.resolved.corePlugins.some(c => c === "flexShrink")) {
-			throw ErrorNotEnable
-		}
-		;[this.hasDefault, this.values] = getDefault(this.context.resolved.theme.flexShrink)
+export const flexShrink: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "flexShrink")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.resolved.theme.flexShrink)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flexShrink"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^flex-shrink(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -115,13 +119,14 @@ export const flexShrink: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		if (this.hasDefault && val === "") {
+		if (hasDefault && val === "") {
 			return true
 		}
 
 		if (isArbitraryValue(val)) {
 			return true
 		}
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+flexShrink.canArbitraryValue = true

@@ -1,18 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const textOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "textOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "textOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.textOpacity)
+export const textOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "textOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.textOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^text-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -24,22 +24,23 @@ export const textOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+textOpacity.canArbitraryValue = true
 
-export const backgroundOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "backgroundOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.backgroundOpacity)
+export const backgroundOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.backgroundOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^bg-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -51,22 +52,23 @@ export const backgroundOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+backgroundOpacity.canArbitraryValue = true
 
-export const borderOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "borderOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "borderOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.borderOpacity)
+export const borderOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "borderOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.borderOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "borderOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^border-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -78,22 +80,23 @@ export const borderOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+borderOpacity.canArbitraryValue = true
 
-export const placeholderOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "placeholderOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "placeholderOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.placeholderOpacity)
+export const placeholderOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "placeholderOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.placeholderOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "placeholderOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^placeholder-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -105,22 +108,23 @@ export const placeholderOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+placeholderOpacity.canArbitraryValue = true
 
-export const divideOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "divideOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "divideOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.divideOpacity)
+export const divideOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "divideOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.divideOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "divideOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^divide-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -132,22 +136,23 @@ export const divideOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+divideOpacity.canArbitraryValue = true
 
-export const ringOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "ringOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "ringOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.ringOpacity)
+export const ringOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "ringOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.ringOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "ringOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^ring-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -159,22 +164,23 @@ export const ringOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+ringOpacity.canArbitraryValue = true
 
-export const opacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "opacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "opacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.opacity)
+export const opacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "opacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.opacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "opacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -186,22 +192,23 @@ export const opacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+opacity.canArbitraryValue = true
 
-export const backdropOpacity: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	opacity: string[]
-	constructor(private context: Context) {
-		this.name = "backdropOpacity"
-		if (!this.context.resolved.corePlugins.some(c => c === "backdropOpacity")) {
-			throw ErrorNotEnable
-		}
-		this.opacity = Object.keys(this.context.resolved.theme.backdropOpacity)
+export const backdropOpacity: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backdropOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.resolved.theme.backdropOpacity)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backdropOpacity"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^backdrop-opacity-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -213,6 +220,7 @@ export const backdropOpacity: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.opacity.some(c => c === opacity)
+		return opacities.some(c => c === opacity)
 	}
 }
+backdropOpacity.canArbitraryValue = true

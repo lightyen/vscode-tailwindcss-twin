@@ -1,16 +1,17 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const transform: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "transform"
-		if (!this.context.resolved.corePlugins.some(c => c === "transform")) {
-			throw ErrorNotEnable
-		}
+export const transform: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transform")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transform"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "transform" ||
 			value === "transform-cpu" ||
@@ -19,19 +20,20 @@ export const transform: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+transform.canArbitraryValue = false
 
-export const rotate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "rotate"
-		if (!this.context.resolved.corePlugins.some(c => c === "rotate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.rotate)
+export const rotate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "rotate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.rotate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "rotate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^-?rotate-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -48,22 +50,23 @@ export const rotate: PluginConstructor = class implements Plugin {
 			val = "-" + val
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+rotate.canArbitraryValue = true
 
-export const skew: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "skew"
-		if (!this.context.resolved.corePlugins.some(c => c === "skew")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.skew)
+export const skew: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "skew")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.skew)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "skew"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^-?skew-(?:x-|y-)(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -80,22 +83,23 @@ export const skew: PluginConstructor = class implements Plugin {
 			val = "-" + val
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+skew.canArbitraryValue = true
 
-export const scale: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "scale"
-		if (!this.context.resolved.corePlugins.some(c => c === "scale")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.scale)
+export const scale: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "scale")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.scale)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "scale"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^scale-(?:x-|y-)?(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -107,22 +111,23 @@ export const scale: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+scale.canArbitraryValue = true
 
-export const translate: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "translate"
-		if (!this.context.resolved.corePlugins.some(c => c === "translate")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.translate)
+export const translate: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "translate")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.translate)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "translate"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^-?translate-(?:x|y)-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -139,22 +144,23 @@ export const translate: PluginConstructor = class implements Plugin {
 			val = "-" + val
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+translate.canArbitraryValue = true
 
-export const transformOrigin: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "transformOrigin"
-		if (!this.context.resolved.corePlugins.some(c => c === "transformOrigin")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.transformOrigin)
+export const transformOrigin: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "transformOrigin")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.transformOrigin)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "transformOrigin"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^origin-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -166,6 +172,7 @@ export const transformOrigin: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+transformOrigin.canArbitraryValue = true

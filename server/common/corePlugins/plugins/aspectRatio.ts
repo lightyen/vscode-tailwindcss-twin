@@ -1,19 +1,18 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const appearance: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = true
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "aspectRatio"
-		if (!this.context.resolved.corePlugins.some(c => c === "aspectRatio")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.aspectRatio)
+export const aspectRatio: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "aspectRatio")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.aspectRatio)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "aspectRatio"
+		},
 	}
 
-	isMatch(value: string) {
+	function isMatch(value: string) {
 		const match = /^aspect-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -25,6 +24,8 @@ export const appearance: PluginConstructor = class implements Plugin {
 			return true
 		}
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+
+aspectRatio.canArbitraryValue = true

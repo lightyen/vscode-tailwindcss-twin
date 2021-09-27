@@ -1,5 +1,6 @@
 import * as animation from "./animation"
-import * as colors from "./color"
+import * as aspectRatio from "./aspectRatio"
+import * as colors from "./colors"
 import * as content from "./content"
 import * as cursor from "./cursor"
 import * as filter from "./filter"
@@ -20,6 +21,7 @@ import * as transition from "./transition"
 
 export default {
 	...animation,
+	...aspectRatio,
 	...colors,
 	...content,
 	...cursor,

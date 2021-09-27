@@ -5,9 +5,9 @@ import { DIAGNOSTICS_ID } from "~/../shared"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import parseThemeValue from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
-import type { Tailwind } from "~/tailwind"
-import type { Cache, ServiceOptions } from "~/twLanguageService"
+import type { TailwindLoader } from "~/tailwind"
 import { cssDataManager } from "./cssData"
+import type { Cache, ServiceOptions } from "./service"
 
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
 const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSensitive: true })
@@ -41,7 +41,7 @@ function createDiagnosticArray() {
 	}) as Diagnostic[]
 }
 
-export function validate(document: TextDocument, state: Tailwind, options: ServiceOptions, cache: Cache) {
+export function validate(document: TextDocument, state: TailwindLoader, options: ServiceOptions, cache: Cache) {
 	const diagnostics = createDiagnosticArray()
 	const uri = document.uri.toString()
 	const tokens = findAllMatch(document, options.jsxPropImportChecking)
@@ -127,7 +127,7 @@ function validateTwin({
 	document: TextDocument
 	offset: number
 	kind: PatternKind
-	state: Tailwind
+	state: TailwindLoader
 	diagnostics: ServiceOptions["diagnostics"]
 	result: Diagnostic[]
 } & ReturnType<typeof parser.spread>): void {
@@ -352,7 +352,12 @@ function validateTwin({
 	}
 }
 
-function checkTwinCssProperty(item: parser.SpreadDescription, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinCssProperty(
+	item: parser.SpreadDescription,
+	document: TextDocument,
+	offset: number,
+	state: TailwindLoader,
+) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
 		if (state.twin.isVariant(variant)) {
@@ -421,7 +426,12 @@ function checkTwinCssProperty(item: parser.SpreadDescription, document: TextDocu
 	return result
 }
 
-function checkTwinClassName(item: parser.SpreadDescription, document: TextDocument, offset: number, state: Tailwind) {
+function checkTwinClassName(
+	item: parser.SpreadDescription,
+	document: TextDocument,
+	offset: number,
+	state: TailwindLoader,
+) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
 		if (state.twin.isVariant(variant)) {
@@ -523,7 +533,7 @@ enum PredictionKind {
 }
 
 function guess(
-	state: Tailwind,
+	state: TailwindLoader,
 	variants: string[],
 	text: string,
 ): { kind: PredictionKind; value: string; score: number } {

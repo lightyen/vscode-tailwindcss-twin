@@ -1,57 +1,64 @@
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const accessibility: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "accessibility"
-		if (!this.context.resolved.corePlugins.some(c => c === "accessibility")) {
-			throw ErrorNotEnable
-		}
+export const accessibility: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "accessibility")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "accessibility"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "sr-only" || value === "not-sr-only"
 	}
 }
+accessibility.canArbitraryValue = false
 
-export const appearance: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "appearance"
-		if (!this.context.resolved.corePlugins.some(c => c === "appearance")) {
-			throw ErrorNotEnable
-		}
+export const appearance: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "appearance")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "appearance"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "appearance-none"
 	}
 }
+appearance.canArbitraryValue = false
 
-export const borderCollapse: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "borderCollapse"
-		if (!this.context.resolved.corePlugins.some(c => c === "borderCollapse")) {
-			throw ErrorNotEnable
-		}
+export const borderCollapse: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "borderCollapse")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "borderCollapse"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "border-collapse" || value === "border-separate"
 	}
 }
+borderCollapse.canArbitraryValue = false
 
-export const borderStyle: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "borderStyle"
-		if (!this.context.resolved.corePlugins.some(c => c === "borderStyle")) {
-			throw ErrorNotEnable
-		}
+export const borderStyle: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "borderStyle")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "borderStyle"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "border-solid" ||
 			value === "border-dashed" ||
@@ -61,73 +68,83 @@ export const borderStyle: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+borderStyle.canArbitraryValue = false
 
-export const boxDecorationBreak: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "boxDecorationBreak"
-		if (!this.context.resolved.corePlugins.some(c => c === "boxDecorationBreak")) {
-			throw ErrorNotEnable
-		}
+export const boxDecorationBreak: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "boxDecorationBreak")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "boxDecorationBreak"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "decoration-slice" || value === "decoration-clone"
 	}
 }
+boxDecorationBreak.canArbitraryValue = false
 
-export const boxSizing: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "boxSizing"
-		if (!this.context.resolved.corePlugins.some(c => c === "boxSizing")) {
-			throw ErrorNotEnable
-		}
+export const boxSizing: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "boxSizing")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "boxSizing"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "box-border" || value === "box-content"
 	}
 }
+boxSizing.canArbitraryValue = false
 
-export const clear: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "clear"
-		if (!this.context.resolved.corePlugins.some(c => c === "clear")) {
-			throw ErrorNotEnable
-		}
+export const clear: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "clear")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "clear"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "clear-left" || value === "clear-right" || value === "clear-both" || value === "clear-none"
 	}
 }
+clear.canArbitraryValue = false
 
-export const container: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "container"
-		if (!this.context.resolved.corePlugins.some(c => c === "container")) {
-			throw ErrorNotEnable
-		}
+export const container: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "container")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "container"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "container"
 	}
 }
+container.canArbitraryValue = false
 
-export const display: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "display"
-		if (!this.context.resolved.corePlugins.some(c => c === "display")) {
-			throw ErrorNotEnable
-		}
+export const display: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "display")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "display"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "block" ||
 			value === "inline-block" ||
@@ -153,17 +170,19 @@ export const display: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+display.canArbitraryValue = false
 
-export const divideStyle: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "divideStyle"
-		if (!this.context.resolved.corePlugins.some(c => c === "divideStyle")) {
-			throw ErrorNotEnable
-		}
+export const divideStyle: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "divideStyle")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "divideStyle"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "divide-solid" ||
 			value === "divide-dashed" ||
@@ -173,31 +192,35 @@ export const divideStyle: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+divideStyle.canArbitraryValue = false
 
-export const isolation: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "isolation"
-		if (!this.context.resolved.corePlugins.some(c => c === "isolation")) {
-			throw ErrorNotEnable
-		}
+export const isolation: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "isolation")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "isolation"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "isolate" || value === "isolation-auto"
 	}
 }
+isolation.canArbitraryValue = false
 
-export const mixBlendMode: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "mixBlendMode"
-		if (!this.context.resolved.corePlugins.some(c => c === "mixBlendMode")) {
-			throw ErrorNotEnable
-		}
+export const mixBlendMode: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "mixBlendMode")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "mixBlendMode"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "mix-blend-normal" ||
 			value === "mix-blend-multiply" ||
@@ -218,17 +241,19 @@ export const mixBlendMode: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+mixBlendMode.canArbitraryValue = false
 
-export const overflow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "overflow"
-		if (!this.context.resolved.corePlugins.some(c => c === "overflow")) {
-			throw ErrorNotEnable
-		}
+export const overflow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "overflow")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "overflow"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "overflow-auto" ||
 			value === "overflow-hidden" ||
@@ -245,31 +270,35 @@ export const overflow: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+overflow.canArbitraryValue = false
 
-export const textOverflow: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "textOverflow"
-		if (!this.context.resolved.corePlugins.some(c => c === "textOverflow")) {
-			throw ErrorNotEnable
-		}
+export const textOverflow: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "textOverflow")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textOverflow"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "truncate" || value === "overflow-ellipsis" || value === "overflow-clip"
 	}
 }
+textOverflow.canArbitraryValue = false
 
-export const overscrollBehavior: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "overscrollBehavior"
-		if (!this.context.resolved.corePlugins.some(c => c === "overscrollBehavior")) {
-			throw ErrorNotEnable
-		}
+export const overscrollBehavior: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "overscrollBehavior")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "overscrollBehavior"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "overscroll-auto" ||
 			value === "overscroll-contain" ||
@@ -283,31 +312,35 @@ export const overscrollBehavior: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+overscrollBehavior.canArbitraryValue = false
 
-export const pointerEvents: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "pointerEvents"
-		if (!this.context.resolved.corePlugins.some(c => c === "pointerEvents")) {
-			throw ErrorNotEnable
-		}
+export const pointerEvents: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "pointerEvents")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "pointerEvents"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "pointer-events-none" || value === "pointer-events-auto"
 	}
 }
+pointerEvents.canArbitraryValue = false
 
-export const position: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "position"
-		if (!this.context.resolved.corePlugins.some(c => c === "position")) {
-			throw ErrorNotEnable
-		}
+export const position: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "position")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "position"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "static" ||
 			value === "fixed" ||
@@ -317,101 +350,115 @@ export const position: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+position.canArbitraryValue = false
 
-export const resize: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "resize"
-		if (!this.context.resolved.corePlugins.some(c => c === "resize")) {
-			throw ErrorNotEnable
-		}
+export const resize: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "resize")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "resize"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "resize-none" || value === "resize" || value === "resize-x" || value === "resize-y"
 	}
 }
+resize.canArbitraryValue = false
 
-export const tableLayout: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "tableLayout"
-		if (!this.context.resolved.corePlugins.some(c => c === "tableLayout")) {
-			throw ErrorNotEnable
-		}
+export const tableLayout: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "tableLayout")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "tableLayout"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "table-auto" || value === "table-fixed"
 	}
 }
+tableLayout.canArbitraryValue = false
 
-export const textDecoration: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "textDecoration"
-		if (!this.context.resolved.corePlugins.some(c => c === "textDecoration")) {
-			throw ErrorNotEnable
-		}
+export const textDecoration: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "textDecoration")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textDecoration"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "underline" || value === "line-through" || value === "no-underline"
 	}
 }
+textDecoration.canArbitraryValue = false
 
-export const textTransform: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "textTransform"
-		if (!this.context.resolved.corePlugins.some(c => c === "textTransform")) {
-			throw ErrorNotEnable
-		}
+export const textTransform: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "textTransform")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textTransform"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "uppercase" || value === "lowercase" || value === "capitalize" || value === "normal-case"
 	}
 }
+textTransform.canArbitraryValue = false
 
-export const userSelect: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "userSelect"
-		if (!this.context.resolved.corePlugins.some(c => c === "userSelect")) {
-			throw ErrorNotEnable
-		}
+export const userSelect: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "userSelect")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "userSelect"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "select-none" || value === "select-text" || value === "select-all" || value === "select-auto"
 	}
 }
+userSelect.canArbitraryValue = false
 
-export const visibility: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "visibility"
-		if (!this.context.resolved.corePlugins.some(c => c === "visibility")) {
-			throw ErrorNotEnable
-		}
+export const visibility: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "visibility")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "visibility"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "visible" || value === "invisible"
 	}
 }
+visibility.canArbitraryValue = false
 
-export const whitespace: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "whitespace"
-		if (!this.context.resolved.corePlugins.some(c => c === "whitespace")) {
-			throw ErrorNotEnable
-		}
+export const whitespace: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "whitespace")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "whitespace"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "whitespace-normal" ||
 			value === "whitespace-nowrap" ||
@@ -421,45 +468,51 @@ export const whitespace: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+whitespace.canArbitraryValue = false
 
-export const wordBreak: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "wordBreak"
-		if (!this.context.resolved.corePlugins.some(c => c === "wordBreak")) {
-			throw ErrorNotEnable
-		}
+export const wordBreak: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "wordBreak")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "wordBreak"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "break-normal" || value === "break-words" || value === "break-all"
 	}
 }
+wordBreak.canArbitraryValue = false
 
-export const float: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "float"
-		if (!this.context.resolved.corePlugins.some(c => c === "float")) {
-			throw ErrorNotEnable
-		}
+export const float: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "float")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "float"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "float-right" || value === "float-left" || value === "float-none"
 	}
 }
+float.canArbitraryValue = false
 
-export const alignContent: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "alignContent"
-		if (!this.context.resolved.corePlugins.some(c => c === "alignContent")) {
-			throw ErrorNotEnable
-		}
+export const alignContent: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "alignContent")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "alignContent"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "content-center" ||
 			value === "content-start" ||
@@ -470,17 +523,19 @@ export const alignContent: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+alignContent.canArbitraryValue = false
 
-export const alignItems: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "alignItems"
-		if (!this.context.resolved.corePlugins.some(c => c === "alignItems")) {
-			throw ErrorNotEnable
-		}
+export const alignItems: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "alignItems")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "alignItems"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "items-start" ||
 			value === "items-end" ||
@@ -490,17 +545,19 @@ export const alignItems: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+alignItems.canArbitraryValue = false
 
-export const alignSelf: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "alignSelf"
-		if (!this.context.resolved.corePlugins.some(c => c === "alignSelf")) {
-			throw ErrorNotEnable
-		}
+export const alignSelf: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "alignSelf")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "alignSelf"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "self-auto" ||
 			value === "self-start" ||
@@ -511,17 +568,19 @@ export const alignSelf: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+alignSelf.canArbitraryValue = false
 
-export const placeContent: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "placeContent"
-		if (!this.context.resolved.corePlugins.some(c => c === "placeContent")) {
-			throw ErrorNotEnable
-		}
+export const placeContent: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "placeContent")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "placeContent"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "place-content-center" ||
 			value === "place-content-start" ||
@@ -533,17 +592,19 @@ export const placeContent: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+placeContent.canArbitraryValue = false
 
-export const placeItems: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "placeItems"
-		if (!this.context.resolved.corePlugins.some(c => c === "placeItems")) {
-			throw ErrorNotEnable
-		}
+export const placeItems: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "placeItems")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "placeItems"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "place-items-start" ||
 			value === "place-items-end" ||
@@ -552,17 +613,19 @@ export const placeItems: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+placeItems.canArbitraryValue = false
 
-export const placeSelf: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "placeSelf"
-		if (!this.context.resolved.corePlugins.some(c => c === "placeSelf")) {
-			throw ErrorNotEnable
-		}
+export const placeSelf: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "placeSelf")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "placeSelf"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "place-self-auto" ||
 			value === "place-self-start" ||
@@ -572,17 +635,19 @@ export const placeSelf: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+placeSelf.canArbitraryValue = false
 
-export const justifyContent: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "justifyContent"
-		if (!this.context.resolved.corePlugins.some(c => c === "justifyContent")) {
-			throw ErrorNotEnable
-		}
+export const justifyContent: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "justifyContent")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "justifyContent"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "justify-start" ||
 			value === "justify-end" ||
@@ -593,17 +658,19 @@ export const justifyContent: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+justifyContent.canArbitraryValue = false
 
-export const justifyItems: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "justifyItems"
-		if (!this.context.resolved.corePlugins.some(c => c === "justifyItems")) {
-			throw ErrorNotEnable
-		}
+export const justifyItems: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "justifyItems")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "justifyItems"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "justify-items-start" ||
 			value === "justify-items-end" ||
@@ -612,17 +679,19 @@ export const justifyItems: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+justifyItems.canArbitraryValue = false
 
-export const justifySelf: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "justifySelf"
-		if (!this.context.resolved.corePlugins.some(c => c === "justifySelf")) {
-			throw ErrorNotEnable
-		}
+export const justifySelf: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "justifySelf")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "justifySelf"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "justify-self-auto" ||
 			value === "justify-self-start" ||
@@ -632,17 +701,19 @@ export const justifySelf: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+justifySelf.canArbitraryValue = false
 
-export const verticalAlign: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "verticalAlign"
-		if (!this.context.resolved.corePlugins.some(c => c === "verticalAlign")) {
-			throw ErrorNotEnable
-		}
+export const verticalAlign: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "verticalAlign")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "verticalAlign"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "align-baseline" ||
 			value === "align-top" ||
@@ -653,31 +724,35 @@ export const verticalAlign: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+verticalAlign.canArbitraryValue = false
 
-export const textAlign: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "textAlign"
-		if (!this.context.resolved.corePlugins.some(c => c === "textAlign")) {
-			throw ErrorNotEnable
-		}
+export const textAlign: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "textAlign")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textAlign"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "text-left" || value === "text-center" || value === "text-right" || value === "text-justify"
 	}
 }
+textAlign.canArbitraryValue = false
 
-export const backgroundBlendMode: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backgroundBlendMode"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundBlendMode")) {
-			throw ErrorNotEnable
-		}
+export const backgroundBlendMode: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundBlendMode")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundBlendMode"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "bg-blend-normal" ||
 			value === "bg-blend-multiply" ||
@@ -698,17 +773,19 @@ export const backgroundBlendMode: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+backgroundBlendMode.canArbitraryValue = false
 
-export const backgroundClip: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backgroundClip"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundClip")) {
-			throw ErrorNotEnable
-		}
+export const backgroundClip: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundClip")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundClip"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "bg-clip-border" ||
 			value === "bg-clip-padding" ||
@@ -717,45 +794,51 @@ export const backgroundClip: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+backgroundClip.canArbitraryValue = false
 
-export const backgroundOrigin: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backgroundOrigin"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundOrigin")) {
-			throw ErrorNotEnable
-		}
+export const backgroundOrigin: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundOrigin")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundOrigin"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "bg-origin-border" || value === "bg-origin-padding" || value === "bg-origin-content"
 	}
 }
+backgroundOrigin.canArbitraryValue = false
 
-export const backgroundAttachment: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backgroundAttachment"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundAttachment")) {
-			throw ErrorNotEnable
-		}
+export const backgroundAttachment: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundAttachment")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundAttachment"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return value === "bg-fixed" || value === "bg-local" || value === "bg-scroll"
 	}
 }
+backgroundAttachment.canArbitraryValue = false
 
-export const backgroundRepeat: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	constructor(private context: Context) {
-		this.name = "backgroundRepeat"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundRepeat")) {
-			throw ErrorNotEnable
-		}
+export const backgroundRepeat: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundRepeat")) throw ErrorNotEnable
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundRepeat"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		return (
 			value === "bg-repeat" ||
 			value === "bg-no-repeat" ||
@@ -766,19 +849,20 @@ export const backgroundRepeat: PluginConstructor = class implements Plugin {
 		)
 	}
 }
+backgroundRepeat.canArbitraryValue = false
 
-export const backgroundImage: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backgroundImage"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundImage")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backgroundImage)
+export const backgroundImage: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundImage")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backgroundImage)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundImage"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^bg-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -786,22 +870,23 @@ export const backgroundImage: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backgroundImage.canArbitraryValue = false
 
-export const backgroundPosition: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backgroundPosition"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundPosition")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backgroundPosition)
+export const backgroundPosition: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundPosition")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backgroundPosition)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundPosition"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^bg-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -809,22 +894,23 @@ export const backgroundPosition: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backgroundPosition.canArbitraryValue = false
 
-export const backgroundSize: PluginConstructor = class implements Plugin {
-	static canArbitraryValue = false
-	name: keyof Tailwind.CorePluginFeatures
-	values: string[]
-	constructor(private context: Context) {
-		this.name = "backgroundSize"
-		if (!this.context.resolved.corePlugins.some(c => c === "backgroundSize")) {
-			throw ErrorNotEnable
-		}
-		this.values = Object.keys(this.context.resolved.theme.backgroundSize)
+export const backgroundSize: PluginConstructor = (context: Context): Plugin => {
+	if (!context.resolved.corePlugins.some(c => c === "backgroundSize")) throw ErrorNotEnable
+	const values = Object.keys(context.resolved.theme.backgroundSize)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "backgroundSize"
+		},
 	}
-	isMatch(value: string) {
+
+	function isMatch(value: string) {
 		const match = /^bg-(.*)/.exec(value)
 		if (!match) {
 			return false
@@ -832,6 +918,7 @@ export const backgroundSize: PluginConstructor = class implements Plugin {
 
 		const val = match[1]
 
-		return this.values.some(c => c === val)
+		return values.some(c => c === val)
 	}
 }
+backgroundSize.canArbitraryValue = false

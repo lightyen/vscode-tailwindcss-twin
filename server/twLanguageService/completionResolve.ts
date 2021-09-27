@@ -1,14 +1,14 @@
 import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
-import { Tailwind } from "~/tailwind"
-import type { ServiceOptions } from "~/twLanguageService"
+import type { TailwindLoader } from "~/tailwind"
 import { getEntryDescription } from "./cssData"
 import * as md from "./markdown"
 import { getDescription, getName, getReferenceLinks } from "./referenceLink"
+import type { ServiceOptions } from "./service"
 
 export default function completionResolve(
 	item: lsp.CompletionItem,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
 	if (item.data.type == undefined || item.data.type === "theme") {
@@ -39,7 +39,7 @@ export default function completionResolve(
 function resolve(
 	item: lsp.CompletionItem,
 	keyword: string,
-	state: Tailwind,
+	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
 	const { type, entry } = item.data as {
@@ -66,9 +66,9 @@ function resolve(
 			} else if (type === "variant") {
 				item.detail = "custom variant"
 			} else if (type === "screen") {
-				item.detail = "custom screen"
+				item.detail = getName("screens")
 			} else if (type === "color") {
-				item.detail = "custom color"
+				item.detail = getName("colors")
 			}
 		}
 	}
@@ -155,7 +155,7 @@ function resolve(
 	return item
 }
 
-function getRemUnit(key: string, rootFontSize: number, state: Tailwind) {
+function getRemUnit(key: string, rootFontSize: number, state: TailwindLoader) {
 	if (rootFontSize <= 0) {
 		return ""
 	}
