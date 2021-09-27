@@ -95,6 +95,12 @@ Support ONLY `*.tsx` and `*.jsx`
             }
         },
         {
+          "scope": "support.type.arbitrary-style.endOpacity.twin",
+            "settings": {
+              "foreground": "#c05b5b6b"
+            }
+        },
+        {
           "scope": "punctuation.section.embedded.arbitrary-style",
              "settings": {
                "foreground": "#8a88fc"

@@ -7,8 +7,9 @@ export type SpreadDescription = {
 	type: SpreadResultType
 	variants: TokenList
 	important: boolean
-	prop?: nodes.CssPropertyPropNode | nodes.ArbitraryStylePropNode | undefined
-	content?: nodes.CssValueNode | undefined
+	prop?: nodes.CssPropertyPropNode | nodes.ArbitraryStylePropNode
+	content?: nodes.CssValueNode
+	e?: nodes.IdentifierNode
 }
 
 export enum SpreadResultType {
@@ -41,12 +42,7 @@ export function spread({
 	start?: number
 	end?: number
 	separator?: string
-}): {
-	items: SpreadDescription[]
-	emptyGroup: nodes.GroupNode[]
-	emptyVariants: nodes.VariantSpanNode[]
-	notClosed: Array<nodes.GroupNode | nodes.CssPropertyNode | nodes.ArbitraryStyleNode>
-} {
+}) {
 	interface Context {
 		variants: TokenList
 		important: boolean
@@ -55,7 +51,8 @@ export function spread({
 	const items: SpreadDescription[] = []
 	const emptyGroup: nodes.GroupNode[] = []
 	const emptyVariants: nodes.VariantSpanNode[] = []
-	const notClosed: Array<nodes.GroupNode | nodes.CssPropertyNode | nodes.ArbitraryStyleNode> = []
+	const notClosed: Array<nodes.GroupNode | nodes.CssPropertyNode | nodes.ArbitraryStyleNode | nodes.IdentifierNode> =
+		[]
 
 	const walk = (node: nodes.Node | undefined, ctx: Context): void => {
 		if (node == undefined) {
@@ -85,7 +82,7 @@ export function spread({
 			}
 
 			walk(node.child, { ...ctx, important: ctx.important || node.important })
-		} else if (nodes.isCssProperty(node) || nodes.isArbitraryStyle(node)) {
+		} else if (nodes.isCssProperty(node)) {
 			if (!node.closed) {
 				notClosed.push(node)
 				return
@@ -96,6 +93,26 @@ export function spread({
 				type: spreadResultType(node),
 				prop: node.prop,
 				content: node.content,
+				...ctx,
+				important: ctx.important || node.important,
+			})
+		} else if (nodes.isArbitraryStyle(node)) {
+			if (!node.closed) {
+				notClosed.push(node)
+				return
+			}
+
+			if (node.endOpacity && node.endOpacity.closed === false) {
+				notClosed.push(node.endOpacity.value)
+				return
+			}
+
+			items.push({
+				target: node.child,
+				type: spreadResultType(node),
+				prop: node.prop,
+				content: node.content,
+				e: node.endOpacity?.value,
 				...ctx,
 				important: ctx.important || node.important,
 			})

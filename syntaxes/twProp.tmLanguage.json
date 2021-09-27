@@ -412,8 +412,8 @@
     },
     "expression-arbitrary-style-single-quote": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+/|\\w+-)+)(\\[)",
-      "end": "(\\])(!?)",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
+      "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
       "beginCaptures": {
         "1": {
           "name": "support.function.important-bang.arbitrary-style.twin"
@@ -430,6 +430,9 @@
           "name": "punctuation.section.embedded.arbitrary-style.end.twin"
         },
         "2": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        },
+        "3": {
           "name": "support.function.important-bang.arbitrary-style.twin"
         }
       },
@@ -459,8 +462,8 @@
     },
     "expression-arbitrary-style-double-quote": {
       "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:\\w+/|\\w+-)+)(\\[)",
-      "end": "(\\])(!?)",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
+      "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
       "beginCaptures": {
         "1": {
           "name": "support.function.important-bang.arbitrary-style.twin"
@@ -477,6 +480,9 @@
           "name": "punctuation.section.embedded.arbitrary-style.end.twin"
         },
         "2": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        },
+        "3": {
           "name": "support.function.important-bang.arbitrary-style.twin"
         }
       },
@@ -503,6 +509,30 @@
           "include": "#block-comment-end-double-quote"
         }
       ]
+    },
+    "expression-arbitrary-opacity": {
+      "contentName": "support.type.arbitrary-style.endOpacity.twin",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
+      "end": "(\\])(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.important-bang.arbitrary-style.twin"
+        },
+        "2": {
+          "name": "support.type.arbitrary-style.prop.twin"
+        },
+        "3": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.arbitrary-style.twin"
+        }
+      }
     },
     "variant-group-expression": {
       "begin": "(!?)(\\()",
@@ -555,6 +585,9 @@
           "include": "#expression-arbitrary-style-single-quote"
         },
         {
+          "include": "#expression-arbitrary-opacity"
+        },
+        {
           "include": "#expression-classname"
         },
         {
@@ -578,6 +611,9 @@
         },
         {
           "include": "#expression-arbitrary-style-double-quote"
+        },
+        {
+          "include": "#expression-arbitrary-opacity"
         },
         {
           "include": "#expression-classname"

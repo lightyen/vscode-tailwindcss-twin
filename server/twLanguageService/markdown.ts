@@ -56,7 +56,7 @@ export function renderClassname({
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
-		const lines: string[] = [`.${escape(rule.name)}${rule.pseudo.join("")}${escape(rule.rest)} {`]
+		const lines: string[] = [`.${escape(rule.name)}${rule.pseudo.join("")}${rule.rest} {`]
 		for (const key in rule.decls) {
 			for (const value of rule.decls[key]) {
 				lines.push(
@@ -110,7 +110,7 @@ export function renderClassnameJIT({
 	const newline = "\n"
 	const indent = "\t"
 	function ruleToStrings(rule: RuleItem, indent: string, important: boolean) {
-		const lines: string[] = [`.${escape(raw)}${rule.pseudo.join("")}${escape(rule.rest)} {`]
+		const lines: string[] = [`.${escape(raw)}${rule.pseudo.join("")}${rule.rest} {`]
 		for (const key in rule.decls) {
 			for (const value of rule.decls[key]) {
 				lines.push(

@@ -185,7 +185,7 @@ export function parse({
 	const decl = createToken(start, end, text.slice(start, end))
 	const _separator = separator.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 	const regexp = new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?[\\w-/]+)\\[|((?:(?!\\/\\/|\\/\\*)!?[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?(?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|(!?(?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 
@@ -302,16 +302,71 @@ export function parse({
 				}),
 			)
 		} else if (arbitrary) {
+			const prop = createToken(
+				start,
+				match.index + arbitrary.length,
+				text.slice(start, match.index + arbitrary.length),
+			)
+			const isArbitraryStyle1 = prop.value.endsWith("-") // text-[], text-[]/opacity, text-[]/[]
+			const isArbitraryStyle2 = prop.value.endsWith("/") // ~~text-color/opacity~~, ~~text-color/[]~~
 			const rb = findRightBracket({ text, start: regexp.lastIndex - 1, end, brackets: ["[", "]"] })
-			let content: Token
+			let content: Token | undefined
 			let ident: Token
+			let endOpacity: { value: nodes.IdentifierNode; closed?: boolean } | undefined
 			let exclamationRight: nodes.IdentifierNode | undefined
 			if (rb != undefined) {
 				content = createToken(regexp.lastIndex, rb, text.slice(regexp.lastIndex, rb))
-				ident = createToken(start, rb + 1, text.slice(start, rb + 1))
 				regexp.lastIndex = rb + 1
-				if (text[rb + 1] === "!") {
-					exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
+				if (text[regexp.lastIndex] === "/") {
+					if (isArbitraryStyle1) {
+						regexp.lastIndex += 1
+						if (text[regexp.lastIndex] === "[") {
+							const rb = findRightBracket({
+								text,
+								start: regexp.lastIndex,
+								end,
+								brackets: ["[", "]"],
+							})
+							if (rb != undefined) {
+								endOpacity = {
+									value: nodes.createIdentifierNode(
+										createToken(regexp.lastIndex + 1, rb, text.slice(regexp.lastIndex + 1, rb)),
+									),
+									closed: true,
+								}
+								regexp.lastIndex = rb + 1
+							} else {
+								endOpacity = {
+									value: nodes.createIdentifierNode(
+										createToken(regexp.lastIndex + 1, end, text.slice(regexp.lastIndex + 1, end)),
+									),
+									closed: false,
+								}
+								regexp.lastIndex = end
+							}
+						} else {
+							const withOpacityRegexp = /^\d+/
+							const match = withOpacityRegexp.exec(text.slice(regexp.lastIndex))
+							if (match) {
+								endOpacity = {
+									value: nodes.createIdentifierNode(
+										createToken(regexp.lastIndex, regexp.lastIndex + match[0].length, match[0]),
+									),
+								}
+								regexp.lastIndex += match[0].length
+							} else {
+								regexp.lastIndex -= 1
+							}
+						}
+					}
+				}
+
+				ident = createToken(start, regexp.lastIndex, text.slice(start, regexp.lastIndex))
+
+				if (text[regexp.lastIndex] === "!") {
+					exclamationRight = nodes.createIdentifierNode(
+						createToken(regexp.lastIndex, regexp.lastIndex + 1, "!"),
+					)
 					regexp.lastIndex += 1
 				}
 			} else {
@@ -321,25 +376,21 @@ export function parse({
 			}
 
 			const token = createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex))
-			const prop = createToken(
-				start,
-				match.index + arbitrary.length,
-				text.slice(start, match.index + arbitrary.length),
-			)
 
-			if (/(-|\/)$/.test(prop.value)) {
+			if (isArbitraryStyle1 || isArbitraryStyle2) {
 				children.push(
 					nodes.createArbitraryStyleNode({
 						token,
 						closed: rb != undefined,
 						prop: nodes.createArbitraryStylePropNode(prop),
-						content: nodes.createCssValueNode(content),
+						content: content ? nodes.createCssValueNode(content) : undefined,
 						exclamationLeft,
 						exclamationRight,
 						child: nodes.createIdentifierNode(ident),
+						endOpacity,
 					}),
 				)
-			} else {
+			} else if (content) {
 				children.push(
 					nodes.createCssPropertyNode({
 						token,

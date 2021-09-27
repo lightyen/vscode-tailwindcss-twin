@@ -66,8 +66,8 @@ export interface IdentifierNode extends Token {
 export interface GroupNode extends Token {
 	kind: NodeKind.Group
 	closed: boolean
-	exclamationLeft?: Node | undefined
-	exclamationRight?: Node | undefined
+	exclamationLeft?: Node
+	exclamationRight?: Node
 	important: boolean
 	child: DeclarationNode | VariantSpanNode | GroupNode | ClassNameNode | CssPropertyNode | ArbitraryStyleNode
 	prefix?: Node // unused
@@ -94,8 +94,8 @@ export interface CssPropertyNode extends Token {
 	prop: CssPropertyPropNode
 	content: CssValueNode
 	closed: boolean
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	child: IdentifierNode
 	important: boolean
 }
@@ -105,17 +105,18 @@ export interface ArbitraryStyleNode extends Token {
 	prop: ArbitraryStylePropNode
 	content: CssValueNode
 	closed: boolean
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	child: IdentifierNode
 	important: boolean
+	endOpacity?: { value: IdentifierNode; closed?: boolean }
 }
 
 export interface ClassNameNode extends Token {
 	kind: NodeKind.ClassName
 	child: IdentifierNode
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	important: boolean
 }
 
@@ -178,7 +179,7 @@ export function createDeclarationNode(params: { token: Token; children: NodeList
 export function createVariantSpanNode(params: {
 	token: Token
 	variant: VariantNode
-	child?: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode | undefined
+	child?: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode
 }) {
 	const { token, variant, child } = params
 	return new Proxy(token, {
@@ -231,8 +232,8 @@ export function createSeparatorNode(token: Token) {
 export function createClassNameNode(params: {
 	token: Token
 	child: IdentifierNode
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 }) {
 	// const { token, child, exclamationLeft, exclamationRight } = params
 	return new Proxy(params.token, {
@@ -258,8 +259,8 @@ export function createClassNameNode(params: {
 export function createGroupNode(params: {
 	token: Token
 	closed: boolean
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	child: DeclarationNode | VariantSpanNode | GroupNode | ClassNameNode | CssPropertyNode | ArbitraryStyleNode
 	prefix?: Node // unused
 }) {
@@ -291,8 +292,8 @@ export function createGroupNode(params: {
 export function createCssPropertyNode(params: {
 	token: Token
 	closed: boolean
-	exclamationLeft?: IdentifierNode | undefined
-	exclamationRight?: IdentifierNode | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	prop: CssPropertyPropNode
 	content: CssValueNode
 	child: IdentifierNode
@@ -327,13 +328,14 @@ export function createCssPropertyNode(params: {
 export function createArbitraryStyleNode(params: {
 	token: Token
 	closed: boolean
-	exclamationLeft?: Node | undefined
-	exclamationRight?: Node | undefined
+	exclamationLeft?: IdentifierNode
+	exclamationRight?: IdentifierNode
 	prop: ArbitraryStylePropNode
-	content: CssValueNode
+	content?: CssValueNode
 	child: IdentifierNode
+	endOpacity?: { value: IdentifierNode; closed?: boolean }
 }) {
-	const { token, closed, exclamationLeft, exclamationRight, prop: propName, content, child } = params
+	const { token, closed, exclamationLeft, exclamationRight, prop: propName, content, child, endOpacity } = params
 	return new Proxy(token, {
 		get(target, prop, ...rest) {
 			switch (prop) {
@@ -353,6 +355,8 @@ export function createArbitraryStyleNode(params: {
 					return content
 				case "child":
 					return child
+				case "endOpacity":
+					return endOpacity
 				default:
 					return Reflect.get(target, prop, ...rest)
 			}

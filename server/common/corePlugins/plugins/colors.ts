@@ -70,6 +70,10 @@ export const backgroundColor: PluginConstructor = (context: Context): Plugin => 
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
 			return true
@@ -115,8 +119,16 @@ export const textColor: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
+			if (isArbitraryValue(rest.slice(0, index))) {
+				const val = rest.slice(1, index - 1).trim()
+				return isColorValue(val)
+			}
 			return true
 		}
 
@@ -160,8 +172,16 @@ export const borderColor: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
+			if (isArbitraryValue(rest.slice(0, index))) {
+				const val = rest.slice(1, index - 1).trim()
+				return isColorValue(val)
+			}
 			return true
 		}
 
@@ -201,6 +221,10 @@ export const placeholderColor: PluginConstructor = (context: Context): Plugin =>
 		}
 
 		if (!opacities) {
+			return false
+		}
+
+		if (rest.indexOf("/") !== index) {
 			return false
 		}
 
@@ -248,8 +272,16 @@ export const ringColor: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
+			if (isArbitraryValue(rest.slice(0, index))) {
+				const val = rest.slice(1, index - 1).trim()
+				return isColorValue(val)
+			}
 			return true
 		}
 
@@ -293,8 +325,16 @@ export const ringOffsetColor: PluginConstructor = (context: Context): Plugin => 
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
+			if (isArbitraryValue(rest.slice(0, index))) {
+				const val = rest.slice(1, index - 1).trim()
+				return isColorValue(val)
+			}
 			return true
 		}
 		return opacities.some(c => c === opacity)
@@ -333,6 +373,10 @@ export const divideColor: PluginConstructor = (context: Context): Plugin => {
 		}
 
 		if (!opacities) {
+			return false
+		}
+
+		if (rest.indexOf("/") !== index) {
 			return false
 		}
 
@@ -376,6 +420,10 @@ export const caretColor: PluginConstructor = (context: Context): Plugin => {
 		}
 
 		if (!opacities) {
+			return false
+		}
+
+		if (rest.indexOf("/") !== index) {
 			return false
 		}
 
@@ -423,6 +471,10 @@ export const gradientColorStops: PluginConstructor = (context: Context): Plugin 
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
 			return true
@@ -467,8 +519,16 @@ export const stroke: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
 		const opacity = rest.slice(index + 1)
 		if (isArbitraryValue(opacity)) {
+			if (isArbitraryValue(rest.slice(0, index))) {
+				const val = rest.slice(1, index - 1).trim()
+				return isColorValue(val)
+			}
 			return true
 		}
 
@@ -508,6 +568,10 @@ export const fill: PluginConstructor = (context: Context): Plugin => {
 		}
 
 		if (!opacities) {
+			return false
+		}
+
+		if (rest.indexOf("/") !== index) {
 			return false
 		}
 
