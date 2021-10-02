@@ -57,7 +57,6 @@ async function addClient(
 	initOptions.serverSourceMapUri = vscode.Uri.joinPath(
 		vscode.Uri.file(context.extensionPath),
 		"dist",
-		"server",
 		"server.js.map",
 	).toString()
 
