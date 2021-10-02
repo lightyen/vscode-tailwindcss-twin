@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.10.1
+
+- Fix sourcemap path
+- Fix extension enable/disable feature
+
 ## 0.10.0
 
 - Accept config file: `{tailwind,tailwind.config}.{ts,js,cjs}` (also accept esm export),
