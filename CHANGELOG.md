@@ -1,5 +1,43 @@
 # CHANGELOG.md
 
+## 0.10.0
+
+- Accept config file: `{tailwind,tailwind.config}.{ts,js,cjs}` (also accept esm export),
+
+now you can write tailwind config like:
+
+```ts
+// tailwind.config.ts
+
+import colors from "tailwindcss/colors"
+import plugin from "tailwindcss/plugin"
+
+delete colors.lightBlue
+
+export default {
+  theme: {
+    extend: {
+      colors: {
+        ...colors,
+        mycolor: require("./mycolor"),
+      },
+    },
+  },
+  plugins: [
+    require("@tailwindcss/ui"),
+    plugin(function ({ addComponents, addUtilities, addVariant, e  }) {
+      //
+    }),
+  ],
+} as Tailwind.ConfigJS
+```
+
+- Refactor: remove javascript syntax **class**, info message
+- Add sourcemap for debug tracing
+- Bump *tailwindcss* to 2.2.16
+- Bump *postcss* to 8.3.8
+- \[Experimental\] feature: arbitrary color with arbitrary opacity
+
 ## 0.9.5
 
 - Change configuration value type
