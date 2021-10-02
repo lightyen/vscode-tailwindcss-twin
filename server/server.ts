@@ -430,15 +430,9 @@ function connectLsp() {
 	}
 
 	function bind() {
-		documents.onDidOpen(async params => {
-			const service = matchService(params.document.uri, services)
-			await service?.start()
-			diagnostics(params.document)
-		})
+		documents.onDidOpen(async params => diagnostics(params.document))
 
-		documents.onDidChangeContent(async params => {
-			diagnostics(params.document)
-		})
+		documents.onDidChangeContent(async params => diagnostics(params.document))
 
 		connection.onCompletion(params => matchService(params.textDocument.uri, services)?.onCompletion(params))
 
