@@ -599,17 +599,23 @@ function createMap<T>(m: Map<string, T>) {
 
 function collectScreens(variants: IMap<VariantItem>) {
 	const result: Map<string, number> = new Map()
+	let array: Array<[string, number]> = []
 	variants.forEach(({ key, value }) => {
 		for (const val of value) {
 			const match = val.match(/@media\s+\(.*width:\s*(\d+)px/)
 			if (match != null) {
 				const [, px] = match
-				result.set(key, Number(px))
+				array.push([key, Number(px)])
 				break
 			}
 		}
 	})
-
+	array = array.sort(([, a], [, b]) => {
+		return a - b
+	})
+	for (let i = 0; i < array.length; i++) {
+		result.set(array[i][0], i)
+	}
 	return createMap(result)
 }
 
