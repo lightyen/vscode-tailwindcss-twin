@@ -1,7 +1,6 @@
-import path from "path"
 import { URI } from "vscode-uri"
 import { dlv } from "~/common/get_set"
-import { importFrom, requireModule, resolveModuleName } from "~/common/module"
+import { importFrom } from "~/common/module"
 import { createTwin, Twin, __INNER_TAILWIND_SEPARATOR__ } from "./twin"
 
 export type TailwindLoader = ReturnType<typeof createTailwindLoader>
@@ -26,14 +25,11 @@ export enum ExtensionMode {
 	Test = 3,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-export const defaultConfigUri = URI.file(resolveModuleName("tailwindcss/defaultConfig")!)
-
 export function createTailwindLoader(configPath: URI, extensionUri: URI, extensionMode: ExtensionMode) {
-	const tailwindcss = requireModule("tailwindcss", { paths: extensionUri.fsPath })
-	const resolveConfig = requireModule("tailwindcss/resolveConfig", { paths: extensionUri.fsPath })
-	const plugin = requireModule("tailwindcss/plugin", { paths: extensionUri.fsPath })
-	const postcss = requireModule("postcss", { paths: extensionUri.fsPath })
+	const tailwindcss = importFrom("tailwindcss", { cache: true, base: extensionUri.fsPath })
+	const resolveConfig = importFrom("tailwindcss/resolveConfig", { cache: true, base: extensionUri.fsPath })
+	const plugin = importFrom("tailwindcss/plugin", { cache: true, base: extensionUri.fsPath })
+	const postcss = importFrom("postcss", { cache: true, base: extensionUri.fsPath })
 
 	let config: Tailwind.ResolvedConfigJS
 	let twin: Twin
@@ -77,7 +73,6 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 				extensionMode === ExtensionMode.Development
 					? "process.env.NODE_ENV = 'development';\n"
 					: "process.env.NODE_ENV = 'production';\n",
-			base: defaultConfigUri.fsPath === moduleName ? extensionUri.fsPath : path.dirname(moduleName),
 		}) as Tailwind.ConfigJS
 
 		if (__config) {

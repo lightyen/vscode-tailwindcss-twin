@@ -1,12 +1,11 @@
 import { deepStrictEqual } from "assert"
-import Module from "module"
 import path from "path"
 import { DIAGNOSTICS_ID, NAME, SECTION_ID, Settings } from "shared"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver/node"
 import { FileChangeType } from "vscode-languageserver/node"
 import { URI, Utils } from "vscode-uri"
-import { requireModule } from "~/common/module"
+import { importFrom } from "~/common/module"
 import packageInfo from "../package.json"
 import { intl } from "./locale"
 import { ExtensionMode } from "./tailwind"
@@ -93,7 +92,7 @@ function connectLsp() {
 
 		console.info(
 			`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-			requireModule("typescript", { paths: Module["_nodeModulePaths"](extensionUri.fsPath) }).version,
+			importFrom("typescript", { cache: true, base: extensionUri.fsPath }).version,
 		)
 		console.info(
 			`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,

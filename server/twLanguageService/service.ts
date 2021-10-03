@@ -5,9 +5,10 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
 import idebounce from "~/common/idebounce"
+import { resolveModuleName } from "~/common/module"
 import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
-import { createTailwindLoader, defaultConfigUri, ExtensionMode } from "~/tailwind"
+import { createTailwindLoader, ExtensionMode } from "~/tailwind"
 import completion from "./completion"
 import completionResolve from "./completionResolve"
 import { validate } from "./diagnostics"
@@ -29,6 +30,10 @@ export type Cache = Record<string, Record<string, ReturnType<typeof parser.sprea
 export function createTailwindLanguageService(documents: lsp.TextDocuments<TextDocument>, options: ServiceOptions) {
 	const cache: Cache = {}
 	const emitter = new EventEmitter()
+	const defaultConfigUri = URI.file(
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		resolveModuleName("tailwindcss/defaultConfig", { paths: options.extensionUri.fsPath })!,
+	)
 	const configPath = options.configPath ?? defaultConfigUri
 	const state = createTailwindLoader(configPath, options.extensionUri, options.extensionMode)
 	const isDefault = options.configPath == undefined
