@@ -266,8 +266,8 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 
 	if (base) {
 		const pnp = tryPnP(base)
-		return requireModule(moduleName, { cache, paths: base, pnp })
+		return interopExport(requireModule(moduleName, { cache, paths: base, pnp }))
 	}
 
-	return requireModule(moduleName, { cache })
+	return interopExport(requireModule(moduleName, { cache }))
 }
