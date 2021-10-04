@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.10.2
+
+- Fix config loading on yarn2
+- Enhance screen variants sorting
+
 ## 0.10.1
 
 - Fix sourcemap path
