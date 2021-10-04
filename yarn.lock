@@ -5956,6 +5956,11 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
+typescript-paths@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/typescript-paths/-/typescript-paths-1.1.2.tgz#1a31f2213bb3f6573bfdc6e1ddc203bc20d2b370"
+  integrity sha512-qvLeo32FcCKjoIPzf5eQLBI41+TVN6gI9gVinGn/etV3I1JJOJxHXXhJ67nCJWysGCj6R8wYrzMdQzJ01yMMjg==
+
 typescript@4.4.3:
   version "4.4.3"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.4.3.tgz#bdc5407caa2b109efd4f82fe130656f977a29324"

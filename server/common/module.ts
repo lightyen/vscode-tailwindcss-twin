@@ -2,6 +2,7 @@ import fs from "fs"
 import Module from "module"
 import path from "path"
 import ts from "typescript"
+import * as tp from "typescript-paths"
 
 interface PnpEntry {
 	setup?(): void
@@ -118,7 +119,7 @@ export function transpile(compilerOptions: ts.CompilerOptions, moduleName: strin
 
 	if (diagnostics) {
 		for (const diagnostic of diagnostics) {
-			console.log(diagnostic.messageText)
+			console.info(diagnostic.messageText)
 		}
 	}
 
@@ -140,11 +141,25 @@ function requireModuleFromCode(
 	code: string,
 	filename: string,
 	pnp?: PnpEntry | undefined,
+	mappings?: tp.Mapping[] | undefined,
 	base = path.dirname(filename),
 ) {
 	const __module = new Module(filename)
 	__module.paths = Module["_nodeModulePaths"](base)
 	__module.require = function __require(moduleName) {
+		if (mappings) {
+			const resolved = tp.resolveModuleName({
+				mappings,
+				compilerOptions,
+				host,
+				request: moduleName,
+				importer: "empty",
+			})
+			if (resolved) {
+				moduleName = resolved
+			}
+		}
+
 		const isAbs = path.isAbsolute(moduleName)
 		if (isAbs || moduleName.startsWith("./") || moduleName.startsWith("../")) {
 			if (!isAbs) moduleName = path.resolve(path.dirname(filename), moduleName)
@@ -160,6 +175,7 @@ function requireModuleFromCode(
 						transpile(compilerOptions, moduleName),
 						moduleName,
 						pnp,
+						mappings,
 					)
 				default: {
 					const resolvedFileName = tryAddExtensions(moduleName)
@@ -170,6 +186,7 @@ function requireModuleFromCode(
 						transpile(compilerOptions, moduleName),
 						moduleName,
 						pnp,
+						mappings,
 					)
 				}
 			}
@@ -195,6 +212,15 @@ interface importFromOptions {
 	base?: string | undefined
 	cache?: boolean | undefined
 	header?: string | undefined
+}
+
+const logger = tp.createLogger({ logLevel: tp.LogLevel.Error })
+const host: ts.ModuleResolutionHost = {
+	...ts.sys,
+	fileExists(filename) {
+		if (filename.endsWith(ts.Extension.Dts)) return false
+		return ts.sys.fileExists(filename)
+	},
 }
 
 /**
@@ -227,8 +253,31 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const interopExport = (obj: any) => (obj && obj.default ? obj.default : obj)
 
+	function loadTsConfig(ws: string) {
+		let mappings: tp.Mapping[] | undefined
+		const tsConfigPath = ts.findConfigFile(ws, ts.sys.fileExists)
+		if (tsConfigPath) {
+			const { error, config } = ts.readConfigFile(tsConfigPath, host.readFile)
+			if (!error) {
+				const { options, errors } = ts.parseJsonConfigFileContent(config, ts.sys, path.resolve(ws))
+				if (errors.length === 0 && options.paths) {
+					const ms = tp.createMappings({ paths: options.paths, log: logger })
+					if (ms.length > 0) {
+						mappings = ms
+					}
+				}
+				for (const error of errors) {
+					console.info(error.messageText)
+				}
+			}
+		}
+		return mappings
+	}
+
 	const isAbs = path.isAbsolute(moduleName)
 	if (isAbs || moduleName.startsWith("./") || moduleName.startsWith("../")) {
+		const mappings = loadTsConfig(path.dirname(moduleName))
+		if (mappings) compilerOptions.baseUrl = path.dirname(moduleName)
 		switch (path.extname(moduleName)) {
 			case ".json":
 				return requireModule(moduleName, { cache, paths: path.dirname(moduleName) })
@@ -244,6 +293,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
 						pnp,
+						mappings,
 					),
 				)
 			}
@@ -258,6 +308,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
 						pnp,
+						mappings,
 					),
 				)
 			}
@@ -265,6 +316,24 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	}
 
 	if (base) {
+		const mappings = loadTsConfig(base)
+		if (mappings) {
+			compilerOptions.baseUrl = base
+			const resolved = tp.resolveModuleName({
+				mappings,
+				compilerOptions,
+				host,
+				request: moduleName,
+				importer: "empty",
+			})
+			if (resolved) {
+				if (typeof options === "string") {
+					return importFrom(resolved)
+				}
+				return importFrom(resolved, { ...options, base: "" })
+			}
+		}
+
 		const pnp = tryPnP(base)
 		return interopExport(requireModule(moduleName, { cache, paths: base, pnp }))
 	}
