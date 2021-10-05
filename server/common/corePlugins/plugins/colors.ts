@@ -37,10 +37,10 @@ function findColors(palette: Tailwind.ResolvedPalette): string[] {
 }
 
 export const backgroundColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.backgroundColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "backgroundOpacity")
-		? Object.keys(context.resolved.theme.backgroundOpacity)
+	if (!context.config.corePlugins.some(c => c === "borderColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.backgroundColor)
+	const opacities = context.config.corePlugins.some(c => c === "backgroundOpacity")
+		? Object.keys(context.config.theme.backgroundOpacity)
 		: null
 
 	return {
@@ -85,10 +85,10 @@ export const backgroundColor: PluginConstructor = (context: Context): Plugin => 
 backgroundColor.canArbitraryValue = true
 
 export const textColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.textColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "textOpacity")
-		? Object.keys(context.resolved.theme.textOpacity)
+	if (!context.config.corePlugins.some(c => c === "textColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.textColor)
+	const opacities = context.config.corePlugins.some(c => c === "textOpacity")
+		? Object.keys(context.config.theme.textOpacity)
 		: null
 
 	return {
@@ -138,10 +138,10 @@ export const textColor: PluginConstructor = (context: Context): Plugin => {
 textColor.canArbitraryValue = true
 
 export const borderColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.borderColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "borderOpacity")
-		? Object.keys(context.resolved.theme.borderOpacity)
+	if (!context.config.corePlugins.some(c => c === "borderColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.borderColor)
+	const opacities = context.config.corePlugins.some(c => c === "borderOpacity")
+		? Object.keys(context.config.theme.borderOpacity)
 		: null
 
 	return {
@@ -152,7 +152,7 @@ export const borderColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^border-(?:t-|r-|b-|l-)?(.*)/.exec(value)
+		const match = /^border-(?:x-|y-|t-|r-|b-|l-)?(.*)/.exec(value)
 		if (!match) {
 			return false
 		}
@@ -191,10 +191,10 @@ export const borderColor: PluginConstructor = (context: Context): Plugin => {
 borderColor.canArbitraryValue = true
 
 export const placeholderColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "placeholderColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.placeholderColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "placeholderOpacity")
-		? Object.keys(context.resolved.theme.placeholderOpacity)
+	if (!context.config.corePlugins.some(c => c === "placeholderColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.placeholderColor)
+	const opacities = context.config.corePlugins.some(c => c === "placeholderOpacity")
+		? Object.keys(context.config.theme.placeholderOpacity)
 		: null
 
 	return {
@@ -238,10 +238,10 @@ export const placeholderColor: PluginConstructor = (context: Context): Plugin =>
 placeholderColor.canArbitraryValue = true
 
 export const ringColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "ringColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.ringColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "ringOpacity")
-		? Object.keys(context.resolved.theme.ringOpacity)
+	if (!context.config.corePlugins.some(c => c === "ringColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.ringColor)
+	const opacities = context.config.corePlugins.some(c => c === "ringOpacity")
+		? Object.keys(context.config.theme.ringOpacity)
 		: null
 
 	return {
@@ -291,10 +291,10 @@ export const ringColor: PluginConstructor = (context: Context): Plugin => {
 ringColor.canArbitraryValue = true
 
 export const ringOffsetColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "ringOffsetColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.ringOffsetColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "ringOpacity")
-		? Object.keys(context.resolved.theme.ringOpacity)
+	if (!context.config.corePlugins.some(c => c === "ringOffsetColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.ringOffsetColor)
+	const opacities = context.config.corePlugins.some(c => c === "ringOpacity")
+		? Object.keys(context.config.theme.ringOpacity)
 		: null
 
 	return {
@@ -343,10 +343,10 @@ export const ringOffsetColor: PluginConstructor = (context: Context): Plugin => 
 ringOffsetColor.canArbitraryValue = true
 
 export const divideColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "divideColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.divideColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "divideOpacity")
-		? Object.keys(context.resolved.theme.divideOpacity)
+	if (!context.config.corePlugins.some(c => c === "divideColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.divideColor)
+	const opacities = context.config.corePlugins.some(c => c === "divideOpacity")
+		? Object.keys(context.config.theme.divideOpacity)
 		: null
 
 	return {
@@ -390,10 +390,10 @@ export const divideColor: PluginConstructor = (context: Context): Plugin => {
 divideColor.canArbitraryValue = true
 
 export const caretColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "caretColor")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.caretColor)
-	const opacities = context.resolved.corePlugins.some(c => c === "opacity")
-		? Object.keys(context.resolved.theme.opacity)
+	if (!context.config.corePlugins.some(c => c === "caretColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.caretColor)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
 		: null
 
 	return {
@@ -438,10 +438,10 @@ export const caretColor: PluginConstructor = (context: Context): Plugin => {
 caretColor.canArbitraryValue = true
 
 export const gradientColorStops: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gradientColorStops")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.gradientColorStops)
-	const opacities = context.resolved.corePlugins.some(c => c === "opacity")
-		? Object.keys(context.resolved.theme.opacity)
+	if (!context.config.corePlugins.some(c => c === "gradientColorStops")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.gradientColorStops)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
 		: null
 
 	return {
@@ -485,10 +485,10 @@ export const gradientColorStops: PluginConstructor = (context: Context): Plugin 
 gradientColorStops.canArbitraryValue = true
 
 export const stroke: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "stroke")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.stroke)
-	const opacities = context.resolved.corePlugins.some(c => c === "opacity")
-		? Object.keys(context.resolved.theme.opacity)
+	if (!context.config.corePlugins.some(c => c === "stroke")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.stroke)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
 		: null
 
 	return {
@@ -538,10 +538,10 @@ export const stroke: PluginConstructor = (context: Context): Plugin => {
 stroke.canArbitraryValue = true
 
 export const fill: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fill")) throw ErrorNotEnable
-	const colors = findColors(context.resolved.theme.fill)
-	const opacities = context.resolved.corePlugins.some(c => c === "opacity")
-		? Object.keys(context.resolved.theme.opacity)
+	if (!context.config.corePlugins.some(c => c === "fill")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.fill)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
 		: null
 
 	return {
@@ -584,3 +584,50 @@ export const fill: PluginConstructor = (context: Context): Plugin => {
 	}
 }
 fill.canArbitraryValue = true
+
+export const accentColor: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "accentColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.accentColor)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
+		: null
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "accentColor"
+		},
+	}
+
+	function isMatch(value: string) {
+		const match = /^accent-(.*)/.exec(value)
+		if (!match) {
+			return false
+		}
+
+		const rest = match[1]
+
+		const index = rest.lastIndexOf("/")
+		if (index === -1) {
+			if (isArbitraryValue(rest)) {
+				return true
+			}
+			return colors.some(c => c === rest)
+		}
+
+		if (!opacities) {
+			return false
+		}
+
+		if (rest.indexOf("/") !== index) {
+			return false
+		}
+
+		const opacity = rest.slice(index + 1)
+		if (isArbitraryValue(opacity)) {
+			return true
+		}
+		return opacities.some(c => c === opacity)
+	}
+}
+accentColor.canArbitraryValue = true

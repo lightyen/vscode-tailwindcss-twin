@@ -1,27 +1,38 @@
 import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
+import { getEntryDescription } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
-import { getEntryDescription } from "./cssData"
-import * as md from "./markdown"
 import { getDescription, getName, getReferenceLinks } from "./referenceLink"
 import type { ServiceOptions } from "./service"
+
+export type CompletionItemPayloadType = "theme" | "screen" | "color" | "utility" | "variant" | "cssProp" | "cssValue"
+
+export type CompletionItemPayload = {
+	type: CompletionItemPayloadType
+	entry?: IPropertyData
+}
 
 export default function completionResolve(
 	item: lsp.CompletionItem,
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
-	if (item.data.type == undefined || item.data.type === "theme") {
+	const payload = item.data as CompletionItemPayload | undefined
+	if (!payload) {
+		return item
+	}
+
+	if (payload.type === "theme") {
 		return item
 	}
 
 	let keyword = item.label.slice(state.config.prefix.length)
-	const plugin = state.twin.getPluginByName(keyword)
+	const plugin = state.tw.getPlugin(keyword)
 	if (plugin) {
 		keyword = plugin.name
 	}
 
-	item = resolve(item, keyword, state, options)
+	item = resolve(item, keyword, state, options, payload)
 
 	if (options.references && item.documentation) {
 		if (typeof item.documentation === "object") {
@@ -41,14 +52,11 @@ function resolve(
 	keyword: string,
 	state: TailwindLoader,
 	options: ServiceOptions,
+	payload: CompletionItemPayload,
 ): lsp.CompletionItem {
-	const { type, entry } = item.data as {
-		type: string
-		entry: IPropertyData
-	}
-
-	if (type === "cssPropertyName" || type === "cssPropertyValue") {
-		if (type === "cssPropertyName") {
+	const { type, entry } = payload
+	if (type === "cssProp" || type === "cssValue") {
+		if (type === "cssProp") {
 			if (entry) {
 				item.documentation = getEntryDescription(entry, true)
 			}
@@ -59,12 +67,10 @@ function resolve(
 	if (options.references) {
 		item.detail = getName(keyword)
 		if (!item.detail) {
-			if (type === "components") {
-				item.detail = "custom component"
-			} else if (type === "utilities") {
-				item.detail = "custom utility"
+			if (type === "utility") {
+				// item.detail = "custom"
 			} else if (type === "variant") {
-				item.detail = "custom variant"
+				// item.detail = "custom variant"
 			} else if (type === "screen") {
 				item.detail = getName("screens")
 			} else if (type === "color") {
@@ -73,58 +79,46 @@ function resolve(
 		}
 	}
 
-	if (type === "color") {
-		const data = state.twin.classnames.get(item.label)
-		if (!(data instanceof Array)) {
-			return item
-		}
-
-		const result: Record<string, string> = {}
-		for (const d of data) {
-			for (const k in d.decls) {
-				for (const v of d.decls[k]) {
-					result[k] = v
-				}
-			}
-		}
-		item.detail = Object.entries(result)
-			.map(([prop, value]) => `${prop}: ${value};`)
-			.join("\n")
-		return item
-	}
-
 	if (type === "variant" || type === "screen") {
+		item.documentation = {
+			kind: lsp.MarkupKind.Markdown,
+			value: "",
+		}
 		const key = item.label.replace(new RegExp(`${state.separator}$`), "")
-		const data = state.twin.variants.get(key)
-		if (!(data instanceof Array)) {
-			return item
+		const scssText = state.tw.renderVariant(key)
+
+		if (scssText) {
+			item.documentation.value = ["```scss", scssText, "```", "\n"].join("\n")
 		}
 
-		const desc = getDescription(item.label)
-
-		if (data instanceof Array) {
-			const text: string[] = []
-			if (data.length === 0) {
-				text.push(item.label)
-			} else {
-				text.push(`${data.join(", ")}`)
-			}
-			item.documentation = {
-				kind: lsp.MarkupKind.Markdown,
-				value: "",
-			}
-			const content = md.renderVariant({ state, key })
-			if (content) {
-				item.documentation.value = content
-			}
+		if (options.references) {
+			const desc = getDescription(item.label)
 			if (desc) {
 				item.documentation.value = desc + "\n" + item.documentation.value
 			}
 		}
+
 		return item
 	}
 
-	if (type === "utilities") {
+	const cssText = state.tw.renderClassname({ classname: item.label, rootFontSize: options.rootFontSize })
+	if (!cssText) {
+		return item
+	}
+
+	if (type === "color") {
+		return item
+	}
+
+	if (type === "utility") {
+		item.documentation = {
+			kind: lsp.MarkupKind.Markdown,
+			value: "",
+		}
+		item.documentation.value = ["```css", cssText, "```", "\n"].join("\n")
+	}
+
+	if (options.references) {
 		const postfix = getRemUnit(item.label, options.rootFontSize, state)
 		if (postfix) {
 			if ((item.detail?.length ?? 0) <= 20) {
@@ -133,53 +127,31 @@ function resolve(
 				item.detail = postfix
 			}
 		}
-		item.documentation = {
-			kind: lsp.MarkupKind.Markdown,
-			value: md.renderClassname({ key: item.label, state, options }) ?? "",
-		}
-
-		return item
 	}
 
-	if (type === "components") {
-		item.documentation = {
-			kind: lsp.MarkupKind.Markdown,
-			value: md.renderClassname({ key: item.label, state, options }) ?? "",
-		}
-
-		// special
-		if (item.label === state.config.prefix + "container") {
-			item.documentation.value = getDescription("container") + "\n" + item.documentation.value
-		}
-	}
 	return item
 }
 
-function getRemUnit(key: string, rootFontSize: number, state: TailwindLoader) {
+function getRemUnit(classname: string, rootFontSize: number, state: TailwindLoader) {
 	if (rootFontSize <= 0) {
 		return ""
 	}
 
-	const rules = state.twin.classnames.get(key)
-	if (!rules) return ""
-
+	const decls = state.tw.getDecls(classname)
 	const reg = /(-?\d[.\d+e]*)rem/
 
-	for (const rule of rules) {
-		for (const k in rule.decls) {
-			const values = rule.decls[k]
-			for (let i = 0; i < values.length; i++) {
-				const match = reg.exec(values[i])
-				if (!match) {
-					continue
-				}
-				const [text, n] = match
-				const val = parseFloat(n)
-				if (Number.isNaN(val)) {
-					continue
-				}
-				return ` (${text} = ${rootFontSize * val}px)`
+	for (const [, values] of decls) {
+		for (let i = 0; i < values.length; i++) {
+			const match = reg.exec(values[i])
+			if (!match) {
+				continue
 			}
+			const [text, n] = match
+			const val = parseFloat(n)
+			if (Number.isNaN(val)) {
+				continue
+			}
+			return ` (${text} = ${rootFontSize * val}px)`
 		}
 	}
 

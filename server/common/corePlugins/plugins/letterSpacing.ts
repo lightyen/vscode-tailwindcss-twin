@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const letterSpacing: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "letterSpacing")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.letterSpacing)
+	if (!context.config.corePlugins.some(c => c === "letterSpacing")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.letterSpacing)
 
 	return {
 		isMatch,

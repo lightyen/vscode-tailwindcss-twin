@@ -8,8 +8,8 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 }
 
 export const content: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "content")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.content)
+	if (!context.config.corePlugins.some(c => c === "content")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.content)
 
 	return {
 		isMatch,

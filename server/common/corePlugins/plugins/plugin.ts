@@ -1,6 +1,5 @@
 export interface Context {
-	config: Tailwind.ConfigJS
-	resolved: Tailwind.ResolvedConfigJS
+	config: Tailwind.ResolvedConfigJS
 }
 
 export interface Plugin {

@@ -1,11 +1,9 @@
-import resolveConfig from "tailwindcss/resolveConfig"
 import plugins from "./plugins"
 
 export function createGetPluginByName(config: Tailwind.ResolvedConfigJS) {
-	const resolved = resolveConfig(config)
 	const corePlugins = Object.values(plugins).map(newPlugin => {
 		try {
-			return newPlugin({ config, resolved })
+			return newPlugin({ config })
 		} catch {
 			return undefined
 		}

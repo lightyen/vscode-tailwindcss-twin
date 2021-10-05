@@ -1,8 +1,8 @@
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const fontFamily: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontFamily")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.fontFamily)
+	if (!context.config.corePlugins.some(c => c === "fontFamily")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.fontFamily)
 
 	return {
 		isMatch,
@@ -25,8 +25,8 @@ export const fontFamily: PluginConstructor = (context: Context): Plugin => {
 fontFamily.canArbitraryValue = false
 
 export const fontWeight: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontWeight")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.fontWeight)
+	if (!context.config.corePlugins.some(c => c === "fontWeight")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.fontWeight)
 
 	return {
 		isMatch,
@@ -49,7 +49,7 @@ export const fontWeight: PluginConstructor = (context: Context): Plugin => {
 fontWeight.canArbitraryValue = false
 
 export const fontStyle: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontStyle")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "fontStyle")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -65,7 +65,7 @@ export const fontStyle: PluginConstructor = (context: Context): Plugin => {
 fontStyle.canArbitraryValue = false
 
 export const fontVariantNumeric: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontVariantNumeric")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "fontVariantNumeric")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -91,7 +91,7 @@ export const fontVariantNumeric: PluginConstructor = (context: Context): Plugin 
 fontVariantNumeric.canArbitraryValue = false
 
 export const fontSmoothing: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontSmoothing")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "fontSmoothing")) throw ErrorNotEnable
 
 	return {
 		isMatch,

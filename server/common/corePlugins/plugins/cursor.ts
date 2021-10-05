@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const cursor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "cursor")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.cursor)
+	if (!context.config.corePlugins.some(c => c === "cursor")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.cursor)
 
 	return {
 		isMatch,

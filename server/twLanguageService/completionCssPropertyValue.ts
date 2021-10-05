@@ -1,7 +1,8 @@
 import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
-import * as languageFacts from "./cssData"
-import { cssDataManager, getEntryDescription, units } from "./cssData"
+import { ICompletionItem } from "~/common/types"
+import * as languageFacts from "~/common/vscode-css-languageservice"
+import { cssDataManager, getEntryDescription, units } from "~/common/vscode-css-languageservice"
 
 function isDeprecated(entry: IPropertyData): boolean {
 	if (entry.status && (entry.status === "nonstandard" || entry.status === "obsolete")) {
@@ -15,7 +16,7 @@ export function getCompletionsForDeclarationValue(
 	propertyName: string,
 	currentWord: string,
 	range: lsp.Range,
-): lsp.CompletionItem[] {
+): ICompletionItem[] {
 	const items: lsp.CompletionItem[] = []
 	const entry = cssDataManager.getProperty(propertyName)
 	if (entry) {
@@ -67,19 +68,19 @@ export function getCompletionsForDeclarationValue(
 
 	for (let i = 0; i < items.length; i++) {
 		items[i].data = {
-			type: "cssPropertyValue",
+			type: "cssValue",
 			entry,
 		}
 	}
 
-	return items
+	return items as ICompletionItem[]
 }
 
 export function getCompletionsFromRestrictions(
 	restrictions: string[],
 	currentWord: string,
 	range: lsp.Range,
-): lsp.CompletionItem[] {
+): ICompletionItem[] {
 	const items: lsp.CompletionItem[] = []
 	for (const restriction of restrictions) {
 		switch (restriction) {
@@ -120,11 +121,11 @@ export function getCompletionsFromRestrictions(
 
 	for (let i = 0; i < items.length; i++) {
 		items[i].data = {
-			type: "cssPropertyValue",
+			type: "cssValue",
 		}
 	}
 
-	return items
+	return items as ICompletionItem[]
 }
 
 function getColorProposals(range: lsp.Range): lsp.CompletionItem[] {

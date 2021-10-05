@@ -145,6 +145,20 @@ whitespace: "https://tailwindcss.com/docs/whitespace"
 width: "https://tailwindcss.com/docs/width"
 wordBreak: "https://tailwindcss.com/docs/word-break"
 zIndex: "https://tailwindcss.com/docs/z-index"
+accentColor: https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color
+# textIndent: ""
+# willChange: ""
+# touchAction: ""
+# breakBefore: ""
+# breakInside: ""
+# breakAfter: ""
+# scrollSnapType: ""
+# scrollSnapAlign: ""
+# scrollSnapStop: ""
+# scrollMargin: ""
+# scrollPadding: ""
+# scrollBehavior: ""
+# columns: ""
 
 # customs
 
@@ -155,8 +169,8 @@ colors: "https://tailwindcss.com/docs/customizing-colors"
 
 dark: "https://tailwindcss.com/docs/dark-mode"
 
-motion-safe: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-safe"
-motion-reduce: "https://tailwindcss.com/docs/hover-focus-and-other-states#motion-reduce"
+motion-safe: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
+motion-reduce: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
 
 first-letter: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-letter
 first-line: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-line
@@ -191,6 +205,8 @@ in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+file: https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button
+open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
 
 group-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 group-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -220,6 +236,7 @@ group-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 group-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 group-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 group-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+group-open: ""
 
 peer-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 peer-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -249,6 +266,7 @@ peer-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 peer-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 peer-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 peer-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
+peer-open: ""
 
 tw.before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
 tw.after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after

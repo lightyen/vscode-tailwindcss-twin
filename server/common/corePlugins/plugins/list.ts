@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const listStyleType: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "listStyleType")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.listStyleType)
+	if (!context.config.corePlugins.some(c => c === "listStyleType")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.listStyleType)
 
 	return {
 		isMatch,
@@ -30,7 +30,7 @@ export const listStyleType: PluginConstructor = (context: Context): Plugin => {
 listStyleType.canArbitraryValue = true
 
 export const listStylePosition: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "listStylePosition")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "listStylePosition")) throw ErrorNotEnable
 
 	return {
 		isMatch,

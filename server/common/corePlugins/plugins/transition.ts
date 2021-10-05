@@ -8,8 +8,8 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 }
 
 export const transitionProperty: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transitionProperty")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.transitionProperty)
+	if (!context.config.corePlugins.some(c => c === "transitionProperty")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.transitionProperty)
 
 	return {
 		isMatch,
@@ -40,8 +40,8 @@ export const transitionProperty: PluginConstructor = (context: Context): Plugin 
 transitionProperty.canArbitraryValue = true
 
 export const transitionDelay: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transitionDelay")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.transitionDelay)
+	if (!context.config.corePlugins.some(c => c === "transitionDelay")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.transitionDelay)
 
 	return {
 		isMatch,
@@ -68,8 +68,8 @@ export const transitionDelay: PluginConstructor = (context: Context): Plugin => 
 transitionDelay.canArbitraryValue = true
 
 export const transitionDuration: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transitionDuration")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.transitionDuration)
+	if (!context.config.corePlugins.some(c => c === "transitionDuration")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.transitionDuration)
 
 	return {
 		isMatch,
@@ -96,8 +96,8 @@ export const transitionDuration: PluginConstructor = (context: Context): Plugin 
 transitionDuration.canArbitraryValue = true
 
 export const transitionTimingFunction: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transitionTimingFunction")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.transitionTimingFunction)
+	if (!context.config.corePlugins.some(c => c === "transitionTimingFunction")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.transitionTimingFunction)
 
 	return {
 		isMatch,

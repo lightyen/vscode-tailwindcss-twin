@@ -18,6 +18,12 @@ import * as sizing from "./sizing"
 import * as spacing from "./spacing"
 import * as transform from "./transform"
 import * as transition from "./transition"
+import * as touchAction from "./touchAction"
+import * as scroll from "./scroll"
+import * as columns from "./columns"
+import * as textIndent from "./textIndent"
+import * as breaks from "./breaks"
+import * as willChange from "./willChange"
 
 export default {
 	...animation,
@@ -40,4 +46,10 @@ export default {
 	...transform,
 	...transition,
 	...others,
+	...touchAction,
+	...scroll,
+	...columns,
+	...breaks,
+	...textIndent,
+	...willChange,
 }

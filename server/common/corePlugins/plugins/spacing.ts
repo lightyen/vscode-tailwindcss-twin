@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const inset: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "inset")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.inset)
+	if (!context.config.corePlugins.some(c => c === "inset")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.inset)
 
 	return {
 		isMatch,
@@ -35,8 +35,8 @@ export const inset: PluginConstructor = (context: Context): Plugin => {
 inset.canArbitraryValue = true
 
 export const margin: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "margin")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.margin)
+	if (!context.config.corePlugins.some(c => c === "margin")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.margin)
 
 	return {
 		isMatch,
@@ -68,8 +68,8 @@ export const margin: PluginConstructor = (context: Context): Plugin => {
 margin.canArbitraryValue = true
 
 export const space: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "space")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.space)
+	if (!context.config.corePlugins.some(c => c === "space")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.space)
 
 	return {
 		isMatch,
@@ -101,8 +101,8 @@ export const space: PluginConstructor = (context: Context): Plugin => {
 space.canArbitraryValue = true
 
 export const padding: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "padding")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.padding)
+	if (!context.config.corePlugins.some(c => c === "padding")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.padding)
 
 	return {
 		isMatch,
@@ -129,8 +129,8 @@ export const padding: PluginConstructor = (context: Context): Plugin => {
 padding.canArbitraryValue = true
 
 export const gap: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gap")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gap)
+	if (!context.config.corePlugins.some(c => c === "gap")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gap)
 
 	return {
 		isMatch,
@@ -157,8 +157,8 @@ export const gap: PluginConstructor = (context: Context): Plugin => {
 gap.canArbitraryValue = true
 
 export const height: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "height")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.height)
+	if (!context.config.corePlugins.some(c => c === "height")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.height)
 
 	return {
 		isMatch,
@@ -185,8 +185,8 @@ export const height: PluginConstructor = (context: Context): Plugin => {
 height.canArbitraryValue = true
 
 export const minHeight: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "minHeight")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.minHeight)
+	if (!context.config.corePlugins.some(c => c === "minHeight")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.minHeight)
 
 	return {
 		isMatch,
@@ -213,8 +213,8 @@ export const minHeight: PluginConstructor = (context: Context): Plugin => {
 minHeight.canArbitraryValue = true
 
 export const maxHeight: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "maxHeight")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.maxHeight)
+	if (!context.config.corePlugins.some(c => c === "maxHeight")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.maxHeight)
 
 	return {
 		isMatch,
@@ -241,8 +241,8 @@ export const maxHeight: PluginConstructor = (context: Context): Plugin => {
 maxHeight.canArbitraryValue = true
 
 export const width: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "width")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.width)
+	if (!context.config.corePlugins.some(c => c === "width")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.width)
 
 	return {
 		isMatch,
@@ -269,8 +269,8 @@ export const width: PluginConstructor = (context: Context): Plugin => {
 width.canArbitraryValue = true
 
 export const minWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "minWidth")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.minWidth)
+	if (!context.config.corePlugins.some(c => c === "minWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.minWidth)
 
 	return {
 		isMatch,
@@ -297,8 +297,8 @@ export const minWidth: PluginConstructor = (context: Context): Plugin => {
 minWidth.canArbitraryValue = true
 
 export const maxWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "maxWidth")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.maxWidth)
+	if (!context.config.corePlugins.some(c => c === "maxWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.maxWidth)
 
 	return {
 		isMatch,

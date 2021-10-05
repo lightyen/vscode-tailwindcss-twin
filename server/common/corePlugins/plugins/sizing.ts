@@ -3,8 +3,8 @@ import isLengthValue from "./common/isLengthValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const fontSize: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "fontSize")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.fontSize)
+	if (!context.config.corePlugins.some(c => c === "fontSize")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.fontSize)
 
 	return {
 		isMatch,
@@ -32,8 +32,8 @@ export const fontSize: PluginConstructor = (context: Context): Plugin => {
 fontSize.canArbitraryValue = true
 
 export const lineHeight: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "lineHeight")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.lineHeight)
+	if (!context.config.corePlugins.some(c => c === "lineHeight")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.lineHeight)
 
 	return {
 		isMatch,
@@ -60,8 +60,8 @@ export const lineHeight: PluginConstructor = (context: Context): Plugin => {
 lineHeight.canArbitraryValue = true
 
 export const strokeWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "strokeWidth")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.strokeWidth)
+	if (!context.config.corePlugins.some(c => c === "strokeWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.strokeWidth)
 
 	return {
 		isMatch,
@@ -89,8 +89,8 @@ export const strokeWidth: PluginConstructor = (context: Context): Plugin => {
 strokeWidth.canArbitraryValue = true
 
 export const ringOffsetWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "ringOffsetWidth")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.ringOffsetWidth)
+	if (!context.config.corePlugins.some(c => c === "ringOffsetWidth")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.ringOffsetWidth)
 
 	return {
 		isMatch,
@@ -124,8 +124,8 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 }
 
 export const borderRadius: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderRadius")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.borderRadius)
+	if (!context.config.corePlugins.some(c => c === "borderRadius")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.borderRadius)
 
 	return {
 		isMatch,
@@ -152,8 +152,8 @@ export const borderRadius: PluginConstructor = (context: Context): Plugin => {
 borderRadius.canArbitraryValue = false
 
 export const boxShadow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "boxShadow")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.boxShadow)
+	if (!context.config.corePlugins.some(c => c === "boxShadow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.boxShadow)
 
 	return {
 		isMatch,
@@ -184,8 +184,8 @@ export const boxShadow: PluginConstructor = (context: Context): Plugin => {
 boxShadow.canArbitraryValue = false
 
 export const dropShadow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "dropShadow")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.dropShadow)
+	if (!context.config.corePlugins.some(c => c === "dropShadow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.dropShadow)
 
 	return {
 		isMatch,
@@ -216,8 +216,8 @@ export const dropShadow: PluginConstructor = (context: Context): Plugin => {
 dropShadow.canArbitraryValue = false
 
 export const blur: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "blur")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.blur)
+	if (!context.config.corePlugins.some(c => c === "blur")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.blur)
 
 	return {
 		isMatch,
@@ -251,8 +251,8 @@ export const blur: PluginConstructor = (context: Context): Plugin => {
 blur.canArbitraryValue = true
 
 export const backdropBlur: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropBlur")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.backdropBlur)
+	if (!context.config.corePlugins.some(c => c === "backdropBlur")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.backdropBlur)
 
 	return {
 		isMatch,
@@ -286,8 +286,8 @@ export const backdropBlur: PluginConstructor = (context: Context): Plugin => {
 backdropBlur.canArbitraryValue = true
 
 export const borderWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderWidth")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.borderWidth)
+	if (!context.config.corePlugins.some(c => c === "borderWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.borderWidth)
 
 	return {
 		isMatch,
@@ -301,7 +301,7 @@ export const borderWidth: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^border(?:-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/.exec(value)
+		const match = /^border(?:-x\b|-y\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/.exec(value)
 		if (!match) {
 			return false
 		}
@@ -322,8 +322,8 @@ export const borderWidth: PluginConstructor = (context: Context): Plugin => {
 borderWidth.canArbitraryValue = true
 
 export const divideWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "divideWidth")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.divideWidth)
+	if (!context.config.corePlugins.some(c => c === "divideWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.divideWidth)
 
 	return {
 		isMatch,
@@ -357,8 +357,8 @@ export const divideWidth: PluginConstructor = (context: Context): Plugin => {
 divideWidth.canArbitraryValue = true
 
 export const ringWidth: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "ringWidth")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.ringWidth)
+	if (!context.config.corePlugins.some(c => c === "ringWidth")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.ringWidth)
 
 	return {
 		isMatch,

@@ -5,8 +5,8 @@ import { DIAGNOSTICS_ID } from "~/../shared"
 import { findAllMatch, PatternKind } from "~/common/ast"
 import parseThemeValue from "~/common/parseThemeValue"
 import * as parser from "~/common/twin-parser"
+import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
-import { cssDataManager } from "./cssData"
 import type { Cache, ServiceOptions } from "./service"
 
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
@@ -64,7 +64,7 @@ export function validate(document: TextDocument, state: TailwindLoader, options:
 					return diagnostics
 				}
 			}
-			if (!state.getTheme(result.keys(), true)) {
+			if (!state.tw.getTheme(result.keys(), true)) {
 				if (
 					!diagnostics.push({
 						range: { start: document.positionAt(start), end: document.positionAt(end) },
@@ -78,7 +78,7 @@ export function validate(document: TextDocument, state: TailwindLoader, options:
 			}
 		} else if (kind === PatternKind.TwinScreen) {
 			if (value) {
-				const result = state.getTheme(["screens", value])
+				const result = state.tw.getTheme(["screens", value])
 				if (result == undefined) {
 					if (
 						!diagnostics.push({
@@ -227,8 +227,8 @@ function validateTwin({
 				}
 
 				const label = item.target.value
-				const data = state.twin.classnames.get(label)
-				if (!(data instanceof Array)) {
+				const decls = state.tw.getDecls(label)
+				if (decls.size === 0) {
 					continue
 				}
 
@@ -247,10 +247,8 @@ function validateTwin({
 
 				if (diagnostics.conflict === "loose" || isIgnored(label)) {
 					const s = new Set<string>()
-					for (const d of data) {
-						for (const c of Object.keys(d.decls)) {
-							s.add(c)
-						}
+					for (const [prop] of decls) {
+						s.add(prop)
 					}
 					const key = [...variants, Array.from(s).sort().join(":")].join(".")
 					const target = map[key]
@@ -260,19 +258,14 @@ function validateTwin({
 						map[key] = parser.createTokenList([item.target])
 					}
 				} else if (diagnostics.conflict === "strict") {
-					for (const d of data) {
+					for (const [prop] of decls) {
 						const twinKeys = variants.sort()
-						for (const property of Object.keys(d.decls)) {
-							const key = [...d.context, d.rest, ...d.pseudo, ...twinKeys, property].join(".")
-							const target = map[key]
-							if (target instanceof Array) {
-								target.push(item.target)
-							} else {
-								map[key] = parser.createTokenList([item.target])
-							}
-						}
-						if (d.source === "components") {
-							break
+						const key = [...twinKeys, prop].join(".")
+						const target = map[key]
+						if (target instanceof Array) {
+							target.push(item.target)
+						} else {
+							map[key] = parser.createTokenList([item.target])
 						}
 					}
 				}
@@ -360,10 +353,10 @@ function checkTwinCssProperty(
 ) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
-		if (state.twin.isVariant(variant)) {
+		if (state.tw.isVariant(variant)) {
 			continue
 		}
-		const ret = state.twin.searchers.variants.search(variant)
+		const ret = state.tw.searchers.variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -434,10 +427,10 @@ function checkTwinClassName(
 ) {
 	const result: Diagnostic[] = []
 	for (const [a, b, variant] of item.variants) {
-		if (state.twin.isVariant(variant)) {
+		if (state.tw.isVariant(variant)) {
 			continue
 		}
-		const ret = state.twin.searchers.variants.search(variant)
+		const ret = state.tw.searchers.variants.search(variant)
 		const ans = ret?.[0]?.item
 		if (ans) {
 			result.push({
@@ -466,12 +459,8 @@ function checkTwinClassName(
 	if (item.target.value) {
 		const variants = item.variants.texts
 		const { start, end } = item.target
-		let value = item.target.value
-		const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(value)
-		if (isColorShorthandOpacity) {
-			value = name
-		}
-		if (!state.twin.isSuggestedClassName(variants, value)) {
+		const value = item.target.value
+		if (state.tw.getDecls(value).size === 0) {
 			const ret = guess(state, variants, value)
 			if (ret.score === 0) {
 				switch (ret.kind) {
@@ -537,8 +526,8 @@ function guess(
 	variants: string[],
 	text: string,
 ): { kind: PredictionKind; value: string; score: number } {
-	const a = state.twin.searchers.classnames.search(text)
-	const b = state.twin.searchers.variants.search(text)
+	const a = state.tw.searchers.classnames.search(text)
+	const b = state.tw.searchers.variants.search(text)
 	const c = csspropSearcher.search(text)
 	let kind = PredictionKind.Unknown
 	let value = ""
@@ -589,7 +578,7 @@ function isIgnored(label: string) {
 		return true
 	}
 
-	if (label.match(/^border-(?:t|r|b|l)-/)) {
+	if (label.match(/^border-(?:x|y|t|r|b|l)-/)) {
 		return true
 	}
 

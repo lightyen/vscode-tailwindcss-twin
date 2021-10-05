@@ -2,7 +2,7 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const objectFit: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "objectFit")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "objectFit")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -24,8 +24,8 @@ export const objectFit: PluginConstructor = (context: Context): Plugin => {
 objectFit.canArbitraryValue = false
 
 export const objectPosition: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "objectPosition")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.objectPosition)
+	if (!context.config.corePlugins.some(c => c === "objectPosition")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.objectPosition)
 
 	return {
 		isMatch,

@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const gridTemplateColumns: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridTemplateColumns")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridTemplateColumns)
+	if (!context.config.corePlugins.some(c => c === "gridTemplateColumns")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridTemplateColumns)
 
 	return {
 		isMatch,
@@ -30,8 +30,8 @@ export const gridTemplateColumns: PluginConstructor = (context: Context): Plugin
 gridTemplateColumns.canArbitraryValue = true
 
 export const gridTemplateRows: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridTemplateRows")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridTemplateRows)
+	if (!context.config.corePlugins.some(c => c === "gridTemplateRows")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridTemplateRows)
 
 	return {
 		isMatch,
@@ -58,7 +58,7 @@ export const gridTemplateRows: PluginConstructor = (context: Context): Plugin =>
 gridTemplateRows.canArbitraryValue = true
 
 export const gridAutoFlow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridAutoFlow")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "gridAutoFlow")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -79,8 +79,8 @@ export const gridAutoFlow: PluginConstructor = (context: Context): Plugin => {
 gridAutoFlow.canArbitraryValue = false
 
 export const gridAutoColumns: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridAutoColumns")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridAutoColumns)
+	if (!context.config.corePlugins.some(c => c === "gridAutoColumns")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridAutoColumns)
 
 	return {
 		isMatch,
@@ -107,8 +107,8 @@ export const gridAutoColumns: PluginConstructor = (context: Context): Plugin => 
 gridAutoColumns.canArbitraryValue = true
 
 export const gridAutoRows: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridAutoRows")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridAutoRows)
+	if (!context.config.corePlugins.some(c => c === "gridAutoRows")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridAutoRows)
 
 	return {
 		isMatch,
@@ -135,8 +135,8 @@ export const gridAutoRows: PluginConstructor = (context: Context): Plugin => {
 gridAutoRows.canArbitraryValue = true
 
 export const gridColumn: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridColumn")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridColumn)
+	if (!context.config.corePlugins.some(c => c === "gridColumn")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridColumn)
 
 	return {
 		isMatch,
@@ -163,8 +163,8 @@ export const gridColumn: PluginConstructor = (context: Context): Plugin => {
 gridColumn.canArbitraryValue = true
 
 export const gridColumnStart: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridColumnStart")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridColumnStart)
+	if (!context.config.corePlugins.some(c => c === "gridColumnStart")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridColumnStart)
 
 	return {
 		isMatch,
@@ -191,8 +191,8 @@ export const gridColumnStart: PluginConstructor = (context: Context): Plugin => 
 gridColumnStart.canArbitraryValue = true
 
 export const gridColumnEnd: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridColumnEnd")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridColumnEnd)
+	if (!context.config.corePlugins.some(c => c === "gridColumnEnd")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridColumnEnd)
 
 	return {
 		isMatch,
@@ -219,8 +219,8 @@ export const gridColumnEnd: PluginConstructor = (context: Context): Plugin => {
 gridColumnEnd.canArbitraryValue = true
 
 export const gridRow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridRow")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridRow)
+	if (!context.config.corePlugins.some(c => c === "gridRow")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridRow)
 
 	return {
 		isMatch,
@@ -247,8 +247,8 @@ export const gridRow: PluginConstructor = (context: Context): Plugin => {
 gridRow.canArbitraryValue = true
 
 export const gridRowStart: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridRowStart")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridRowStart)
+	if (!context.config.corePlugins.some(c => c === "gridRowStart")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridRowStart)
 
 	return {
 		isMatch,
@@ -275,8 +275,8 @@ export const gridRowStart: PluginConstructor = (context: Context): Plugin => {
 gridRowStart.canArbitraryValue = true
 
 export const gridRowEnd: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "gridRowEnd")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.gridRowEnd)
+	if (!context.config.corePlugins.some(c => c === "gridRowEnd")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.gridRowEnd)
 
 	return {
 		isMatch,

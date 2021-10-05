@@ -58,11 +58,6 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 		onColorPresentation,
 	}
 
-	/** Ask whether state machine is ready. */
-	function ready() {
-		return !!state.twin
-	}
-
 	function relativeWorkspace(uri: URI) {
 		return path.relative(options.workspaceFolder.path, uri.path)
 	}
@@ -70,13 +65,13 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 	/** Load tailwind.config to memory and run PostCSS. */
 	async function start(): Promise<void> {
 		if (!options.enabled || loading) return
-		if (ready()) return
+		if (state.tw) return
 		try {
 			loading = true
 			console.info(`[${new Date().toLocaleString()}]`, "loading:", configPathString)
 			const start = process.hrtime.bigint()
-			await state.readTailwindConfig()
-			await state.runPostCSS()
+			state.readTailwindConfig()
+			state.createContext()
 			const end = process.hrtime.bigint()
 			console.info(
 				`[${new Date().toLocaleString()}]`,
@@ -100,8 +95,8 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 			loading = true
 			console.info(`[${new Date().toLocaleString()}]`, "reloading:", configPathString)
 			const start = process.hrtime.bigint()
-			await state.readTailwindConfig()
-			await state.runPostCSS()
+			state.readTailwindConfig()
+			state.createContext()
 			const end = process.hrtime.bigint()
 			console.info(
 				`[${new Date().toLocaleString()}]`,
@@ -123,9 +118,10 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 	}
 
 	/** Provide auto complete feature. */
+	// TODO: cache completionList
 	async function onCompletion(params: lsp.CompletionParams) {
 		if (!options.enabled || loading) return
-		if (!ready()) {
+		if (!state.tw) {
 			start()
 			return undefined
 		}
@@ -136,14 +132,14 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 
 	/** Provide completion resolve item feature. */
 	async function onCompletionResolve(item: lsp.CompletionItem) {
-		if (!ready()) return item
+		if (!state.tw) return item
 		return completionResolve(item, state, options)
 	}
 
 	/** Provide on hover feature. */
 	async function onHover(params: lsp.HoverParams) {
 		if (!options.enabled || loading) return
-		if (!ready()) {
+		if (!state.tw) {
 			start()
 			return undefined
 		}
@@ -158,7 +154,7 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 		if (cache[document.uri] == undefined) {
 			cache[document.uri] = {}
 		}
-		if (!ready()) {
+		if (!state.tw) {
 			start()
 			return []
 		}
@@ -172,7 +168,7 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 		if (cache[document.uri] == undefined) {
 			cache[document.uri] = {}
 		}
-		if (!ready()) {
+		if (!state.tw) {
 			start()
 			return []
 		}
@@ -191,14 +187,14 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 
 	async function onDocumentColor(params: lsp.DocumentColorParams) {
 		if (!options.enabled || loading) return
-		if (!ready()) []
+		if (!state.tw) []
 		// TODO: onDocumentColor
 		return []
 	}
 
 	async function onColorPresentation(params: lsp.ColorPresentationParams) {
 		if (!options.enabled || loading) return
-		if (!ready()) []
+		if (!state.tw) []
 		// TODO: onColorPresentation
 		// const c = chroma(color.red * 255, color.green * 255, color.blue * 255, color.alpha)
 		// 	return [
@@ -211,13 +207,14 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 
 	function getColors() {
 		if (!options.enabled || loading) return
-		if (!ready()) []
+		if (!state.tw) []
+		// TODO: exclude custom classname
 		return new Promise<string[]>(resolve => {
-			if (ready()) {
-				resolve(state.twin.colors.map(c => c.key))
+			if (state.tw) {
+				resolve(Array.from(state.tw.colors.keys()))
 			} else {
 				emitter.once("ready", () => {
-					resolve(state.twin.colors.map(c => c.key))
+					resolve(Array.from(state.tw.colors.keys()))
 				})
 			}
 		})

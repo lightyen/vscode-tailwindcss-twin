@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const animation: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "animation")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.animation)
+	if (!context.config.corePlugins.some(c => c === "animation")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.animation)
 
 	return {
 		isMatch,

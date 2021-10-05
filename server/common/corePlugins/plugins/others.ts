@@ -1,7 +1,7 @@
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const accessibility: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "accessibility")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "accessibility")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -17,7 +17,7 @@ export const accessibility: PluginConstructor = (context: Context): Plugin => {
 accessibility.canArbitraryValue = false
 
 export const appearance: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "appearance")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "appearance")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -33,7 +33,7 @@ export const appearance: PluginConstructor = (context: Context): Plugin => {
 appearance.canArbitraryValue = false
 
 export const borderCollapse: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderCollapse")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "borderCollapse")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -49,7 +49,7 @@ export const borderCollapse: PluginConstructor = (context: Context): Plugin => {
 borderCollapse.canArbitraryValue = false
 
 export const borderStyle: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderStyle")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "borderStyle")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -64,6 +64,7 @@ export const borderStyle: PluginConstructor = (context: Context): Plugin => {
 			value === "border-dashed" ||
 			value === "border-dotted" ||
 			value === "border-double" ||
+			value === "border-hidden" ||
 			value === "border-none"
 		)
 	}
@@ -71,7 +72,7 @@ export const borderStyle: PluginConstructor = (context: Context): Plugin => {
 borderStyle.canArbitraryValue = false
 
 export const boxDecorationBreak: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "boxDecorationBreak")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "boxDecorationBreak")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -87,7 +88,7 @@ export const boxDecorationBreak: PluginConstructor = (context: Context): Plugin 
 boxDecorationBreak.canArbitraryValue = false
 
 export const boxSizing: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "boxSizing")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "boxSizing")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -103,7 +104,7 @@ export const boxSizing: PluginConstructor = (context: Context): Plugin => {
 boxSizing.canArbitraryValue = false
 
 export const clear: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "clear")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "clear")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -119,7 +120,7 @@ export const clear: PluginConstructor = (context: Context): Plugin => {
 clear.canArbitraryValue = false
 
 export const container: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "container")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "container")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -135,7 +136,7 @@ export const container: PluginConstructor = (context: Context): Plugin => {
 container.canArbitraryValue = false
 
 export const display: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "display")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "display")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -173,7 +174,7 @@ export const display: PluginConstructor = (context: Context): Plugin => {
 display.canArbitraryValue = false
 
 export const divideStyle: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "divideStyle")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "divideStyle")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -195,7 +196,7 @@ export const divideStyle: PluginConstructor = (context: Context): Plugin => {
 divideStyle.canArbitraryValue = false
 
 export const isolation: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "isolation")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "isolation")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -211,7 +212,7 @@ export const isolation: PluginConstructor = (context: Context): Plugin => {
 isolation.canArbitraryValue = false
 
 export const mixBlendMode: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "mixBlendMode")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "mixBlendMode")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -244,7 +245,7 @@ export const mixBlendMode: PluginConstructor = (context: Context): Plugin => {
 mixBlendMode.canArbitraryValue = false
 
 export const overflow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "overflow")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "overflow")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -257,12 +258,15 @@ export const overflow: PluginConstructor = (context: Context): Plugin => {
 		return (
 			value === "overflow-auto" ||
 			value === "overflow-hidden" ||
+			value === "overflow-clip" ||
 			value === "overflow-visible" ||
 			value === "overflow-scroll" ||
 			value === "overflow-x-auto" ||
 			value === "overflow-y-auto" ||
 			value === "overflow-x-hidden" ||
 			value === "overflow-y-hidden" ||
+			value === "overflow-x-clip" ||
+			value === "overflow-y-clip" ||
 			value === "overflow-x-visible" ||
 			value === "overflow-y-visible" ||
 			value === "overflow-x-scroll" ||
@@ -273,7 +277,7 @@ export const overflow: PluginConstructor = (context: Context): Plugin => {
 overflow.canArbitraryValue = false
 
 export const textOverflow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textOverflow")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "textOverflow")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -283,13 +287,15 @@ export const textOverflow: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		return value === "truncate" || value === "overflow-ellipsis" || value === "overflow-clip"
+		return (
+			value === "truncate" || value === "overflow-ellipsis" || value === "text-ellipsis" || value === "text-clip"
+		)
 	}
 }
 textOverflow.canArbitraryValue = false
 
 export const overscrollBehavior: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "overscrollBehavior")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "overscrollBehavior")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -315,7 +321,7 @@ export const overscrollBehavior: PluginConstructor = (context: Context): Plugin 
 overscrollBehavior.canArbitraryValue = false
 
 export const pointerEvents: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "pointerEvents")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "pointerEvents")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -331,7 +337,7 @@ export const pointerEvents: PluginConstructor = (context: Context): Plugin => {
 pointerEvents.canArbitraryValue = false
 
 export const position: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "position")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "position")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -353,7 +359,7 @@ export const position: PluginConstructor = (context: Context): Plugin => {
 position.canArbitraryValue = false
 
 export const resize: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "resize")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "resize")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -369,7 +375,7 @@ export const resize: PluginConstructor = (context: Context): Plugin => {
 resize.canArbitraryValue = false
 
 export const tableLayout: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "tableLayout")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "tableLayout")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -385,7 +391,7 @@ export const tableLayout: PluginConstructor = (context: Context): Plugin => {
 tableLayout.canArbitraryValue = false
 
 export const textDecoration: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textDecoration")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "textDecoration")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -401,7 +407,7 @@ export const textDecoration: PluginConstructor = (context: Context): Plugin => {
 textDecoration.canArbitraryValue = false
 
 export const textTransform: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textTransform")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "textTransform")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -417,7 +423,7 @@ export const textTransform: PluginConstructor = (context: Context): Plugin => {
 textTransform.canArbitraryValue = false
 
 export const userSelect: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "userSelect")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "userSelect")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -433,7 +439,7 @@ export const userSelect: PluginConstructor = (context: Context): Plugin => {
 userSelect.canArbitraryValue = false
 
 export const visibility: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "visibility")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "visibility")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -449,7 +455,7 @@ export const visibility: PluginConstructor = (context: Context): Plugin => {
 visibility.canArbitraryValue = false
 
 export const whitespace: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "whitespace")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "whitespace")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -471,7 +477,7 @@ export const whitespace: PluginConstructor = (context: Context): Plugin => {
 whitespace.canArbitraryValue = false
 
 export const wordBreak: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "wordBreak")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "wordBreak")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -487,7 +493,7 @@ export const wordBreak: PluginConstructor = (context: Context): Plugin => {
 wordBreak.canArbitraryValue = false
 
 export const float: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "float")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "float")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -503,7 +509,7 @@ export const float: PluginConstructor = (context: Context): Plugin => {
 float.canArbitraryValue = false
 
 export const alignContent: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "alignContent")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "alignContent")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -526,7 +532,7 @@ export const alignContent: PluginConstructor = (context: Context): Plugin => {
 alignContent.canArbitraryValue = false
 
 export const alignItems: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "alignItems")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "alignItems")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -548,7 +554,7 @@ export const alignItems: PluginConstructor = (context: Context): Plugin => {
 alignItems.canArbitraryValue = false
 
 export const alignSelf: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "alignSelf")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "alignSelf")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -571,7 +577,7 @@ export const alignSelf: PluginConstructor = (context: Context): Plugin => {
 alignSelf.canArbitraryValue = false
 
 export const placeContent: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "placeContent")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "placeContent")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -595,7 +601,7 @@ export const placeContent: PluginConstructor = (context: Context): Plugin => {
 placeContent.canArbitraryValue = false
 
 export const placeItems: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "placeItems")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "placeItems")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -616,7 +622,7 @@ export const placeItems: PluginConstructor = (context: Context): Plugin => {
 placeItems.canArbitraryValue = false
 
 export const placeSelf: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "placeSelf")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "placeSelf")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -638,7 +644,7 @@ export const placeSelf: PluginConstructor = (context: Context): Plugin => {
 placeSelf.canArbitraryValue = false
 
 export const justifyContent: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "justifyContent")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "justifyContent")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -661,7 +667,7 @@ export const justifyContent: PluginConstructor = (context: Context): Plugin => {
 justifyContent.canArbitraryValue = false
 
 export const justifyItems: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "justifyItems")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "justifyItems")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -682,7 +688,7 @@ export const justifyItems: PluginConstructor = (context: Context): Plugin => {
 justifyItems.canArbitraryValue = false
 
 export const justifySelf: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "justifySelf")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "justifySelf")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -704,7 +710,7 @@ export const justifySelf: PluginConstructor = (context: Context): Plugin => {
 justifySelf.canArbitraryValue = false
 
 export const verticalAlign: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "verticalAlign")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "verticalAlign")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -720,14 +726,16 @@ export const verticalAlign: PluginConstructor = (context: Context): Plugin => {
 			value === "align-middle" ||
 			value === "align-bottom" ||
 			value === "align-text-top" ||
-			value === "align-text-bottom"
+			value === "align-text-bottom" ||
+			value === "align-sub" ||
+			value === "align-super"
 		)
 	}
 }
 verticalAlign.canArbitraryValue = false
 
 export const textAlign: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textAlign")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "textAlign")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -743,7 +751,7 @@ export const textAlign: PluginConstructor = (context: Context): Plugin => {
 textAlign.canArbitraryValue = false
 
 export const backgroundBlendMode: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundBlendMode")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundBlendMode")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -776,7 +784,7 @@ export const backgroundBlendMode: PluginConstructor = (context: Context): Plugin
 backgroundBlendMode.canArbitraryValue = false
 
 export const backgroundClip: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundClip")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundClip")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -797,7 +805,7 @@ export const backgroundClip: PluginConstructor = (context: Context): Plugin => {
 backgroundClip.canArbitraryValue = false
 
 export const backgroundOrigin: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundOrigin")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundOrigin")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -813,7 +821,7 @@ export const backgroundOrigin: PluginConstructor = (context: Context): Plugin =>
 backgroundOrigin.canArbitraryValue = false
 
 export const backgroundAttachment: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundAttachment")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundAttachment")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -829,7 +837,7 @@ export const backgroundAttachment: PluginConstructor = (context: Context): Plugi
 backgroundAttachment.canArbitraryValue = false
 
 export const backgroundRepeat: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundRepeat")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundRepeat")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -852,8 +860,8 @@ export const backgroundRepeat: PluginConstructor = (context: Context): Plugin =>
 backgroundRepeat.canArbitraryValue = false
 
 export const backgroundImage: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundImage")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backgroundImage)
+	if (!context.config.corePlugins.some(c => c === "backgroundImage")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backgroundImage)
 
 	return {
 		isMatch,
@@ -876,8 +884,8 @@ export const backgroundImage: PluginConstructor = (context: Context): Plugin => 
 backgroundImage.canArbitraryValue = false
 
 export const backgroundPosition: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundPosition")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backgroundPosition)
+	if (!context.config.corePlugins.some(c => c === "backgroundPosition")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backgroundPosition)
 
 	return {
 		isMatch,
@@ -900,8 +908,8 @@ export const backgroundPosition: PluginConstructor = (context: Context): Plugin 
 backgroundPosition.canArbitraryValue = false
 
 export const backgroundSize: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundSize")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backgroundSize)
+	if (!context.config.corePlugins.some(c => c === "backgroundSize")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backgroundSize)
 
 	return {
 		isMatch,

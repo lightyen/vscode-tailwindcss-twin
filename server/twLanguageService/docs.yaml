@@ -349,12 +349,9 @@
 "https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus":
   name: Group-focus
   desc: "The `group-focus` variant works just like `group-hover` except for focus."
-"https://tailwindcss.com/docs/hover-focus-and-other-states#motion-safe":
-  name: Motion-safe
-  desc: "Add the `motion-safe:` prefix to only apply a utility when the `prefers-reduced-motion` media feature matches `no-preference`."
-"https://tailwindcss.com/docs/hover-focus-and-other-states#motion-reduce":
-  name: Motion-reduce
-  desc: "Add the `motion-reduce:` prefix to only apply a utility when the `prefers-reduced-motion` media feature matches `reduce`."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion":
+  name: prefers-reduced-motion
+  desc: "The **prefers-reduced-motion** CSS media feature is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses."
 "https://tailwindcss.com/docs/hover-focus-and-other-states#disabled":
   name: Disabled
   desc: "Add the `disabled:` prefix to only apply a utility when an element is disabled."
@@ -439,7 +436,12 @@
 "https://developer.mozilla.org/en-US/docs/Web/CSS/content":
   name: Content
   desc: "The **content** CSS property replaces an element with a generated value. Objects inserted using the `content` property are **anonymous** replaced elements*.*"
-
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button":
+  name: "::file-selector-button"
+  desc: 'The **::file-selector-button** CSS pseudo-element represents the button of an <input> of  type="file".'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors":
+  name: "CSS attribute [open]"
+  desc: ""
 ###### twin.macro
 
 "https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js":
@@ -608,11 +610,14 @@
   name: twin.macro
   desc: "The **hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether the user's *primary* input mechanism can hover over elements."
 "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir":
-  name: twin.macro
+  name: dir
   desc: The **dir** global attribute is an enumerated attribute that indicates the directionality of the element's text.
 "https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color":
-  name: twin.macro
+  name: caret-color
   desc: "The **caret-color** CSS property sets the color of the **insertion caret**, the visible marker where the next character typed will be inserted. This is sometimes referred to as the **text input cursor**. The caret appears in elements such as `<input>` or those with the `contenteditable` attribute. The caret is typically a thin vertical line that flashes to help make it more noticeable. By default, it is black, but its color can be altered with this property."
 "https://github.com/ben-rogerson/twin.macro/releases/tag/2.7.0":
   name: twin.macro
   desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color":
+  name: accent-color
+  desc: 'The **accent-color** CSS property sets the color of the elements accent. An accent appears in elements such as <input> of type="checkbox", or type="radio".'

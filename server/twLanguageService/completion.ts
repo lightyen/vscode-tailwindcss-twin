@@ -1,5 +1,4 @@
 import chroma from "chroma-js"
-import type { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { canMatch, PatternKind } from "~/common/ast"
@@ -7,25 +6,19 @@ import { findThemeValueKeys } from "~/common/parseThemeValue"
 import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
 import * as nodes from "~/common/twin-parser/twNodes"
+import type { ICompletionItem } from "~/common/types"
+import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
-import type { ClassNameItem } from "~/tailwind/twin"
 import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
-import { cssDataManager } from "./cssData"
 import type { ServiceOptions } from "./service"
 
-export interface InnerData {
-	type: "screen" | "utilities" | "components" | "color" | "variant" | "theme" | "cssPropertyName" | "cssPropertyValue"
-	uri: string
-	entry?: IPropertyData
-}
-
 function doReplace(
-	list: lsp.CompletionItem[],
+	list: ICompletionItem[],
 	document: TextDocument,
 	offset: number,
 	start: number,
 	end: number,
-	handler: (item: lsp.CompletionItem) => string,
+	handler: (item: ICompletionItem) => string,
 ) {
 	for (let i = 0; i < list.length; i++) {
 		const item = list[i]
@@ -40,11 +33,11 @@ function doReplace(
 }
 
 function doInsert(
-	list: lsp.CompletionItem[],
+	list: ICompletionItem[],
 	document: TextDocument,
 	offset: number,
 	start: number,
-	handler: (item: lsp.CompletionItem) => string,
+	handler: (item: ICompletionItem) => string,
 ) {
 	for (let i = 0; i < list.length; i++) {
 		const item = list[i]
@@ -104,14 +97,21 @@ function twinCompletion(
 	const [offset, , text] = match
 	const position = index - offset
 	const suggestion = parser.suggest({ text, position, separator: state.separator })
-	const isIncomplete = false
-
+	const isIncomplete = true
+	// const start = process.hrtime.bigint()
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilties = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const arbitraryValue = arbitraryValueCompletion(document, text, position, offset, kind, suggestion, state, options)
-
-	return lsp.CompletionList.create([...variants, ...utilties, ...shortcss, ...arbitraryValue], isIncomplete)
+	const completionList = lsp.CompletionList.create([], isIncomplete)
+	completionList.items = completionList.items
+		.concat(variants)
+		.concat(utilties)
+		.concat(shortcss)
+		.concat(arbitraryValue)
+	// const end = process.hrtime.bigint()
+	// console.info(`[${new Date().toLocaleString()}]`, `auto complete: (${Number((end - start) / 10n ** 6n)}ms)`)
+	return completionList
 }
 
 function variantsCompletion(
@@ -127,8 +127,9 @@ function variantsCompletion(
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
 	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
 	const nextCharacter = text.slice(position, position + 1)
-	const userVariants = suggestion?.variants.texts ?? []
-	let variantItems: lsp.CompletionItem[] = []
+	const userVariants = new Set(suggestion?.variants.texts ?? [])
+
+	let variantItems: ICompletionItem[] = []
 	let variantEnabled = true
 
 	if (suggestion.inComment) {
@@ -148,47 +149,58 @@ function variantsCompletion(
 	}
 
 	if (variantEnabled) {
-		const variantFilter = state.twin.getSuggestedVariantFilter(userVariants)
-		variantItems = state.twin.variants
-			.filter(([label]) => variantFilter(label))
-			.map<lsp.CompletionItem>(([label]) => {
-				const bp = state.twin.screens.get(label)
-				if (bp != undefined) {
-					return {
-						label: label + state.separator,
-						sortText: bp.toString().padStart(5, " "),
-						kind: lsp.CompletionItemKind.Module,
-						data: { type: "screen" },
-						command: {
-							title: "Suggest",
-							command: "editor.action.triggerSuggest",
-						},
-					}
-				} else if (label === "placeholder") {
-					return {
-						label: label + state.separator,
-						sortText: "*" + label,
-						kind: lsp.CompletionItemKind.Method,
-						data: { type: "variant" },
-						command: {
-							title: "Suggest",
-							command: "editor.action.triggerSuggest",
-						},
-					}
-				} else {
-					const f = state.twin.isDarkLightMode(label)
-					return {
-						label: label + state.separator,
-						sortText: f ? "*" + label : "~~~:" + label,
-						kind: f ? lsp.CompletionItemKind.Color : lsp.CompletionItemKind.Method,
-						data: { type: "variant" },
-						command: {
-							title: "Suggest",
-							command: "editor.action.triggerSuggest",
-						},
-					}
-				}
-			})
+		const [screens, darkmode, placeholder, restVariants] = state.tw.variants
+		variantItems = variantItems
+			.concat(
+				screens.map((value, index) => ({
+					label: value + state.separator,
+					sortText: index.toString().padStart(5, " "),
+					kind: lsp.CompletionItemKind.Module,
+					data: { type: "screen" },
+					command: {
+						title: "Suggest",
+						command: "editor.action.triggerSuggest",
+					},
+				})),
+			)
+			.concat(
+				darkmode.map(value => ({
+					label: value + state.separator,
+					sortText: "*" + value,
+					kind: lsp.CompletionItemKind.Color,
+					data: { type: "variant" },
+					command: {
+						title: "Suggest",
+						command: "editor.action.triggerSuggest",
+					},
+				})),
+			)
+			.concat(
+				placeholder.map(value => ({
+					label: value + state.separator,
+					sortText: "*" + value,
+					kind: lsp.CompletionItemKind.Method,
+					data: { type: "variant" },
+					command: {
+						title: "Suggest",
+						command: "editor.action.triggerSuggest",
+					},
+				})),
+			)
+			.concat(
+				restVariants.map(value => ({
+					label: value + state.separator,
+					sortText: "~~~" + value,
+					kind: lsp.CompletionItemKind.Method,
+					data: { type: "variant" },
+					command: {
+						title: "Suggest",
+						command: "editor.action.triggerSuggest",
+					},
+				})),
+			)
+
+		variantItems = variantItems.filter(item => !userVariants.has(item.label.slice(0, -state.separator.length)))
 	}
 
 	const next = text.slice(b, b + 1)
@@ -206,7 +218,7 @@ function variantsCompletion(
 
 	if (suggestion.target) {
 		if (suggestion.type === parser.SuggestResultType.Variant) {
-			const isVariantWord = state.twin.isVariant(value)
+			const isVariantWord = state.tw.isVariant(value)
 			if (!isVariantWord || (position > a && position < b)) {
 				doReplace(variantItems, document, offset, a, b, item => item.label)
 			}
@@ -236,8 +248,7 @@ function utilitiesCompletion(
 ) {
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
 	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
-	const userVariants = suggestion?.variants.texts ?? []
-	let classNameItems: lsp.CompletionItem[] = []
+	let classNameItems: ICompletionItem[] = []
 	let classNameEnabled = true
 
 	if (kind === PatternKind.TwinCssProperty) {
@@ -251,7 +262,7 @@ function utilitiesCompletion(
 	if (suggestion.target) {
 		switch (suggestion.type) {
 			case parser.SuggestResultType.Variant: {
-				const isVariantWord = state.twin.isVariant(value)
+				const isVariantWord = state.tw.isVariant(value)
 				b = b + state.separator.length
 				if (position === b && !isVariantWord) {
 					classNameEnabled = false
@@ -265,10 +276,7 @@ function utilitiesCompletion(
 	}
 
 	if (classNameEnabled) {
-		const classesFilter = state.twin.getSuggestedClassNameFilter(userVariants)
-		classNameItems = state.twin.classnames
-			.filter(item => classesFilter(item.key))
-			.map(([label, rules]) => createCompletionItem({ label, rules, variants: userVariants, kind, state }))
+		classNameItems = state.tw.getUtilitiesCompletionItems(suggestion)
 	}
 
 	const next = text.slice(b, b + 1)
@@ -276,12 +284,7 @@ function utilitiesCompletion(
 
 	if (suggestion.target) {
 		if (position > a && position < b) {
-			const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(suggestion.target.value)
-			if (isColorShorthandOpacity) {
-				doReplace(classNameItems, document, offset, a, a + name.length, item => item.label)
-			} else {
-				doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
-			}
+			doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
@@ -317,8 +320,8 @@ function shortcssCompletion(
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
 	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
 
-	let cssPropItems: lsp.CompletionItem[] = []
-	const cssValueItems: lsp.CompletionItem[] = []
+	let cssPropItems: ICompletionItem[] = []
+	const cssValueItems: ICompletionItem[] = []
 	let cssPropEnabled = true
 	let cssValueEnabled = false
 
@@ -329,7 +332,7 @@ function shortcssCompletion(
 	if (suggestion.target) {
 		if (suggestion.type === parser.SuggestResultType.Variant) {
 			b = b + state.separator.length
-			const isVariantWord = state.twin.isVariant(value)
+			const isVariantWord = state.tw.isVariant(value)
 			if (position === b && !isVariantWord) {
 				cssPropEnabled = false
 			}
@@ -354,27 +357,28 @@ function shortcssCompletion(
 				command: "editor.action.triggerSuggest",
 			},
 			data: {
-				type: "cssPropertyName",
+				type: "cssProp",
 				entry,
 			},
 		}))
 
-		cssPropItems.push(
-			...state.twin.customProperties.map(label => ({
-				label,
-				sortText: "~~~~~" + label,
-				kind: lsp.CompletionItemKind.Field,
-				insertTextFormat: lsp.InsertTextFormat.Snippet,
-				insertText: label + "[$0]",
-				command: {
-					title: "Suggest",
-					command: "editor.action.triggerSuggest",
-				},
-				data: {
-					type: "cssPropertyName",
-				},
-				documentation: "custom variable",
-			})),
+		cssPropItems = cssPropItems.concat(
+			state.tw.customProperties.map(label => {
+				const item: ICompletionItem = {
+					label,
+					data: { type: "cssProp" },
+					sortText: "~~~~~" + label,
+					kind: lsp.CompletionItemKind.Field,
+					insertTextFormat: lsp.InsertTextFormat.Snippet,
+					insertText: label + "[$0]",
+					command: {
+						title: "Suggest",
+						command: "editor.action.triggerSuggest",
+					},
+					documentation: "custom variable",
+				}
+				return item
+			}),
 		)
 	}
 
@@ -426,7 +430,7 @@ const fromRestrictions =
 
 const mappingArbitraryPropToCssProp: Record<
 	string,
-	Array<(currentWord: string, range: lsp.Range) => lsp.CompletionItem[]>
+	Array<(currentWord: string, range: lsp.Range) => ICompletionItem[]>
 > = {
 	"divide-": [fromCssProp("border-color")],
 	"bg-": [fromCssProp("background-color")],
@@ -482,10 +486,16 @@ const mappingArbitraryPropToCssProp: Record<
 	"border-r-": [fromCssProp("border-right-width"), fromCssProp("border-right-color")],
 	"border-b-": [fromCssProp("border-bottom-width"), fromCssProp("border-bottom-color")],
 	"border-l-": [fromCssProp("border-left-width"), fromCssProp("border-left-color")],
+	"border-x-": [fromCssProp("border-left-width"), fromCssProp("border-left-color")],
+	"border-y-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
 	"text-": [fromRestrictions("color", "length", "percentage")],
 	"ring-": [fromRestrictions("length", "color")],
 	"stroke-": [fromCssProp("stroke-width"), fromCssProp("stroke")],
 	"caret-": [fromCssProp("caret-color")],
+	"aspect-": [fromCssProp("aspect-ratio")],
+	"accent-": [fromRestrictions("color")],
+	"indent-": [fromCssProp("text-indent")],
+	"columns-": [fromCssProp("columns")],
 }
 
 function arbitraryValueCompletion(
@@ -498,7 +508,7 @@ function arbitraryValueCompletion(
 	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
-	const cssValueItems: lsp.CompletionItem[] = []
+	const cssValueItems: ICompletionItem[] = []
 
 	if (suggestion.target == undefined) {
 		return cssValueItems
@@ -546,7 +556,7 @@ function twinThemeCompletion(
 		return { isIncomplete: false, items: [] }
 	}
 
-	const value = state.getTheme(keys)
+	const value = state.tw.getTheme(keys)
 	if (typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
@@ -573,14 +583,12 @@ function twinThemeCompletion(
 	return {
 		isIncomplete: false,
 		items: candidates.map(label => {
-			const item: lsp.CompletionItem = {
+			const item: ICompletionItem = {
 				label,
 				sortText: formatCandidates(label),
+				data: { type: "theme" },
 			}
-			const value = state.getTheme([...keys, label])
-			item.data = {
-				type: "theme",
-			}
+			const value = state.tw.getTheme([...keys, label])
 			if (typeof value === "object") {
 				item.kind = lsp.CompletionItemKind.Module
 				item.documentation = {
@@ -655,7 +663,7 @@ function twinScreenCompletion(
 	token: parser.Token,
 	state: TailwindLoader,
 ): lsp.CompletionList {
-	const value = state.getTheme(["screens"])
+	const value = state.tw.getTheme(["screens"])
 	if (typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
@@ -682,13 +690,13 @@ function twinScreenCompletion(
 	return {
 		isIncomplete: false,
 		items: candidates.map(label => {
-			const bp = state.twin.screens.get(label)
-			const item: lsp.CompletionItem = {
+			const index = state.tw.screens.indexOf(label)
+			const item: ICompletionItem = {
 				label,
-				sortText: bp?.toString().padStart(5, " ") ?? formatCandidates(label),
+				sortText: index.toString().padStart(5, " ") ?? formatCandidates(label),
+				data: { type: "theme" },
 			}
-			const value = state.getTheme(["screens", label])
-			item.data = {}
+			const value = state.tw.getTheme(["screens", label])
 			if (typeof value === "object") {
 				item.kind = lsp.CompletionItemKind.Module
 				item.documentation = {
@@ -709,13 +717,13 @@ function twinScreenCompletion(
 						if (value === "transparent") {
 							item.kind = lsp.CompletionItemKind.Color
 							item.documentation = "rgba(0, 0, 0, 0.0)"
-							item.data.type = "color"
+							item.data = { type: "color" }
 							return item
 						}
 						chroma(value)
 						item.kind = lsp.CompletionItemKind.Color
 						item.documentation = value
-						item.data.type = "color"
+						item.data = { type: "color" }
 					} catch {
 						item.kind = lsp.CompletionItemKind.Constant
 						item.documentation = {
@@ -740,68 +748,5 @@ function twinScreenCompletion(
 
 			return item
 		}),
-	}
-}
-
-function createCompletionItem({
-	label,
-	rules,
-	state,
-}: {
-	label: string
-	rules: ClassNameItem
-	variants: string[]
-	kind: PatternKind
-	state: TailwindLoader
-}): lsp.CompletionItem {
-	const item: lsp.CompletionItem = {
-		label,
-		data: { type: "utilities" },
-		kind: lsp.CompletionItemKind.Constant,
-		sortText: (label.slice(0, 1) === "-" ? "~~~" : "~~") + formatLabel(label),
-	}
-
-	if (rules.some(d => d.source === "components")) {
-		item.data.type = "components"
-		return item
-	}
-
-	const info = state.twin.colors.get(label)
-	if (!info) {
-		return item
-	}
-
-	item.kind = lsp.CompletionItemKind.Color
-	if (label.includes("current")) {
-		return item
-	}
-
-	if (label.includes("transparent")) {
-		item.documentation = "rgba(0, 0, 0, 0.0)"
-		item.data.type = "color"
-		return item
-	}
-
-	item.documentation = info.backgroundColor || info.borderColor || info.color
-	item.data.type = "color"
-
-	return item
-}
-
-function formatLabel(label: string) {
-	const reg = /((?:[\w-]+-)+)+([\d/.]+)/
-	const m = label.match(reg)
-	if (!m) {
-		return label
-	}
-	try {
-		const val = eval(m[2])
-		if (typeof val !== "number") {
-			return label
-		}
-		const prefix = m[1] + (/^[\d.]+$/.test(m[2]) ? "@" : "_")
-		return prefix + val.toFixed(3).padStart(7, "0")
-	} catch {
-		return label
 	}
 }

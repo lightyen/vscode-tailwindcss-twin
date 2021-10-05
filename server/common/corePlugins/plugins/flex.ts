@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const flex: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "flex")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.flex)
+	if (!context.config.corePlugins.some(c => c === "flex")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.flex)
 
 	return {
 		isMatch,
@@ -30,7 +30,7 @@ export const flex: PluginConstructor = (context: Context): Plugin => {
 flex.canArbitraryValue = true
 
 export const flexDirection: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "flexDirection")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "flexDirection")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -48,7 +48,7 @@ export const flexDirection: PluginConstructor = (context: Context): Plugin => {
 flexDirection.canArbitraryValue = false
 
 export const flexWrap: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "flexWrap")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "flexWrap")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -70,8 +70,8 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 }
 
 export const flexGrow: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "flexGrow")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.flexGrow)
+	if (!context.config.corePlugins.some(c => c === "flexGrow")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.flexGrow)
 
 	return {
 		isMatch,
@@ -101,8 +101,8 @@ export const flexGrow: PluginConstructor = (context: Context): Plugin => {
 flexGrow.canArbitraryValue = true
 
 export const flexShrink: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "flexShrink")) throw ErrorNotEnable
-	const [hasDefault, values] = getDefault(context.resolved.theme.flexShrink)
+	if (!context.config.corePlugins.some(c => c === "flexShrink")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.flexShrink)
 
 	return {
 		isMatch,

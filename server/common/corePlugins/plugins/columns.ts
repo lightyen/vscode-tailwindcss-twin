@@ -1,19 +1,19 @@
 import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const outline: PluginConstructor = (context: Context): Plugin => {
-	if (!context.config.corePlugins.some(c => c === "outline")) throw ErrorNotEnable
-	const values = Object.keys(context.config.theme.outline)
+export const columns: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "columns")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.columns)
 
 	return {
 		isMatch,
 		get name(): keyof Tailwind.CorePluginFeatures {
-			return "outline"
+			return "columns"
 		},
 	}
 
 	function isMatch(value: string) {
-		const match = /^outline-(.*)/.exec(value)
+		const match = /^columns-(.*)/.exec(value)
 		if (!match) {
 			return false
 		}
@@ -27,4 +27,4 @@ export const outline: PluginConstructor = (context: Context): Plugin => {
 		return values.some(c => c === val)
 	}
 }
-outline.canArbitraryValue = true
+columns.canArbitraryValue = true

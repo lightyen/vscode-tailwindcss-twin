@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const textOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "textOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.textOpacity)
+	if (!context.config.corePlugins.some(c => c === "textOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.textOpacity)
 
 	return {
 		isMatch,
@@ -30,8 +30,8 @@ export const textOpacity: PluginConstructor = (context: Context): Plugin => {
 textOpacity.canArbitraryValue = true
 
 export const backgroundOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backgroundOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.backgroundOpacity)
+	if (!context.config.corePlugins.some(c => c === "backgroundOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.backgroundOpacity)
 
 	return {
 		isMatch,
@@ -58,8 +58,8 @@ export const backgroundOpacity: PluginConstructor = (context: Context): Plugin =
 backgroundOpacity.canArbitraryValue = true
 
 export const borderOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "borderOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.borderOpacity)
+	if (!context.config.corePlugins.some(c => c === "borderOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.borderOpacity)
 
 	return {
 		isMatch,
@@ -86,8 +86,8 @@ export const borderOpacity: PluginConstructor = (context: Context): Plugin => {
 borderOpacity.canArbitraryValue = true
 
 export const placeholderOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "placeholderOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.placeholderOpacity)
+	if (!context.config.corePlugins.some(c => c === "placeholderOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.placeholderOpacity)
 
 	return {
 		isMatch,
@@ -114,8 +114,8 @@ export const placeholderOpacity: PluginConstructor = (context: Context): Plugin 
 placeholderOpacity.canArbitraryValue = true
 
 export const divideOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "divideOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.divideOpacity)
+	if (!context.config.corePlugins.some(c => c === "divideOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.divideOpacity)
 
 	return {
 		isMatch,
@@ -142,8 +142,8 @@ export const divideOpacity: PluginConstructor = (context: Context): Plugin => {
 divideOpacity.canArbitraryValue = true
 
 export const ringOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "ringOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.ringOpacity)
+	if (!context.config.corePlugins.some(c => c === "ringOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.ringOpacity)
 
 	return {
 		isMatch,
@@ -170,8 +170,8 @@ export const ringOpacity: PluginConstructor = (context: Context): Plugin => {
 ringOpacity.canArbitraryValue = true
 
 export const opacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "opacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.opacity)
+	if (!context.config.corePlugins.some(c => c === "opacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.opacity)
 
 	return {
 		isMatch,
@@ -198,8 +198,8 @@ export const opacity: PluginConstructor = (context: Context): Plugin => {
 opacity.canArbitraryValue = true
 
 export const backdropOpacity: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropOpacity")) throw ErrorNotEnable
-	const opacities = Object.keys(context.resolved.theme.backdropOpacity)
+	if (!context.config.corePlugins.some(c => c === "backdropOpacity")) throw ErrorNotEnable
+	const opacities = Object.keys(context.config.theme.backdropOpacity)
 
 	return {
 		isMatch,

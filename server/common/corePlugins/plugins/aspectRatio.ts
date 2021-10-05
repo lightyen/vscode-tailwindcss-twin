@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const aspectRatio: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "aspectRatio")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.aspectRatio)
+	if (!context.config.corePlugins.some(c => c === "aspectRatio")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.aspectRatio)
 
 	return {
 		isMatch,

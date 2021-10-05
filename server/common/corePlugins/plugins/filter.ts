@@ -2,7 +2,7 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const filter: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "filter")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "filter")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -18,7 +18,7 @@ export const filter: PluginConstructor = (context: Context): Plugin => {
 filter.canArbitraryValue = false
 
 export const backdropFilter: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropFilter")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backdropFilter")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -34,8 +34,8 @@ export const backdropFilter: PluginConstructor = (context: Context): Plugin => {
 backdropFilter.canArbitraryValue = false
 
 export const brightness: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "brightness")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.brightness)
+	if (!context.config.corePlugins.some(c => c === "brightness")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.brightness)
 
 	return {
 		isMatch,
@@ -62,8 +62,8 @@ export const brightness: PluginConstructor = (context: Context): Plugin => {
 brightness.canArbitraryValue = true
 
 export const backdropBrightness: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropBrightness")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backdropBrightness)
+	if (!context.config.corePlugins.some(c => c === "backdropBrightness")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backdropBrightness)
 
 	return {
 		isMatch,
@@ -90,8 +90,8 @@ export const backdropBrightness: PluginConstructor = (context: Context): Plugin 
 backdropBrightness.canArbitraryValue = true
 
 export const contrast: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "contrast")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.contrast)
+	if (!context.config.corePlugins.some(c => c === "contrast")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.contrast)
 
 	return {
 		isMatch,
@@ -118,8 +118,8 @@ export const contrast: PluginConstructor = (context: Context): Plugin => {
 contrast.canArbitraryValue = true
 
 export const backdropContrast: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropContrast")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backdropContrast)
+	if (!context.config.corePlugins.some(c => c === "backdropContrast")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backdropContrast)
 
 	return {
 		isMatch,
@@ -146,8 +146,8 @@ export const backdropContrast: PluginConstructor = (context: Context): Plugin =>
 backdropContrast.canArbitraryValue = true
 
 export const hueRotate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "hueRotate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.hueRotate)
+	if (!context.config.corePlugins.some(c => c === "hueRotate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.hueRotate)
 
 	return {
 		isMatch,
@@ -179,8 +179,8 @@ export const hueRotate: PluginConstructor = (context: Context): Plugin => {
 hueRotate.canArbitraryValue = true
 
 export const backdropHueRotate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropHueRotate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backdropHueRotate)
+	if (!context.config.corePlugins.some(c => c === "backdropHueRotate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backdropHueRotate)
 
 	return {
 		isMatch,
@@ -212,8 +212,8 @@ export const backdropHueRotate: PluginConstructor = (context: Context): Plugin =
 backdropHueRotate.canArbitraryValue = true
 
 export const saturate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "saturate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.saturate)
+	if (!context.config.corePlugins.some(c => c === "saturate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.saturate)
 
 	return {
 		isMatch,
@@ -240,8 +240,8 @@ export const saturate: PluginConstructor = (context: Context): Plugin => {
 saturate.canArbitraryValue = true
 
 export const backdropSaturate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropSaturate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.backdropSaturate)
+	if (!context.config.corePlugins.some(c => c === "backdropSaturate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.backdropSaturate)
 
 	return {
 		isMatch,
@@ -274,8 +274,8 @@ function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
 }
 
 export const grayscale: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "grayscale")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.grayscale)
+	if (!context.config.corePlugins.some(c => c === "grayscale")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.grayscale)
 
 	return {
 		isMatch,
@@ -305,8 +305,8 @@ export const grayscale: PluginConstructor = (context: Context): Plugin => {
 grayscale.canArbitraryValue = true
 
 export const backdropGrayscale: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropGrayscale")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.backdropGrayscale)
+	if (!context.config.corePlugins.some(c => c === "backdropGrayscale")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.backdropGrayscale)
 
 	return {
 		isMatch,
@@ -336,8 +336,8 @@ export const backdropGrayscale: PluginConstructor = (context: Context): Plugin =
 backdropGrayscale.canArbitraryValue = true
 
 export const invert: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "invert")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.invert)
+	if (!context.config.corePlugins.some(c => c === "invert")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.invert)
 
 	return {
 		isMatch,
@@ -367,8 +367,8 @@ export const invert: PluginConstructor = (context: Context): Plugin => {
 invert.canArbitraryValue = true
 
 export const backdropInvert: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropInvert")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.backdropInvert)
+	if (!context.config.corePlugins.some(c => c === "backdropInvert")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.backdropInvert)
 
 	return {
 		isMatch,
@@ -398,8 +398,8 @@ export const backdropInvert: PluginConstructor = (context: Context): Plugin => {
 backdropInvert.canArbitraryValue = true
 
 export const sepia: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "sepia")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.sepia)
+	if (!context.config.corePlugins.some(c => c === "sepia")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.sepia)
 
 	return {
 		isMatch,
@@ -429,8 +429,8 @@ export const sepia: PluginConstructor = (context: Context): Plugin => {
 sepia.canArbitraryValue = true
 
 export const backdropSepia: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "backdropSepia")) throw ErrorNotEnable
-	const [hasDefault, size] = getDefault(context.resolved.theme.backdropSepia)
+	if (!context.config.corePlugins.some(c => c === "backdropSepia")) throw ErrorNotEnable
+	const [hasDefault, size] = getDefault(context.config.theme.backdropSepia)
 
 	return {
 		isMatch,

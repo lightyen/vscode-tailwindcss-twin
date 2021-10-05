@@ -17,6 +17,6 @@ export function transformSourceMap(serverSourceMapPath: string, stack: string): 
 			return `at ${oldName}(${source || oldSource}:${line || oldLine}:${column || oldColumn})`
 		}
 
-		return `at ${oldName} ${source || oldSource}:${line || oldLine}:${column || oldColumn}`
+		return `at ${oldName}${source || oldSource}:${line || oldLine}:${column || oldColumn}`
 	})
 }

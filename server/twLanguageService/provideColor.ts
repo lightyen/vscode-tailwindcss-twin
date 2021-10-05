@@ -53,21 +53,7 @@ export async function provideColorDecorations(
 			switch (c.type) {
 				case parser.SpreadResultType.ClassName:
 					{
-						let value = c.target.value
-
-						const [isColorShorthandOpacity, name] = state.twin.isColorShorthandOpacity(value)
-						if (isColorShorthandOpacity) {
-							value = name
-						}
-
-						const classname = state.twin.classnames.get(value)
-						if (!classname) {
-							continue
-						}
-						if (classname.some(c => c.source === "components")) {
-							continue
-						}
-						const color = state.twin.colors.get(value)
+						const color = state.tw.getColorDesc(c.target.value)
 						if (color) {
 							colors.push({
 								range: {
@@ -81,19 +67,19 @@ export async function provideColorDecorations(
 					break
 				case parser.SpreadResultType.ArbitraryStyle:
 					{
-						const [isColorArbitraryOpacity, value] = state.twin.isColorArbitraryOpacity(c.target.value)
-						if (isColorArbitraryOpacity) {
-							const color = state.twin.colors.get(value)
-							if (color) {
-								colors.push({
-									range: {
-										start: document.positionAt(start + c.target.start),
-										end: document.positionAt(start + c.target.end),
-									},
-									...color,
-								})
-							}
-						}
+						// const [isColorArbitraryOpacity, value] = state.twin.isColorArbitraryOpacity(c.target.value)
+						// if (isColorArbitraryOpacity) {
+						// 	const color = state.twin.colors.get(value)
+						// 	if (color) {
+						// 		colors.push({
+						// 			range: {
+						// 				start: document.positionAt(start + c.target.start),
+						// 				end: document.positionAt(start + c.target.end),
+						// 			},
+						// 			...color,
+						// 		})
+						// 	}
+						// }
 						// NOTE: conflict with vscode-styled-components
 						// else if (state.twin.isArbitraryColor(c.target.value)) {
 						// 	const tw = await state.jitColor(c.target.value)
@@ -122,7 +108,7 @@ function getThemeDecoration(text: string, state: TailwindLoader): string | undef
 	if (result.errors.length > 0) {
 		return undefined
 	}
-	const value = state.getTheme(result.keys(), true)
+	const value = state.tw.getTheme(result.keys(), true)
 	if (typeof value === "string") {
 		if (value === "transparent") {
 			return value

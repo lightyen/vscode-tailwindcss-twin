@@ -2,7 +2,7 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const transform: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transform")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "transform")) throw ErrorNotEnable
 
 	return {
 		isMatch,
@@ -23,8 +23,8 @@ export const transform: PluginConstructor = (context: Context): Plugin => {
 transform.canArbitraryValue = false
 
 export const rotate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "rotate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.rotate)
+	if (!context.config.corePlugins.some(c => c === "rotate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.rotate)
 
 	return {
 		isMatch,
@@ -56,8 +56,8 @@ export const rotate: PluginConstructor = (context: Context): Plugin => {
 rotate.canArbitraryValue = true
 
 export const skew: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "skew")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.skew)
+	if (!context.config.corePlugins.some(c => c === "skew")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.skew)
 
 	return {
 		isMatch,
@@ -89,8 +89,8 @@ export const skew: PluginConstructor = (context: Context): Plugin => {
 skew.canArbitraryValue = true
 
 export const scale: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "scale")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.scale)
+	if (!context.config.corePlugins.some(c => c === "scale")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.scale)
 
 	return {
 		isMatch,
@@ -117,8 +117,8 @@ export const scale: PluginConstructor = (context: Context): Plugin => {
 scale.canArbitraryValue = true
 
 export const translate: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "translate")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.translate)
+	if (!context.config.corePlugins.some(c => c === "translate")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.translate)
 
 	return {
 		isMatch,
@@ -150,8 +150,8 @@ export const translate: PluginConstructor = (context: Context): Plugin => {
 translate.canArbitraryValue = true
 
 export const transformOrigin: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "transformOrigin")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.transformOrigin)
+	if (!context.config.corePlugins.some(c => c === "transformOrigin")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.transformOrigin)
 
 	return {
 		isMatch,

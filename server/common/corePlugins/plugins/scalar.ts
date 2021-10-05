@@ -2,8 +2,8 @@ import isArbitraryValue from "./common/isArbitraryValue"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const order: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "order")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.order)
+	if (!context.config.corePlugins.some(c => c === "order")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.order)
 
 	return {
 		isMatch,
@@ -30,8 +30,8 @@ export const order: PluginConstructor = (context: Context): Plugin => {
 order.canArbitraryValue = true
 
 export const zIndex: PluginConstructor = (context: Context): Plugin => {
-	if (!context.resolved.corePlugins.some(c => c === "zIndex")) throw ErrorNotEnable
-	const values = Object.keys(context.resolved.theme.zIndex)
+	if (!context.config.corePlugins.some(c => c === "zIndex")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.zIndex)
 
 	return {
 		isMatch,
