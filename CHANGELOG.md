@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.10.3
+
+- Fix module importing
+- Try to load tsconfig paths
+
 ## 0.10.2
 
 - Fix config loading on yarn2
