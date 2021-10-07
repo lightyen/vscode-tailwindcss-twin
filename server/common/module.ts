@@ -1,4 +1,3 @@
-import fs from "fs"
 import Module from "module"
 import path from "path"
 import ts from "typescript"
@@ -111,8 +110,9 @@ export function requireModule(moduleName: string, options: string | requireModul
 }
 
 export function transpile(compilerOptions: ts.CompilerOptions, moduleName: string): string {
-	const code = fs.readFileSync(moduleName, { encoding: "utf-8" }).toString()
-	const { outputText: transpiledCode, diagnostics } = ts.transpileModule(code, {
+	const code = ts.sys.readFile(moduleName)
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const { outputText: transpiledCode, diagnostics } = ts.transpileModule(code!, {
 		moduleName,
 		compilerOptions,
 	})
@@ -126,24 +126,19 @@ export function transpile(compilerOptions: ts.CompilerOptions, moduleName: strin
 	return transpiledCode
 }
 
-function tryAddExtensions(moduleName: string, extensions = [".ts", ".js", ".cjs", ".mjs"]) {
-	for (const ext of extensions) {
-		try {
-			fs.accessSync(moduleName + ext)
-			return moduleName + ext
-		} catch {}
-	}
-	return undefined
-}
+type Mappings = ReturnType<typeof tp.createMappings>
 
 function requireModuleFromCode(
 	compilerOptions: ts.CompilerOptions,
 	code: string,
 	filename: string,
+	host: ts.ModuleResolutionHost,
 	pnp?: PnpEntry | undefined,
-	mappings?: tp.Mapping[] | undefined,
+	mappings?: Mappings | undefined,
 	base = path.dirname(filename),
 ) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const interopExport = (obj: any) => (obj && obj.default ? obj.default : obj)
 	const __module = new Module(filename)
 	__module.paths = Module["_nodeModulePaths"](base)
 	__module.require = function __require(moduleName) {
@@ -170,23 +165,29 @@ function requireModuleFromCode(
 				case ".js":
 				case ".cjs":
 				case ".mjs":
-					return requireModuleFromCode(
-						compilerOptions,
-						transpile(compilerOptions, moduleName),
-						moduleName,
-						pnp,
-						mappings,
+					return interopExport(
+						requireModuleFromCode(
+							compilerOptions,
+							transpile(compilerOptions, moduleName),
+							moduleName,
+							host,
+							pnp,
+							mappings,
+						),
 					)
 				default: {
-					const resolvedFileName = tryAddExtensions(moduleName)
-					if (!resolvedFileName) return requireModule(moduleName, { filename, cache: false })
-					moduleName = resolvedFileName
-					return requireModuleFromCode(
-						compilerOptions,
-						transpile(compilerOptions, moduleName),
-						moduleName,
-						pnp,
-						mappings,
+					const { resolvedModule } = ts.resolveModuleName(moduleName, filename, compilerOptions, host)
+					if (!resolvedModule?.resolvedFileName) return requireModule(moduleName, { filename, cache: false })
+					moduleName = resolvedModule.resolvedFileName
+					return interopExport(
+						requireModuleFromCode(
+							compilerOptions,
+							transpile(compilerOptions, moduleName),
+							moduleName,
+							host,
+							pnp,
+							mappings,
+						),
 					)
 				}
 			}
@@ -215,13 +216,6 @@ interface importFromOptions {
 }
 
 const logger = tp.createLogger({ logLevel: tp.LogLevel.Error })
-const host: ts.ModuleResolutionHost = {
-	...ts.sys,
-	fileExists(filename) {
-		if (filename.endsWith(ts.Extension.Dts)) return false
-		return ts.sys.fileExists(filename)
-	},
-}
 
 /**
  * @param moduleName module ID
@@ -250,11 +244,19 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 		allowSyntheticDefaultImports: true,
 	}
 
+	const host: ts.ModuleResolutionHost = {
+		...ts.sys,
+		fileExists(filename) {
+			if (filename.endsWith(ts.Extension.Dts)) return false
+			return ts.sys.fileExists(filename)
+		},
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const interopExport = (obj: any) => (obj && obj.default ? obj.default : obj)
 
 	function loadTsConfig(ws: string) {
-		let mappings: tp.Mapping[] | undefined
+		let mappings: Mappings | undefined
 		const tsConfigPath = ts.findConfigFile(ws, ts.sys.fileExists)
 		if (tsConfigPath) {
 			const { error, config } = ts.readConfigFile(tsConfigPath, host.readFile)
@@ -276,37 +278,41 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 
 	const isAbs = path.isAbsolute(moduleName)
 	if (isAbs || moduleName.startsWith("./") || moduleName.startsWith("../")) {
-		const mappings = loadTsConfig(path.dirname(moduleName))
-		if (mappings) compilerOptions.baseUrl = path.dirname(moduleName)
+		const currentDirectory = path.dirname(moduleName)
+		const mappings = loadTsConfig(currentDirectory)
+		if (mappings) compilerOptions.baseUrl = currentDirectory
 		switch (path.extname(moduleName)) {
 			case ".json":
-				return requireModule(moduleName, { cache, paths: path.dirname(moduleName) })
+				return requireModule(moduleName, { cache, paths: currentDirectory })
 			case ".ts":
 			case ".js":
 			case ".cjs":
 			case ".mjs": {
-				const pnp = tryPnP(path.dirname(moduleName))
+				const pnp = tryPnP(currentDirectory)
 				if (pnp) compilerOptions.strict = false
 				return interopExport(
 					requireModuleFromCode(
 						compilerOptions,
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
+						host,
 						pnp,
 						mappings,
 					),
 				)
 			}
 			default: {
-				const pnp = tryPnP(path.dirname(moduleName))
+				const pnp = tryPnP(currentDirectory)
 				if (pnp) compilerOptions.strict = false
-				const resolvedFileName = tryAddExtensions(moduleName)
-				if (resolvedFileName) moduleName = resolvedFileName
+				const containingFile = path.resolve(currentDirectory, "empty")
+				const { resolvedModule } = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host)
+				if (resolvedModule?.resolvedFileName) moduleName = resolvedModule.resolvedFileName
 				return interopExport(
 					requireModuleFromCode(
 						compilerOptions,
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
+						host,
 						pnp,
 						mappings,
 					),
@@ -335,8 +341,13 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 		}
 
 		const pnp = tryPnP(base)
+		const containingFile = path.resolve(base, "empty")
+		const { resolvedModule } = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host)
+		if (resolvedModule?.resolvedFileName) moduleName = resolvedModule.resolvedFileName
 		return interopExport(requireModule(moduleName, { cache, paths: base, pnp }))
 	}
 
+	const { resolvedModule } = ts.resolveModuleName(moduleName, "./empty", compilerOptions, host)
+	if (resolvedModule?.resolvedFileName) moduleName = resolvedModule.resolvedFileName
 	return interopExport(requireModule(moduleName, { cache }))
 }
