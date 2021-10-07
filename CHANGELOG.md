@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.10.4
+
+- Fix parser
+
 ## 0.10.3
 
 - Fix module importing
