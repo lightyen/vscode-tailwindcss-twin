@@ -149,7 +149,9 @@ function findTerminal(text: string, start = 0, end = text.length, sep = ":"): nu
 				if (char === "!") return i + 1
 				return i
 			case 5:
-				if (char === ")") {
+				if (char === "(") {
+					_stack += 1
+				} else if (char === ")") {
 					_stack -= 1
 					if (_stack <= 0) {
 						state = 4

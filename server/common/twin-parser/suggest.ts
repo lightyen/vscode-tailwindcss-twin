@@ -50,7 +50,28 @@ export function suggest({
 		variants: TokenList
 	}
 
-	const inComment = ({
+	interface TravelResult {
+		target?: nodes.Node
+		type?: SuggestResultType
+		variants: TokenList
+	}
+
+	const result = travel(parse({ text, start, end, separator, breac: position }), { variants: createTokenList() })
+
+	if (result == undefined) {
+		return {
+			variants: createTokenList(),
+			inComment: inComment({ position, text, start, end }),
+		}
+	}
+
+	return {
+		...result,
+		word: result.target?.getWord(position),
+		inComment: inComment({ position, text, start, end }),
+	}
+
+	function inComment({
 		position,
 		text,
 		start = 0,
@@ -60,7 +81,7 @@ export function suggest({
 		text: string
 		start?: number
 		end?: number
-	}): boolean => {
+	}): boolean {
 		const reg = /(")|(')|(\/\/[^\n]*(?:\n|$))|((?:\/\*).*?(?:\*\/|$))/gs
 		let match: RegExpExecArray | null
 		reg.lastIndex = start
@@ -90,19 +111,31 @@ export function suggest({
 		return false
 	}
 
-	const inRange = (node: nodes.Node) => position >= node.start && position <= node.end
+	function inRange(node: nodes.Node) {
+		return position >= node.start && position <= node.end
+	}
 
-	const travel = (
-		node: nodes.Node,
-		ctx: Context,
-	):
-		| {
-				target: nodes.Node
-				type: SuggestResultType
-				variants: TokenList
-		  }
-		| undefined => {
-		const walk = (node: nodes.Node) => {
+	function travel(node: nodes.Node, ctx: Context): TravelResult | undefined {
+		if (node == undefined) {
+			return undefined
+		}
+
+		if (nodes.isDeclaration(node)) {
+			const c = node.children.find(child => inRange(child))
+			if (c) {
+				return walk(c)
+			}
+
+			return { ...ctx }
+		}
+
+		if (inRange(node)) {
+			return walk(node)
+		}
+
+		return { ...ctx }
+
+		function walk(node: nodes.Node) {
 			if (nodes.isVariantSpan(node)) {
 				const variants = ctx.variants.slice()
 				if (inRange(node.variant)) {
@@ -117,7 +150,6 @@ export function suggest({
 				if (node.prefix && inRange(node.prefix)) {
 					return { target: node.prefix, type: suggestResultType(node.prefix), variants: ctx.variants }
 				}
-
 				return travel(node.child, { ...ctx })
 			}
 
@@ -131,39 +163,5 @@ export function suggest({
 
 			return undefined
 		}
-
-		if (node == undefined) {
-			return undefined
-		}
-
-		if (nodes.isDeclaration(node)) {
-			const c = node.children.find(child => inRange(child))
-			if (c) {
-				return walk(c)
-			}
-
-			return undefined
-		}
-
-		if (inRange(node)) {
-			return walk(node)
-		}
-
-		return undefined
-	}
-
-	const result = travel(parse({ text, start, end, separator, breac: position }), { variants: createTokenList() })
-
-	if (result == undefined) {
-		return {
-			variants: createTokenList(),
-			inComment: inComment({ position, text, start, end }),
-		}
-	}
-
-	return {
-		...result,
-		word: result.target.getWord(position),
-		inComment: inComment({ position, text, start, end }),
 	}
 }
