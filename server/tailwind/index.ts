@@ -34,15 +34,12 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 		transformAllSelectors,
 		transformAllClasses,
 		transformLastClasses,
-	} = importFrom("tailwindcss/lib/util/pluginUtils", {
+	} = importFrom("tailwindcss/lib/util/pluginUtils", { cache: true, base: extensionUri.fsPath })
+	const prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", {
 		cache: true,
 		base: extensionUri.fsPath,
 	})
-	const prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", { cache: true, base: extensionUri.fsPath })
-	const plugin = importFrom("tailwindcss/plugin", {
-		cache: true,
-		base: extensionUri.fsPath,
-	})
+	const plugin = importFrom("tailwindcss/plugin", { cache: true, base: extensionUri.fsPath })
 	const resolveConfig: Tailwind.resolveConfig = importFrom("tailwindcss/resolveConfig", {
 		cache: true,
 		base: extensionUri.fsPath,

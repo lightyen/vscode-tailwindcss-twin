@@ -2,8 +2,10 @@ import Fuse from "fuse.js"
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { DIAGNOSTICS_ID } from "~/../shared"
-import { findAllMatch, PatternKind } from "~/common/ast"
+import { findAllMatch, PatternKind, TokenResult } from "~/common/ast"
+import { defaultLogger as console } from "~/common/logger"
 import parseThemeValue from "~/common/parseThemeValue"
+import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
 import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
@@ -44,72 +46,101 @@ function createDiagnosticArray() {
 export function validate(document: TextDocument, state: TailwindLoader, options: ServiceOptions, cache: Cache) {
 	const diagnostics = createDiagnosticArray()
 	const uri = document.uri.toString()
-	const tokens = findAllMatch(document, options.jsxPropImportChecking)
-	for (const { token, kind } of tokens) {
-		const [start, end, value] = token
-		if (kind === PatternKind.TwinTheme) {
-			const result = parseThemeValue(value)
-			for (const err of result.errors) {
-				if (
-					!diagnostics.push({
-						range: {
-							start: document.positionAt(start + err.start),
-							end: document.positionAt(start + err.end),
-						},
-						source: DIAGNOSTICS_ID,
-						message: err.message,
-						severity: DiagnosticSeverity.Error,
-					})
-				) {
-					return diagnostics
-				}
-			}
-			if (!state.tw.getTheme(result.keys(), true)) {
-				if (
-					!diagnostics.push({
-						range: { start: document.positionAt(start), end: document.positionAt(end) },
-						source: DIAGNOSTICS_ID,
-						message: "value is undefined",
-						severity: DiagnosticSeverity.Error,
-					})
-				) {
-					return diagnostics
-				}
-			}
-		} else if (kind === PatternKind.TwinScreen) {
-			if (value) {
-				const result = state.tw.getTheme(["screens", value])
-				if (result == undefined) {
-					if (
-						!diagnostics.push({
-							range: { start: document.positionAt(start), end: document.positionAt(end) },
-							source: DIAGNOSTICS_ID,
-							message: "value is undefined",
-							severity: DiagnosticSeverity.Error,
-						})
-					) {
-						return diagnostics
-					}
-				}
-			}
-		} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
-			const c = cache[uri][value]
-			if (!c) {
-				const result = parser.spread({ text: value, separator: state.separator })
-				cache[uri][value] = result
-			}
-			validateTwin({
-				document,
-				offset: start,
-				kind,
-				diagnostics: options.diagnostics,
-				state,
-				result: diagnostics,
-				...cache[uri][value],
-			})
+	let tokens: TokenResult[]
+
+	try {
+		tokens = findAllMatch(document, options.jsxPropImportChecking)
+		if (tokens.length === 0) {
+			return diagnostics
 		}
+	} catch (error) {
+		const err = error as Error
+		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+		console.error(err)
 	}
-	return diagnostics
+
+	const start = process.hrtime.bigint()
+	const answer = doValidate()
+	const end = process.hrtime.bigint()
+	console.trace(`validate (${Number((end - start) / 10n ** 6n)}ms)`)
+	return answer
+
+	function doValidate() {
+		try {
+			for (const { token, kind } of tokens) {
+				const [start, end, value] = token
+				if (kind === PatternKind.TwinTheme) {
+					const result = parseThemeValue(value)
+					for (const err of result.errors) {
+						if (
+							!diagnostics.push({
+								range: {
+									start: document.positionAt(start + err.start),
+									end: document.positionAt(start + err.end),
+								},
+								source: DIAGNOSTICS_ID,
+								message: err.message,
+								severity: DiagnosticSeverity.Error,
+							})
+						) {
+							return diagnostics
+						}
+					}
+					if (!state.tw.getTheme(result.keys(), true)) {
+						if (
+							!diagnostics.push({
+								range: { start: document.positionAt(start), end: document.positionAt(end) },
+								source: DIAGNOSTICS_ID,
+								message: "value is undefined",
+								severity: DiagnosticSeverity.Error,
+							})
+						) {
+							return diagnostics
+						}
+					}
+				} else if (kind === PatternKind.TwinScreen) {
+					if (value) {
+						const result = state.tw.getTheme(["screens", value])
+						if (result == undefined) {
+							if (
+								!diagnostics.push({
+									range: { start: document.positionAt(start), end: document.positionAt(end) },
+									source: DIAGNOSTICS_ID,
+									message: "value is undefined",
+									severity: DiagnosticSeverity.Error,
+								})
+							) {
+								return diagnostics
+							}
+						}
+					}
+				} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
+					const c = cache[uri][value]
+					if (!c) {
+						const result = parser.spread({ text: value, separator: state.separator })
+						cache[uri][value] = result
+					}
+					validateTwin({
+						document,
+						offset: start,
+						kind,
+						diagnostics: options.diagnostics,
+						state,
+						result: diagnostics,
+						...cache[uri][value],
+					})
+				}
+			}
+			return diagnostics
+		} catch (error) {
+			const err = error as Error
+			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+			console.error(err)
+			console.error("do validation failed.")
+		}
+
+		return diagnostics
+	}
 }
 
 function validateTwin({

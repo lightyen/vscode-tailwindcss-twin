@@ -245,6 +245,19 @@
         "tailwindcss.rootFontSize": {
           "type": "number",
           "default": 16
+        },
+        "tailwindcss.logLevel": {
+          "type": "string",
+          "description": "%ext.settings.logging.level%",
+          "enum": [
+            "none",
+            "error",
+            "warning",
+            "info",
+            "debug",
+            "trace"
+          ],
+          "default": "info"
         }
       }
     },

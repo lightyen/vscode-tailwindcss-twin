@@ -2,6 +2,7 @@ import Module from "module"
 import path from "path"
 import ts from "typescript"
 import * as tp from "typescript-paths"
+import { defaultLogger as console } from "~/common/logger"
 
 interface PnpEntry {
 	setup?(): void

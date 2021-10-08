@@ -1,7 +1,8 @@
 import chroma from "chroma-js"
 import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { canMatch, PatternKind } from "~/common/ast"
+import { canMatch, PatternKind, TokenResult } from "~/common/ast"
+import { defaultLogger as console } from "~/common/logger"
 import { findThemeValueKeys } from "~/common/parseThemeValue"
 import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
@@ -11,6 +12,64 @@ import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
 import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
 import type { ServiceOptions } from "./service"
+
+export default function completion(
+	document: TextDocument,
+	position: lsp.Position,
+	state: TailwindLoader,
+	options: ServiceOptions,
+): lsp.CompletionList | undefined {
+	let result: TokenResult | undefined
+	try {
+		result = canMatch(document, position, false, options.jsxPropImportChecking)
+		if (!result) {
+			return undefined
+		}
+	} catch (error) {
+		const err = error as Error
+		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+		console.error(err)
+	}
+
+	const start = process.hrtime.bigint()
+	const list = doComplete()
+	const end = process.hrtime.bigint()
+	console.trace(`provide completion (${Number((end - start) / 10n ** 6n)}ms)`)
+	return list
+
+	function doComplete() {
+		try {
+			const index = document.offsetAt(position)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const { kind, token } = result!
+			if (kind === PatternKind.TwinTheme) {
+				const list = twinThemeCompletion(document, index, token, state)
+				for (let i = 0; i < list.items.length; i++) {
+					list.items[i].data.uri = document.uri
+				}
+				return list
+			} else if (kind === PatternKind.TwinScreen) {
+				const list = twinScreenCompletion(document, index, token, state)
+				for (let i = 0; i < list.items.length; i++) {
+					list.items[i].data.uri = document.uri
+				}
+				return list
+			} else {
+				const list = twinCompletion(document, index, token, kind, state, options)
+				for (let i = 0; i < list.items.length; i++) {
+					list.items[i].data.uri = document.uri
+				}
+				return list
+			}
+		} catch (error) {
+			const err = error as Error
+			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+			console.error(err)
+			console.error("build completion list failed.")
+		}
+		return undefined
+	}
+}
 
 function doReplace(
 	list: ICompletionItem[],
@@ -45,47 +104,6 @@ function doInsert(
 	}
 }
 
-export default function completion(
-	document: TextDocument,
-	position: lsp.Position,
-	state: TailwindLoader,
-	options: ServiceOptions,
-): lsp.CompletionList | undefined {
-	try {
-		const result = canMatch(document, position, false, options.jsxPropImportChecking)
-		if (!result) {
-			return undefined
-		}
-		const index = document.offsetAt(position)
-		const { kind, token } = result
-		if (kind === PatternKind.TwinTheme) {
-			const list = twinThemeCompletion(document, index, token, state)
-			for (let i = 0; i < list.items.length; i++) {
-				list.items[i].data.uri = document.uri
-			}
-			return list
-		} else if (kind === PatternKind.TwinScreen) {
-			const list = twinScreenCompletion(document, index, token, state)
-			for (let i = 0; i < list.items.length; i++) {
-				list.items[i].data.uri = document.uri
-			}
-			return list
-		} else {
-			const list = twinCompletion(document, index, token, kind, state, options)
-			for (let i = 0; i < list.items.length; i++) {
-				list.items[i].data.uri = document.uri
-			}
-			return list
-		}
-	} catch (error) {
-		const err = error as Error
-		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-		console.error(`[${new Date().toLocaleString()}]`, err)
-		console.error("build completions failed.")
-	}
-	return undefined
-}
-
 function twinCompletion(
 	document: TextDocument,
 	index: number,
@@ -97,8 +115,7 @@ function twinCompletion(
 	const [offset, , text] = match
 	const position = index - offset
 	const suggestion = parser.suggest({ text, position, separator: state.separator })
-	const isIncomplete = true
-	// const start = process.hrtime.bigint()
+	const isIncomplete = false
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilties = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
@@ -109,8 +126,6 @@ function twinCompletion(
 		.concat(utilties)
 		.concat(shortcss)
 		.concat(arbitraryValue)
-	// const end = process.hrtime.bigint()
-	// console.info(`[${new Date().toLocaleString()}]`, `auto complete: (${Number((end - start) / 10n ** 6n)}ms)`)
 	return completionList
 }
 

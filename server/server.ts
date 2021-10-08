@@ -5,6 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver/node"
 import { FileChangeType } from "vscode-languageserver/node"
 import { URI, Utils } from "vscode-uri"
+import { defaultLogger as console } from "~/common/logger"
 import { importFrom } from "~/common/module"
 import packageInfo from "../package.json"
 import { intl } from "./locale"
@@ -38,7 +39,6 @@ const priority = [".ts", ".js", ".cjs"]
 function connectLsp() {
 	const connection: lsp.Connection = lsp.createConnection(lsp.ProposedFeatures.all)
 	const documents = new lsp.TextDocuments(TextDocument)
-
 	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
 	const configFolders: Map<string, URI[]> = new Map()
 	let hasConfigurationCapability = false
@@ -71,7 +71,7 @@ function connectLsp() {
 		workspaceFolder = URI.parse(options.workspaceFolder)
 		extensionMode = options.extensionMode
 		const configs = options.configs.map(c => URI.parse(c)).sort(prioritySorter)
-
+		console.level = options.logLevel
 		settings = options
 		delete settings["workspaceFolder"]
 		delete settings["configs"]
@@ -90,15 +90,18 @@ function connectLsp() {
 			return packageInfo.dependencies[lib]
 		}
 
-		console.info(
+		globalThis.console.info(
 			`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 			importFrom("typescript", { cache: true, base: extensionUri.fsPath }).version,
 		)
-		console.info(
+		globalThis.console.info(
 			`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 			getLibVersion("tailwindcss"),
 		)
-		console.info(`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("postcss"))
+		globalThis.console.info(
+			`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+			getLibVersion("postcss"),
+		)
 
 		for (const configPath of configs) {
 			addService(configPath, settings)
@@ -189,6 +192,13 @@ function connectLsp() {
 			let needToUpdate = false
 			let needToRenderColors = false
 			let needToDiagnostics = false
+
+			if (settings.logLevel !== extSettings.logLevel) {
+				settings.logLevel = extSettings.logLevel
+				needToUpdate = true
+				console.info(`logLevel = ${settings.logLevel}`)
+				console.level = settings.logLevel
+			}
 
 			if (settings.enabled !== extSettings.enabled) {
 				settings.enabled = extSettings.enabled

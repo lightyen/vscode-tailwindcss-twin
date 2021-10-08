@@ -8,5 +8,6 @@
   "ext.settings.diagnostics.conflict.loose": "Show warning when all css property were conflicted.",
   "ext.settings.diagnostics.conflict.strict": "Show warning when any css property was conflicted.",
   "ext.settings.jsxPropImportChecking": "jsx prop import checking(set it to false if using with babel-plugin-twin).",
+  "ext.settings.logging.level": "The logging level the extension logs at, defaults to 'info'",
   "ext.debug-outout.version": "version"
 }

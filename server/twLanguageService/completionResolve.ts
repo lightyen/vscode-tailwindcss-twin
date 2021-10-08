@@ -1,5 +1,7 @@
 import { IPropertyData } from "vscode-css-languageservice"
 import * as lsp from "vscode-languageserver"
+import { defaultLogger as console } from "~/common/logger"
+import { transformSourceMap } from "~/common/sourcemap"
 import { getEntryDescription } from "~/common/vscode-css-languageservice"
 import type { TailwindLoader } from "~/tailwind"
 import { getDescription, getName, getReferenceLinks } from "./referenceLink"
@@ -17,33 +19,41 @@ export default function completionResolve(
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): lsp.CompletionItem {
-	const payload = item.data as CompletionItemPayload | undefined
-	if (!payload) {
-		return item
-	}
+	try {
+		const payload = item.data as CompletionItemPayload | undefined
+		if (!payload) {
+			return item
+		}
 
-	if (payload.type === "theme") {
-		return item
-	}
+		if (payload.type === "theme") {
+			return item
+		}
 
-	let keyword = item.label.slice(state.config.prefix.length)
-	const plugin = state.tw.getPlugin(keyword)
-	if (plugin) {
-		keyword = plugin.name
-	}
+		let keyword = item.label.slice(state.config.prefix.length)
+		const plugin = state.tw.getPlugin(keyword)
+		if (plugin) {
+			keyword = plugin.name
+		}
 
-	item = resolve(item, keyword, state, options, payload)
+		item = resolve(item, keyword, state, options, payload)
 
-	if (options.references && item.documentation) {
-		if (typeof item.documentation === "object") {
-			const refs = getReferenceLinks(keyword)
-			if (refs.length == 1) {
-				item.documentation.value += "\n" + `[Reference](${refs[0].url})`
-			} else if (refs.length > 0) {
-				item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
+		if (options.references && item.documentation) {
+			if (typeof item.documentation === "object") {
+				const refs = getReferenceLinks(keyword)
+				if (refs.length == 1) {
+					item.documentation.value += "\n" + `[Reference](${refs[0].url})`
+				} else if (refs.length > 0) {
+					item.documentation.value += "\n" + refs.map((ref, i) => `[Reference${i}](${ref.url}) `).join("\n")
+				}
 			}
 		}
+		return item
+	} catch (error) {
+		const err = error as Error
+		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+		console.error(err)
 	}
+
 	return item
 }
 

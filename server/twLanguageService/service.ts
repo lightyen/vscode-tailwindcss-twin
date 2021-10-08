@@ -5,6 +5,7 @@ import * as lsp from "vscode-languageserver"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { URI } from "vscode-uri"
 import idebounce from "~/common/idebounce"
+import { defaultLogger as console } from "~/common/logger"
 import { resolveModuleName } from "~/common/module"
 import { transformSourceMap } from "~/common/sourcemap"
 import * as parser from "~/common/twin-parser"
@@ -68,20 +69,17 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 		if (state.tw) return
 		try {
 			loading = true
-			console.info(`[${new Date().toLocaleString()}]`, "loading:", configPathString)
+			console.info("loading:", configPathString)
 			const start = process.hrtime.bigint()
 			state.readTailwindConfig()
 			state.createContext()
 			const end = process.hrtime.bigint()
-			console.info(
-				`[${new Date().toLocaleString()}]`,
-				`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`,
-			)
+			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 			emitter.emit("ready")
 		} catch (error) {
 			const err = error as Error
 			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(`[${new Date().toLocaleString()}]`, err)
+			console.error(err)
 			console.error("load failed: " + configPathString + "\n")
 		} finally {
 			loading = false
@@ -93,19 +91,16 @@ export function createTailwindLanguageService(documents: lsp.TextDocuments<TextD
 		if (!options.enabled || loading) return
 		try {
 			loading = true
-			console.info(`[${new Date().toLocaleString()}]`, "reloading:", configPathString)
+			console.info("reloading:", configPathString)
 			const start = process.hrtime.bigint()
 			state.readTailwindConfig()
 			state.createContext()
 			const end = process.hrtime.bigint()
-			console.info(
-				`[${new Date().toLocaleString()}]`,
-				`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`,
-			)
+			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 		} catch (error) {
 			const err = error as Error
 			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(`[${new Date().toLocaleString()}]`, err)
+			console.error(err)
 			console.error("reload failed: " + configPathString + "\n")
 		} finally {
 			loading = false
