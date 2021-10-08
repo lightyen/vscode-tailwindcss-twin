@@ -12,32 +12,33 @@ export function removeCommentsInCss(text: string, start = 0, end = text.length) 
 	let b = 0
 	const results: Array<[number, number]> = []
 	for (let i = start; i < end; i++) {
+		const char = text.charCodeAt(i)
 		if (string === 0 && comment === 0) {
-			if (url === 0 && text[i] === "u" && /\W/.test(text[i - 1] || " ")) {
+			if (url === 0 && char === 117 && /\W/.test(text[i - 1] || " ")) {
 				url = 1
-			} else if (url === 1 && text[i] === "r") {
+			} else if (url === 1 && char === 114) {
 				url = 2
-			} else if (url === 2 && text[i] === "l") {
+			} else if (url === 2 && char === 108) {
 				url = 3
-			} else if (url < 3 || (url === 3 && text[i] === ")")) {
+			} else if (url < 3 || (url === 3 && char === 41)) {
 				url = 0
 			}
 		}
 
 		if (url < 3 && comment === 0) {
 			if (string === 0) {
-				if (text.slice(i, i + 2) === "//") {
+				if (char === 47 && text.charCodeAt(i + 1) === 47) {
 					comment = 1
 					results.push([b, i])
-				} else if (text.slice(i, i + 2) === "/*") {
+				} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
 					comment = 2
 					results.push([b, i])
 				}
 			}
-		} else if (comment === 1 && text[i] === "\n") {
+		} else if (comment === 1 && char === 10) {
 			comment = 0
 			b = i + 1
-		} else if (comment === 2 && text.slice(i, i + 2) === "*/") {
+		} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
 			comment = 0
 			i += 1
 			b = i + 1
@@ -45,15 +46,15 @@ export function removeCommentsInCss(text: string, start = 0, end = text.length) 
 
 		if (string === 0) {
 			if (comment === 0) {
-				if (text[i] === '"') {
+				if (char === 34) {
 					string = 1
-				} else if (text[i] === "'") {
+				} else if (char === 39) {
 					string = 2
 				}
 			}
-		} else if (string === 1 && text[i] === '"') {
+		} else if (string === 1 && char === 34) {
 			string = 0
-		} else if (string === 2 && text[i] === "'") {
+		} else if (string === 2 && char === 39) {
 			string = 0
 		}
 	}

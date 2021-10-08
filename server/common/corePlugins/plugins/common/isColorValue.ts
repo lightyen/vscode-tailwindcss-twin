@@ -150,6 +150,7 @@ export const colors: Record<string, string> = {
 }
 
 export default function isColorValue(value: string) {
+	if (value.startsWith("color:")) return true
 	if (/^(?:rgba|rgb|hsla|hsl)\(/.test(value)) {
 		return true
 	}
@@ -158,7 +159,7 @@ export default function isColorValue(value: string) {
 		return true
 	}
 
-	if (value === "currentColor" || value === "transparent") {
+	if (value === "currentColor" || value === "transparent" || value === "inherit") {
 		return true
 	}
 

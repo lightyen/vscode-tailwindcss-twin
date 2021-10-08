@@ -18,7 +18,7 @@ export const textIndent: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const isNegative = match[0][0] === "-"
+		const isNegative = match[0].charCodeAt(0) === 45
 		let val = match[1]
 
 		if (!isNegative && isArbitraryValue(val)) {

@@ -120,7 +120,8 @@ export default function parseThemeValue(input: string): Result {
 			}
 
 			if (hasId) {
-				if (input[reg.lastIndex] && input[reg.lastIndex] !== "." && input[reg.lastIndex] !== "[") {
+				const char = input.charCodeAt(reg.lastIndex)
+				if (char && char !== 46 && char !== 91) {
 					errors.push({
 						message: "Syntax Error (access expression)",
 						start: reg.lastIndex,
@@ -142,7 +143,7 @@ export default function parseThemeValue(input: string): Result {
 				token: tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1)),
 			})
 
-			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: ["[", "]"] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
 			if (typeof closedBracket !== "number") {
 				errors.push({
 					message: "except to find a ']' to match the '['",
@@ -258,14 +259,15 @@ export function findThemeValueKeys(
 			}
 
 			if (hasId) {
-				if (input[reg.lastIndex] && input[reg.lastIndex] !== "." && input[reg.lastIndex] !== "[") {
+				const char = input.charCodeAt(reg.lastIndex)
+				if (char && char !== 46 && char !== 91) {
 					break
 				}
 			} else {
 				break
 			}
 		} else if (bracId) {
-			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: ["[", "]"] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
 			if (typeof closedBracket !== "number") {
 				if (position === match.index + 1) {
 					hit = tw.createToken(match.index, match.index + 1, input.slice(match.index, match.index + 1))

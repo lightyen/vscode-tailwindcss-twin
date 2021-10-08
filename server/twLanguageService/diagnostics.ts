@@ -50,22 +50,21 @@ export function validate(document: TextDocument, state: TailwindLoader, options:
 
 	try {
 		tokens = findAllMatch(document, options.jsxPropImportChecking)
-		if (tokens.length === 0) {
-			return diagnostics
-		}
+		if (tokens.length === 0) return diagnostics
 	} catch (error) {
 		const err = error as Error
 		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
 		console.error(err)
+		return diagnostics
 	}
 
 	const start = process.hrtime.bigint()
-	const answer = doValidate()
+	const answer = doValidate(tokens)
 	const end = process.hrtime.bigint()
 	console.trace(`validate (${Number((end - start) / 10n ** 6n)}ms)`)
 	return answer
 
-	function doValidate() {
+	function doValidate(tokens: TokenResult[]) {
 		try {
 			for (const { token, kind } of tokens) {
 				const [start, end, value] = token

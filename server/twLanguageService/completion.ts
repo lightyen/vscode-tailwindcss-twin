@@ -22,26 +22,24 @@ export default function completion(
 	let result: TokenResult | undefined
 	try {
 		result = canMatch(document, position, false, options.jsxPropImportChecking)
-		if (!result) {
-			return undefined
-		}
+		if (!result) return undefined
 	} catch (error) {
 		const err = error as Error
 		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
 		console.error(err)
+		return undefined
 	}
 
 	const start = process.hrtime.bigint()
-	const list = doComplete()
+	const list = doComplete(result)
 	const end = process.hrtime.bigint()
 	console.trace(`provide completion (${Number((end - start) / 10n ** 6n)}ms)`)
 	return list
 
-	function doComplete() {
+	function doComplete(result: TokenResult) {
 		try {
 			const index = document.offsetAt(position)
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const { kind, token } = result!
+			const { kind, token } = result
 			if (kind === PatternKind.TwinTheme) {
 				const list = twinThemeCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
@@ -141,7 +139,7 @@ function variantsCompletion(
 ) {
 	const [a, , value] = suggestion?.target ?? parser.createToken(0, 0, "")
 	let [, b] = suggestion?.target ?? parser.createToken(0, 0, "")
-	const nextCharacter = text.slice(position, position + 1)
+	const nextCharacter = text.charCodeAt(position)
 	const userVariants = new Set(suggestion?.variants.texts ?? [])
 
 	let variantItems: ICompletionItem[] = []
@@ -222,7 +220,7 @@ function variantsCompletion(
 	const nextNotSpace = next != "" && suggestion != undefined && next.match(/[\s)]/) == null
 
 	if (preferVariantWithParentheses) {
-		if (nextCharacter !== "(") {
+		if (nextCharacter !== 40) {
 			for (let i = 0; i < variantItems.length; i++) {
 				const item = variantItems[i]
 				item.insertTextFormat = lsp.InsertTextFormat.Snippet
@@ -580,7 +578,7 @@ function twinThemeCompletion(
 
 	function formatCandidates(label: string) {
 		let prefix = ""
-		if (label.slice(0, 1) === "-") {
+		if (label.charCodeAt(0) === 45) {
 			prefix = "~~~"
 			label = label.slice(1)
 		}
@@ -687,7 +685,7 @@ function twinScreenCompletion(
 
 	function formatCandidates(label: string) {
 		let prefix = ""
-		if (label.slice(0, 1) === "-") {
+		if (label.charCodeAt(0) === 45) {
 			prefix = "~~~"
 			label = label.slice(1)
 		}

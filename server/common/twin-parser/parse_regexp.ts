@@ -1,18 +1,29 @@
 import { createToken, Token } from "./token"
 import * as nodes from "./twNodes"
 
+// "-" 45
+// "[" 91
+// "]" 93
+// " " 32
+// "/" 47
+// "*" 42
+// "(" 40
+// ")" 41
+// "!" 33
+// '"' 34
+// "'" 39
+
 /** Try to find right bracket from left bracket, return `undefind` if not found. */
 export function findRightBracket({
 	text,
 	start = 0,
 	end = text.length,
-	brackets = ["(", ")"],
+	brackets = [40, 41],
 }: {
 	text: string
 	start?: number
 	end?: number
-	/** brackets, default is `["(", ")"]` */
-	brackets?: [string, string]
+	brackets?: [number, number]
 }): number | undefined {
 	let stack = 0
 	const [lbrac, rbrac] = brackets
@@ -21,11 +32,12 @@ export function findRightBracket({
 	let url = 0
 
 	for (let i = start; i < end; i++) {
-		if (text[i] === lbrac) {
+		const char = text.charCodeAt(i)
+		if (char === lbrac) {
 			if (string === 0 && comment === 0) {
 				stack++
 			}
-		} else if (text[i] === rbrac) {
+		} else if (char === rbrac) {
 			if (string === 0 && comment === 0) {
 				if (stack === 1) {
 					return i
@@ -38,43 +50,43 @@ export function findRightBracket({
 		}
 
 		if (string === 0 && comment === 0) {
-			if (url === 0 && text[i] === "u" && /\W/.test(text[i - 1] || " ")) {
+			if (url === 0 && char === 117 && /\W/.test(text[i - 1] || " ")) {
 				url = 1
-			} else if (url === 1 && text[i] === "r") {
+			} else if (url === 1 && char === 114) {
 				url = 2
-			} else if (url === 2 && text[i] === "l") {
+			} else if (url === 2 && char === 108) {
 				url = 3
-			} else if (url < 3 || (url === 3 && text[i] === ")")) {
+			} else if (url < 3 || (url === 3 && char === 41)) {
 				url = 0
 			}
 		}
 
 		if (url < 3 && comment === 0) {
 			if (string === 0) {
-				if (text.slice(i, i + 2) === "//") {
+				if (char === 47 && text.charCodeAt(i + 1) === 47) {
 					comment = 1
-				} else if (text.slice(i, i + 2) === "/*") {
+				} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
 					comment = 2
 				}
 			}
-		} else if (comment === 1 && text[i] === "\n") {
+		} else if (comment === 1 && char === 10) {
 			comment = 0
-		} else if (comment === 2 && text.slice(i, i + 2) === "*/") {
+		} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
 			comment = 0
 			i += 1
 		}
 
 		if (string === 0) {
 			if (comment === 0) {
-				if (text[i] === '"') {
+				if (char === 34) {
 					string = 1
-				} else if (text[i] === "'") {
+				} else if (char === 39) {
 					string = 2
 				}
 			}
-		} else if (string === 1 && text[i] === '"') {
+		} else if (string === 1 && char === 34) {
 			string = 0
-		} else if (string === 2 && text[i] === "'") {
+		} else if (string === 2 && char === 39) {
 			string = 0
 		}
 	}
@@ -83,11 +95,25 @@ export function findRightBracket({
 
 function findRightBlockComment(text: string, start = 0, end = text.length): number | undefined {
 	for (let i = start + 2; i < end; i++) {
-		if (text.slice(i, i + 2) === "*/") {
+		if (text.charCodeAt(i) === 42 && text.charCodeAt(i + 1) === 47) {
 			return i + 1
 		}
 	}
 	return undefined
+}
+
+function isSpace(char: number) {
+	switch (char) {
+		case 32:
+		case 12:
+		case 10:
+		case 13:
+		case 9:
+		case 11:
+			return true
+		default:
+			return false
+	}
 }
 
 function findTerminal(text: string, start = 0, end = text.length, sep = ":"): number {
@@ -95,11 +121,11 @@ function findTerminal(text: string, start = 0, end = text.length, sep = ":"): nu
 	let stack = 0
 	let _stack = 0
 	for (let i = start; i < end; i++) {
-		const char = text[i]
+		const char = text.charCodeAt(i)
 		switch (state) {
 			case 0:
-				if (/\s/.test(char)) return i
-				if (char === "(") {
+				if (isSpace(char)) return i
+				if (char === 40) {
 					let isSep = true
 					for (let k = 0; k < sep.length; k++) {
 						if (sep[k] !== text[i - k - 1]) {
@@ -114,44 +140,44 @@ function findTerminal(text: string, start = 0, end = text.length, sep = ":"): nu
 						return i
 					}
 				}
-				if (char === "[") {
+				if (char === 91) {
 					state = 1
 					stack += 1
 				}
 				break
 			case 1:
 				switch (char) {
-					case "[":
+					case 91:
 						stack += 1
 						break
-					case "]":
+					case 93:
 						stack -= 1
 						if (stack <= 0) {
 							state = 4
 						}
 						break
-					case "'":
+					case 39:
 						state = 2
 						break
-					case '"':
+					case 34:
 						state = 3
 						break
 				}
 				break
 			case 2:
-				if (char === "'") state = 1
+				if (char === 39) state = 1
 				break
 			case 3:
-				if (char === '"') state = 1
+				if (char === 34) state = 1
 				break
 			case 4:
-				if (/\s/.test(char)) return i
-				if (char === "!") return i + 1
+				if (isSpace(char)) return i
+				if (char === 33) return i + 1
 				return i
 			case 5:
-				if (char === "(") {
+				if (char === 40) {
 					_stack += 1
-				} else if (char === ")") {
+				} else if (char === 41) {
 					_stack -= 1
 					if (_stack <= 0) {
 						state = 4
@@ -200,7 +226,7 @@ export function parse({
 		let exclamationLeft: nodes.IdentifierNode | undefined
 		start = match.index
 
-		if (text[start] === "!") {
+		if (text.charCodeAt(start) === 33) {
 			exclamationLeft = nodes.createIdentifierNode(createToken(start, start + 1, "!"))
 			start += 1
 		}
@@ -222,19 +248,19 @@ export function parse({
 				),
 			})
 
-			if (text[start] === "!") {
+			if (text.charCodeAt(start) === 33) {
 				exclamationLeft = nodes.createIdentifierNode(createToken(start, start + 1, "!"))
 				start += 1
 			}
 
-			if (text[start] === "(") {
+			if (text.charCodeAt(start) === 40) {
 				const rb = findRightBracket({ text, start, end })
 				const _a = start
 				start += 1
 				let exclamationRight: nodes.IdentifierNode | undefined
 				if (rb != undefined) {
 					regexp.lastIndex = rb + 1
-					if (text[rb + 1] === "!") {
+					if (text.charCodeAt(rb + 1) === 33) {
 						exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
 						regexp.lastIndex += 1
 					}
@@ -290,7 +316,7 @@ export function parse({
 		} else if (classnames) {
 			let exclamationRight: nodes.IdentifierNode | undefined
 			let _end = regexp.lastIndex
-			if (text[regexp.lastIndex - 1] === "!") {
+			if (text.charCodeAt(regexp.lastIndex - 1) === 33) {
 				exclamationRight = nodes.createIdentifierNode(createToken(regexp.lastIndex - 1, regexp.lastIndex, "!"))
 				_end -= 1
 			}
@@ -311,7 +337,7 @@ export function parse({
 			)
 			const isArbitraryStyle1 = prop.value.endsWith("-") // text-[], text-[]/opacity, text-[]/[]
 			const isArbitraryStyle2 = prop.value.endsWith("/") // ~~text-color/opacity~~, ~~text-color/[]~~
-			const rb = findRightBracket({ text, start: regexp.lastIndex - 1, end, brackets: ["[", "]"] })
+			const rb = findRightBracket({ text, start: regexp.lastIndex - 1, end, brackets: [91, 93] })
 			let content: Token | undefined
 			let ident: Token
 			let endOpacity: { value: nodes.IdentifierNode; closed?: boolean } | undefined
@@ -319,15 +345,15 @@ export function parse({
 			if (rb != undefined) {
 				content = createToken(regexp.lastIndex, rb, text.slice(regexp.lastIndex, rb))
 				regexp.lastIndex = rb + 1
-				if (text[regexp.lastIndex] === "/") {
+				if (text.charCodeAt(regexp.lastIndex) === 47) {
 					if (isArbitraryStyle1) {
 						regexp.lastIndex += 1
-						if (text[regexp.lastIndex] === "[") {
+						if (text.charCodeAt(regexp.lastIndex) === 91) {
 							const rb = findRightBracket({
 								text,
 								start: regexp.lastIndex,
 								end,
-								brackets: ["[", "]"],
+								brackets: [91, 93],
 							})
 							if (rb != undefined) {
 								endOpacity = {
@@ -365,7 +391,7 @@ export function parse({
 
 				ident = createToken(start, regexp.lastIndex, text.slice(start, regexp.lastIndex))
 
-				if (text[regexp.lastIndex] === "!") {
+				if (text.charCodeAt(regexp.lastIndex) === 33) {
 					exclamationRight = nodes.createIdentifierNode(
 						createToken(regexp.lastIndex, regexp.lastIndex + 1, "!"),
 					)
@@ -417,7 +443,7 @@ export function parse({
 			const rb = findRightBracket({ text, start, end })
 			if (rb != undefined) {
 				regexp.lastIndex = rb + 1
-				if (text[rb + 1] === "!") {
+				if (text.charCodeAt(rb + 1) === 33) {
 					exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
 					regexp.lastIndex += 1
 				}

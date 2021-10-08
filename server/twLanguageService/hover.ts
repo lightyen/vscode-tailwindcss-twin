@@ -19,21 +19,19 @@ export default async function hover(
 	let result: TokenResult | undefined
 	try {
 		result = canMatch(document, position, true, options.jsxPropImportChecking)
-		if (!result) {
-			return undefined
-		}
+		if (!result) return undefined
 	} catch (error) {
 		const err = error as Error
 		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
 		console.error(err)
+		return undefined
 	}
 
-	return doHover()
+	return doHover(result)
 
-	function doHover() {
+	function doHover(result: TokenResult) {
 		try {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const { token, kind } = result!
+			const { token, kind } = result
 			if (kind === PatternKind.TwinTheme) {
 				const range = {
 					start: document.positionAt(token.start),
@@ -108,16 +106,21 @@ export default async function hover(
 				}
 
 				let markdown: lsp.MarkupContent | undefined
-
 				if (cssText) {
 					markdown = {
 						kind: lsp.MarkupKind.Markdown,
-						value: ["```scss", cssText, "```", "\n"].join("\n"),
+						value: [
+							selection.type === parser.HoverResultType.Variant ? "```scss" : "```css",
+							cssText,
+							"```",
+							"\n",
+						].join("\n"),
 					}
 				} else {
 					// try anoather keyword
 					const i = value.lastIndexOf("/")
-					if (i !== -1) {
+					const n = value.charCodeAt(i + 1)
+					if (i !== -1 && (n === 91 || (n >= 48 && n <= 57))) {
 						value = value.slice(0, i)
 					}
 				}
@@ -127,8 +130,13 @@ export default async function hover(
 					const keyword = value.replace(new RegExp(`^${state.config.prefix}`), "")
 					let name: string | undefined = state.tw.getPlugin(keyword)?.name
 					if (!name) {
-						name = keyword
+						if (state.tw.screens.indexOf(keyword) !== -1) {
+							name = "screens"
+						} else {
+							name = keyword
+						}
 					}
+					console.trace("hover:", name)
 					if (name) {
 						const type = getDescription(name)
 						if (type) {
