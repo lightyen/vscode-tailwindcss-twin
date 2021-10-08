@@ -8,5 +8,6 @@
   "ext.settings.diagnostics.conflict.loose": "所有的 css 屬性都符合才顯示警告。",
   "ext.settings.diagnostics.conflict.strict": "只要發現有重複的 css 屬性即顯示警告。",
   "ext.settings.jsxPropImportChecking": "檢查 twin 庫是否已導入。（babel-plugin-twin 的情境請設定為 false）",
+  "ext.settings.logging.level": "Twin 擴充套件的日誌層級，預設為 'info'",
   "ext.debug-outout.version": "版本"
 }

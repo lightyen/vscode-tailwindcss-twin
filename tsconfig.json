@@ -9,16 +9,7 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitThis": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "removeComments": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "sourceMap": true
-  },
-  "references": [{ "path": "./client" }, { "path": "./server" }],
-  "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts"]
+    "exactOptionalPropertyTypes": false,
+    "resolveJsonModule": true
+  }
 }
