@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "lib": ["ESNext"],
+    "types": ["node", "vscode", "webpack-env", "tailwind-types"],
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "rootDir": "..",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"],
+      "co": ["../common/index.ts"],
+      "co/*": ["../common/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.json", "../common/**/*", "../package.json", "../package.nls*.json"],
+  "exclude": ["**/__tests__/**", "**/*.test.ts"]
+}

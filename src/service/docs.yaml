@@ -1,0 +1,657 @@
+"https://tailwindcss.com/docs/container":
+  name: Container
+  desc: A component for fixing an element's width to the current breakpoint.
+"https://tailwindcss.com/docs/space":
+  name: Space Between
+  desc: Utilities for controlling the space between child elements.
+"https://tailwindcss.com/docs/divide-width":
+  name: Divide Width
+  desc: Utilities for controlling the border width between elements.
+"https://tailwindcss.com/docs/divide-color":
+  name: Divide Color
+  desc: Utilities for controlling the border color between elements.
+"https://tailwindcss.com/docs/divide-style":
+  name: Divide Style
+  desc: Utilities for controlling the border style between elements.
+"https://tailwindcss.com/docs/divide-opacity":
+  name: Divide Opacity
+  desc: Utilities for controlling the opacity borders between elements.
+"https://tailwindcss.com/docs/screen-readers":
+  name: Screen Readers
+  desc: Utilities for improving accessibility with screen readers.
+"https://tailwindcss.com/docs/appearance":
+  name: Appearance
+  desc: Utilities for suppressing native form control styling.
+"https://tailwindcss.com/docs/background-attachment":
+  name: Background Attachment
+  desc: Utilities for controlling how a background image behaves when scrolling.
+"https://tailwindcss.com/docs/background-clip":
+  name: Background Clip
+  desc: Utilities for controlling the bounding box of an element's background.
+"https://tailwindcss.com/docs/background-color":
+  name: Background Color
+  desc: Utilities for controlling an element's background color.
+"https://tailwindcss.com/docs/background-image":
+  name: Background Image
+  desc: Utilities for controlling an element's background image.
+"https://tailwindcss.com/docs/gradient-color-stops":
+  name: Gradient Color Stops
+  desc: Utilities for controlling the color stops in background gradients.
+"https://tailwindcss.com/docs/background-opacity":
+  name: Background Opacity
+  desc: Utilities for controlling the opacity of an element's background color.
+"https://tailwindcss.com/docs/background-position":
+  name: Background Position
+  desc: Utilities for controlling the position of an element's background image.
+"https://tailwindcss.com/docs/background-repeat":
+  name: Background Repeat
+  desc: Utilities for controlling the repetition of an element's background image.
+"https://tailwindcss.com/docs/background-size":
+  name: Background Size
+  desc: Utilities for controlling the background size of an element's background image.
+"https://tailwindcss.com/docs/border-collapse":
+  name: Border Collapse
+  desc: Utilities for controlling whether table borders should collapse or be separated.
+"https://tailwindcss.com/docs/border-color":
+  name: Border Color
+  desc: Utilities for controlling the color of an element's borders.
+"https://tailwindcss.com/docs/border-opacity":
+  name: Border Opacity
+  desc: Utilities for controlling the opacity of an element's border color.
+"https://tailwindcss.com/docs/border-radius":
+  name: Border Radius
+  desc: Utilities for controlling the border radius of an element.
+"https://tailwindcss.com/docs/border-style":
+  name: Border Style
+  desc: Utilities for controlling the style of an element's borders.
+"https://tailwindcss.com/docs/border-width":
+  name: Border Width
+  desc: Utilities for controlling the width of an element's borders.
+"https://tailwindcss.com/docs/box-sizing":
+  name: Box Sizing
+  desc: Utilities for controlling how the browser should calculate an element's total size.
+"https://tailwindcss.com/docs/cursor":
+  name: Cursor
+  desc: Utilities for controlling the cursor style when hovering over an element.
+"https://tailwindcss.com/docs/display":
+  name: Display
+  desc: Utilities for controlling the display box type of an element.
+"https://tailwindcss.com/docs/flex-direction":
+  name: Flex Direction
+  desc: Utilities for controlling the direction of flex items.
+"https://tailwindcss.com/docs/flex-wrap":
+  name: Flex Wrap
+  desc: Utilities for controlling how flex items wrap.
+"https://tailwindcss.com/docs/place-items":
+  name: Place Items
+  desc: Utilities for controlling how items are justified and aligned at the same time.
+"https://tailwindcss.com/docs/place-content":
+  name: Place Content
+  desc: Utilities for controlling how content is justified and aligned at the same time.
+"https://tailwindcss.com/docs/place-self":
+  name: Place Self
+  desc: Utilities for controlling how an individual item is justified and aligned at the same time.
+"https://tailwindcss.com/docs/align-items":
+  name: Align Items
+  desc: Utilities for controlling how flex and grid items are positioned along a container's cross axis.
+"https://tailwindcss.com/docs/align-content":
+  name: Align Content
+  desc: Utilities for controlling how rows are positioned in multi-row flex and grid containers.
+"https://tailwindcss.com/docs/align-self":
+  name: Align Self
+  desc: Utilities for controlling how an individual flex or grid item is positioned along its container's cross axis.
+"https://tailwindcss.com/docs/justify-items":
+  name: Justify Items
+  desc: Utilities for controlling how grid items are aligned along their inline axis.
+"https://tailwindcss.com/docs/justify-content":
+  name: Justify Content
+  desc: Utilities for controlling how flex and grid items are positioned along a container's main axis.
+"https://tailwindcss.com/docs/justify-self":
+  name: Justify Self
+  desc: Utilities for controlling how an individual grid item is aligned along its inline axis.
+"https://tailwindcss.com/docs/flex":
+  name: Flex
+  desc: Utilities for controlling how flex items both grow and shrink.
+"https://tailwindcss.com/docs/flex-grow":
+  name: Flex Grow
+  desc: Utilities for controlling how flex items grow.
+"https://tailwindcss.com/docs/flex-shrink":
+  name: Flex Shrink
+  desc: Utilities for controlling how flex items shrink.
+"https://tailwindcss.com/docs/order":
+  name: Order
+  desc: Utilities for controlling the order of flex and grid items.
+"https://tailwindcss.com/docs/float":
+  name: Floats
+  desc: Utilities for controlling the wrapping of content around an element.
+"https://tailwindcss.com/docs/clear":
+  name: Clear
+  desc: Utilities for controlling the wrapping of content around an element.
+"https://tailwindcss.com/docs/font-family":
+  name: Font Family
+  desc: Utilities for controlling the font family of an element.
+"https://tailwindcss.com/docs/font-weight":
+  name: Font Weight
+  desc: Utilities for controlling the font weight of an element.
+"https://tailwindcss.com/docs/height":
+  name: Height
+  desc: Utilities for setting the height of an element
+"https://tailwindcss.com/docs/font-size":
+  name: Font Size
+  desc: Utilities for controlling the font size of an element.
+"https://tailwindcss.com/docs/line-height":
+  name: Line Height
+  desc: Utilities for controlling the leading (line height) of an element.
+"https://tailwindcss.com/docs/list-style-position":
+  name: List Style Position
+  desc: Utilities for controlling the position of bullets/numbers in lists.
+"https://tailwindcss.com/docs/list-style-type":
+  name: List Style Type
+  desc: Utilities for controlling the bullet/number style of a list.
+"https://tailwindcss.com/docs/margin":
+  name: Margin
+  desc: Utilities for controlling an element's margin.
+"https://tailwindcss.com/docs/max-height":
+  name: Max-Height
+  desc: Utilities for setting the maximum height of an element
+"https://tailwindcss.com/docs/max-width":
+  name: Max-Width
+  desc: Utilities for setting the maximum width of an element
+"https://tailwindcss.com/docs/min-height":
+  name: Min-Height
+  desc: Utilities for setting the minimum height of an element
+"https://tailwindcss.com/docs/min-width":
+  name: Min-Width
+  desc: Utilities for setting the minimum width of an element
+"https://tailwindcss.com/docs/object-fit":
+  name: Object Fit
+  desc: Utilities for controlling how a replaced element's content should be resized.
+"https://tailwindcss.com/docs/object-position":
+  name: Object Position
+  desc: Utilities for controlling how a replaced element's content should be positioned within its container.
+"https://tailwindcss.com/docs/opacity":
+  name: Opacity
+  desc: Utilities for controlling the opacity of an element.
+"https://tailwindcss.com/docs/outline":
+  name: Outline
+  desc: Utilities for controlling an element's outline.
+"https://tailwindcss.com/docs/overflow":
+  name: Overflow
+  desc: Utilities for controlling how an element handles content that is too large for the container.
+"https://tailwindcss.com/docs/overscroll-behavior":
+  name: Overscroll Behavior
+  desc: Utilities for controlling how the browser behaves when reaching the boundary of a scrolling area.
+"https://tailwindcss.com/docs/padding":
+  name: Padding
+  desc: Utilities for controlling an element's padding.
+"https://tailwindcss.com/docs/placeholder-color":
+  name: Placeholder Color
+  desc: Utilities for controlling the color of placeholder text.
+"https://tailwindcss.com/docs/placeholder-opacity":
+  name: Placeholder Opacity
+  desc: Utilities for controlling the opacity of an element's placeholder color.
+"https://tailwindcss.com/docs/pointer-events":
+  name: Pointer Events
+  desc: Utilities for controlling whether an element responds to pointer events.
+"https://tailwindcss.com/docs/position":
+  name: Position
+  desc: Utilities for controlling how an element is positioned in the DOM.
+"https://tailwindcss.com/docs/top-right-bottom-left":
+  name: Top / Right / Bottom / Left
+  desc: Utilities for controlling the placement of positioned elements.
+"https://tailwindcss.com/docs/resize":
+  name: Resize
+  desc: Utilities for controlling how an element can be resized.
+"https://tailwindcss.com/docs/box-shadow":
+  name: Box Shadow
+  desc: Utilities for controlling the box shadow of an element.
+"https://tailwindcss.com/docs/ring-width":
+  name: Ring Width
+  desc: Utilities for creating outline rings with box-shadows.
+"https://tailwindcss.com/docs/ring-offset-color":
+  name: Ring Offset Color
+  desc: Utilities for setting the color of outline ring offsets.
+"https://tailwindcss.com/docs/ring-offset-width":
+  name: Ring Offset Width
+  desc: Utilities for simulating an offset when adding outline rings.
+"https://tailwindcss.com/docs/ring-color":
+  name: Ring Color
+  desc: Utilities for setting the color of outline rings.
+"https://tailwindcss.com/docs/ring-opacity":
+  name: Ring Opacity
+  desc: Utilities for setting the opacity of outline rings.
+"https://tailwindcss.com/docs/fill":
+  name: Fill
+  desc: Utilities for styling the fill of SVG elements.
+"https://tailwindcss.com/docs/stroke":
+  name: Stroke
+  desc: Utilities for styling the stroke of SVG elements.
+"https://tailwindcss.com/docs/stroke-width":
+  name: Stroke Width
+  desc: Utilities for styling the stroke width of SVG elements.
+"https://tailwindcss.com/docs/table-layout":
+  name: Table Layout
+  desc: Utilities for controlling the table layout algorithm.
+"https://tailwindcss.com/docs/text-align":
+  name: Text Alignment
+  desc: Utilities for controlling the alignment of text.
+"https://tailwindcss.com/docs/text-color":
+  name: Text Color
+  desc: Utilities for controlling the text color of an element.
+"https://tailwindcss.com/docs/text-opacity":
+  name: Text Opacity
+  desc: Utilities for controlling the opacity of an element's text color.
+"https://tailwindcss.com/docs/text-overflow":
+  name: Text Overflow
+  desc: Utilities for controlling text overflow in an element.
+"https://tailwindcss.com/docs/font-style":
+  name: Font Style
+  desc: Utilities for controlling the style of text.
+"https://tailwindcss.com/docs/text-transform":
+  name: Text Transform
+  desc: Utilities for controlling the transformation of text.
+"https://tailwindcss.com/docs/text-decoration":
+  name: Text Decoration
+  desc: Utilities for controlling the decoration of text.
+"https://tailwindcss.com/docs/font-smoothing":
+  name: Font Smoothing
+  desc: Utilities for controlling the font smoothing of an element.
+"https://tailwindcss.com/docs/font-variant-numeric":
+  name: Font Variant Numeric
+  desc: Utilities for controlling the variant of numbers.
+"https://tailwindcss.com/docs/letter-spacing":
+  name: Letter Spacing
+  desc: Utilities for controlling the tracking (letter spacing) of an element.
+"https://tailwindcss.com/docs/user-select":
+  name: User Select
+  desc: Utilities for controlling whether the user can select text in an element.
+"https://tailwindcss.com/docs/vertical-align":
+  name: Vertical Alignment
+  desc: Utilities for controlling the vertical alignment of an inline or table-cell box.
+"https://tailwindcss.com/docs/visibility":
+  name: Visibility
+  desc: Utilities for controlling the visibility of an element.
+"https://tailwindcss.com/docs/whitespace":
+  name: Whitespace
+  desc: Utilities for controlling an element's white-space property.
+"https://tailwindcss.com/docs/word-break":
+  name: Word Break
+  desc: Utilities for controlling word breaks in an element.
+"https://tailwindcss.com/docs/width":
+  name: Width
+  desc: Utilities for setting the width of an element
+"https://tailwindcss.com/docs/z-index":
+  name: Z-Index
+  desc: Utilities for controlling the stack order of an element.
+"https://tailwindcss.com/docs/isolation":
+  name: Isolation
+  desc: Utilities for controlling whether an element should explicitly create a new stacking context.
+"https://tailwindcss.com/docs/gap":
+  name: Gap
+  desc: Utilities for controlling gutters between grid rows and columns.
+"https://tailwindcss.com/docs/grid-auto-flow":
+  name: Grid Auto Flow
+  desc: Utilities for controlling how elements in a grid are auto-placed.
+"https://tailwindcss.com/docs/grid-template-columns":
+  name: Grid Template Columns
+  desc: Utilities for specifying the columns in a grid layout.
+"https://tailwindcss.com/docs/grid-auto-columns":
+  name: Grid Auto Columns
+  desc: Utilities for controlling the size of implicitly-created grid columns.
+"https://tailwindcss.com/docs/grid-column":
+  name: Grid Column Start / End
+  desc: Utilities for controlling how elements are sized and placed across grid columns.
+"https://tailwindcss.com/docs/grid-template-rows":
+  name: Grid Template Rows
+  desc: Utilities for specifying the rows in a grid layout.
+"https://tailwindcss.com/docs/grid-auto-rows":
+  name: Grid Auto Rows
+  desc: Utilities for controlling the size of implicitly-created grid rows.
+"https://tailwindcss.com/docs/grid-row":
+  name: Grid Row Start / End
+  desc: Utilities for controlling how elements are sized and placed across grid rows.
+"https://tailwindcss.com/docs/transform":
+  name: Transform
+  desc: Utilities for controlling transform behaviour.
+"https://tailwindcss.com/docs/transform-origin":
+  name: Transform Origin
+  desc: Utilities for specifying the origin for an element's transformations.
+"https://tailwindcss.com/docs/scale":
+  name: Scale
+  desc: Utilities for scaling elements with transform.
+"https://tailwindcss.com/docs/rotate":
+  name: Rotate
+  desc: Utilities for rotating elements with transform.
+"https://tailwindcss.com/docs/translate":
+  name: Translate
+  desc: Utilities for translating elements with transform.
+"https://tailwindcss.com/docs/skew":
+  name: Skew
+  desc: Utilities for skewing elements with transform.
+"https://tailwindcss.com/docs/transition-property":
+  name: Transition Property
+  desc: Utilities for controlling which CSS properties transition.
+"https://tailwindcss.com/docs/transition-timing-function":
+  name: Transition Timing Function
+  desc: Utilities for controlling the easing of CSS transitions.
+"https://tailwindcss.com/docs/transition-duration":
+  name: Transition Duration
+  desc: Utilities for controlling the duration of CSS transitions.
+"https://tailwindcss.com/docs/transition-delay":
+  name: Transition Delay
+  desc: Utilities for controlling the delay of CSS transitions.
+"https://tailwindcss.com/docs/animation":
+  name: Animation
+  desc: Utilities for animating elements with CSS animations.
+"https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover":
+  name: Group-hover
+  desc: "If you need to style a child element when hovering over a specific parent element, add the group class to the parent element and add the `group-hover:` prefix to the utility on the child element."
+"https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus":
+  name: Group-focus
+  desc: "The `group-focus` variant works just like `group-hover` except for focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion":
+  name: prefers-reduced-motion
+  desc: "The **prefers-reduced-motion** CSS media feature is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses."
+"https://tailwindcss.com/docs/hover-focus-and-other-states#disabled":
+  name: Disabled
+  desc: "Add the `disabled:` prefix to only apply a utility when an element is disabled."
+"https://tailwindcss.com/docs/dark-mode":
+  name: Dark Mode
+  desc: Using Tailwind CSS to style your site in dark mode.
+"https://tailwindcss.com/docs/responsive-design":
+  name: Responsive Design
+  desc: Using responsive utility variants to build adaptive user interfaces.
+"https://tailwindcss.com/docs/box-decoration-break":
+  name: Box Decoration Break
+  desc: Utilities for controlling how element fragments should be rendered across multiple lines, columns, or pages.
+"https://tailwindcss.com/docs/mix-blend-mode":
+  name: Mix Blend Mode
+  desc: Utilities for controlling how an element should blend with the background.
+"https://tailwindcss.com/docs/background-blend-mode":
+  name: Background Blend Mode
+  desc: Utilities for controlling how an element's background image should blend with its background color.
+"https://tailwindcss.com/docs/filter":
+  name: Filter
+  desc: Utilities for enabling and disabling filters on an element.
+"https://tailwindcss.com/docs/blur":
+  name: Blur
+  desc: Utilities for applying blur filters to an element.
+"https://tailwindcss.com/docs/brightness":
+  name: Brightness
+  desc: Utilities for applying brightness filters to an element.
+"https://tailwindcss.com/docs/contrast":
+  name: Contrast
+  desc: Utilities for applying contrast filters to an element.
+"https://tailwindcss.com/docs/drop-shadow":
+  name: Drop Shadow
+  desc: Utilities for applying drop-shadow filters to an element.
+"https://tailwindcss.com/docs/grayscale":
+  name: Grayscale
+  desc: Utilities for applying grayscale filters to an element.
+"https://tailwindcss.com/docs/hue-rotate":
+  name: Hue Rotate
+  desc: Utilities for applying hue-rotate filters to an element.
+"https://tailwindcss.com/docs/invert":
+  name: Invert
+  desc: Utilities for applying invert filters to an element.
+"https://tailwindcss.com/docs/saturate":
+  name: Saturate
+  desc: Utilities for applying saturation filters to an element.
+"https://tailwindcss.com/docs/sepia":
+  name: Sepia
+  desc: Utilities for applying sepia filters to an element.
+"https://tailwindcss.com/docs/backdrop-filter":
+  name: Backdrop Filter
+  desc: Utilities for enabling and disabling backdrop filters on an element.
+"https://tailwindcss.com/docs/backdrop-blur":
+  name: Backdrop Blur
+  desc: Utilities for applying backdrop blur filters to an element.
+"https://tailwindcss.com/docs/backdrop-brightness":
+  name: Backdrop Brightness
+  desc: Utilities for applying backdrop brightness filters to an element.
+"https://tailwindcss.com/docs/backdrop-contrast":
+  name: Backdrop Contrast
+  desc: Utilities for applying backdrop contrast filters to an element.
+"https://tailwindcss.com/docs/backdrop-grayscale":
+  name: Backdrop Grayscale
+  desc: Utilities for applying backdrop grayscale filters to an element.
+"https://tailwindcss.com/docs/backdrop-hue-rotate":
+  name: Backdrop Hue Rotate
+  desc: Utilities for applying backdrop hue-rotate filters to an element.
+"https://tailwindcss.com/docs/backdrop-invert":
+  name: Backdrop Invert
+  desc: Utilities for applying backdrop invert filters to an element.
+"https://tailwindcss.com/docs/backdrop-opacity":
+  name: Backdrop Opacity
+  desc: Utilities for applying backdrop opacity filters to an element.
+"https://tailwindcss.com/docs/backdrop-saturate":
+  name: Backdrop Saturate
+  desc: Utilities for applying backdrop saturation filters to an element.
+"https://tailwindcss.com/docs/backdrop-sepia":
+  name: Backdrop Sepia
+  desc: Utilities for applying backdrop sepia filters to an element.
+"https://tailwindcss.com/docs/background-origin":
+  name: Background Origin
+  desc: Utilities for controlling how an element's background is positioned relative to borders, padding, and content.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color":
+  name: caret-color
+  desc: "The **caret-color** CSS property sets the color of the **insertion caret**, the visible marker where the next character typed will be inserted. This is sometimes referred to as the **text input cursor**. The caret appears in elements such as `<input>` or those with the `contenteditable` attribute. The caret is typically a thin vertical line that flashes to help make it more noticeable. By default, it is black, but its color can be altered with this property."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color":
+  name: accent-color
+  desc: 'The **accent-color** CSS property sets the color of the elements accent. An accent appears in elements such as <input> of type="checkbox", or type="radio".'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent":
+  name: text-indent
+  desc: "The **text-indent** CSS property sets the length of empty space (indentation) that is put before lines of text in a block."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/will-change":
+  name: will-change
+  desc: "The **will-change** CSS property hints to browsers how an element is expected to change. Browsers may set up optimizations before an element is actually changed. These kinds of optimizations can increase the responsiveness of a page by doing potentially expensive work before they are actually required."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action":
+  name: touch-action
+  desc: "The **touch-action** CSS property sets how an element's region can be manipulated by a touchscreen user (for example, by zooming features built into the browser)."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/break-before":
+  name: break-before
+  desc: "The **break-before** CSS property sets how page, column, or region breaks should behave before a generated box. If there is no generated box, the property is ignored."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/break-inside":
+  name: break-inside
+  desc: "The **break-inside** CSS property sets how page, column, or region breaks should behave inside a generated box. If there is no generated box, the property is ignored."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/break-after":
+  name: break-after
+  desc: "The **break-after** CSS property sets how page, column, or region breaks should behave after a generated box. If there is no generated box, the property is ignored."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type":
+  name: scroll-snap-type
+  desc: "The **scroll-snap-type** CSS property sets how strictly snap points are enforced on the scroll container in case there is one."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align":
+  name: scroll-snap-align
+  desc: "The *scroll-snap-align* property specifies the box’s snap position as an alignment of its snap area (as the alignment subject) within its snap container’s snapport (as the alignment container). The two values specify the snapping alignment in the block axis and inline axis, respectively. If only one value is specified, the second value defaults to the same value."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-stop":
+  name: scroll-snap-stop
+  desc: 'The **scroll-snap-stop** CSS property defines whether the scroll container is allowed to "pass over" possible snap positions.'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin":
+  name: scroll-margin
+  desc: "The **scroll-margin** *shorthand property* sets all of the scroll margins of an element at once, assigning values much like the `margin` property does for margins of an element."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding":
+  name: scroll-padding
+  desc: "The **scroll-padding** *shorthand property* sets scroll padding on all sides of an element at once, much like the `padding` property does for padding on an element."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior":
+  name: scroll-behavior
+  desc: "The **scroll-behavior** CSS property sets the behavior for a scrolling box when scrolling is triggered by the navigation or CSSOM scrolling APIs."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/columns":
+  name: columns
+  desc: "The **columns** CSS shorthand property sets the number of columns to use when drawing an element's contents, as well as those columns' widths."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/content":
+  name: Content
+  desc: "The **content** CSS property replaces an element with a generated value. Objects inserted using the `content` property are **anonymous** replaced elements*.*"
+"https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js":
+  name: twin.macro
+  desc: ""
+"https://github.com/ben-rogerson/twin.macro/blob/master/docs/group.md":
+  name: twin.macro
+  desc: ""
+"https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles":
+  name: twin.macro
+  desc: ""
+"https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md":
+  name: twin.macro
+  desc: |
+    Custom paddings on the `container` class were introduced in Tailwind v1.4 and also in Twin shortly after.
+
+    Twin adds another feature and that is custom independent left/right margins and paddings. This can be used on layouts that are a little more creative with their horizontal layout positioning.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child":
+  name: pseudo class
+  desc: "The **:first-child** CSS pseudo-class represents the first element among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child":
+  name: pseudo class
+  desc: "The **:last-child** CSS pseudo-class represents the last element among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:only-child":
+  name: pseudo class
+  desc: "The **:only-child** CSS pseudo-class represents an element without any siblings. This is the same as `:first-child:last-child` or `:nth-child(1):nth-last-child(1)`, but with a lower specificity."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child":
+  name: pseudo class
+  desc: "The **:nth-child()** CSS pseudo-class matches elements based on their position in a group of siblings."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type":
+  name: pseudo class
+  desc: "The **:first-of-type** CSS pseudo-class represents the first element of its type among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type":
+  name: pseudo class
+  desc: "The **:last-of-type** CSS pseudo-class represents the last element of its type among a group of sibling elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:only-of-type":
+  name: pseudo class
+  desc: "The **:only-of-type** CSS pseudo-class represents an element that has no siblings of the same type."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:hover":
+  name: pseudo class
+  desc: "The **:hover** CSS pseudo-class matches when the user interacts with an element with a pointing device, but does not necessarily activate it. It is generally triggered when the user hovers over an element with the cursor (mouse pointer)."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:focus":
+  name: pseudo class
+  desc: "The **:focus** CSS pseudo-class represents an element (such as a form input) that has received focus. It is generally triggered when the user clicks or taps on an element or selects it with the keyboard's **Tab** key."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled":
+  name: pseudo class
+  desc: "The **:disabled** CSS pseudo-class represents any disabled element. An element is disabled if it can't be activated (selected, clicked on, typed into, etc.) or accept focus. The element also has an enabled state, in which it can be activated or accept focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:active":
+  name: pseudo class
+  desc: 'The **:active** CSS pseudo-class represents an element (such as a button) that is being activated by the user. When using a mouse, "activation" typically starts when the user presses down the primary mouse button.'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:target":
+  name: pseudo class
+  desc: "The **:target** CSS pseudo-class represents a unique element (the *target element*) with an `id` matching the URL's fragment."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:visited":
+  name: pseudo class
+  desc: "The **:visited** CSS pseudo-class represents links that the user has already visited. For privacy reasons, the styles that can be modified using this selector are very limited."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:default":
+  name: pseudo class
+  desc: "The **:default** CSS pseudo-class selects form elements that are the default in a group of related elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:checked":
+  name: pseudo class
+  desc: 'The **:checked** CSS pseudo-class selector represents any radio (`<input type="radio">`), checkbox (`<input type="checkbox">`), or option (`<option>` in a `<select>`) element that is checked or toggled to an `on` state.'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate":
+  name: pseudo class
+  desc: "The **:indeterminate** CSS pseudo-class represents any form element whose state is `indeterminate`, such as checkboxes which have their HTML indeterminate attribute set to `true`, radio buttons which are members of a group in which all radio buttons are unchecked, and indeterminate `<progress>` elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:placeholder-shown":
+  name: pseudo class
+  desc: "The **:placeholder-shown** CSS pseudo-class represents any `<input>` or `<textarea>` element that is currently displaying placeholder text."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:autofill":
+  name: pseudo class
+  desc: "The **:autofill** CSS pseudo-class matches when an `<input>` element has its value autofilled by the browser. The class stops matching if the user edits the field."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within":
+  name: pseudo class
+  desc: "The **:focus-within** CSS pseudo-class matches an element if the element or any of its descendants are focused. In other words, it represents an element that is itself matched by the **:focus** pseudo-class or has a descendant that is matched by **:focus**. (This includes descendants in shadow trees.)"
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible":
+  name: pseudo class
+  desc: "The **:focus-visible** pseudo-class applies while an element matches the **:focus** pseudo-class and the UA (User Agent) determines via heuristics that the focus should be made evident on the element. (Many browsers show a “focus ring” by default in this case.)"
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:required":
+  name: pseudo class
+  desc: "The **:required** CSS pseudo-class represents any `<input>`, `<select>`, or `<textarea>` element that has the `required` attribute set on it."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:valid":
+  name: pseudo class
+  desc: "The **:valid** CSS pseudo-class represents any `<input>` or other `<form>` element whose contents validate successfully. This allows to easily make valid fields adopt an appearance that helps the user confirm that their data is formatted properly."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:invalid":
+  name: pseudo class
+  desc: "The **:invalid** CSS pseudo-class represents any `<input>` or other `<form>` element whose contents fail to validate."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range":
+  name: pseudo class
+  desc: "The **:in-range** CSS pseudo-class represents an `<input>` element whose current value is within the range limits specified by the `min` and `max` attributes."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range":
+  name: pseudo class
+  desc: "The **:out-of-range** CSS pseudo-class represents an `<input>` element whose current value is outside the range limits specified by the `min` and `max` attributes."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only":
+  name: pseudo class
+  desc: "The **:read-only** CSS pseudo-class represents an element (such as `input` or `textarea`) that is not editable by the user."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:empty":
+  name: pseudo class
+  desc: "The **:empty** CSS pseudo-class represents any element that has no children. Children can be either element nodes or text (including whitespace). Comments, processing instructions, and CSS `content` do not affect whether an element is considered empty."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type":
+  name: pseudo class
+  desc: "The **:nth-of-type()** CSS pseudo-class matches elements of a given type (tag name), based on their position among a group of siblings."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled":
+  name: pseudo class
+  desc: "The **:enabled** CSS pseudo-class represents any enabled element. An element is enabled if it can be activated (selected, clicked on, typed into, etc.) or accept focus. The element also has a disabled state, in which it can't be activated or accept focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:link":
+  name: pseudo class
+  desc: "The **:link** CSS pseudo-class represents an element that has not yet been visited. It matches every unvisited `<a>` or `<area>` element that has an `href` attribute."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:optional":
+  name: pseudo class
+  desc: "The **:optional** CSS pseudo-class represents any `<input>`, `<select>`, or `<textarea>` element that does not have the `required` attribute set on it."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/:read-write":
+  name: pseudo class
+  desc: "The **:read-write** CSS pseudo-class represents an element (such as `input` or `textarea`) that is editable by the user."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button":
+  name: pseudo element
+  desc: 'The **::file-selector-button** CSS pseudo-element represents the button of an <input> of  type="file".'
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::first-letter":
+  name: pseudo element
+  desc: "The **::first-letter** CSS pseudo-element applies styles to the first letter of the first line of a block-level element, but only when not preceded by other content (such as images or inline tables)."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::first-line":
+  name: pseudo element
+  desc: "The **::first-line** CSS pseudo-element applies styles to the first line of a block-level element. Note that the length of the first line depends on many factors, including the width of the element, the width of the document, and the font size of the text."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::marker":
+  name: pseudo element
+  desc: "The **::marker** CSS pseudo-element selects the marker box of a list item, which typically contains a bullet or number. It works on any element or pseudo-element set to `display: list-item`, such as the `<li>` and `<summary>` elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::selection":
+  name: pseudo element
+  desc: "The **::selection** CSS pseudo-element applies styles to the part of a document that has been highlighted by the user (such as clicking and dragging the mouse across text)."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::before":
+  name: pseudo element
+  desc: "In CSS, **::before** creates a pseudo-element that is the first child of the selected element. It is often used to add cosmetic content to an element with the `content` property. It is inline by default."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::after":
+  name: pseudo element
+  desc: "In CSS, **::after** creates a pseudo-element that is the last child of the selected element. It is often used to add cosmetic content to an element with the `content` property. It is inline by default."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/::placeholder":
+  name: pseudo element
+  desc: "The **::placeholder** CSS pseudo-element represents the placeholder text in an `<input>` or `<textarea>` element."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors":
+  name: selector match all
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator":
+  name: child combinator
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/General_sibling_combinator":
+  name: general sibling combinator
+  desc: ""
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media":
+  name: "@media"
+  desc: |
+    The **@media** CSS [at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/At-rule) can be used to apply part of a style sheet based on the result of one or more [media queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries). With it, you specify a media query and a block of CSS to apply to the document if and only if the media query matches the device on which the content is being used.
+
+    Note: In JavaScript, the rules created using @media can be accessed with the CSSMediaRule CSS object model interface.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation":
+  name: "@media/orientation"
+  desc: "The **orientation** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test the orientation of the [viewport](https://developer.mozilla.org/en-US/docs/Glossary/Viewport) (or the page box, for [paged media](https://developer.mozilla.org/en-US/docs/Web/CSS/Paged_Media))."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-pointer":
+  name: "@media/any-pointer"
+  desc: "The **any-pointer** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) tests whether the user has *any* pointing device (such as a mouse), and if so, how accurate it is."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer":
+  name: "@media/pointer"
+  desc: |
+    The **pointer** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) tests whether the user has a pointing device (such as a mouse), and if so, how accurate the *primary* pointing device is.
+
+    Note: If you want to test the accuracy of any pointing device, use any-pointer instead.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover":
+  name: "@media/any-hover"
+  desc: "The **any-hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether *any* available input mechanism can hover over elements."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover":
+  name: "@media/hover"
+  desc: "The **hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether the user's *primary* input mechanism can hover over elements."
+"https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir":
+  name: global attribute
+  desc: The **dir** global attribute is an enumerated attribute that indicates the directionality of the element's text.
+"https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors":
+  name: attribute selector
+  desc: ""

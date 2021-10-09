@@ -16,19 +16,19 @@ rules:
   no-var: error
   no-extra-bind: error
   prefer-arrow-callback: error
-
   no-empty:
     - warn
     - allowEmptyCatch: true
+  "@typescript-eslint/ban-ts-comment": off
   "@typescript-eslint/no-unused-vars":
     - warn
     - vars: all
       args: none
       ignoreRestSiblings: true
       caughtErrors: none
-  "@typescript-eslint/no-empty-interface": "off"
-  "@typescript-eslint/camelcase": "off"
-  "@typescript-eslint/explicit-function-return-type": "off"
+  "@typescript-eslint/no-empty-interface": off
+  "@typescript-eslint/camelcase": off
+  "@typescript-eslint/explicit-function-return-type": off
   "@typescript-eslint/array-type":
     - error
     - default: array-simple
@@ -40,7 +40,7 @@ rules:
       singleline:
         delimiter: semi
         requireLast: false
-  "@typescript-eslint/explicit-module-boundary-types": "off"
+  "@typescript-eslint/explicit-module-boundary-types": off
 
 env:
   node: true

@@ -5,7 +5,6 @@ import path from "path"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
 import { ExternalsPlugin } from "webpack"
-import WebpackBar from "webpackbar"
 
 class ExternalsVendorPlugin {
 	externals: Record<string, string>
@@ -20,10 +19,9 @@ class ExternalsVendorPlugin {
 	}
 }
 
-const clientWorkspaceFolder = path.resolve(__dirname, "client")
-const serverWorkspaceFolder = path.resolve(__dirname, "server")
+const clientWorkspaceFolder = path.resolve(__dirname, "src")
 
-const configClient: Configuration = {
+const configExtension: Configuration = {
 	target: "node",
 	mode: process.env.NODE_ENV === "production" ? "production" : "development",
 	devtool: "source-map",
@@ -32,51 +30,7 @@ const configClient: Configuration = {
 		path: path.resolve(__dirname, "dist"),
 		filename: "extension.js",
 		libraryTarget: "commonjs2",
-		devtoolModuleFilenameTemplate: "webpack://[resource-path]",
-	},
-	module: {
-		rules: [
-			{
-				test: /\.ts$/,
-				exclude: /node_modules|\.test\.ts$/,
-				use: [
-					{
-						loader: "babel-loader",
-						options: {
-							presets: [["@babel/preset-env", { targets: "node 10" }], "@babel/preset-typescript"],
-							plugins: ["@babel/plugin-transform-runtime"],
-						},
-					},
-				],
-			},
-		],
-	},
-	resolve: {
-		extensions: [".ts", ".js", ".json"],
-		plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(clientWorkspaceFolder, "tsconfig.json") })],
-	},
-	plugins: [
-		new ForkTsCheckerPlugin({
-			typescript: {
-				configFile: path.resolve(clientWorkspaceFolder, "tsconfig.json"),
-			},
-		}),
-		new ExternalsVendorPlugin("vscode"),
-		new ESLintPlugin({ extensions: ["ts"] }),
-		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
-	],
-}
-
-const configServer: Configuration = {
-	target: "node",
-	mode: process.env.NODE_ENV === "production" ? "production" : "development",
-	devtool: "source-map",
-	entry: path.join(serverWorkspaceFolder, "server.ts"),
-	output: {
-		path: path.resolve(__dirname, "dist"),
-		filename: "server.js",
-		libraryTarget: "commonjs2",
-		devtoolModuleFilenameTemplate: "webpack://[resource-path]",
+		devtoolModuleFilenameTemplate: "[absolute-resource-path]",
 	},
 	module: {
 		rules: [
@@ -101,19 +55,18 @@ const configServer: Configuration = {
 	},
 	resolve: {
 		extensions: [".ts", ".js", ".json"],
-		plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(serverWorkspaceFolder, "tsconfig.json") })],
+		plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(clientWorkspaceFolder, "tsconfig.json") })],
 	},
 	plugins: [
 		new ForkTsCheckerPlugin({
 			typescript: {
-				configFile: path.resolve(serverWorkspaceFolder, "tsconfig.json"),
+				configFile: path.resolve(clientWorkspaceFolder, "tsconfig.json"),
 			},
 		}),
-		new ExternalsVendorPlugin("typescript"),
+		new ExternalsVendorPlugin("vscode", "typescript"),
 		new ESLintPlugin({ extensions: ["ts"] }),
-		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["server*"] }),
-		new WebpackBar({ color: "blue" }),
+		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
 	],
 }
 
-export default [configClient, configServer]
+export default configExtension
