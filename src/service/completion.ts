@@ -20,6 +20,7 @@ export default function completion(
 ): vscode.CompletionList<ICompletionItem> | undefined {
 	let result: TokenResult | undefined
 	try {
+		// TODO: besides js/ts, support other language extrators
 		result = canMatch(document, position, false, options.jsxPropImportChecking)
 		if (!result) return undefined
 	} catch (error) {

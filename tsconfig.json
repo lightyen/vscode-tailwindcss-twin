@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": false,
     "resolveJsonModule": true
   }
 }

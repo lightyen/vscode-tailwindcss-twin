@@ -1,18 +1,11 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "composite": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES2020",
     "lib": ["ESNext"],
     "types": ["node", "vscode", "webpack-env", "tailwind-types"],
-    "strict": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
     "rootDir": "..",
     "paths": {
       "~/*": ["./*"],
