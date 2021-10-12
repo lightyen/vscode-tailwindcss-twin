@@ -18,8 +18,8 @@ export default function completionResolve(
 		if (!payload) return item
 		if (payload.type === "theme") return item
 
+		const plugin = state.tw.getPlugin(item.label)
 		let keyword = item.label.slice(state.config.prefix.length)
-		const plugin = state.tw.getPlugin(keyword)
 		if (plugin) keyword = plugin.name
 
 		item = resolve(item, keyword, state, options, payload)

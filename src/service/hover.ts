@@ -5,6 +5,7 @@ import { transformSourceMap } from "co/sourcemap"
 import * as parser from "co/twin-parser"
 import { cssDataManager, getEntryDescription } from "co/vscode-css-languageservice"
 import { Hover, MarkdownString, Range } from "vscode"
+import { escapeRegexp } from "~/../common"
 import type { ServiceOptions } from "."
 import { getDescription, getReferenceLinks } from "./referenceLink"
 import type { TailwindLoader } from "./tailwind"
@@ -119,8 +120,9 @@ export default async function hover(
 
 				const header = new MarkdownString()
 				if (options.references) {
-					const keyword = value.replace(new RegExp(`^${state.config.prefix}`), "")
-					const name = state.tw.getPlugin(keyword)?.name ?? keyword
+					const plugin = state.tw.getPlugin(value)
+					let name = value.replace(new RegExp(`^${escapeRegexp(state.config.prefix)}`), "")
+					if (plugin) name = plugin.name
 					if (name) {
 						const desc = getDescription(name)
 						if (typeof desc === "string") {
