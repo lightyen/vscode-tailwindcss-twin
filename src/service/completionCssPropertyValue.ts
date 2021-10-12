@@ -1,5 +1,5 @@
-import * as languageFacts from "co/vscode-css-languageservice"
-import { cssDataManager, getEntryDescription, units } from "co/vscode-css-languageservice"
+import * as languageFacts from "@/vscode-css-languageservice"
+import { cssDataManager, getEntryDescription, units } from "@/vscode-css-languageservice"
 import { CompletionItemKind, CompletionItemTag, Range, SnippetString } from "vscode"
 import { IPropertyData } from "vscode-css-languageservice"
 import type { ICompletionItem } from "~/typings/completion"

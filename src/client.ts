@@ -1,5 +1,5 @@
+import { defaultLogger as console } from "@/logger"
 import { deepStrictEqual } from "assert"
-import { defaultLogger as console } from "co/logger"
 import path from "path"
 import vscode, { CodeAction } from "vscode"
 import { URI, Utils } from "vscode-uri"

@@ -11,19 +11,15 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "removeComments": true,
     "resolveJsonModule": true,
-    "noImplicitAny": true,
     "skipLibCheck": true,
-    "sourceMap": true,
     "rootDir": "..",
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
-      "co": ["../common/index.ts"],
-      "co/*": ["../common/*"]
+      "@": ["./common/index.ts"],
+      "@/*": ["./common/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.json", "../common/**/*", "../package.json", "../package.nls*.json"],
+  "include": ["**/*.ts", "**/*.json", "../package.json", "../package.nls*.json"],
   "exclude": ["**/__tests__/**", "**/*.test.ts"]
 }

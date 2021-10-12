@@ -1,8 +1,8 @@
+import { md5 } from "@"
+import { findAllMatch, PatternKind } from "@/ast"
+import parseThemeValue from "@/parseThemeValue"
+import * as parser from "@/twin-parser"
 import chroma from "chroma-js"
-import { md5 } from "co"
-import { findAllMatch, PatternKind } from "co/ast"
-import parseThemeValue from "co/parseThemeValue"
-import * as parser from "co/twin-parser"
 import vscode from "vscode"
 import { ColorDesc, createTwContext } from "./tailwind/tw"
 

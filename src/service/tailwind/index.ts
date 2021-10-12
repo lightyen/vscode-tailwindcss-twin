@@ -1,5 +1,5 @@
-import { importFrom } from "co/module"
-import { SuggestionResult } from "co/twin-parser"
+import { importFrom } from "@/module"
+import { SuggestionResult } from "@/twin-parser"
 import Fuse from "fuse.js"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
