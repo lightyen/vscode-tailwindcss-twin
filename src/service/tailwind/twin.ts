@@ -14,36 +14,10 @@ export interface selectorParser {
 	pseudo: typeof parser.pseudo
 }
 
-interface updateClass {
-	(
-		classname: string,
-		options: {
-			withAttr?(className: string, attr: string): string
-			withPseudo(className: string, pseudo: string): string
-		},
-	): string | null | undefined
-}
-
-interface transformOptions {
-	wrap?(): postcss.Node
-	withRule?(rule: postcss.Rule): void
-}
-
-export interface ContextModule {
+export interface ContextModule extends Tailwind.pluginUtils {
 	plugin: Tailwind.createPlugin
 	postcss: postcss.Postcss
-	prefixSelector(prefix: string, selector: string): string
-	applyStateToMarker(
-		selector: string,
-		marker: string,
-		state: string,
-		join: (marker: string, selector: string) => string,
-	): string
-	updateLastClasses(selectors: string, updateClass: updateClass): string
-	updateAllClasses(selectors: string, updateClass: updateClass): string
-	transformAllSelectors(transformSelector: updateClass, options?: transformOptions): Tailwind.Generator
-	transformAllClasses(transformClass: updateClass, options?: transformOptions): Tailwind.Generator
-	transformLastClasses(transformClass: updateClass, options?: transformOptions): Tailwind.Generator
+	prefixSelector: Tailwind.prefixSelector
 }
 
 export function twin(context: ContextModule): Tailwind.ConfigJS {

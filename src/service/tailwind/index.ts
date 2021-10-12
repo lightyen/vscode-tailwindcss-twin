@@ -49,14 +49,12 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 		transformAllSelectors,
 		transformAllClasses,
 		transformLastClasses,
-	} = importFrom("tailwindcss/lib/util/pluginUtils", { base: extensionUri.fsPath })
-	const prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", {
-		cache: true,
+	}: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", { base: extensionUri.fsPath })
+	const prefixSelector: Tailwind.prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", {
 		base: extensionUri.fsPath,
 	})
-	const plugin = importFrom("tailwindcss/plugin", { base: extensionUri.fsPath })
+	const plugin: Tailwind.createPlugin = importFrom("tailwindcss/plugin", { base: extensionUri.fsPath })
 	const resolveConfig: Tailwind.resolveConfig = importFrom("tailwindcss/resolveConfig", {
-		cache: true,
 		base: extensionUri.fsPath,
 	})
 

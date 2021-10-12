@@ -5558,10 +5558,10 @@ symbol-tree@^3.2.4:
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
-tailwind-types@3.0.0-alpha.10:
-  version "3.0.0-alpha.10"
-  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-3.0.0-alpha.10.tgz#c92923759124c1770a85ec101f68d1415bcbbc64"
-  integrity sha512-bTi4cx7q3GBGcXLhqmgrfmIurgKvy8DIEqOMmub9db0We9sI6Fndi4WSD/vi5j4i+HNTUuOCBAo30I+fKNjbbw==
+tailwind-types@3.0.0-alpha.11:
+  version "3.0.0-alpha.11"
+  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-3.0.0-alpha.11.tgz#62e057547ae459528f0567b92eabbddde4cf8fc7"
+  integrity sha512-6qsGDueyY8fwMiIYA4eOwET1sCb5LNgPOpNqTWiBNdJY6sdp0slM3V2QtO/IYY9pfi1/DCYGVh7DWGYHkaxZjQ==
   dependencies:
     csstype "^3.0.9"
     postcss "^8.3.9"
