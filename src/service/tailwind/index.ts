@@ -29,6 +29,17 @@ export enum ExtensionMode {
 	Test = 3,
 }
 
+/**
+ * Completion item tags are extra annotations that tweak the rendering of a completion
+ * item.
+ */
+export enum CompletionItemTag {
+	/**
+	 * Render a completion as obsolete, usually using a strike-out.
+	 */
+	Deprecated = 1,
+}
+
 export function createTailwindLoader(configPath: URI, extensionUri: URI, extensionMode: ExtensionMode) {
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath })
 	const {
