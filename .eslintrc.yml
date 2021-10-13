@@ -9,8 +9,6 @@ extends:
   - "plugin:prettier/recommended"
 parserOptions:
   sourceType: module
-ignorePatterns:
-  - references/tailwind_v2.2_test.js
 rules:
   spaced-comment: error
   no-var: error
