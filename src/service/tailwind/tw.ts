@@ -82,7 +82,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		variables,
 		context,
 		screens,
-		colors, // remove?
 		isVariant,
 		renderVariant,
 		renderClassname,

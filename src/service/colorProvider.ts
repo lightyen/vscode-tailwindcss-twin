@@ -69,7 +69,7 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 					const result = parser.spread({ text: value })
 					for (const item of result.items) {
 						if (item.type !== parser.SpreadResultType.ClassName) continue
-						const color = tw.colors.get(item.target.value)
+						const color = tw.getColorDesc(item.target.value)
 						if (color) {
 							if (no(color)) continue
 							const range = new vscode.Range(
