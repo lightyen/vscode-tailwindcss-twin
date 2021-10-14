@@ -3,6 +3,7 @@ import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
 import { transformSourceMap } from "@/sourcemap"
 import * as parser from "@/twin-parser"
+import EventEmitter from "events"
 import path from "path"
 import vscode from "vscode"
 import { URI } from "vscode-uri"
@@ -54,6 +55,8 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		},
 	}
 
+	const activated = new EventEmitter()
+
 	return {
 		get configPath() {
 			return configPath
@@ -68,7 +71,17 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		completionItemProvider,
 		hoverProvider,
 		provideDiagnostics(document: TextDocument) {
-			return validate(document, state, options)
+			return new Promise<ReturnType<typeof validate> | undefined>(resolve => {
+				if (!options.enabled) resolve(undefined)
+				if (!loading) {
+					if (!state.tw) start()
+					resolve(validate(document, state, options))
+				} else {
+					activated.once("signal", () => {
+						resolve(validate(document, state, options))
+					})
+				}
+			})
 		},
 		colorProvider: {
 			dispose() {
@@ -91,9 +104,10 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			const start = process.hrtime.bigint()
 			state.readTailwindConfig()
 			state.createContext()
-			const end = process.hrtime.bigint()
-			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 			_colorProvider = createColorProvider(state.tw)
+			const end = process.hrtime.bigint()
+			activated.emit("signal")
+			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 		} catch (error) {
 			const err = error as Error
 			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
@@ -113,9 +127,10 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			state.readTailwindConfig()
 			state.createContext()
 			_colorProvider?.dispose()
-			const end = process.hrtime.bigint()
-			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 			_colorProvider = createColorProvider(state.tw)
+			const end = process.hrtime.bigint()
+			activated.emit("signal")
+			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 		} catch (error) {
 			const err = error as Error
 			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
@@ -158,13 +173,26 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	}
 
 	async function renderColorDecoration(editor: vscode.TextEditor) {
+		if (!options.enabled) return
 		return new Promise<void>(resolve => {
-			if (!options.enabled || loading) return
-			if (!state.tw) {
-				start()
+			if (!loading) {
+				if (!state.tw) {
+					start()
+				}
+				const a = process.hrtime.bigint()
+				_colorProvider?.render(editor)
+				const b = process.hrtime.bigint()
+				console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
+				resolve()
+			} else {
+				activated.once("signal", () => {
+					const a = process.hrtime.bigint()
+					_colorProvider?.render(editor)
+					const b = process.hrtime.bigint()
+					console.trace(`async colors (${Number((b - a) / 10n ** 6n)}ms)`)
+					resolve()
+				})
 			}
-			_colorProvider?.render(editor)
-			resolve()
 		})
 	}
 }
