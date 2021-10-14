@@ -192,97 +192,55 @@
         }
       }
     },
-    "css-function-single-quote": {
-      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
+    "expression-arbitrary-variant-single-quote": {
+      "contentName:": "meta.embedded.block.css.twin",
+      "begin": "(\\[)",
+      "end": "(\\]):",
       "beginCaptures": {
         "1": {
-          "name": "support.function.css.twin"
+          "name": "punctuation.section.embedded.arbitrary-variant.begin.twin"
         }
       },
-      "end": "\\)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-variant.end.twin"
+        }
+      },
       "patterns": [
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#css-function-single-quote"
-        },
-        {
-          "include": "#css-url-single-quote"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
         {
           "include": "#line-comment-end-single-quote"
         },
         {
           "include": "#block-comment-end-single-quote"
+        },
+        {
+          "include": "source.css.scss"
         }
       ]
     },
-    "css-function-double-quote": {
-      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
+    "expression-arbitrary-variant-double-quote": {
+      "contentName:": "meta.embedded.block.css.twin",
+      "begin": "(\\[)",
+      "end": "(\\]):",
       "beginCaptures": {
         "1": {
-          "name": "support.function.css.twin"
+          "name": "punctuation.section.embedded.arbitrary-variant.begin.twin"
         }
       },
-      "end": "\\)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-variant.end.twin"
+        }
+      },
       "patterns": [
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "include": "#css-function-double-quote"
-        },
-        {
-          "include": "#css-url-double-quote"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
         {
           "include": "#line-comment-end-double-quote"
         },
         {
           "include": "#block-comment-end-double-quote"
-        }
-      ]
-    },
-    "css-url-single-quote": {
-      "begin": "\\b(url)\\(",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.css.twin"
-        }
-      },
-      "end": "\\)",
-      "patterns": [
-        {
-          "include": "#qstring-double"
         },
         {
-          "match": "[^\"'\\s\\(\\)]+",
-          "name": "variable.parameter.url.css.twin"
-        }
-      ]
-    },
-    "css-url-double-quote": {
-      "begin": "\\b(url)\\(",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.css.twin"
-        }
-      },
-      "end": "\\)",
-      "patterns": [
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "match": "[^\"'\\s\\(\\)]+",
-          "name": "variable.parameter.url.css.twin"
+          "include": "source.css.scss"
         }
       ]
     },
@@ -311,25 +269,16 @@
       },
       "patterns": [
         {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#css-function-single-quote"
-        },
-        {
-          "include": "#css-url-single-quote"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
-        {
           "include": "#line-comment-end-single-quote"
         },
         {
           "include": "#block-comment-end-single-quote"
+        },
+        {
+          "include": "#css-value-content-bracket"
+        },
+        {
+          "include": "source.css#property-values"
         }
       ]
     },
@@ -358,25 +307,16 @@
       },
       "patterns": [
         {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "include": "#css-function-double-quote"
-        },
-        {
-          "include": "#css-url-double-quote"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
-        {
           "include": "#line-comment-end-double-quote"
         },
         {
           "include": "#block-comment-end-double-quote"
+        },
+        {
+          "include": "#css-value-content-bracket"
+        },
+        {
+          "include": "source.css#property-values"
         }
       ]
     },
@@ -397,22 +337,6 @@
       "patterns": [
         {
           "include": "#css-value-content-bracket"
-        }
-      ]
-    },
-    "css-value-content-val": {
-      "match": "(\\b(?<!#)[-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
-      "captures": {
-        "1": {
-          "name": "constant.numeric.decimal.twin"
-        },
-        "2": {
-          "name": "keyword.other.unit.px.twin"
-        }
-      },
-      "patterns": [
-        {
-          "name": "keyword.other.unit.twin"
         }
       ]
     },
@@ -458,6 +382,9 @@
           "include": "#block-comment-end-single-quote"
         },
         {
+          "include": "#expression-arbitrary-variant-single-quote"
+        },
+        {
           "include": "#expression-variant"
         },
         {
@@ -475,6 +402,9 @@
         },
         {
           "include": "#block-comment-end-double-quote"
+        },
+        {
+          "include": "#expression-arbitrary-variant-double-quote"
         },
         {
           "include": "#expression-variant"
