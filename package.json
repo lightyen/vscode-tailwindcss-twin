@@ -117,7 +117,20 @@
         }
       }
     },
+    "languages": [
+      {
+        "id": "source.css.scss.tw",
+        "aliases": [
+          "SCSS (customized)"
+        ]
+      }
+    ],
     "grammars": [
+      {
+        "language": "source.css.scss.tw",
+        "scopeName": "source.css.scss.tw",
+        "path": "./syntaxes/scss.tm.json"
+      },
       {
         "injectTo": [
           "source.tsx",

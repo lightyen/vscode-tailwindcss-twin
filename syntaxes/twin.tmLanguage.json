@@ -94,6 +94,31 @@
         }
       }
     },
+    "expression-arbitrary-variant": {
+      "begin": "(\\[)",
+      "end": "(\\]):",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-variant.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-variant.end.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "source.css.scss.tw"
+        }
+      ]
+    },
     "expression-classname": {
       "match": "(!?)((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
       "captures": {
@@ -107,59 +132,6 @@
           "name": "support.function.important-bang.classname.twin"
         }
       }
-    },
-    "css-function": {
-      "begin": "\\b(?!url)(\\w+(?:-\\w+)*)\\(",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.css.twin"
-        }
-      },
-      "end": "\\)",
-      "patterns": [
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "include": "#css-function"
-        },
-        {
-          "include": "#css-url"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        }
-      ]
-    },
-    "css-url": {
-      "begin": "\\b(url)\\(",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.css.twin"
-        }
-      },
-      "end": "\\)",
-      "patterns": [
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "match": "[^\"'\\s\\(\\)]+",
-          "name": "variable.parameter.url.css.twin"
-        }
-      ]
     },
     "expression-short-css": {
       "contentName": "entity.name.variable.css-value.twin",
@@ -186,28 +158,16 @@
       },
       "patterns": [
         {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "include": "#css-function"
-        },
-        {
-          "include": "#css-url"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
-        {
           "include": "#line-comment-end-backtick"
         },
         {
           "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "#css-value-content-bracket"
+        },
+        {
+          "include": "source.css#property-values"
         }
       ]
     },
@@ -228,22 +188,6 @@
       "patterns": [
         {
           "include": "#css-value-content-bracket"
-        }
-      ]
-    },
-    "css-value-content-val": {
-      "match": "(\\b(?<!#)[-+]?[0-9]*\\.?[0-9]+)(%|fr|em|rem|ex|px|cm|mm|in|pt|pc|ch|vw|vh|vmin|vmax|deg|rad|grad|turn|ms|s|Hz|kHz|dpi|dpcm|dppx|\\b)",
-      "captures": {
-        "1": {
-          "name": "constant.numeric.decimal.twin"
-        },
-        "2": {
-          "name": "keyword.other.unit.px.twin"
-        }
-      },
-      "patterns": [
-        {
-          "name": "keyword.other.unit.twin"
         }
       ]
     },
@@ -275,28 +219,16 @@
       },
       "patterns": [
         {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "#qstring-double"
-        },
-        {
-          "include": "#qstring-single"
-        },
-        {
-          "include": "#css-function"
-        },
-        {
-          "include": "#css-url"
-        },
-        {
-          "include": "#css-value-content-val"
-        },
-        {
           "include": "#line-comment-end-backtick"
         },
         {
           "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "#css-value-content-bracket"
+        },
+        {
+          "include": "source.css#property-values"
         }
       ]
     },
@@ -364,6 +296,9 @@
         },
         {
           "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "#expression-arbitrary-variant"
         },
         {
           "include": "#expression-variant"
