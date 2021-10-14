@@ -84,6 +84,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		screens,
 		isVariant,
 		renderVariant,
+		renderArbitraryVariant,
 		renderClassname,
 		renderCssProperty,
 		renderDecls,
@@ -136,6 +137,13 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		}
 
 		return data.join(", ") + " {\n\t/* ... */\n}"
+	}
+
+	function renderArbitraryVariant(code: string) {
+		code = code.trim().replace(/\s{2,}/g, " ")
+		code = code + " {\n\t/* ... */\n}"
+		const root = postcss.parse(code)
+		return root.toString()
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
