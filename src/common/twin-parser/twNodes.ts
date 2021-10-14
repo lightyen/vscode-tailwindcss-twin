@@ -14,6 +14,7 @@ export enum NodeKind {
 	CssPropertyProp,
 	ArbitraryStyle, // text-[black]
 	ArbitraryStyleProp,
+	ArbitraryVariant, // [.group:hover &]:classname
 }
 
 export type Node =
@@ -29,16 +30,17 @@ export type Node =
 	| CssPropertyPropNode
 	| ArbitraryStylePropNode
 	| CssValueNode
+	| ArbitraryVariantNode
 
 export type Leaf = IdentifierNode | SeparatorNode | CssPropertyPropNode | ArbitraryStylePropNode | CssValueNode
 
-export interface NodeList extends Array<Node> {
+export interface NodeList<T extends Node = Node> extends Array<T> {
 	texts: string[]
-	slice(start?: number, end?: number): NodeList
+	slice(start?: number, end?: number): NodeList<T>
 }
 
-export function createNodeList(nodes: Node[]) {
-	return new Proxy(nodes, {
+export function createNodeList<T extends Node = Node>(nodes?: T[]) {
+	return new Proxy(nodes ?? [], {
 		get: function (target, prop, ...rest) {
 			switch (prop) {
 				case "texts":
@@ -51,12 +53,12 @@ export function createNodeList(nodes: Node[]) {
 					return Reflect.get(target, prop, ...rest)
 			}
 		},
-	}) as NodeList
+	}) as NodeList<T>
 }
 
-export interface DeclarationNode extends Token {
+export interface DeclarationNode<T extends Node = Node> extends Token {
 	kind: NodeKind.Declaration
-	children: NodeList
+	children: NodeList<T>
 }
 
 export interface IdentifierNode extends Token {
@@ -75,7 +77,7 @@ export interface GroupNode extends Token {
 
 export interface VariantSpanNode extends Token {
 	kind: NodeKind.VariantSpan
-	variant: VariantNode
+	variant: VariantNode | ArbitraryVariantNode
 	child: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode
 }
 
@@ -85,7 +87,14 @@ export interface VariantNode extends Token {
 	sep: SeparatorNode
 }
 
-interface SeparatorNode extends Token {
+export interface ArbitraryVariantNode extends Token {
+	kind: NodeKind.ArbitraryVariant
+	child: IdentifierNode // TODO: split selectors
+	sep?: SeparatorNode
+	closed: boolean
+}
+
+export interface SeparatorNode extends Token {
 	kind: NodeKind.Separator
 }
 
@@ -160,7 +169,11 @@ export function isVariant(node: Node): node is VariantNode {
 	return node.kind === NodeKind.Variant
 }
 
-export function createDeclarationNode(params: { token: Token; children: NodeList }) {
+export function isArbitraryVariant(node: Node): node is ArbitraryVariantNode {
+	return node.kind === NodeKind.ArbitraryVariant
+}
+
+export function createDeclarationNode<T extends Node = Node>(params: { token: Token; children: NodeList<T> }) {
 	const { token, children } = params
 	return new Proxy(token, {
 		get(target, prop, ...rest) {
@@ -178,7 +191,7 @@ export function createDeclarationNode(params: { token: Token; children: NodeList
 
 export function createVariantSpanNode(params: {
 	token: Token
-	variant: VariantNode
+	variant: VariantNode | ArbitraryVariantNode
 	child?: VariantSpanNode | GroupNode | CssPropertyNode | ArbitraryStyleNode | ClassNameNode
 }) {
 	const { token, variant, child } = params
@@ -216,6 +229,31 @@ export function createVariantNode(params: { token: Token; sep: SeparatorNode; ch
 	}) as VariantNode
 }
 
+export function createArbitraryVariantNode(params: {
+	token: Token
+	sep?: SeparatorNode
+	child: IdentifierNode
+	closed: boolean
+}) {
+	const { token, sep, child, closed } = params
+	return new Proxy(token, {
+		get(target, prop, ...rest) {
+			switch (prop) {
+				case "kind":
+					return NodeKind.ArbitraryVariant
+				case "sep":
+					return sep
+				case "child":
+					return child
+				case "closed":
+					return closed
+				default:
+					return Reflect.get(target, prop, ...rest)
+			}
+		},
+	}) as ArbitraryVariantNode
+}
+
 export function createSeparatorNode(token: Token) {
 	return new Proxy(token, {
 		get(target, prop, ...rest) {
@@ -235,6 +273,7 @@ export function createClassNameNode(params: {
 	exclamationLeft?: IdentifierNode
 	exclamationRight?: IdentifierNode
 }) {
+	// const { token, child, exclamationLeft, exclamationRight } = params
 	return new Proxy(params.token, {
 		get(target, prop, ...rest) {
 			switch (prop) {

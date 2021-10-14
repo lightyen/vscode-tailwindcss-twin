@@ -8,6 +8,7 @@ export enum HoverResultType {
 	ClassName,
 	CssProperty,
 	ArbitraryStyle,
+	ArbitraryVariant,
 }
 
 function hoverResultType(node: nodes.Node) {
@@ -20,6 +21,8 @@ function hoverResultType(node: nodes.Node) {
 			return HoverResultType.CssProperty
 		case nodes.NodeKind.ArbitraryStyle:
 			return HoverResultType.ArbitraryStyle
+		case nodes.NodeKind.ArbitraryVariant:
+			return HoverResultType.ArbitraryVariant
 		default:
 			return HoverResultType.Unknown
 	}

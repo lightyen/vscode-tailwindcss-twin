@@ -126,21 +126,17 @@ function findTerminal(text: string, start = 0, end = text.length, sep = ":"): nu
 			case 0:
 				if (isSpace(char)) return i
 				if (char === 40) {
-					let isSep = true
-					for (let k = 0; k < sep.length; k++) {
-						if (sep[k] !== text[i - k - 1]) {
-							isSep = false
-							break
+					const important = text.charCodeAt(i - 1) === 33
+					if (important) i -= 1
+					const len = sep.length
+					for (let k = 0; k < len; k++) {
+						if (sep.charCodeAt(len - k - 1) !== text.charCodeAt(i - k - 1)) {
+							return i
 						}
 					}
-					if (isSep) {
-						state = 5
-						_stack += 1
-					} else {
-						return i
-					}
-				}
-				if (char === 91) {
+					if (!important) _stack += 1
+					state = 5
+				} else if (char === 91) {
 					state = 1
 					stack += 1
 				}
@@ -170,10 +166,18 @@ function findTerminal(text: string, start = 0, end = text.length, sep = ":"): nu
 			case 3:
 				if (char === 34) state = 1
 				break
-			case 4:
+			case 4: {
 				if (isSpace(char)) return i
 				if (char === 33) return i + 1
-				return i
+				const len = sep.length
+				for (let k = 0; k < len; k++) {
+					if (sep.charCodeAt(k) !== text.charCodeAt(i + k)) {
+						return i
+					}
+				}
+				state = 0
+				break
+			}
 			case 5:
 				if (char === 40) {
 					_stack += 1
@@ -213,7 +217,7 @@ export function parse({
 	const decl = createToken(start, end, text.slice(start, end))
 	const _separator = separator.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 	const regexp = new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(!?(?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|(!?(?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${_separator})|(\\[)|(!?(?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|(!?(?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 
@@ -222,7 +226,7 @@ export function parse({
 	text = text.slice(0, end)
 
 	while ((match = regexp.exec(text))) {
-		const [, , blockComment, variant, arbitrary, classnames, group, others] = match
+		const [, , blockComment, variant, ar_variant, arbitrary, classnames, group, others] = match
 		let exclamationLeft: nodes.IdentifierNode | undefined
 		start = match.index
 
@@ -233,7 +237,7 @@ export function parse({
 
 		if (variant) {
 			start += variant.length
-
+			const sep = nodes.createSeparatorNode(createToken(start - separator.length, start, separator))
 			const variantNode = nodes.createVariantNode({
 				token: createToken(match.index, start, variant),
 				child: nodes.createIdentifierNode(
@@ -243,9 +247,7 @@ export function parse({
 						text.slice(match.index, start - separator.length),
 					),
 				),
-				sep: nodes.createSeparatorNode(
-					createToken(start - separator.length, start, text.slice(start - separator.length, start)),
-				),
+				sep,
 			})
 
 			if (text.charCodeAt(start) === 33) {
@@ -285,8 +287,8 @@ export function parse({
 					}),
 				)
 			} else {
-				const _end = findTerminal(text, match.index + variant.length, end, separator)
-				const node = parse({ text, start: match.index + variant.length, end: _end })
+				const _end = findTerminal(text, sep.end, end, separator)
+				const node = parse({ text, start: sep.end, end: _end })
 
 				if (node.kind !== nodes.NodeKind.Declaration) {
 					children.push(
@@ -306,6 +308,118 @@ export function parse({
 								text.slice(match.index, regexp.lastIndex),
 							),
 							variant: variantNode,
+							child: undefined,
+						}),
+					)
+				}
+
+				regexp.lastIndex = _end
+			}
+		} else if (ar_variant) {
+			const ar_rb = findRightBracket({ text, start: match.index, end, brackets: [91, 93] })
+			if (ar_rb == undefined) {
+				const ar_variantNode = nodes.createArbitraryVariantNode({
+					token: createToken(match.index, end, text.slice(match.index, end)),
+					child: nodes.createIdentifierNode(createToken(match.index, end, text.slice(match.index, end))),
+					sep: undefined,
+					closed: false,
+				})
+				children.push(
+					nodes.createVariantSpanNode({
+						token: createToken(match.index, end, text.slice(match.index, end)),
+						variant: ar_variantNode,
+						child: undefined,
+					}),
+				)
+				regexp.lastIndex = end
+				continue
+			}
+
+			let sep: nodes.SeparatorNode | undefined
+			if (text.slice(ar_rb + 1).startsWith(separator)) {
+				sep = nodes.createSeparatorNode(createToken(ar_rb + 1, ar_rb + 1 + separator.length, separator))
+			}
+
+			if (!sep) {
+				children.push(
+					nodes.createClassNameNode({
+						token: createToken(match.index, ar_rb + 1, text.slice(match.index, ar_rb + 1)),
+						child: nodes.createIdentifierNode(
+							createToken(match.index, ar_rb + 1, text.slice(match.index, ar_rb + 1)),
+						),
+					}),
+				)
+				continue
+			}
+
+			start = sep.end
+			const ar_variantNode = nodes.createArbitraryVariantNode({
+				token: createToken(match.index, start, text.slice(match.index, start)),
+				child: nodes.createIdentifierNode(
+					createToken(match.index, ar_rb + 1, text.slice(match.index, ar_rb + 1)),
+				),
+				sep,
+				closed: ar_rb != undefined,
+			})
+
+			if (text.charCodeAt(sep.end) === 33) {
+				exclamationLeft = nodes.createIdentifierNode(createToken(sep.end, sep.end + 1, "!"))
+				start = sep.end + 1
+			}
+
+			if (text.charCodeAt(start) === 40) {
+				const rb = findRightBracket({ text, start, end })
+				const _a = start
+				start += 1
+				let exclamationRight: nodes.IdentifierNode | undefined
+				if (rb != undefined) {
+					regexp.lastIndex = rb + 1
+					if (text.charCodeAt(rb + 1) === 33) {
+						exclamationRight = nodes.createIdentifierNode(createToken(rb + 1, rb + 2, "!"))
+						regexp.lastIndex += 1
+					}
+				} else {
+					regexp.lastIndex = end
+				}
+
+				const _end = rb != undefined ? rb : end
+				const _b = rb != undefined ? rb + 1 : end
+
+				children.push(
+					nodes.createVariantSpanNode({
+						token: createToken(match.index, regexp.lastIndex, text.slice(match.index, regexp.lastIndex)),
+						variant: ar_variantNode,
+						child: nodes.createGroupNode({
+							token: createToken(_a, _b, text.slice(_a, _b)),
+							child: parse({ text, start, end: _end }),
+							exclamationLeft,
+							exclamationRight,
+							closed: rb != undefined,
+						}),
+					}),
+				)
+			} else {
+				const _end = findTerminal(text, sep.end, end, separator)
+				const node = parse({ text, start: sep.end, end: _end })
+
+				if (node.kind !== nodes.NodeKind.Declaration) {
+					children.push(
+						nodes.createVariantSpanNode({
+							token: createToken(match.index, _end, text.slice(match.index, _end)),
+							variant: ar_variantNode,
+							child: node,
+						}),
+					)
+				} else {
+					// empty
+					children.push(
+						nodes.createVariantSpanNode({
+							token: createToken(
+								match.index,
+								regexp.lastIndex,
+								text.slice(match.index, regexp.lastIndex),
+							),
+							variant: ar_variantNode,
 							child: undefined,
 						}),
 					)

@@ -3,6 +3,7 @@ import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
 import * as parser from "@/twin-parser"
+import * as nodes from "@/twin-parser/twNodes"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode"
@@ -240,7 +241,7 @@ function validateTwin({
 					continue
 				}
 
-				const variants = item.variants.texts
+				const variants = item.variants.map(v => v.child.value)
 				if (item.type === parser.SpreadResultType.CssProperty) {
 					const twinKeys = variants.sort()
 					const property = item.prop?.toKebab()
@@ -319,7 +320,7 @@ function validateTwin({
 					continue
 				}
 
-				const twinKeys = item.variants.texts.sort()
+				const twinKeys = item.variants.map(v => v.child.value).sort()
 				const property = item.target.toKebab()
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
@@ -377,7 +378,11 @@ function checkTwinCssProperty(
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
-	for (const [a, b, variant] of item.variants) {
+	for (const node of item.variants) {
+		if (!nodes.isVariant(node)) {
+			continue
+		}
+		const [a, b, variant] = node.child
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -439,7 +444,11 @@ function checkTwinClassName(
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
-	for (const [a, b, variant] of item.variants) {
+	for (const node of item.variants) {
+		if (!nodes.isVariant(node)) {
+			continue
+		}
+		const [a, b, variant] = node.child
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -464,7 +473,7 @@ function checkTwinClassName(
 	}
 
 	if (item.target.value) {
-		const variants = item.variants.texts
+		const variants = item.variants.map(v => v.child.value)
 		const { start, end } = item.target
 		const value = item.target.value
 		if (state.tw.renderDecls(value).size === 0) {
