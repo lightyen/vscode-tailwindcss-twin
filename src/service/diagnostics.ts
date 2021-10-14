@@ -3,6 +3,7 @@ import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
 import * as parser from "@/twin-parser"
+import * as nodes from "@/twin-parser/twNodes"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode"
@@ -240,7 +241,7 @@ function validateTwin({
 					continue
 				}
 
-				const variants = item.variants.texts
+				const variants = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " "))
 				if (item.type === parser.SpreadResultType.CssProperty) {
 					const twinKeys = variants.sort()
 					const property = item.prop?.toKebab()
@@ -319,7 +320,7 @@ function validateTwin({
 					continue
 				}
 
-				const twinKeys = item.variants.texts.sort()
+				const twinKeys = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " ")).sort()
 				const property = item.target.toKebab()
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
@@ -377,7 +378,11 @@ function checkTwinCssProperty(
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
-	for (const [a, b, variant] of item.variants) {
+	for (const node of item.variants) {
+		if (!nodes.isVariant(node)) {
+			continue
+		}
+		const [a, b, variant] = node.child
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -439,7 +444,11 @@ function checkTwinClassName(
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
-	for (const [a, b, variant] of item.variants) {
+	for (const node of item.variants) {
+		if (!nodes.isVariant(node)) {
+			continue
+		}
+		const [a, b, variant] = node.child
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -464,11 +473,10 @@ function checkTwinClassName(
 	}
 
 	if (item.target.value) {
-		const variants = item.variants.texts
 		const { start, end } = item.target
 		const value = item.target.value
 		if (state.tw.renderDecls(value).size === 0) {
-			const ret = guess(state, variants, value)
+			const ret = guess(state, value)
 			if (ret.score === 0) {
 				switch (ret.kind) {
 					case PredictionKind.CssProperty:
@@ -495,12 +503,19 @@ function checkTwinClassName(
 							severity: DiagnosticSeverity.Error,
 						})
 				}
-			} else {
+			} else if (ret.value) {
 				result.push({
 					source: DIAGNOSTICS_ID,
 					message: `Unknown: ${value}, did you mean ${ret.value}?`,
 					range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
 					data: { text: value, newText: ret.value },
+					severity: DiagnosticSeverity.Error,
+				})
+			} else {
+				result.push({
+					source: DIAGNOSTICS_ID,
+					message: `Unknown: ${value}`,
+					range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
 					severity: DiagnosticSeverity.Error,
 				})
 			}
@@ -516,11 +531,7 @@ enum PredictionKind {
 	Variant,
 }
 
-function guess(
-	state: TailwindLoader,
-	variants: string[],
-	text: string,
-): { kind: PredictionKind; value: string; score: number } {
+function guess(state: TailwindLoader, text: string): { kind: PredictionKind; value: string; score: number } {
 	const a = state.classnames.search(text)
 	const b = state.variants.search(text)
 	const c = csspropSearcher.search(text)

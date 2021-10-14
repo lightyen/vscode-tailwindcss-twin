@@ -89,6 +89,13 @@ export default async function hover(
 
 				if (kind !== PatternKind.Twin) return undefined
 
+				if (selection.type === parser.HoverResultType.ArbitraryVariant) {
+					return {
+						range,
+						contents: [new MarkdownString("arbitrary variant")],
+					}
+				}
+
 				if (selection.type === parser.HoverResultType.Variant) {
 					const header = new MarkdownString()
 					if (options.references) {

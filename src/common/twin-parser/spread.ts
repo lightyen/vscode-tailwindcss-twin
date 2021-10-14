@@ -1,11 +1,11 @@
 import { parse } from "./parse_regexp"
-import { createTokenList, Token, TokenList } from "./token"
+import { Token } from "./token"
 import * as nodes from "./twNodes"
 
 export type SpreadDescription = {
 	target: Token
 	type: SpreadResultType
-	variants: TokenList
+	variants: nodes.NodeList<nodes.VariantNode | nodes.ArbitraryVariantNode>
 	important: boolean
 	prop?: nodes.CssPropertyPropNode | nodes.ArbitraryStylePropNode
 	content?: nodes.CssValueNode
@@ -44,15 +44,20 @@ export function spread({
 	separator?: string
 }) {
 	interface Context {
-		variants: TokenList
+		variants: nodes.NodeList<nodes.VariantNode | nodes.ArbitraryVariantNode>
 		important: boolean
 	}
 
 	const items: SpreadDescription[] = []
 	const emptyGroup: nodes.GroupNode[] = []
 	const emptyVariants: nodes.VariantSpanNode[] = []
-	const notClosed: Array<nodes.GroupNode | nodes.CssPropertyNode | nodes.ArbitraryStyleNode | nodes.IdentifierNode> =
-		[]
+	const notClosed: Array<
+		| nodes.GroupNode
+		| nodes.CssPropertyNode
+		| nodes.ArbitraryStyleNode
+		| nodes.ArbitraryVariantNode
+		| nodes.IdentifierNode
+	> = []
 
 	const walk = (node: nodes.Node | undefined, ctx: Context): void => {
 		if (node == undefined) {
@@ -63,12 +68,16 @@ export function spread({
 				walk(node.children[i], ctx)
 			}
 		} else if (nodes.isVariantSpan(node)) {
+			if (nodes.isArbitraryVariant(node.variant) && !node.variant.closed) {
+				notClosed.push(node.variant)
+				return
+			}
 			if (node.child == undefined || node.child.value.trim() === "") {
 				emptyVariants.push(node)
 				return
 			}
 			const variants = ctx.variants.slice()
-			variants.push(node.variant.child)
+			variants.push(node.variant)
 			walk(node.child, { ...ctx, variants })
 		} else if (nodes.isGroup(node)) {
 			if (!node.closed) {
@@ -126,7 +135,7 @@ export function spread({
 		}
 	}
 
-	walk(parse({ text, start, end, separator }), { variants: createTokenList(), important: false })
+	walk(parse({ text, start, end, separator }), { variants: nodes.createNodeList(), important: false })
 
 	return { items, emptyGroup, emptyVariants, notClosed }
 }
