@@ -153,6 +153,7 @@ function variantsCompletion(
 				break
 			case parser.SuggestResultType.CssProperty:
 			case parser.SuggestResultType.ArbitraryStyle:
+			case parser.SuggestResultType.ArbitraryVariant:
 				variantEnabled = false
 				break
 		}
@@ -284,6 +285,7 @@ function utilitiesCompletion(
 				break
 			}
 			case parser.SuggestResultType.CssProperty:
+			case parser.SuggestResultType.ArbitraryVariant:
 				classNameEnabled = false
 				break
 		}

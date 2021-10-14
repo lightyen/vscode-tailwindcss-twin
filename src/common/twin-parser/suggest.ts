@@ -16,12 +16,15 @@ export enum SuggestResultType {
 	ClassName,
 	CssProperty,
 	ArbitraryStyle,
+	ArbitraryVariant,
 }
 
 function suggestResultType(node: nodes.Node) {
 	switch (node.kind) {
 		case nodes.NodeKind.Variant:
 			return SuggestResultType.Variant
+		case nodes.NodeKind.ArbitraryVariant:
+			return SuggestResultType.ArbitraryVariant
 		case nodes.NodeKind.ClassName:
 			return SuggestResultType.ClassName
 		case nodes.NodeKind.CssProperty:
