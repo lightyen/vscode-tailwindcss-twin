@@ -194,7 +194,7 @@
           "include": "#block-comment-end-single-quote"
         },
         {
-          "include": "source.css.scss"
+          "include": "source.css.scss.tw"
         }
       ]
     },
@@ -220,7 +220,7 @@
           "include": "#block-comment-end-double-quote"
         },
         {
-          "include": "source.css.scss"
+          "include": "source.css.scss.tw"
         }
       ]
     },
