@@ -1,5 +1,5 @@
 .vscode
-webpack.config.js
+webpack.config.*
 **/*.ts
 .gitignore
 .prettierrc.yml
@@ -9,12 +9,13 @@ webpack.tsconfig.json
 **/tsconfig.json
 **/tsconfig.base.json
 contributing.md
-extension/**
-client/**/*
-server/**/*
 tests/**
 references
 .github/**
 examples
 media/icon.svg
 media/icon.xcf
+# node_modules
+src/**/*
+.browserslistrc
+statistics.html
