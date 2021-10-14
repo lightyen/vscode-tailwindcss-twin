@@ -4,49 +4,16 @@
   "scopeName": "source.css.scss.tw",
   "patterns": [
     {
-      "include": "#variable_setting"
-    },
-    {
-      "include": "#at_rule_forward"
-    },
-    {
-      "include": "#at_rule_use"
-    },
-    {
-      "include": "#at_rule_include"
-    },
-    {
-      "include": "#at_rule_import"
-    },
-    {
-      "include": "#general"
-    },
-    {
-      "include": "#flow_control"
-    },
-    {
       "include": "#rules"
     },
     {
       "include": "#property_list"
     },
     {
-      "include": "#at_rule_mixin"
-    },
-    {
       "include": "#at_rule_media"
     },
     {
-      "include": "#at_rule_function"
-    },
-    {
-      "include": "#at_rule_charset"
-    },
-    {
       "include": "#at_rule_option"
-    },
-    {
-      "include": "#at_rule_namespace"
     },
     {
       "include": "#at_rule_fontface"
@@ -58,14 +25,7 @@
       "include": "#at_rule_keyframes"
     },
     {
-      "include": "#at_rule_at_root"
-    },
-    {
       "include": "#at_rule_supports"
-    },
-    {
-      "match": ";",
-      "name": "punctuation.terminator.rule.css"
     }
   ],
   "repository": {
@@ -152,7 +112,7 @@
           "name": "punctuation.definition.keyword.scss"
         }
       },
-      "end": "\\s*(?={)",
+      "end": "\\s*(?={|\\])",
       "name": "meta.at-rule.else.scss",
       "patterns": [
         {
@@ -193,7 +153,7 @@
     "at_rule_fontface": {
       "patterns": [
         {
-          "begin": "^\\s*((@)font-face\\b)",
+          "begin": "\\s*((@)font-face\\b)",
           "beginCaptures": {
             "1": {
               "name": "keyword.control.at-rule.fontface.scss"
@@ -202,7 +162,7 @@
               "name": "punctuation.definition.keyword.scss"
             }
           },
-          "end": "\\s*(?={)",
+          "end": "\\s*(?={|\\])",
           "name": "meta.at-rule.fontface.scss",
           "patterns": [
             {
@@ -222,7 +182,7 @@
           "name": "punctuation.definition.keyword.scss"
         }
       },
-      "end": "\\s*(?={)",
+      "end": "\\s*(?={|\\])",
       "name": "meta.at-rule.for.scss",
       "patterns": [
         {
@@ -304,7 +264,7 @@
               "name": "entity.name.function.scss"
             }
           },
-          "end": "\\s*(?={)",
+          "end": "\\s*(?={|\\])",
           "name": "meta.at-rule.function.scss",
           "patterns": [
             {
@@ -339,7 +299,7 @@
           "name": "punctuation.definition.keyword.scss"
         }
       },
-      "end": "\\s*(?={)",
+      "end": "\\s*(?={|\\])",
       "name": "meta.at-rule.if.scss",
       "patterns": [
         {
@@ -448,7 +408,7 @@
       ]
     },
     "at_rule_keyframes": {
-      "begin": "(?<=^|\\s)(@)(?:-(?:webkit|moz)-)?keyframes\\b",
+      "begin": "(@)(?:-(?:webkit|moz)-)?keyframes\\b",
       "beginCaptures": {
         "0": {
           "name": "keyword.control.at-rule.keyframes.scss"
@@ -457,7 +417,7 @@
           "name": "punctuation.definition.keyword.scss"
         }
       },
-      "end": "(?<=})",
+      "end": "\\s*(?={|\\])",
       "name": "meta.at-rule.keyframes.scss",
       "patterns": [
         {
@@ -537,9 +497,6 @@
               "name": "entity.other.attribute-name.scss"
             },
             {
-              "include": "#flow_control"
-            },
-            {
               "include": "#interpolation"
             },
             {
@@ -555,7 +512,7 @@
     "at_rule_media": {
       "patterns": [
         {
-          "begin": "^\\s*((@)media)\\b",
+          "begin": "\\s*((@)media)\\b",
           "beginCaptures": {
             "1": {
               "name": "keyword.control.at-rule.media.scss"
@@ -564,7 +521,7 @@
               "name": "punctuation.definition.keyword.scss"
             }
           },
-          "end": "\\s*(?={)",
+          "end": "\\s*(?={|\\])",
           "name": "meta.at-rule.media.scss",
           "patterns": [
             {
@@ -765,7 +722,7 @@
     "at_rule_page": {
       "patterns": [
         {
-          "begin": "^\\s*((@)page)(?=:|\\s)\\s*([-:\\w]*)",
+          "begin": "\\s*((@)page)(?=:|\\s)\\s*([-:\\w]*)",
           "captures": {
             "1": {
               "name": "keyword.control.at-rule.page.scss"
@@ -777,7 +734,7 @@
               "name": "entity.name.function.scss"
             }
           },
-          "end": "\\s*(?={)",
+          "end": "\\s*(?={|\\])",
           "name": "meta.at-rule.page.scss"
         }
       ]
@@ -805,7 +762,7 @@
     },
     "at_rule_at_root": {
       "begin": "\\s*((@)(at-root))(\\s+|$)",
-      "end": "\\s*(?={)",
+      "end": "\\s*(?={|\\])",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.at-rule.at-root.scss"
@@ -828,7 +785,7 @@
       ]
     },
     "at_rule_supports": {
-      "begin": "(?<=^|\\s)(@)supports\\b",
+      "begin": "(@)supports\\b",
       "captures": {
         "0": {
           "name": "keyword.control.at-rule.supports.scss"
@@ -837,7 +794,7 @@
           "name": "punctuation.definition.keyword.scss"
         }
       },
-      "end": "(?={)|$",
+      "end": "(?={|\\])|$",
       "name": "meta.at-rule.supports.scss",
       "patterns": [
         {
@@ -1351,9 +1308,6 @@
       "name": "meta.property-list.scss",
       "patterns": [
         {
-          "include": "#flow_control"
-        },
-        {
           "include": "#rules"
         },
         {
@@ -1433,15 +1387,6 @@
       "patterns": [
         {
           "include": "#general"
-        },
-        {
-          "include": "#at_rule_extend"
-        },
-        {
-          "include": "#at_rule_content"
-        },
-        {
-          "include": "#at_rule_include"
         },
         {
           "include": "#at_rule_media"
