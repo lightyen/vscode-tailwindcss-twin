@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.11.0
+
+- Support arbitrary variant syntax
+- Remove language server
+- Detect activeTextEditor tab size
+- Improve textmate grammars
+
 ## 0.10.4
 
 - Fix parser
