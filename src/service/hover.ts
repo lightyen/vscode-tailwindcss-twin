@@ -90,9 +90,20 @@ export default async function hover(
 				if (kind !== PatternKind.Twin) return undefined
 
 				if (selection.type === parser.HoverResultType.ArbitraryVariant) {
+					const header = new MarkdownString("**arbitrary variant**")
+					const codes = new MarkdownString()
+					let code = selection.target.value.slice(1, -1)
+					if (!code) {
+						return {
+							range,
+							contents: [header, codes],
+						}
+					}
+					code = state.tw.renderArbitraryVariant(code)
+					if (code) codes.appendCodeblock(code, "scss")
 					return {
 						range,
-						contents: [new MarkdownString("arbitrary variant")],
+						contents: [header, codes],
 					}
 				}
 

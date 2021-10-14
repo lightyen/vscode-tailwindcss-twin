@@ -15,8 +15,7 @@
     "noImplicitAny": false,
     "module": "commonjs",
     "target": "es6",
-    "lib": ["ESNext"],
-    "baseUrl": ".",
-    "paths": {}
-  }
+    "lib": ["ES2020"]
+  },
+  "includes": ["./webpack.config.*"]
 }
