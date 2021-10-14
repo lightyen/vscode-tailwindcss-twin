@@ -95,15 +95,15 @@
       }
     },
     "expression-arbitrary-variant": {
-      "begin": "(\\[)",
-      "end": "(\\]):",
+      "begin": "\\[",
+      "end": "\\]:",
       "beginCaptures": {
-        "1": {
+        "0": {
           "name": "punctuation.section.embedded.arbitrary-variant.begin.twin"
         }
       },
       "endCaptures": {
-        "1": {
+        "0": {
           "name": "punctuation.section.embedded.arbitrary-variant.end.twin"
         }
       },
