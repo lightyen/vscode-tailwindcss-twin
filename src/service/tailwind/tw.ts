@@ -65,7 +65,9 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 
 	__config.mode = "aot"
 	const selectorProcessor: Processor = parser()
-	let result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;")
+	let result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;", {
+		from: undefined,
+	})
 	process(result)
 
 	__config.mode = "jit"
@@ -75,7 +77,9 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			.flat(),
 	)
 	__config.purge = { content: [], safelist: extended }
-	result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;")
+	result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;", {
+		from: undefined,
+	})
 	process(result)
 
 	__config.mode = "aot"

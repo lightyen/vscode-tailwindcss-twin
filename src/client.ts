@@ -90,6 +90,8 @@ export async function workspaceClient(
 			emptyGroup: true,
 		},
 	})
+	console.level = settings.logLevel
+
 	if (settings.colorDecorators === "inherit") {
 		settings.colorDecorators = workspaceConfiguration.get("editor.colorDecorators") ? "on" : "off"
 	}
@@ -109,39 +111,6 @@ export async function workspaceClient(
 	addDefaultService(settings)
 
 	const collection = vscode.languages.createDiagnosticCollection("tw")
-
-	function updateDiagnostics(document: vscode.TextDocument, diagnostics: readonly vscode.Diagnostic[] | undefined) {
-		collection.delete(document.uri)
-		collection.set(document.uri, diagnostics)
-	}
-
-	function renderToEditor(editor = vscode.window.activeTextEditor) {
-		if (!editor) return
-		const document = editor.document
-		if (document.uri.scheme === "output") return
-		if (document) {
-			collection.clear()
-			const srv = matchService(document.uri.toString(), services)
-			if (!srv) return
-			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
-			if (settings.diagnostics.enabled) {
-				updateDiagnostics(document, srv.provideDiagnostics(document))
-			} else {
-				updateDiagnostics(document, undefined)
-			}
-		}
-	}
-
-	function run() {
-		vscode.workspace.textDocuments.forEach(document => {
-			const srv = matchService(document.uri.toString(), services)
-			if (srv) {
-				srv.start()
-				renderToEditor()
-			}
-		})
-	}
-	run()
 
 	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> = {
 		provideCompletionItems(document, position, token, context) {
@@ -169,6 +138,8 @@ export async function workspaceClient(
 			)
 		},
 	}
+
+	let activeTextEditor = vscode.window.activeTextEditor
 
 	disposes.push(
 		vscode.languages.registerCompletionItemProvider(
@@ -204,19 +175,23 @@ export async function workspaceClient(
 			},
 		}),
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-			if (vscode.window.activeTextEditor?.document.uri.scheme === "output") return
-			if (editor === vscode.window.activeTextEditor) {
-				renderToEditor()
+			activeTextEditor = editor
+			if (activeTextEditor?.document.uri.scheme === "output") return
+			console.trace("onDidChangeActiveTextEditor()")
+			if (editor === activeTextEditor) {
+				render()
 			}
 		}),
+
 		vscode.workspace.onDidChangeTextDocument(event => {
-			if (vscode.window.activeTextEditor?.document.uri.scheme === "output") return
-			if (event.document === vscode.window.activeTextEditor?.document) {
-				renderToEditor()
+			if (event.document.uri.scheme === "output") return
+			console.trace("onDidChangeTextDocument()")
+			if (event.document === activeTextEditor?.document) {
+				render()
 			}
 		}),
 		vscode.workspace.onDidChangeConfiguration(async event => {
-			console.info(`[setting changes were detected]`)
+			console.trace(`onDidChangeConfiguration()`)
 			const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
 			const extSettings = workspaceConfiguration.get(SECTION_ID) as Settings
 
@@ -318,7 +293,7 @@ export async function workspaceClient(
 			}
 
 			if (needToDiagnostics) {
-				run()
+				first_render()
 			}
 		}),
 	)
@@ -339,10 +314,59 @@ export async function workspaceClient(
 		watcher,
 	)
 
+	first_render()
+
 	return {
 		dispose() {
 			disposes.forEach(obj => obj.dispose())
 		},
+	}
+
+	async function updateDiagnostics(
+		document: vscode.TextDocument,
+		diagnostics: Promise<vscode.Diagnostic[] | undefined>,
+	) {
+		collection.delete(document.uri)
+		const awaitedDiagnostics = await diagnostics
+		console.debug("awaitedDiagnostics", awaitedDiagnostics?.length)
+		if (awaitedDiagnostics) collection.set(document.uri, awaitedDiagnostics)
+	}
+
+	function first_render() {
+		vscode.workspace.textDocuments.forEach(document => {
+			const srv = matchService(document.uri.toString(), services)
+			if (srv) {
+				srv.start()
+				const editor = vscode.window.activeTextEditor
+				if (!editor) return
+				if (editor.document !== document) return
+				if (document.uri.scheme === "output") return
+				collection.clear()
+				if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
+				if (settings.diagnostics.enabled) {
+					updateDiagnostics(document, srv.provideDiagnostics(document))
+				} else {
+					collection.delete(document.uri)
+				}
+			}
+		})
+	}
+
+	function render(editor = vscode.window.activeTextEditor) {
+		if (!editor) return
+		const document = editor.document
+		if (document.uri.scheme === "output") return
+		if (document) {
+			collection.clear()
+			const srv = matchService(document.uri.toString(), services)
+			if (!srv) return
+			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
+			if (settings.diagnostics.enabled) {
+				updateDiagnostics(document, srv.provideDiagnostics(document))
+			} else {
+				collection.delete(document.uri)
+			}
+		}
 	}
 
 	function addDefaultService(settings: Settings, startNow = false) {
