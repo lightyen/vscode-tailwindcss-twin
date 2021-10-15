@@ -1,5 +1,6 @@
 import { createGetPluginByName } from "@/corePlugins"
 import { dlv } from "@/get_set"
+import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
 import { colors as colorNames } from "@/vscode-css-languageservice"
 import chroma from "chroma-js"
@@ -54,8 +55,27 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath }) as Postcss
 	const parser = importFrom("postcss-selector-parser", { base: extensionUri.fsPath })
 	const context = createContext(config) as Tailwind.Context
-	const getPlugin = createGetPluginByName(config)
+	const _getPlugin = createGetPluginByName(config)
 	const screens = Object.keys(config.theme.screens).sort(screenSorter)
+
+	if (typeof config.prefix === "function") {
+		console.info("function prefix is not supported.")
+	}
+
+	if (typeof config.prefix === "function") {
+		const getPrefix = config.prefix
+		config.prefix = function (classname: string) {
+			const prefix = getPrefix(classname)
+			fn(prefix, classname)
+			return prefix
+			function fn(prefix: string, classname: string) {
+				//
+			}
+		}
+	} else if (typeof config.prefix !== "string") {
+		config.prefix = ""
+	}
+
 	const restVariants = Array.from(context.variantMap.keys()).filter(
 		key => screens.indexOf(key) === -1 && key !== "dark" && key !== "light" && key !== "placeholder",
 	)
@@ -89,10 +109,20 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		renderCssProperty,
 		renderDecls,
 		escape,
-		getPlugin,
+		getPlugin(classname: string) {
+			return _getPlugin(classname, trimPrefix)
+		},
 		getColorDesc,
 		getConfig,
 		getTheme,
+		trimPrefix,
+	}
+
+	function trimPrefix(classname: string): string {
+		if (typeof config.prefix === "function") {
+			return classname
+		}
+		return classname.slice(config.prefix.length)
 	}
 
 	function escape(className: string) {

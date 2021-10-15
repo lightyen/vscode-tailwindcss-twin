@@ -1,4 +1,3 @@
-import { escapeRegexp } from "@"
 import { canMatch, PatternKind, TextDocument, TokenResult } from "@/ast"
 import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
@@ -139,7 +138,7 @@ export default async function hover(
 				const header = new MarkdownString()
 				if (options.references) {
 					const plugin = state.tw.getPlugin(value)
-					let name = value.replace(new RegExp(`^${escapeRegexp(state.config.prefix)}`), "")
+					let name = state.tw.trimPrefix(value)
 					if (plugin) name = plugin.name
 					if (name) {
 						const desc = getDescription(name)
