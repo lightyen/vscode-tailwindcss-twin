@@ -492,10 +492,7 @@
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md":
   name: twin.macro
-  desc: |
-    Custom paddings on the `container` class were introduced in Tailwind v1.4 and also in Twin shortly after.
-
-    Twin adds another feature and that is custom independent left/right margins and paddings. This can be used on layouts that are a little more creative with their horizontal layout positioning.
+  desc: ""
 "https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child":
   name: pseudo class
   desc: "The **:first-child** CSS pseudo-class represents the first element among a group of sibling elements."

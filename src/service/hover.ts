@@ -112,7 +112,7 @@ export default async function hover(
 						const desc =
 							state.tw.screens.indexOf(value) === -1 ? getDescription(value) : getDescription("screens")
 						if (typeof desc === "string") {
-							header.appendMarkdown(desc ? desc + "\n" : "twin" + "\n")
+							header.appendMarkdown(desc ? desc + "\n" : "twin.marco" + "\n")
 						}
 
 						const links = getReferenceLinks(value)
@@ -143,7 +143,7 @@ export default async function hover(
 					if (name) {
 						const desc = getDescription(name)
 						if (typeof desc === "string") {
-							header.appendMarkdown(desc ? desc + "\n" : "twin" + "\n")
+							header.appendMarkdown(desc ? desc + "\n" : "twin.marco" + "\n")
 						}
 
 						const links = getReferenceLinks(name)
