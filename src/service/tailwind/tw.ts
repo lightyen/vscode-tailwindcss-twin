@@ -1,5 +1,6 @@
 import { createGetPluginByName } from "@/corePlugins"
 import { dlv } from "@/get_set"
+import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
 import { colors as colorNames } from "@/vscode-css-languageservice/facts"
 import chroma from "chroma-js"
@@ -63,6 +64,24 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	__config.separator = "☕"
 	const re = new RegExp(`^([\\w-]+${__config.separator})+`, "g")
 
+	if (typeof __config.prefix === "function") {
+		console.info("function prefix is not supported.")
+	}
+
+	if (typeof __config.prefix === "function") {
+		const getPrefix = __config.prefix
+		__config.prefix = function (classname: string) {
+			const prefix = getPrefix(classname)
+			fn(prefix, classname)
+			return prefix
+			function fn(prefix: string, classname: string) {
+				//
+			}
+		}
+	} else if (typeof __config.prefix !== "string") {
+		__config.prefix = ""
+	}
+
 	__config.mode = "aot"
 	const selectorProcessor: Processor = parser()
 	let result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;", {
@@ -84,7 +103,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 
 	__config.mode = "aot"
 	const context = createContext(__config)
-	const getPlugin = createGetPluginByName(__config)
+	const _getPlugin = createGetPluginByName(__config)
 
 	const screens = Object.keys(__config.theme.screens).sort(screenSorter)
 	const restVariants = Array.from(context.variantMap.keys()).filter(
@@ -112,10 +131,20 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		renderCssProperty,
 		renderDecls,
 		escape,
-		getPlugin,
+		getPlugin(classname: string) {
+			return _getPlugin(classname, trimPrefix)
+		},
 		getColorDesc,
 		getTheme,
 		getConfig,
+		trimPrefix,
+	}
+
+	function trimPrefix(classname: string): string {
+		if (typeof __config.prefix === "function") {
+			return classname
+		}
+		return classname.slice(__config.prefix.length)
 	}
 
 	function process(result: Result) {
@@ -132,9 +161,6 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 							if (isColorDecls(decls)) {
 								_colors.set(classname, decls)
 								const desc = getColorDesc(classname)
-								if (classname === "absolute") {
-									console.log("absolute", decls, desc)
-								}
 								if (desc) colors.set(classname, desc)
 							}
 						}

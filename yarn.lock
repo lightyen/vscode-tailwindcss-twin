@@ -5767,10 +5767,10 @@ symbol-tree@^3.2.4:
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
-tailwind-types@2.2.5:
-  version "2.2.5"
-  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-2.2.5.tgz#986f2a267286a238a98102354e26bc31abb11cc7"
-  integrity sha512-jjf8h7PoT1ZVTGi5NJigRygXJRcUXEFWHg8lTuv8yplW2IVk+vYjwVrKLJOwp3DrdEVsmdhU6fPDwicuwLCoaQ==
+tailwind-types@2.2.6:
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-2.2.6.tgz#f74b2211e35b2567f640e0a2973c851fd9a9fb89"
+  integrity sha512-bQaYQ4xlHqoIq0wTKMMlmq5LDwhDJ5LF4Q5Sjqn07hIDMVBR9O7LDYCW906qS7OAAiXdGCwdnd+pB328qxr39Q==
   dependencies:
     csstype "^3.0.9"
     postcss "^8.3.9"

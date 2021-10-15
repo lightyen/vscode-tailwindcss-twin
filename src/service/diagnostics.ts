@@ -23,7 +23,7 @@ const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSens
 
 function createDiagnosticArray() {
 	const arr: Diagnostic[] = []
-	const MAXSZIE = 10
+	const MAXSZIE = 20
 	return new Proxy(arr, {
 		get(target, prop, ...rest) {
 			switch (prop) {
