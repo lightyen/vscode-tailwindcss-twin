@@ -78,6 +78,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	result = await postcss([tailwindcss(__config)]).process("@base;@tailwind components;@tailwind utilities;")
 	process(result)
 
+	__config.mode = "aot"
 	const context = createContext(__config)
 	const getPlugin = createGetPluginByName(__config)
 
