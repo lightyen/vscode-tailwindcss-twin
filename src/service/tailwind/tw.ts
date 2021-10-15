@@ -214,7 +214,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		// expandApplyAtRules(context)(root)
+		root.walkAtRules("defaults", rule => {
+			rule.remove()
+		})
 
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
