@@ -1,17 +1,24 @@
 import { createToken, Token } from "./token"
 import * as nodes from "./twNodes"
 
-// "-" 45
-// "[" 91
-// "]" 93
-// " " 32
-// "/" 47
-// "*" 42
-// "(" 40
-// ")" 41
-// "!" 33
-// '"' 34
-// "'" 39
+// export const enum ASCII {
+// 	Tab = 9,
+// 	LF = 10,
+// 	VerticalTab = 11,
+// 	FormFeed = 12,
+// 	CR = 13,
+// 	Quotation = 34,
+// 	Apostrophe = 39,
+// 	Space = 32,
+// 	Exclamation = 33,
+// 	Asterisk = 42,
+// 	Hyphen = 45,
+// 	LeftSquareBracket = 91,
+// 	RightSquareBracket = 93,
+// 	Slash = 47,
+// 	LeftParentheses = 40,
+// 	RightParentheses = 41,
+// }
 
 /** Try to find right bracket from left bracket, return `undefind` if not found. */
 export function findRightBracket({
