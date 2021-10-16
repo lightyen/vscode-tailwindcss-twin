@@ -40,18 +40,20 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	let loading = false
 	let _colorProvider: ReturnType<typeof createColorProvider> | undefined
 
-	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> = {
+	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> & { tabSize: number } = {
+		tabSize: 4,
 		provideCompletionItems(document, position, token, context) {
 			return onCompletion(document, position)
 		},
 		resolveCompletionItem(item, token) {
-			return onCompletionResolve(item)
+			return onCompletionResolve(item, this.tabSize)
 		},
 	}
 
-	const hoverProvider: vscode.HoverProvider = {
+	const hoverProvider: vscode.HoverProvider & { tabSize: number } = {
+		tabSize: 4,
 		provideHover(document, position, token) {
-			return onHover(document, position)
+			return onHover(document, position, this.tabSize)
 		},
 	}
 
@@ -157,19 +159,19 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	}
 
 	/** Provide completion resolve item feature. */
-	async function onCompletionResolve(item: ICompletionItem) {
+	async function onCompletionResolve(item: ICompletionItem, tabSize: number) {
 		if (!state.tw) return item
-		return completionResolve(item, state, options)
+		return completionResolve(item, state, tabSize, options)
 	}
 
 	// /** Provide on hover feature. */
-	async function onHover(document: TextDocument, position: unknown) {
+	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
 		if (!options.enabled || loading) return
 		if (!state.tw) {
 			start()
 			return undefined
 		}
-		return hover(document, position, state, options)
+		return hover(document, position, state, tabSize, options)
 	}
 
 	async function renderColorDecoration(editor: vscode.TextEditor) {

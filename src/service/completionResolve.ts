@@ -11,6 +11,7 @@ import type { TailwindLoader } from "./tailwind"
 export default function completionResolve(
 	item: ICompletionItem,
 	state: TailwindLoader,
+	tabSize: number,
 	options: ServiceOptions,
 ): ICompletionItem {
 	try {
@@ -21,7 +22,8 @@ export default function completionResolve(
 		const plugin = state.tw.getPlugin(item.label)
 		let keyword = state.tw.trimPrefix(item.label)
 		if (plugin) keyword = plugin.name
-		item = resolve(item, keyword, state, options, payload)
+
+		item = resolve(item, keyword, state, tabSize, options, payload)
 
 		if (options.references && item.documentation) {
 			if (typeof item.documentation === "object") {
@@ -45,6 +47,7 @@ function resolve(
 	item: ICompletionItem,
 	keyword: string,
 	state: TailwindLoader,
+	tabSize: number,
 	options: ServiceOptions,
 	payload: ICompletionItem["data"],
 ): ICompletionItem {
@@ -75,14 +78,10 @@ function resolve(
 
 	if (type === "variant" || type === "screen") {
 		const key = item.label.replace(new RegExp(`${state.separator}$`), "")
-		const code = state.tw.renderVariant(key)
+		const code = state.tw.renderVariant(key, tabSize)
 		if (!code) return item
 
 		const fencedCodeBlock = createFencedCodeBlock(code, CodeKind.SCSS)
-		// if (options.references) {
-		// 	const desc = getDescription(item.label)
-		// 	if (desc) values.unshift(desc + "\n")
-		// }
 
 		const markdown = new vscode.MarkdownString()
 		markdown.appendMarkdown(fencedCodeBlock)
@@ -104,7 +103,7 @@ function resolve(
 		}
 	}
 
-	const code = state.tw.renderClassname({ classname: item.label, rootFontSize: options.rootFontSize })
+	const code = state.tw.renderClassname({ classname: item.label, rootFontSize: options.rootFontSize, tabSize })
 	if (!code) return item
 
 	const fencedCodeBlock = createFencedCodeBlock(code, CodeKind.CSS)

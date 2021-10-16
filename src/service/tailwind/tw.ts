@@ -170,6 +170,13 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 	}
 
+	function indent(tabSize: number, value: string) {
+		return value
+			.split(/(\r\n|\n)/g)
+			.map(line => line.replace(/^(\t| {4})+/g, match => "".padStart((match.length >> 2) * tabSize)))
+			.join("")
+	}
+
 	function getColorNames(resloved: Tailwind.ResolvedConfigJS): string[] {
 		const colors = resloved.theme.colors
 		const names: string[] = []
@@ -397,7 +404,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		return node.raws.value
 	}
 
-	function renderVariant(variant: string) {
+	function renderVariant(variant: string, tabSize = 4) {
 		const data: string[] = []
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
@@ -432,14 +439,14 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			})
 		}
 
-		return data.join(", ") + " {\n\t/* ... */\n}"
+		return data.join(", ") + " {\n    /* ... */\n}"
 	}
 
-	function renderArbitraryVariant(code: string) {
+	function renderArbitraryVariant(code: string, tabSize = 4) {
 		code = code.trim().replace(/\s{2,}/g, " ")
-		code = code + " {\n\t/* ... */\n}"
+		code = code + " {\n    /* ... */\n}"
 		const root = postcss.parse(code)
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
@@ -464,10 +471,12 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		classname,
 		important = false,
 		rootFontSize = 0,
+		tabSize = 4,
 	}: {
 		classname: string
 		important?: boolean
 		rootFontSize?: number
+		tabSize?: number
 	}) {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
@@ -488,7 +497,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			})
 		}
 
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function renderCssProperty({
@@ -496,11 +505,13 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		value,
 		important,
 		rootFontSize,
+		tabSize = 4,
 	}: {
 		prop: string
 		value: string
 		important?: boolean
 		rootFontSize?: number
+		tabSize?: number
 	}) {
 		const decl = postcss.decl()
 		decl.prop = prop
@@ -511,7 +522,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		rule.selector = "&"
 		rule.append(decl)
 		const root = postcss.root({ nodes: [rule] })
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function renderDecls(classname: string) {
