@@ -400,7 +400,7 @@ export async function workspaceClient(
 			workspaceFolder,
 			extensionMode,
 		})
-		services.set(ws.toString(), srv)
+		services.set(ws.uri.toString(), srv)
 		if (startNow) srv.start()
 		defaultServiceRunning = true
 	}
