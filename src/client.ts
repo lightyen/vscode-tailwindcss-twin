@@ -345,7 +345,7 @@ export async function workspaceClient(
 	}
 
 	function first_render() {
-		vscode.workspace.textDocuments.forEach(document => {
+		vscode.workspace.textDocuments.forEach(async document => {
 			const srv = matchService(document.uri.toString(), services)
 			if (srv) {
 				srv.start()
