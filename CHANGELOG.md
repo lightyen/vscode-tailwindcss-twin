@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.11.1
+
+- Fix using with default tailwind config
+
 ## 0.11.0
 
 - Support arbitrary variant syntax
