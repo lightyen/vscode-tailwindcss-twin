@@ -42,17 +42,17 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 
 	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> & { tabSize: number } = {
 		tabSize: 4,
-		provideCompletionItems(document, position, token, context) {
+		provideCompletionItems(document, position) {
 			return onCompletion(document, position)
 		},
-		resolveCompletionItem(item, token) {
+		resolveCompletionItem(item) {
 			return onCompletionResolve(item, this.tabSize)
 		},
 	}
 
 	const hoverProvider: vscode.HoverProvider & { tabSize: number } = {
 		tabSize: 4,
-		provideHover(document, position, token) {
+		provideHover(document, position) {
 			return onHover(document, position, this.tabSize)
 		},
 	}
@@ -72,25 +72,21 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		onHover,
 		completionItemProvider,
 		hoverProvider,
-		provideDiagnostics(document: TextDocument) {
-			return new Promise<ReturnType<typeof validate> | undefined>(resolve => {
-				if (!options.enabled) resolve(undefined)
-				if (!loading) {
-					if (!state.tw) start()
-					resolve(validate(document, state, options))
-				} else {
-					activated.once("signal", () => {
-						resolve(validate(document, state, options))
-					})
-				}
-			})
-		},
+		provideDiagnostics,
 		colorProvider: {
 			dispose() {
 				_colorProvider?.dispose()
 			},
 			render: renderColorDecoration,
 		},
+	}
+
+	function ready() {
+		return new Promise<void>(resolve => {
+			activated.once("signal", () => {
+				resolve()
+			})
+		})
 	}
 
 	function relativeWorkspace(uri: URI) {
@@ -150,11 +146,12 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 
 	/** Provide auto complete feature. */
 	async function onCompletion(document: TextDocument, position: unknown) {
-		if (!options.enabled || loading) return
-		if (!state.tw) {
-			start()
-			return new vscode.CompletionList([], true)
+		if (!options.enabled) return undefined
+		if (!loading) {
+			if (!state.tw) start()
+			return completion(document, position, state, options)
 		}
+		await ready()
 		return completion(document, position, state, options)
 	}
 
@@ -166,35 +163,39 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 
 	// /** Provide on hover feature. */
 	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
-		if (!options.enabled || loading) return
-		if (!state.tw) {
-			start()
-			return undefined
+		if (!options.enabled) return undefined
+		if (!loading) {
+			if (!state.tw) start()
+			return hover(document, position, state, tabSize, options)
 		}
+		await ready()
 		return hover(document, position, state, tabSize, options)
 	}
 
 	async function renderColorDecoration(editor: vscode.TextEditor) {
 		if (!options.enabled) return
-		return new Promise<void>(resolve => {
-			if (!loading) {
-				if (!state.tw) {
-					start()
-				}
-				const a = process.hrtime.bigint()
-				_colorProvider?.render(editor)
-				const b = process.hrtime.bigint()
-				console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
-				resolve()
-			} else {
-				activated.once("signal", () => {
-					const a = process.hrtime.bigint()
-					_colorProvider?.render(editor)
-					const b = process.hrtime.bigint()
-					console.trace(`async colors (${Number((b - a) / 10n ** 6n)}ms)`)
-					resolve()
-				})
-			}
-		})
+		if (!loading) {
+			if (!state.tw) start()
+			const a = process.hrtime.bigint()
+			_colorProvider?.render(editor)
+			const b = process.hrtime.bigint()
+			console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
+			return
+		}
+		await ready()
+		const a = process.hrtime.bigint()
+		_colorProvider?.render(editor)
+		const b = process.hrtime.bigint()
+		console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
+	}
+
+	async function provideDiagnostics(document: TextDocument) {
+		if (!options.enabled) return []
+		if (!loading) {
+			if (!state.tw) start()
+			return validate(document, state, options)
+		}
+		await ready()
+		return validate(document, state, options)
 	}
 }
