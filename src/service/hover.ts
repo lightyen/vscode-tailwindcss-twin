@@ -13,6 +13,7 @@ export default async function hover(
 	document: TextDocument,
 	position: unknown,
 	state: TailwindLoader,
+	tabSize: number,
 	options: ServiceOptions,
 ): Promise<Hover | undefined> {
 	let result: TokenResult | undefined
@@ -74,6 +75,7 @@ export default async function hover(
 						value,
 						important,
 						rootFontSize: options.rootFontSize,
+						tabSize,
 					})
 					const codes = new MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
@@ -98,7 +100,7 @@ export default async function hover(
 							contents: [header, codes],
 						}
 					}
-					code = state.tw.renderArbitraryVariant(code)
+					code = state.tw.renderArbitraryVariant(code, tabSize)
 					if (code) codes.appendCodeblock(code, "scss")
 					return {
 						range,
@@ -123,7 +125,7 @@ export default async function hover(
 						}
 					}
 
-					const code = state.tw.renderVariant(value)
+					const code = state.tw.renderVariant(value, tabSize)
 					const codes = new MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -158,6 +160,7 @@ export default async function hover(
 					classname: value,
 					important: selection.important,
 					rootFontSize: options.rootFontSize,
+					tabSize,
 				})
 
 				if (!code) {
@@ -170,6 +173,7 @@ export default async function hover(
 						classname: value,
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
+						tabSize,
 					})
 				}
 

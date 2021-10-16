@@ -122,20 +122,19 @@ export async function workspaceClient(
 			)
 		},
 		resolveCompletionItem(item, token) {
-			return matchService(
-				item.data.uri?.toString() ?? "",
-				services,
-			)?.completionItemProvider.resolveCompletionItem?.(item, token)
+			const srv = matchService(item.data.uri?.toString() ?? "", services)
+			if (!srv) return item
+			srv.completionItemProvider.tabSize = getTabSize()
+			return srv.completionItemProvider.resolveCompletionItem?.(item, token)
 		},
 	}
 
 	const hoverProvider: vscode.HoverProvider = {
 		provideHover(document, position, token) {
-			return matchService(document.uri.toString(), services)?.hoverProvider.provideHover(
-				document,
-				position,
-				token,
-			)
+			const srv = matchService(document.uri.toString(), services)
+			if (!srv) return undefined
+			srv.hoverProvider.tabSize = getTabSize()
+			return srv.hoverProvider.provideHover(document, position, token)
 		},
 	}
 
@@ -320,6 +319,19 @@ export async function workspaceClient(
 		dispose() {
 			disposes.forEach(obj => obj.dispose())
 		},
+	}
+
+	function getTabSize(defaultSize = 4): number {
+		let tabSize: number | undefined
+		if (activeTextEditor) {
+			tabSize =
+				typeof activeTextEditor.options.tabSize === "string" ? defaultSize : activeTextEditor.options.tabSize
+		}
+		if (!tabSize) {
+			const s = workspaceConfiguration.get("editor.tabSize") as string | number | undefined
+			tabSize = typeof s === "string" ? defaultSize : s ?? defaultSize
+		}
+		return tabSize
 	}
 
 	async function updateDiagnostics(

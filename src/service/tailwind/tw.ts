@@ -131,7 +131,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return node.raws.value
 	}
 
-	function renderVariant(variant: string): ScssText {
+	function indent(tabSize: number, value: string) {
+		return value
+			.split(/(\r\n|\n)/g)
+			.map(line => line.replace(/^(\t| {4})+/g, match => "".padStart((match.length >> 2) * tabSize)))
+			.join("")
+	}
+
+	function renderVariant(variant: string, tabSize = 4): ScssText {
 		const data: string[] = []
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
@@ -166,14 +173,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			})
 		}
 
-		return data.join(", ") + " {\n\t/* ... */\n}"
+		return indent(tabSize, data.join(", ") + " {\n    /* ... */\n}")
 	}
 
-	function renderArbitraryVariant(code: string) {
+	function renderArbitraryVariant(code: string, tabSize = 4) {
 		code = code.trim().replace(/\s{2,}/g, " ")
-		code = code + " {\n\t/* ... */\n}"
+		code = code + " {\n    /* ... */\n}"
 		const root = postcss.parse(code)
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
@@ -198,10 +205,12 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		classname,
 		important = false,
 		rootFontSize = 0,
+		tabSize = 4,
 	}: {
 		classname: string
 		important?: boolean
 		rootFontSize?: number
+		tabSize?: number
 	}): CssText {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
@@ -224,8 +233,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
-
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function renderCssProperty({
@@ -233,11 +241,13 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		value,
 		important,
 		rootFontSize,
+		tabSize = 4,
 	}: {
 		prop: string
 		value: string
 		important?: boolean
 		rootFontSize?: number
+		tabSize?: number
 	}): ScssText {
 		const decl = postcss.decl()
 		decl.prop = prop
@@ -248,7 +258,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		rule.selector = "&"
 		rule.append(decl)
 		const root = postcss.root({ nodes: [rule] })
-		return root.toString()
+		return indent(tabSize, root.toString())
 	}
 
 	function getColorDesc(classname: string): ColorDesc | undefined {
