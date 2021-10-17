@@ -2,11 +2,34 @@ import { createGetPluginByName } from "@/corePlugins"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
-import { colors as colorNames } from "@/vscode-css-languageservice/facts"
 import chroma from "chroma-js"
 import type { Postcss, Result, Rule } from "postcss"
 import type { Processor } from "postcss-selector-parser"
-import type { URI } from "vscode-uri"
+import { URI } from "vscode-uri"
+import { extractColors } from "~/common/extractColors"
+
+const colorProps = [
+	"background-color",
+	"color",
+	"border-color",
+	"border-top-color",
+	"border-right-color",
+	"border-bottom-color",
+	"border-left-color",
+	"text-decoration-color",
+	"accent-color",
+	"caret-color",
+	"fill",
+	"stroke",
+	"outline-color",
+	"stop-color",
+	"column-rule-color",
+	"--tw-ring-color",
+	"--tw-ring-offset-color",
+	"--tw-gradient-from",
+	"--tw-gradient-to",
+	"--tw-gradient-stops",
+]
 
 export type ColorDesc = {
 	color?: string
@@ -18,29 +41,6 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T
 export type TwContext = Awaited<ReturnType<typeof createTwContext>>
 
 export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri: URI) {
-	const colorProps = [
-		"background-color",
-		"color",
-		"border-color",
-		"border-top-color",
-		"border-right-color",
-		"border-bottom-color",
-		"border-left-color",
-		"text-decoration-color",
-		"accent-color",
-		"caret-color",
-		"fill",
-		"stroke",
-		"outline-color",
-		"stop-color",
-		"column-rule-color",
-		"--tw-ring-color",
-		"--tw-ring-offset-color",
-		"--tw-gradient-from",
-		"--tw-gradient-to",
-		"--tw-gradient-stops",
-	]
-
 	const parser = importFrom("postcss-selector-parser", {
 		base: extensionUri.fsPath,
 	})
@@ -332,36 +332,39 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			return desc
 		}
 
-		// #000|#000000|#00000090|rgb[a](a, b, c[, d])|rgb[a](a b c[ d])
-		const re =
-			/#[0-9A-F]{3}\b|#[0-9A-F]{6}\b|#[0-9A-F]{8}\b|rgba?\(\s*(?<r>\d{1,3})(?:\s*,|\s+)\s*(?<g>\d{1,3})(?:\s*,|\s+)\s*(?<b>\d{1,3})/i
-		const normalize = (cssValue: string) => cssValue.replace(/(,|\/)\s*var\(\s*[\w-]*\s*\)/gi, "$1 1")
-
 		for (const values of decls.values()) {
 			for (const value of values) {
-				const colorName = colorNames[value.trim()]
-
-				let match = null
-				if (!colorName) {
-					match = normalize(value).match(re)
-					if (match == null) {
-						continue
-					}
+				const colors = extractColors(value)
+				if (colors.length <= 0) {
+					continue
 				}
 
-				let color
+				const firstColor = colors[0]
 
-				if (colorName) {
+				let color: chroma.Color | undefined
+
+				if (typeof firstColor === "string") {
+					if (firstColor === "transparent") {
+						if (isBorder) {
+							desc.borderColor = "transparent"
+						}
+						if (isForeground) {
+							desc.color = "transparent"
+						}
+						if (isBackground || isOther) {
+							desc.backgroundColor = "transparent"
+						}
+						continue
+					}
 					try {
-						color = chroma(colorName)
+						color = chroma(firstColor).alpha(1.0)
 					} catch {}
-				} else if (match) {
+				} else {
 					try {
-						if (match.groups?.r) {
-							const { r, g, b } = match.groups
-							color = chroma(+r, +g, +b)
+						if (firstColor.fnName.startsWith("rgb")) {
+							color = chroma(+firstColor.args[0], +firstColor.args[1], +firstColor.args[2])
 						} else {
-							color = chroma(match[0])
+							color = chroma(`hsl(${firstColor.args.slice(0, 3).join()})`)
 						}
 					} catch {}
 				}
