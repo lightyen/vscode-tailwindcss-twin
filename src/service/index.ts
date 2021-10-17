@@ -13,6 +13,7 @@ import { createColorProvider } from "./colorProvider"
 import completion from "./completion"
 import completionResolve from "./completionResolve"
 import { validate } from "./diagnostics"
+import documentColors from "./documentColors"
 import hover from "./hover"
 import { createTailwindLoader, ExtensionMode } from "./tailwind"
 
@@ -57,6 +58,15 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		},
 	}
 
+	const documentColorProvider: vscode.DocumentColorProvider = {
+		provideDocumentColors(document) {
+			return onDocumentColors(document)
+		},
+		provideColorPresentations(document) {
+			return undefined
+		},
+	}
+
 	const activated = new EventEmitter()
 
 	return {
@@ -79,6 +89,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			},
 			render: renderColorDecoration,
 		},
+		documentColorProvider,
 	}
 
 	function ready() {
@@ -197,5 +208,14 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		}
 		await ready()
 		return validate(document, state, options)
+	}
+
+	async function onDocumentColors(document: TextDocument) {
+		if (!loading) {
+			if (!state.tw) start()
+			return documentColors(document, state, options)
+		}
+		await ready()
+		return []
 	}
 }
