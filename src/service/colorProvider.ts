@@ -52,8 +52,9 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 
 	function getColorRanges(document: vscode.TextDocument) {
 		const colors: Array<[ColorDesc, vscode.Range]> = []
-		const no = (desc: ColorDesc) => {
-			return (
+		const test = (desc: ColorDesc | undefined): desc is ColorDesc => {
+			if (!desc) return false
+			return !(
 				desc.color === "currentColor" ||
 				desc.color === "inherit" ||
 				desc.backgroundColor === "currentColor" ||
@@ -68,15 +69,45 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 				case PatternKind.Twin: {
 					const result = parser.spread({ text: value })
 					for (const item of result.items) {
-						if (item.type !== parser.SpreadResultType.ClassName) continue
-						const color = tw.getColorDesc(item.target.value)
-						if (color) {
-							if (no(color)) continue
-							const range = new vscode.Range(
-								document.positionAt(offset + item.target.start),
-								document.positionAt(offset + item.target.end),
-							)
-							colors.push([color, range])
+						if (item.type === parser.SpreadResultType.ClassName) {
+							const color = tw.getColorDesc(item.target.value)
+							if (!test(color)) {
+								const i = item.target.value.lastIndexOf("/")
+								if (i === -1) continue
+							}
+							if (test(color)) {
+								const range = new vscode.Range(
+									document.positionAt(offset + item.target.start),
+									document.positionAt(offset + item.target.end),
+								)
+								colors.push([color, range])
+							} else {
+								const i = item.target.value.lastIndexOf("/")
+								if (i === -1) continue
+								const value = item.target.value.slice(0, i)
+								const color = tw.getColorDesc(value)
+								if (test(color)) {
+									const start = offset + item.target.start
+									const end = start + value.length
+									const range = new vscode.Range(document.positionAt(start), document.positionAt(end))
+									colors.push([color, range])
+								}
+							}
+						} else if (item.type === parser.SpreadResultType.ArbitraryStyle) {
+							const i = item.target.value.lastIndexOf("/")
+							if (i === -1) continue
+							const n = item.target.value.slice(i + 1)
+							if (Number.isNaN(+n)) {
+								if (n.charCodeAt(0) !== 91) continue
+							}
+							const value = item.target.value.slice(0, i)
+							const color = tw.getColorDesc(value)
+							if (test(color)) {
+								const start = offset + item.target.start
+								const end = start + value.length
+								const range = new vscode.Range(document.positionAt(start), document.positionAt(end))
+								colors.push([color, range])
+							}
 						}
 					}
 					break
