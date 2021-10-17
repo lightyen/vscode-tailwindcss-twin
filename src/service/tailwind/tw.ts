@@ -2,11 +2,11 @@ import { createGetPluginByName } from "@/corePlugins"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
-import { colors as colorNames } from "@/vscode-css-languageservice"
 import chroma from "chroma-js"
 import type { Postcss } from "postcss"
 import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
+import { extractColors } from "~/common/extractColors"
 
 const colorProps = [
 	"background-color",
@@ -332,36 +332,39 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			return desc
 		}
 
-		// #000|#000000|#00000090|rgb[a](a, b, c[, d])|rgb[a](a b c[ d])
-		const re =
-			/#[0-9A-F]{3}\b|#[0-9A-F]{6}\b|#[0-9A-F]{8}\b|rgba?\(\s*(?<r>\d{1,3})(?:\s*,|\s+)\s*(?<g>\d{1,3})(?:\s*,|\s+)\s*(?<b>\d{1,3})/i
-		const normalize = (cssValue: string) => cssValue.replace(/(,|\/)\s*var\(\s*[\w-]*\s*\)/gi, "$1 1")
-
 		for (const values of decls.values()) {
 			for (const value of values) {
-				const colorName = colorNames[value.trim()]
-
-				let match: RegExpMatchArray | null = null
-				if (!colorName) {
-					match = normalize(value).match(re)
-					if (match == null) {
-						continue
-					}
+				const colors = extractColors(value)
+				if (colors.length <= 0) {
+					continue
 				}
+
+				const firstColor = colors[0]
 
 				let color: chroma.Color | undefined
 
-				if (colorName) {
+				if (typeof firstColor === "string") {
+					if (firstColor === "transparent") {
+						if (isBorder) {
+							desc.borderColor = "transparent"
+						}
+						if (isForeground) {
+							desc.color = "transparent"
+						}
+						if (isBackground || isOther) {
+							desc.backgroundColor = "transparent"
+						}
+						continue
+					}
 					try {
-						color = chroma(colorName)
+						color = chroma(firstColor).alpha(1.0)
 					} catch {}
-				} else if (match) {
+				} else {
 					try {
-						if (match.groups?.r) {
-							const { r, g, b } = match.groups
-							color = chroma(+r, +g, +b)
+						if (firstColor.fnName.startsWith("rgb")) {
+							color = chroma(+firstColor.args[0], +firstColor.args[1], +firstColor.args[2])
 						} else {
-							color = chroma(match[0])
+							color = chroma(`hsl(${firstColor.args.slice(0, 3).join()})`)
 						}
 					} catch {}
 				}
