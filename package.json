@@ -281,6 +281,10 @@
             "trace"
           ],
           "default": "info"
+        },
+        "tailwindcss.documentColors": {
+          "type": "boolean",
+          "default": false
         }
       }
     },

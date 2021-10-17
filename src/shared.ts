@@ -18,6 +18,7 @@ export interface Settings {
 	jsxPropImportChecking: boolean
 	rootFontSize: number
 	logLevel: "none" | "error" | "warning" | "info" | "debug" | "trace"
+	documentColors: boolean
 }
 
 export interface ColorDecoration {

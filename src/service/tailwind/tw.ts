@@ -1,4 +1,5 @@
 import { createGetPluginByName } from "@/corePlugins"
+import * as extractColors from "@/extractColors"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
@@ -6,7 +7,6 @@ import chroma from "chroma-js"
 import type { Postcss } from "postcss"
 import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
-import { extractColors } from "~/common/extractColors"
 
 const colorProps = [
 	"background-color",
@@ -334,7 +334,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 
 		for (const values of decls.values()) {
 			for (const value of values) {
-				const colors = extractColors(value)
+				const colors = extractColors.default(value)
 				if (colors.length <= 0) {
 					continue
 				}
@@ -343,8 +343,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 
 				let color: chroma.Color | undefined
 
-				if (typeof firstColor === "string") {
-					if (firstColor === "transparent") {
+				if (extractColors.isColorIdentifier(firstColor) || extractColors.isColorHexValue(firstColor)) {
+					if (firstColor.raw.value === "transparent") {
 						if (isBorder) {
 							desc.borderColor = "transparent"
 						}
@@ -357,7 +357,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 						continue
 					}
 					try {
-						color = chroma(firstColor).alpha(1.0)
+						color = chroma(firstColor.raw.value).alpha(1.0)
 					} catch {}
 				} else {
 					try {
