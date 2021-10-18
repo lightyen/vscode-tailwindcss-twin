@@ -42,7 +42,8 @@ Support ONLY `*.tsx` and `*.jsx`
   "tailwindcss.enabled": true,
   "tailwindcss.jsxPropImportChecking": true,
   "tailwindcss.rootFontSize": 16,
-  "tailwindcss.logLevel": "info"
+  "tailwindcss.logLevel": "info",
+  "tailwindcss.documentColors": false
 }
 ```
 

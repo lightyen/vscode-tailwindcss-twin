@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.11.2
+
+- Fix duplicate warnings [#24](https://github.com/lightyen/vscode-tailwindcss-twin/issues/24)
+- Feature: document colors in css value (default to `false`)
+
 ## 0.11.1
 
 - Fix using with default tailwind config
