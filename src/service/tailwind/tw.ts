@@ -442,7 +442,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			})
 		}
 
-		return data.join(", ") + " {\n    /* ... */\n}"
+		return indent(tabSize, data.join(", ") + " {\n    /* ... */\n}")
 	}
 
 	function renderArbitraryVariant(code: string, tabSize = 4) {
