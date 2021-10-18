@@ -289,7 +289,7 @@ function validateTwin({
 				} else if (diagnostics.conflict === "strict") {
 					for (const [prop] of decls) {
 						const twinKeys = variants.sort()
-						const key = [...twinKeys, prop].join(".")
+						const key = [undefined, ...twinKeys, prop].join(".")
 						const target = map[key]
 						if (target instanceof Array) {
 							target.push(item.target)
