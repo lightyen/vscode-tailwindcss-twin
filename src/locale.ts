@@ -15,7 +15,6 @@ function init() {
 	try {
 		messages = __non_webpack_require__(`../package.nls.${nlsConfig.locale}.json`)
 	} catch (err) {
-		console.log("load locale messages failed:", err)
 		messages = defaultMessages
 	}
 	intl = createIntl(
