@@ -11,6 +11,11 @@ import { ICompletionItem } from "./typings/completion"
 
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact"]
 
+const documentSelector = DEFAULT_SUPPORT_LANGUAGES.map<vscode.DocumentFilter[]>(language => [
+	{ scheme: "file", language },
+	{ scheme: "untitled", language },
+]).flat()
+
 const triggerCharacters = [
 	'"',
 	"'",
@@ -43,24 +48,23 @@ const prioritySorter = (a: URI, b: URI) => {
 	return b.toString().length - a.toString().length
 }
 
-function matchService(uri: string, services: Map<string, ReturnType<typeof createTailwindLanguageService>>) {
-	const arr = Array.from(services)
-		.filter(([workingDir]) => {
-			const rel = path.relative(workingDir, uri)
+function matchService(uri: URI, services: Map<string, ReturnType<typeof createTailwindLanguageService>>) {
+	const uriString = uri.toString()
+	const list = Array.from(services)
+		.filter(([configDir]) => {
+			if (uri.scheme === "untitled") return true
+			const rel = path.relative(configDir, uriString)
 			return !rel.startsWith("..")
 		})
 		.sort((a, b) => b[0].localeCompare(a[0]))
-	return arr[0]?.[1]
-}
-
-export interface WorkspaceClient {
-	dispose(): void
+		.map(m => m[1])
+	return list[0]
 }
 
 export async function workspaceClient(
 	context: vscode.ExtensionContext,
 	ws: vscode.WorkspaceFolder,
-): Promise<WorkspaceClient> {
+): Promise<vscode.Disposable> {
 	const disposes: vscode.Disposable[] = []
 	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
 	const configFolders: Map<string, URI[]> = new Map()
@@ -116,7 +120,8 @@ export async function workspaceClient(
 
 	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> = {
 		provideCompletionItems(document, position, token, context) {
-			return matchService(document.uri.toString(), services)?.completionItemProvider.provideCompletionItems(
+			if (!settings.enabled) return
+			return matchService(document.uri, services)?.completionItemProvider.provideCompletionItems(
 				document,
 				position,
 				token,
@@ -124,7 +129,9 @@ export async function workspaceClient(
 			)
 		},
 		resolveCompletionItem(item, token) {
-			const srv = matchService(item.data.uri?.toString() ?? "", services)
+			if (!settings.enabled) return item
+			if (!item.data.uri) return item
+			const srv = matchService(item.data.uri, services)
 			if (!srv) return item
 			srv.completionItemProvider.tabSize = getTabSize()
 			return srv.completionItemProvider.resolveCompletionItem?.(item, token)
@@ -133,17 +140,44 @@ export async function workspaceClient(
 
 	const hoverProvider: vscode.HoverProvider = {
 		provideHover(document, position, token) {
-			const srv = matchService(document.uri.toString(), services)
+			if (!settings.enabled) return
+			const srv = matchService(document.uri, services)
 			if (!srv) return undefined
 			srv.hoverProvider.tabSize = getTabSize()
 			return srv.hoverProvider.provideHover(document, position, token)
 		},
 	}
 
+	const codeActionProvider: vscode.CodeActionProvider = {
+		provideCodeActions(document, range, context, token) {
+			if (!settings.enabled) return
+			const items = collection.get(document.uri)
+			if (!items) return
+			const actions: vscode.CodeAction[] = []
+			for (let i = 0; i < items.length; i++) {
+				const diagnostic = items[i] as IDiagnostic
+				if (range.contains(diagnostic.range) && diagnostic.data) {
+					const d = items[i] as IDiagnostic
+					if (d.data) {
+						range.contains(d.range)
+						const { text, newText } = d.data
+						const a = new CodeAction(`Replace '${text}' with '${newText}'`, vscode.CodeActionKind.QuickFix)
+						const edit = new vscode.WorkspaceEdit()
+						edit.replace(document.uri, d.range, newText)
+						a.edit = edit
+						actions.push(a)
+					}
+				}
+			}
+			return actions
+		},
+	}
+
 	const documentColorProvider: vscode.DocumentColorProvider = {
 		provideDocumentColors(document, token) {
-			if (!settings.enabled || !settings.documentColors) return undefined
-			const srv = matchService(document.uri.toString(), services)
+			if (!settings.enabled) return
+			if (!settings.documentColors) return
+			const srv = matchService(document.uri, services)
 			if (!srv) return undefined
 			return srv.documentColorProvider.provideDocumentColors(document, token)
 		},
@@ -153,38 +187,10 @@ export async function workspaceClient(
 	let activeTextEditor = vscode.window.activeTextEditor
 
 	disposes.push(
-		vscode.languages.registerCompletionItemProvider(
-			DEFAULT_SUPPORT_LANGUAGES,
-			completionItemProvider,
-			...triggerCharacters,
-		),
-		vscode.languages.registerHoverProvider(DEFAULT_SUPPORT_LANGUAGES, hoverProvider),
-		vscode.languages.registerCodeActionsProvider(DEFAULT_SUPPORT_LANGUAGES, {
-			provideCodeActions(document, range, context, token) {
-				const items = collection.get(document.uri)
-				if (!items) return
-				const actions: vscode.CodeAction[] = []
-				for (let i = 0; i < items.length; i++) {
-					const diagnostic = items[i] as IDiagnostic
-					if (range.contains(diagnostic.range) && diagnostic.data) {
-						const d = items[i] as IDiagnostic
-						if (d.data) {
-							range.contains(d.range)
-							const { text, newText } = d.data
-							const a = new CodeAction(
-								`Replace '${text}' with '${newText}'`,
-								vscode.CodeActionKind.QuickFix,
-							)
-							const edit = new vscode.WorkspaceEdit()
-							edit.replace(document.uri, d.range, newText)
-							a.edit = edit
-							actions.push(a)
-						}
-					}
-				}
-				return actions
-			},
-		}),
+		vscode.languages.registerCompletionItemProvider(documentSelector, completionItemProvider, ...triggerCharacters),
+		vscode.languages.registerHoverProvider(documentSelector, hoverProvider),
+		vscode.languages.registerCodeActionsProvider(documentSelector, codeActionProvider),
+		vscode.languages.registerColorProvider(documentSelector, documentColorProvider),
 		vscode.window.onDidChangeActiveTextEditor(editor => {
 			activeTextEditor = editor
 			if (activeTextEditor?.document.uri.scheme === "output") return
@@ -193,7 +199,6 @@ export async function workspaceClient(
 				render()
 			}
 		}),
-		vscode.languages.registerColorProvider(DEFAULT_SUPPORT_LANGUAGES, documentColorProvider),
 		vscode.workspace.onDidChangeTextDocument(event => {
 			if (event.document.uri.scheme === "output") return
 			console.trace("onDidChangeTextDocument()")
@@ -289,7 +294,7 @@ export async function workspaceClient(
 
 			if (needToUpdate) {
 				for (const document of vscode.workspace.textDocuments) {
-					const service = matchService(document.uri.toString(), services)
+					const service = matchService(document.uri, services)
 					if (service) {
 						service.updateSettings(settings)
 					}
@@ -300,7 +305,7 @@ export async function workspaceClient(
 				await Promise.all(
 					vscode.workspace.textDocuments.map(document => {
 						if (!settings.colorDecorators) {
-							const srv = matchService(document.uri.toString(), services)
+							const srv = matchService(document.uri, services)
 							srv?.colorProvider.dispose()
 							return
 						}
@@ -332,11 +337,7 @@ export async function workspaceClient(
 
 	first_render()
 
-	return {
-		dispose() {
-			disposes.forEach(obj => obj.dispose())
-		},
-	}
+	return vscode.Disposable.from(...disposes)
 
 	function getTabSize(defaultSize = 4): number {
 		let tabSize: number | undefined
@@ -363,20 +364,18 @@ export async function workspaceClient(
 
 	function first_render() {
 		vscode.workspace.textDocuments.forEach(async document => {
-			const srv = matchService(document.uri.toString(), services)
-			if (srv) {
-				srv.start()
-				const editor = vscode.window.activeTextEditor
-				if (!editor) return
-				if (editor.document !== document) return
-				if (document.uri.scheme === "output") return
-				collection.clear()
-				if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
-				if (settings.diagnostics.enabled) {
-					updateDiagnostics(document, srv.provideDiagnostics(document))
-				} else {
-					collection.delete(document.uri)
-				}
+			const srv = matchService(document.uri, services)
+			if (!srv) return
+			const editor = vscode.window.activeTextEditor
+			if (!editor) return
+			if (editor.document !== document) return
+			collection.clear()
+			if (!settings.enabled) return
+			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
+			if (settings.diagnostics.enabled) {
+				updateDiagnostics(document, srv.provideDiagnostics(document))
+			} else {
+				collection.delete(document.uri)
 			}
 		})
 	}
@@ -387,8 +386,9 @@ export async function workspaceClient(
 		if (document.uri.scheme === "output") return
 		if (document) {
 			collection.clear()
-			const srv = matchService(document.uri.toString(), services)
+			const srv = matchService(document.uri, services)
 			if (!srv) return
+			if (!settings.enabled) return
 			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
 			if (settings.diagnostics.enabled) {
 				updateDiagnostics(document, srv.provideDiagnostics(document))
