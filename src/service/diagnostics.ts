@@ -1,4 +1,4 @@
-import { findAllMatch, PatternKind, TextDocument, TokenResult } from "@/ast"
+import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
@@ -6,12 +6,12 @@ import * as parser from "@/twin-parser"
 import * as nodes from "@/twin-parser/twNodes"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
-import { Diagnostic, DiagnosticSeverity, Range } from "vscode"
+import vscode from "vscode"
 import { DIAGNOSTICS_ID } from "~/shared"
 import type { ServiceOptions } from "."
 import type { TailwindLoader } from "./tailwind"
 
-export interface IDiagnostic extends Diagnostic {
+export interface IDiagnostic extends vscode.Diagnostic {
 	data?: {
 		text: string
 		newText: string
@@ -22,14 +22,14 @@ const cssProperties = cssDataManager.getProperties().map(c => c.name)
 const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSensitive: true })
 
 function createDiagnosticArray() {
-	const arr: Diagnostic[] = []
+	const arr: vscode.Diagnostic[] = []
 	const MAXSZIE = 20
 	return new Proxy(arr, {
 		get(target, prop, ...rest) {
 			switch (prop) {
 				case "push":
-					return function (item: Diagnostic) {
-						if (item.severity === DiagnosticSeverity.Warning && target.length >= 2 * MAXSZIE) {
+					return function (item: vscode.Diagnostic) {
+						if (item.severity === vscode.DiagnosticSeverity.Warning && target.length >= 2 * MAXSZIE) {
 							return 0
 						}
 						if (target.length >= MAXSZIE) {
@@ -50,42 +50,35 @@ function createDiagnosticArray() {
 	}) as IDiagnostic[]
 }
 
-export function validate(document: TextDocument, state: TailwindLoader, options: ServiceOptions) {
+export function validate(
+	tokens: ExtractedToken[],
+	document: TextDocument,
+	state: TailwindLoader,
+	options: ServiceOptions,
+) {
 	const diagnostics = createDiagnosticArray()
-	let tokens: TokenResult[]
-
-	try {
-		tokens = findAllMatch(document, options.jsxPropImportChecking)
-		if (tokens.length === 0) return diagnostics
-	} catch (error) {
-		const err = error as Error
-		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-		console.error(err)
-		return diagnostics
-	}
-
 	const start = process.hrtime.bigint()
-	const answer = doValidate(tokens)
+	const answer = doValidate()
 	const end = process.hrtime.bigint()
 	console.trace(`validate (${Number((end - start) / 10n ** 6n)}ms)`)
 	return answer
 
-	function doValidate(tokens: TokenResult[]) {
+	function doValidate() {
 		try {
 			for (const { token, kind } of tokens) {
 				const [start, end, value] = token
-				if (kind === PatternKind.TwinTheme) {
+				if (kind === ExtractedTokenKind.TwinTheme) {
 					const result = parseThemeValue(value)
 					for (const err of result.errors) {
 						if (
 							!diagnostics.push({
-								range: new Range(
+								range: new vscode.Range(
 									document.positionAt(start + err.start),
 									document.positionAt(start + err.end),
 								),
 								source: DIAGNOSTICS_ID,
 								message: err.message,
-								severity: DiagnosticSeverity.Error,
+								severity: vscode.DiagnosticSeverity.Error,
 							})
 						) {
 							return diagnostics
@@ -94,32 +87,32 @@ export function validate(document: TextDocument, state: TailwindLoader, options:
 					if (!state.tw.getTheme(result.keys(), true)) {
 						if (
 							!diagnostics.push({
-								range: new Range(document.positionAt(start), document.positionAt(end)),
+								range: new vscode.Range(document.positionAt(start), document.positionAt(end)),
 								source: DIAGNOSTICS_ID,
 								message: "value is undefined",
-								severity: DiagnosticSeverity.Error,
+								severity: vscode.DiagnosticSeverity.Error,
 							})
 						) {
 							return diagnostics
 						}
 					}
-				} else if (kind === PatternKind.TwinScreen) {
+				} else if (kind === ExtractedTokenKind.TwinScreen) {
 					if (value) {
 						const result = state.tw.getTheme(["screens", value])
 						if (result == undefined) {
 							if (
 								!diagnostics.push({
-									range: new Range(document.positionAt(start), document.positionAt(end)),
+									range: new vscode.Range(document.positionAt(start), document.positionAt(end)),
 									source: DIAGNOSTICS_ID,
 									message: "value is undefined",
-									severity: DiagnosticSeverity.Error,
+									severity: vscode.DiagnosticSeverity.Error,
 								})
 							) {
 								return diagnostics
 							}
 						}
 					}
-				} else if (kind === PatternKind.Twin || PatternKind.TwinCssProperty) {
+				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
 					const result = parser.spread({ text: value, separator: state.separator })
 					validateTwin({
 						document,
@@ -158,7 +151,7 @@ function validateTwin({
 }: {
 	document: TextDocument
 	offset: number
-	kind: PatternKind
+	kind: ExtractedTokenKind
 	state: TailwindLoader
 	diagnostics: ServiceOptions["diagnostics"]
 	result: IDiagnostic[]
@@ -168,15 +161,15 @@ function validateTwin({
 			!result.push({
 				source: DIAGNOSTICS_ID,
 				message: "Bracket is not closed.",
-				range: new Range(document.positionAt(offset + e.start), document.positionAt(offset + e.end)),
-				severity: DiagnosticSeverity.Error,
+				range: new vscode.Range(document.positionAt(offset + e.start), document.positionAt(offset + e.end)),
+				severity: vscode.DiagnosticSeverity.Error,
 			})
 		) {
 			return
 		}
 	}
 
-	if (kind === PatternKind.Twin) {
+	if (kind === ExtractedTokenKind.Twin) {
 		for (let i = 0; i < items.length; i++) {
 			const c = items[i]
 			switch (c.type) {
@@ -217,11 +210,11 @@ function validateTwin({
 						!result.push({
 							source: DIAGNOSTICS_ID,
 							message,
-							range: new Range(
+							range: new vscode.Range(
 								document.positionAt(offset + token.start),
 								document.positionAt(offset + token.end),
 							),
-							severity: DiagnosticSeverity.Warning,
+							severity: vscode.DiagnosticSeverity.Warning,
 						})
 					) {
 						return
@@ -234,7 +227,7 @@ function validateTwin({
 	if (diagnostics.conflict !== "none") {
 		const map: Record<string, parser.TokenList> = {}
 
-		if (kind === PatternKind.Twin) {
+		if (kind === ExtractedTokenKind.Twin) {
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i]
 				if (item.important) {
@@ -299,7 +292,7 @@ function validateTwin({
 					}
 				}
 			}
-		} else if (kind === PatternKind.TwinCssProperty) {
+		} else if (kind === ExtractedTokenKind.TwinCssProperty) {
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i]
 
@@ -311,11 +304,11 @@ function validateTwin({
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message,
-						range: new Range(
+						range: new vscode.Range(
 							document.positionAt(offset + item.target.start),
 							document.positionAt(offset + item.target.end),
 						),
-						severity: DiagnosticSeverity.Error,
+						severity: vscode.DiagnosticSeverity.Error,
 					})
 					continue
 				}
@@ -342,11 +335,11 @@ function validateTwin({
 				!result.push({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
-					range: new Range(
+					range: new vscode.Range(
 						document.positionAt(offset + item.end),
 						document.positionAt(offset + item.end + 1),
 					),
-					severity: DiagnosticSeverity.Warning,
+					severity: vscode.DiagnosticSeverity.Warning,
 				})
 			) {
 				return
@@ -361,8 +354,11 @@ function validateTwin({
 				!result.push({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
-					range: new Range(document.positionAt(offset + item.start), document.positionAt(offset + item.end)),
-					severity: DiagnosticSeverity.Warning,
+					range: new vscode.Range(
+						document.positionAt(offset + item.start),
+						document.positionAt(offset + item.end),
+					),
+					severity: vscode.DiagnosticSeverity.Warning,
 				})
 			) {
 				return
@@ -392,16 +388,16 @@ function checkTwinCssProperty(
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}', did you mean '${ans}'?`,
-				range: new Range(document.positionAt(offset + a), document.positionAt(offset + b)),
+				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
 				data: { text: variant, newText: ans },
-				severity: DiagnosticSeverity.Error,
+				severity: vscode.DiagnosticSeverity.Error,
 			})
 		} else {
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `Can't find '${variant}'`,
-				range: new Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				severity: DiagnosticSeverity.Error,
+				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
+				severity: vscode.DiagnosticSeverity.Error,
 			})
 		}
 	}
@@ -422,16 +418,16 @@ function checkTwinCssProperty(
 		result.push({
 			source: DIAGNOSTICS_ID,
 			message: `Can't find '${value}'`,
-			range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			severity: DiagnosticSeverity.Error,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			severity: vscode.DiagnosticSeverity.Error,
 		})
 	} else if (score > 0) {
 		result.push({
 			source: DIAGNOSTICS_ID,
 			message: `Can't find '${value}', did you mean '${ret[0].item}'?`,
-			range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
 			data: { text: value, newText: ret[0].item },
-			severity: DiagnosticSeverity.Error,
+			severity: vscode.DiagnosticSeverity.Error,
 		})
 	}
 	return result
@@ -458,16 +454,16 @@ function checkTwinClassName(
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `Unknown variant: ${variant}, did you mean '${ans}'?`,
-				range: new Range(document.positionAt(offset + a), document.positionAt(offset + b)),
+				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
 				data: { text: variant, newText: ans },
-				severity: DiagnosticSeverity.Error,
+				severity: vscode.DiagnosticSeverity.Error,
 			})
 		} else {
 			result.push({
 				source: DIAGNOSTICS_ID,
 				message: `Unknown variant: ${variant}`,
-				range: new Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				severity: DiagnosticSeverity.Error,
+				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
+				severity: vscode.DiagnosticSeverity.Error,
 			})
 		}
 	}
@@ -483,40 +479,49 @@ function checkTwinClassName(
 						result.push({
 							source: DIAGNOSTICS_ID,
 							message: `Invalid token '${value}', missing square brackets?`,
-							range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-							severity: DiagnosticSeverity.Error,
+							range: new vscode.Range(
+								document.positionAt(offset + start),
+								document.positionAt(offset + end),
+							),
+							severity: vscode.DiagnosticSeverity.Error,
 						})
 						break
 					case PredictionKind.Variant:
 						result.push({
 							source: DIAGNOSTICS_ID,
 							message: `Invalid token '${value}', missing separator?`,
-							range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-							severity: DiagnosticSeverity.Error,
+							range: new vscode.Range(
+								document.positionAt(offset + start),
+								document.positionAt(offset + end),
+							),
+							severity: vscode.DiagnosticSeverity.Error,
 						})
 						break
 					default:
 						result.push({
 							source: DIAGNOSTICS_ID,
 							message: `Unknown: ${value}`,
-							range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-							severity: DiagnosticSeverity.Error,
+							range: new vscode.Range(
+								document.positionAt(offset + start),
+								document.positionAt(offset + end),
+							),
+							severity: vscode.DiagnosticSeverity.Error,
 						})
 				}
 			} else if (ret.value) {
 				result.push({
 					source: DIAGNOSTICS_ID,
 					message: `Unknown: ${value}, did you mean ${ret.value}?`,
-					range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+					range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
 					data: { text: value, newText: ret.value },
-					severity: DiagnosticSeverity.Error,
+					severity: vscode.DiagnosticSeverity.Error,
 				})
 			} else {
 				result.push({
 					source: DIAGNOSTICS_ID,
 					message: `Unknown: ${value}`,
-					range: new Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-					severity: DiagnosticSeverity.Error,
+					range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+					severity: vscode.DiagnosticSeverity.Error,
 				})
 			}
 		}

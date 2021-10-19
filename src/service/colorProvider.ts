@@ -1,5 +1,6 @@
 import { md5 } from "@"
-import { findAllMatch, PatternKind } from "@/ast"
+import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
+import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
 import * as parser from "@/twin-parser"
 import chroma from "chroma-js"
@@ -15,42 +16,51 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 			}
 			colors.clear()
 		},
-		render(editor: vscode.TextEditor) {
-			const colorRanges = getColorRanges(editor.document)
-			const new_keys = new Map(colorRanges.map(v => [toKey(v[0]), v[0]]))
+		render(tokens: ExtractedToken[], editor: vscode.TextEditor) {
+			const a = process.hrtime.bigint()
+			_render()
+			const b = process.hrtime.bigint()
+			console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
 
-			for (const key of colors.keys()) {
-				if (new_keys.has(key)) continue
-				const deco = colors.get(key)
-				deco?.dispose()
-				colors.delete(key)
-			}
-			for (const [key, desc] of new_keys) {
-				if (!colors.has(key)) {
-					colors.set(key, createTextEditorDecorationType(desc))
+			return
+
+			function _render() {
+				const colorRanges = getColorRanges(tokens, editor.document)
+				const new_keys = new Map(colorRanges.map(v => [toKey(v[0]), v[0]]))
+
+				for (const key of colors.keys()) {
+					if (new_keys.has(key)) continue
+					const deco = colors.get(key)
+					deco?.dispose()
+					colors.delete(key)
 				}
-			}
-
-			const cate = new Map<string, vscode.Range[]>()
-			for (const [desc, range] of colorRanges) {
-				const key = toKey(desc)
-				const ranges = cate.get(key)
-				if (ranges) {
-					ranges.push(range)
-				} else {
-					cate.set(key, [range])
+				for (const [key, desc] of new_keys) {
+					if (!colors.has(key)) {
+						colors.set(key, createTextEditorDecorationType(desc))
+					}
 				}
-			}
 
-			// render
-			for (const [key, ranges] of cate) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				editor.setDecorations(colors.get(key)!, ranges)
+				const cate = new Map<string, vscode.Range[]>()
+				for (const [desc, range] of colorRanges) {
+					const key = toKey(desc)
+					const ranges = cate.get(key)
+					if (ranges) {
+						ranges.push(range)
+					} else {
+						cate.set(key, [range])
+					}
+				}
+
+				// render
+				for (const [key, ranges] of cate) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					editor.setDecorations(colors.get(key)!, ranges)
+				}
 			}
 		},
 	}
 
-	function getColorRanges(document: vscode.TextDocument) {
+	function getColorRanges(tokens: ExtractedToken[], document: TextDocument) {
 		const colors: Array<[ColorDesc, vscode.Range]> = []
 		const test = (desc: ColorDesc | undefined): desc is ColorDesc => {
 			if (!desc) return false
@@ -63,10 +73,10 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 				desc.borderColor === "inherit"
 			)
 		}
-		for (const { token, kind } of findAllMatch(document, true)) {
+		for (const { token, kind } of tokens) {
 			const [offset, end, value] = token
 			switch (kind) {
-				case PatternKind.Twin: {
+				case ExtractedTokenKind.Twin: {
 					const result = parser.spread({ text: value })
 					for (const item of result.items) {
 						if (item.type === parser.SpreadResultType.ClassName) {
@@ -112,7 +122,7 @@ export function createColorProvider(tw: ReturnType<typeof createTwContext>) {
 					}
 					break
 				}
-				case PatternKind.TwinTheme: {
+				case ExtractedTokenKind.TwinTheme: {
 					const color = getThemeDecoration(value, tw)
 					if (color) {
 						const range = new vscode.Range(document.positionAt(offset), document.positionAt(end))

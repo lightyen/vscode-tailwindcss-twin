@@ -1,18 +1,8 @@
 import ts from "typescript"
-import { URI } from "vscode-uri"
-import * as tw from "./twin-parser"
-
-// https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
-export type Language = "javascript" | "javascriptreact" | "typescript" | "typescriptreact"
+import { ExtractedToken, ExtractedTokenKind, Extractor } from "."
+import { createToken } from "../twin-parser"
 
 const twinLabel = "twin.macro"
-
-export enum PatternKind {
-	Twin = "tw",
-	TwinTheme = "theme",
-	TwinCssProperty = "cs",
-	TwinScreen = "screen",
-}
 
 interface Features {
 	jsxProp: boolean
@@ -21,26 +11,24 @@ interface Features {
 	screenTemplate: Set<string>
 }
 
-export type TokenResult = { token: tw.Token; kind: PatternKind }
-
 function transfromToken(
-	result: { kind: PatternKind; token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral },
+	result: { kind: ExtractedTokenKind; token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral },
 	source: ts.SourceFile,
-): TokenResult {
+): ExtractedToken {
 	const text = result.token.getText(source)
 	const start = result.token.getStart(source) + 1
 	let end = result.token.getEnd()
 	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText ?? "" : result.token.text
 	if (/['"`]$/.test(text)) {
 		end -= 1
-		return { kind: result.kind, token: tw.createToken(start, end, value) }
+		return { kind: result.kind, token: createToken(start, end, value) }
 	} else {
 		const m = text.match(/[ \r\t\n]/)
 		if (m?.index != undefined) {
 			end = start + m.index
-			return { kind: result.kind, token: tw.createToken(start, end, value.slice(0, m.index)) }
+			return { kind: result.kind, token: createToken(start, end, value.slice(0, m.index)) }
 		}
-		return { kind: result.kind, token: tw.createToken(start, end, value) }
+		return { kind: result.kind, token: createToken(start, end, value) }
 	}
 }
 
@@ -86,7 +74,7 @@ function findNode(
 	node: ts.Node,
 	position: number,
 	features: Features,
-): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind } | undefined {
+): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: ExtractedTokenKind } | undefined {
 	if (position < node.getStart(source) || position >= node.getEnd()) {
 		return undefined
 	}
@@ -96,7 +84,7 @@ function findNode(
 			return undefined
 		}
 		const id = first.getText(source)
-		if (features.jsxProp && id === PatternKind.Twin) {
+		if (features.jsxProp && id === ExtractedTokenKind.Twin) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
@@ -104,8 +92,8 @@ function findNode(
 			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 				return undefined
 			}
-			return { token, kind: PatternKind.Twin }
-		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
+			return { token, kind: ExtractedTokenKind.Twin }
+		} else if (features.jsxProp && id === ExtractedTokenKind.TwinCssProperty) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
@@ -113,7 +101,7 @@ function findNode(
 			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 				return undefined
 			}
-			return { token, kind: PatternKind.TwinCssProperty }
+			return { token, kind: ExtractedTokenKind.TwinCssProperty }
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {
@@ -135,7 +123,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 					return undefined
 				}
-				return { token, kind: PatternKind.Twin }
+				return { token, kind: ExtractedTokenKind.Twin }
 			} else {
 				return undefined
 			}
@@ -145,7 +133,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 					return undefined
 				}
-				return { token, kind: PatternKind.TwinTheme }
+				return { token, kind: ExtractedTokenKind.TwinTheme }
 			} else {
 				return undefined
 			}
@@ -155,7 +143,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 					return undefined
 				}
-				return { token, kind: PatternKind.TwinScreen }
+				return { token, kind: ExtractedTokenKind.TwinScreen }
 			} else {
 				return undefined
 			}
@@ -185,7 +173,7 @@ function findNode(
 				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
 					return undefined
 				}
-				return { token, kind: PatternKind.TwinTheme }
+				return { token, kind: ExtractedTokenKind.TwinTheme }
 			}
 
 			if (features.screenTemplate.has(first.getText(source))) {
@@ -201,7 +189,7 @@ function findNode(
 				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
 					return undefined
 				}
-				return { token, kind: PatternKind.TwinScreen }
+				return { token, kind: ExtractedTokenKind.TwinScreen }
 			}
 		}
 	}
@@ -216,7 +204,7 @@ function findAllNode(
 	source: ts.SourceFile,
 	node: ts.Node,
 	features: Features,
-): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: PatternKind }> | undefined {
+): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: ExtractedTokenKind }> | undefined {
 	if (ts.isJsxAttribute(node)) {
 		const first = node.getFirstToken(source)
 		if (!first) {
@@ -224,18 +212,18 @@ function findAllNode(
 		}
 
 		const id = first.getText(source)
-		if (features.jsxProp && id === PatternKind.Twin) {
+		if (features.jsxProp && id === ExtractedTokenKind.Twin) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
-			return [{ token, kind: PatternKind.Twin }]
-		} else if (features.jsxProp && id === PatternKind.TwinCssProperty) {
+			return [{ token, kind: ExtractedTokenKind.Twin }]
+		} else if (features.jsxProp && id === ExtractedTokenKind.TwinCssProperty) {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
-			return [{ token, kind: PatternKind.TwinCssProperty }]
+			return [{ token, kind: ExtractedTokenKind.TwinCssProperty }]
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {
@@ -255,21 +243,21 @@ function findAllNode(
 		if (features.twTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: PatternKind.Twin }]
+				return [{ token: literal, kind: ExtractedTokenKind.Twin }]
 			} else {
 				return undefined
 			}
 		} else if (features.themeTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: PatternKind.TwinTheme }]
+				return [{ token: literal, kind: ExtractedTokenKind.TwinTheme }]
 			} else {
 				return undefined
 			}
 		} else if (features.screenTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: PatternKind.TwinScreen }]
+				return [{ token: literal, kind: ExtractedTokenKind.TwinScreen }]
 			} else {
 				return undefined
 			}
@@ -292,7 +280,7 @@ function findAllNode(
 				if (!token) {
 					return undefined
 				}
-				return [{ token, kind: PatternKind.TwinTheme }]
+				return [{ token, kind: ExtractedTokenKind.TwinTheme }]
 			}
 
 			if (features.screenTemplate.has(first.getText(source))) {
@@ -305,7 +293,7 @@ function findAllNode(
 				if (!token) {
 					return undefined
 				}
-				return [{ token, kind: PatternKind.TwinScreen }]
+				return [{ token, kind: ExtractedTokenKind.TwinScreen }]
 			}
 		}
 	}
@@ -342,7 +330,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 					if (namedImports) {
 						namedImports.forEachChild(node => {
 							if (ts.isImportSpecifier(node)) {
-								if (node.getFirstToken(source)?.getText(source) === PatternKind.TwinTheme) {
+								if (node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinTheme) {
 									const count = node.getChildCount(source)
 									if (count === 1) {
 										const identifier = node.getFirstToken(source)?.getText(source)
@@ -355,7 +343,9 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 											themeTemplate.add(identifier)
 										}
 									}
-								} else if (node.getFirstToken(source)?.getText(source) === PatternKind.TwinScreen) {
+								} else if (
+									node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinScreen
+								) {
 									const count = node.getChildCount(source)
 									if (count === 1) {
 										const identifier = node.getFirstToken(source)?.getText(source)
@@ -379,7 +369,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 	return { jsxProp, twTemplate, themeTemplate, screenTemplate }
 }
 
-export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): TokenResult | undefined {
+export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): ExtractedToken | undefined {
 	const features = checkImportTwin(source, jsxPropChecking)
 	const node = findNode(source, source, position, features)
 	if (node == undefined) {
@@ -388,80 +378,67 @@ export function findToken(source: ts.SourceFile, position: number, jsxPropChecki
 	return transfromToken(node, source)
 }
 
-export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): TokenResult[] {
+export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): ExtractedToken[] {
 	const features = checkImportTwin(source, jsxPropChecking)
 	return findAllNode(source, source, features)?.map(node => transfromToken(node, source)) ?? []
 }
 
-export interface TextDocument {
-	offsetAt(position: unknown): number
-	getText(): string
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	positionAt(offset: number): any
-	languageId: string
-	uri: URI
-}
-
-export function canMatch<Position = unknown>(
-	document: TextDocument,
-	position: Position,
-	hover: boolean,
-	jsxPropChecking = true,
-): TokenResult | undefined {
-	const pos = document.offsetAt(position) + (hover ? 1 : 0)
-	let scriptKind: ts.ScriptKind | undefined
-	switch (document.languageId) {
-		case "typescript":
-			scriptKind = ts.ScriptKind.TS
-			break
-		case "javascript":
-			scriptKind = ts.ScriptKind.JS
-			break
-		case "typescriptreact":
-			scriptKind = ts.ScriptKind.TSX
-			break
-		case "javascriptreact":
-			scriptKind = ts.ScriptKind.JSX
-			break
-		default:
-			scriptKind = undefined
-	}
-	if (scriptKind) {
-		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		const token = findToken(source, pos, jsxPropChecking)
-		if (!token) {
-			return undefined
+export const typescriptExtractor: Extractor = {
+	find(document, position, hover, option) {
+		const pos = document.offsetAt(position) + (hover ? 1 : 0)
+		let scriptKind: ts.ScriptKind | undefined
+		switch (document.languageId) {
+			case "typescript":
+				scriptKind = ts.ScriptKind.TS
+				break
+			case "javascript":
+				scriptKind = ts.ScriptKind.JS
+				break
+			case "typescriptreact":
+				scriptKind = ts.ScriptKind.TSX
+				break
+			case "javascriptreact":
+				scriptKind = ts.ScriptKind.JSX
+				break
+			default:
+				scriptKind = undefined
 		}
-		return token
-	}
-	return undefined
-}
-
-export function findAllMatch(document: TextDocument, jsxPropChecking = true): TokenResult[] {
-	let scriptKind: ts.ScriptKind | undefined
-	switch (document.languageId) {
-		case "typescript":
-			scriptKind = ts.ScriptKind.TS
-			break
-		case "javascript":
-			scriptKind = ts.ScriptKind.JS
-			break
-		case "typescriptreact":
-			scriptKind = ts.ScriptKind.TSX
-			break
-		case "javascriptreact":
-			scriptKind = ts.ScriptKind.JSX
-			break
-		default:
-			scriptKind = undefined
-	}
-	if (scriptKind) {
-		const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-		try {
-			return findAllToken(source, jsxPropChecking)
-		} catch {
-			return []
+		if (scriptKind) {
+			const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
+			const token = findToken(source, pos, option.jsxPropImportChecking)
+			if (!token) {
+				return undefined
+			}
+			return token
 		}
-	}
-	return []
+		return undefined
+	},
+	findAll(document, options) {
+		let scriptKind: ts.ScriptKind | undefined
+		switch (document.languageId) {
+			case "typescript":
+				scriptKind = ts.ScriptKind.TS
+				break
+			case "javascript":
+				scriptKind = ts.ScriptKind.JS
+				break
+			case "typescriptreact":
+				scriptKind = ts.ScriptKind.TSX
+				break
+			case "javascriptreact":
+				scriptKind = ts.ScriptKind.JSX
+				break
+			default:
+				scriptKind = undefined
+		}
+		if (scriptKind) {
+			const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
+			try {
+				return findAllToken(source, options.jsxPropImportChecking)
+			} catch {
+				return []
+			}
+		}
+		return []
+	},
 }
