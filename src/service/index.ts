@@ -234,7 +234,6 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		defaultValue: ReturnValue,
 		feature: (extractor: Extractor) => ReturnValue,
 	) {
-		if (!options.enabled) return defaultValue
 		if (!loading) {
 			if (!state.tw) start()
 			return hub<ReturnValue>(document, defaultValue, feature)

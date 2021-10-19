@@ -3,14 +3,14 @@ import { importFrom } from "@/module"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
 import packageInfo from "../package.json"
-import { WorkspaceClient, workspaceClient } from "./client"
+import { workspaceClient } from "./client"
 import { intl } from "./locale"
 import { NAME } from "./shared"
 
 const outputChannel = vscode.window.createOutputChannel(NAME)
 console.outputChannel = outputChannel
 
-const clients: Map<string, WorkspaceClient> = new Map()
+const clients: Map<string, vscode.Disposable> = new Map()
 
 async function addClient(context: vscode.ExtensionContext, ws: vscode.WorkspaceFolder) {
 	if (clients.has(ws.uri.toString())) return
