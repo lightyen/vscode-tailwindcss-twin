@@ -1,4 +1,4 @@
-import { canMatch, PatternKind, TextDocument, TokenResult } from "@/ast"
+import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import { findThemeValueKeys } from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
@@ -13,21 +13,13 @@ import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } fro
 import type { TailwindLoader } from "./tailwind"
 
 export default function completion(
+	result: ExtractedToken | undefined,
 	document: TextDocument,
 	position: unknown,
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): vscode.CompletionList<ICompletionItem> | undefined {
-	let result: TokenResult | undefined
-	try {
-		result = canMatch(document, position, false, options.jsxPropImportChecking)
-		if (!result) return undefined
-	} catch (error) {
-		const err = error as Error
-		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-		console.error(err)
-		return undefined
-	}
+	if (!result) return undefined
 
 	const start = process.hrtime.bigint()
 	const list = doComplete(result)
@@ -35,17 +27,17 @@ export default function completion(
 	console.trace(`provide completion (${Number((end - start) / 10n ** 6n)}ms)`)
 	return list
 
-	function doComplete(result: TokenResult) {
+	function doComplete(result: ExtractedToken) {
 		try {
 			const index = document.offsetAt(position)
 			const { kind, token } = result
-			if (kind === PatternKind.TwinTheme) {
+			if (kind === ExtractedTokenKind.TwinTheme) {
 				const list = twinThemeCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri.toString()
 				}
 				return list
-			} else if (kind === PatternKind.TwinScreen) {
+			} else if (kind === ExtractedTokenKind.TwinScreen) {
 				const list = twinScreenCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri.toString()
@@ -102,7 +94,7 @@ function twinCompletion(
 	document: TextDocument,
 	index: number,
 	match: parser.Token,
-	kind: PatternKind,
+	kind: ExtractedTokenKind,
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): vscode.CompletionList<ICompletionItem> {
@@ -128,7 +120,7 @@ function variantsCompletion(
 	text: string,
 	position: number,
 	offset: number,
-	kind: PatternKind,
+	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	{ preferVariantWithParentheses }: ServiceOptions,
@@ -255,7 +247,7 @@ function utilitiesCompletion(
 	text: string,
 	position: number,
 	offset: number,
-	kind: PatternKind,
+	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
@@ -265,7 +257,7 @@ function utilitiesCompletion(
 	let classNameItems: ICompletionItem[] = []
 	let classNameEnabled = true
 
-	if (kind === PatternKind.TwinCssProperty) {
+	if (kind === ExtractedTokenKind.TwinCssProperty) {
 		classNameEnabled = false
 	}
 
@@ -327,7 +319,7 @@ function shortcssCompletion(
 	text: string,
 	position: number,
 	offset: number,
-	kind: PatternKind,
+	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
@@ -516,7 +508,7 @@ function arbitraryValueCompletion(
 	text: string,
 	position: number,
 	offset: number,
-	kind: PatternKind,
+	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,

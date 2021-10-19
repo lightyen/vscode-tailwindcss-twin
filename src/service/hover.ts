@@ -1,42 +1,34 @@
-import { canMatch, PatternKind, TextDocument, TokenResult } from "@/ast"
+import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
 import * as parser from "@/twin-parser"
 import { cssDataManager, getEntryDescription } from "@/vscode-css-languageservice"
-import { Hover, MarkdownString, Range } from "vscode"
+import vscode from "vscode"
 import type { ServiceOptions } from "."
 import { getDescription, getReferenceLinks } from "./referenceLink"
 import type { TailwindLoader } from "./tailwind"
 
 export default async function hover(
+	result: ExtractedToken | undefined,
 	document: TextDocument,
 	position: unknown,
 	state: TailwindLoader,
-	tabSize: number,
 	options: ServiceOptions,
-): Promise<Hover | undefined> {
-	let result: TokenResult | undefined
-	try {
-		result = canMatch(document, position, true, options.jsxPropImportChecking)
-		if (!result) return undefined
-	} catch (error) {
-		const err = error as Error
-		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-		console.error(err)
-		return undefined
-	}
+	tabSize: number,
+): Promise<vscode.Hover | undefined> {
+	if (!result) return undefined
 
 	return doHover(result)
 
-	function doHover(result: TokenResult) {
+	function doHover(result: ExtractedToken) {
 		try {
 			const { token, kind } = result
-			if (kind === PatternKind.TwinTheme) {
-				const range = new Range(document.positionAt(token.start), document.positionAt(token.end))
+			if (kind === ExtractedTokenKind.TwinTheme) {
+				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveThemeValue({ kind, range, token, state, options })
-			} else if (kind === PatternKind.TwinScreen) {
-				const range = new Range(document.positionAt(token.start), document.positionAt(token.end))
+			} else if (kind === ExtractedTokenKind.TwinScreen) {
+				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveScreenValue({ kind, range, token, state, options })
 			} else {
 				const selection = parser.hover({
@@ -49,7 +41,7 @@ export default async function hover(
 				const { start, end } = selection.target
 				let value = selection.target.value
 
-				const range = new Range(
+				const range = new vscode.Range(
 					document.positionAt(token.start + start),
 					document.positionAt(token.start + end),
 				)
@@ -59,7 +51,7 @@ export default async function hover(
 					const value = selection.value?.value ?? ""
 					const important = selection.important
 
-					const header = new MarkdownString()
+					const header = new vscode.MarkdownString()
 					if (options.references) {
 						const entry = cssDataManager.getProperty(prop)
 						if (entry) {
@@ -77,7 +69,7 @@ export default async function hover(
 						rootFontSize: options.rootFontSize,
 						tabSize,
 					})
-					const codes = new MarkdownString()
+					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
 					if (!header.value && !codes.value) return undefined
@@ -88,11 +80,11 @@ export default async function hover(
 					}
 				}
 
-				if (kind !== PatternKind.Twin) return undefined
+				if (kind !== ExtractedTokenKind.Twin) return undefined
 
 				if (selection.type === parser.HoverResultType.ArbitraryVariant) {
-					const header = new MarkdownString("**arbitrary variant**")
-					const codes = new MarkdownString()
+					const header = new vscode.MarkdownString("**arbitrary variant**")
+					const codes = new vscode.MarkdownString()
 					let code = selection.target.value.slice(1, -1)
 					if (!code) {
 						return {
@@ -109,7 +101,7 @@ export default async function hover(
 				}
 
 				if (selection.type === parser.HoverResultType.Variant) {
-					const header = new MarkdownString()
+					const header = new vscode.MarkdownString()
 					if (options.references) {
 						const desc =
 							state.tw.screens.indexOf(value) === -1 ? getDescription(value) : getDescription("screens")
@@ -126,7 +118,7 @@ export default async function hover(
 					}
 
 					const code = state.tw.renderVariant(value, tabSize)
-					const codes = new MarkdownString()
+					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
 					if (!header.value && !codes.value) return undefined
@@ -137,7 +129,7 @@ export default async function hover(
 					}
 				}
 
-				const header = new MarkdownString()
+				const header = new vscode.MarkdownString()
 				if (options.references) {
 					const plugin = state.tw.getPlugin(value)
 					let name = state.tw.trimPrefix(value)
@@ -177,7 +169,7 @@ export default async function hover(
 					})
 				}
 
-				const codes = new MarkdownString()
+				const codes = new vscode.MarkdownString()
 				if (code) codes.appendCodeblock(code, "css")
 
 				if (!header.value && !codes.value) return undefined
@@ -203,12 +195,12 @@ function resolveThemeValue({
 	token,
 	state,
 }: {
-	kind: PatternKind
-	range: Range
+	kind: ExtractedTokenKind
+	range: vscode.Range
 	token: parser.Token
 	state: TailwindLoader
 	options: ServiceOptions
-}): Hover | undefined {
+}): vscode.Hover | undefined {
 	const result = parseThemeValue(token.value)
 	if (result.errors.length > 0) {
 		return undefined
@@ -216,7 +208,7 @@ function resolveThemeValue({
 
 	const value = state.tw.getTheme(result.keys(), true)
 
-	const markdown = new MarkdownString()
+	const markdown = new vscode.MarkdownString()
 
 	if (typeof value === "string") {
 		markdown.value = `\`\`\`txt\n${value}\n\`\`\``
@@ -237,18 +229,18 @@ function resolveScreenValue({
 	token,
 	state,
 }: {
-	kind: PatternKind
-	range: Range
+	kind: ExtractedTokenKind
+	range: vscode.Range
 	token: parser.Token
 	state: TailwindLoader
 	options: ServiceOptions
-}): Hover | undefined {
+}): vscode.Hover | undefined {
 	const value = state.tw.getTheme(["screens", token.value])
 	if (value == undefined) {
 		return
 	}
 
-	const markdown = new MarkdownString()
+	const markdown = new vscode.MarkdownString()
 
 	if (typeof value === "string") {
 		markdown.value = `\`\`\`css\n@media (min-width: ${value})\n\`\`\``

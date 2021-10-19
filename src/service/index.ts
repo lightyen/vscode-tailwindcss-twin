@@ -1,4 +1,4 @@
-import { TextDocument } from "@/ast"
+import { Extractor, TextDocument, typescriptExtractor } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
 import { transformSourceMap } from "@/sourcemap"
@@ -157,65 +157,106 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 
 	/** Provide auto complete feature. */
 	async function onCompletion(document: TextDocument, position: unknown) {
-		if (!options.enabled) return undefined
-		if (!loading) {
-			if (!state.tw) start()
-			return completion(document, position, state, options)
-		}
-		await ready()
-		return completion(document, position, state, options)
+		return wait(document, undefined, extractor =>
+			completion(
+				tryRun(() => extractor.find(document, position, false, options), undefined),
+				document,
+				position,
+				state,
+				options,
+			),
+		)
 	}
 
-	/** Provide completion resolve item feature. */
 	async function onCompletionResolve(item: ICompletionItem, tabSize: number) {
 		if (!state.tw) return item
 		return completionResolve(item, state, tabSize, options)
 	}
 
-	// /** Provide on hover feature. */
 	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
-		if (!options.enabled) return undefined
-		if (!loading) {
-			if (!state.tw) start()
-			return hover(document, position, state, tabSize, options)
-		}
-		await ready()
-		return hover(document, position, state, tabSize, options)
+		return wait(document, undefined, extractor =>
+			hover(
+				tryRun(() => extractor.find(document, position, false, options), undefined),
+				document,
+				position,
+				state,
+				options,
+				tabSize,
+			),
+		)
 	}
 
 	async function renderColorDecoration(editor: vscode.TextEditor) {
-		if (!options.enabled) return
-		if (!loading) {
-			if (!state.tw) start()
-			const a = process.hrtime.bigint()
-			_colorProvider?.render(editor)
-			const b = process.hrtime.bigint()
-			console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
-			return
-		}
-		await ready()
-		const a = process.hrtime.bigint()
-		_colorProvider?.render(editor)
-		const b = process.hrtime.bigint()
-		console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
+		return wait(editor.document, undefined, extractor =>
+			_colorProvider?.render(
+				tryRun(() => extractor.findAll(editor.document, options), []),
+				editor,
+			),
+		)
 	}
 
 	async function provideDiagnostics(document: TextDocument) {
-		if (!options.enabled) return []
-		if (!loading) {
-			if (!state.tw) start()
-			return validate(document, state, options)
-		}
-		await ready()
-		return validate(document, state, options)
+		return wait(document, [], extractor =>
+			validate(
+				tryRun(() => extractor.findAll(document, options), []),
+				document,
+				state,
+				options,
+			),
+		)
 	}
 
 	async function onDocumentColors(document: TextDocument) {
+		return wait(document, undefined, extractor =>
+			documentColors(
+				tryRun(() => extractor.findAll(document, options), []),
+				document,
+				state,
+				options,
+			),
+		)
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function tryRun<T extends () => any>(callback: T, defaultValue: ReturnType<T>): ReturnType<T> {
+		try {
+			return callback()
+		} catch (error) {
+			const err = error as Error
+			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
+			console.error(err)
+			return defaultValue
+		}
+	}
+
+	async function wait<ReturnValue = unknown>(
+		document: TextDocument,
+		defaultValue: ReturnValue,
+		feature: (extractor: Extractor) => ReturnValue,
+	) {
+		if (!options.enabled) return defaultValue
 		if (!loading) {
 			if (!state.tw) start()
-			return documentColors(document, state, options)
+			return hub<ReturnValue>(document, defaultValue, feature)
 		}
 		await ready()
-		return []
+		return hub<ReturnValue>(document, defaultValue, feature)
+	}
+
+	function hub<ReturnValue = unknown>(
+		document: TextDocument,
+		defaultValue: ReturnValue,
+		feature: (extractor: Extractor) => ReturnValue,
+	) {
+		// https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
+		switch (document.languageId) {
+			case "javascript":
+			case "javascriptreact":
+			case "typescript":
+			case "typescriptreact":
+				return feature(typescriptExtractor)
+			default:
+				return defaultValue
+		}
 	}
 }
