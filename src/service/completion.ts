@@ -34,19 +34,19 @@ export default function completion(
 			if (kind === ExtractedTokenKind.TwinTheme) {
 				const list = twinThemeCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
-					list.items[i].data.uri = document.uri.toString()
+					list.items[i].data.uri = document.uri
 				}
 				return list
 			} else if (kind === ExtractedTokenKind.TwinScreen) {
 				const list = twinScreenCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
-					list.items[i].data.uri = document.uri.toString()
+					list.items[i].data.uri = document.uri
 				}
 				return list
 			} else {
 				const list = twinCompletion(document, index, token, kind, state, options)
 				for (let i = 0; i < list.items.length; i++) {
-					list.items[i].data.uri = document.uri.toString()
+					list.items[i].data.uri = document.uri
 				}
 				return list
 			}
