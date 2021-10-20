@@ -4,6 +4,8 @@ This is a VSCode Tailwind IntelliSense Extension which supports [twin.macro](htt
 
 [Install via the Marketplace](https://marketplace.visualstudio.com/items?itemName=lightyen.tailwindcss-intellisense-twin)
 
+https://user-images.githubusercontent.com/28860476/138010418-9a6a4aac-3429-4b48-bab4-97e7416e1389.mp4
+
 ## Features
 
 - auto completion
