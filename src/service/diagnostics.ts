@@ -234,11 +234,11 @@ function validateTwin({
 					continue
 				}
 
-				const variants = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " "))
+				const variants = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " ")).sort()
 				if (item.type === parser.SpreadResultType.CssProperty) {
-					const twinKeys = variants.sort()
+					// same as loose
 					const property = item.prop?.toKebab()
-					const key = [undefined, ...twinKeys, property].join(".")
+					const key = [...variants, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
 						target.push(item.target)
@@ -281,8 +281,7 @@ function validateTwin({
 					}
 				} else if (diagnostics.conflict === "strict") {
 					for (const [prop] of decls) {
-						const twinKeys = variants.sort()
-						const key = [undefined, ...twinKeys, prop].join(".")
+						const key = [undefined, ...variants, prop].join(".")
 						const target = map[key]
 						if (target instanceof Array) {
 							target.push(item.target)
