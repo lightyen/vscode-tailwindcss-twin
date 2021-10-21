@@ -293,7 +293,23 @@ function utilitiesCompletion(
 
 	if (suggestion.target) {
 		if (position > a && position < b) {
-			doReplace(classNameItems, document, offset, a, b, item => item.label + (nextNotSpace ? " " : ""))
+			let shrinkB = b
+			if (
+				suggestion.type === parser.SuggestResultType.ClassName ||
+				suggestion.type === parser.SuggestResultType.ArbitraryStyle
+			) {
+				const p = state.tw.getPlugin(value)
+				if (p && /color$/i.test(p.name)) {
+					shrinkB += value.lastIndexOf("/") - value.length
+				}
+			}
+
+			for (let i = 0; i < classNameItems.length; i++) {
+				const item = classNameItems[i]
+				item.insertText = item.label + (nextNotSpace ? " " : "")
+				const y = item.kind === vscode.CompletionItemKind.Color && item.documentation ? shrinkB : b
+				item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + y))
+			}
 		} else if (position === a) {
 			doInsert(classNameItems, document, offset, a, item => item.label + " ")
 		} else if (position === b) {
