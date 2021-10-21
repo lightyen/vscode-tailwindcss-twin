@@ -140,11 +140,11 @@ function variantsCompletion(
 	if (suggestion.target) {
 		switch (suggestion.type) {
 			case parser.SuggestResultType.Variant:
+			case parser.SuggestResultType.ArbitraryVariant:
 				b = b + state.separator.length
 				break
 			case parser.SuggestResultType.CssProperty:
 			case parser.SuggestResultType.ArbitraryStyle:
-			case parser.SuggestResultType.ArbitraryVariant:
 				variantEnabled = false
 				break
 		}
@@ -275,8 +275,10 @@ function utilitiesCompletion(
 				}
 				break
 			}
-			case parser.SuggestResultType.CssProperty:
 			case parser.SuggestResultType.ArbitraryVariant:
+				b = b + state.separator.length
+				break
+			case parser.SuggestResultType.CssProperty:
 				classNameEnabled = false
 				break
 		}
