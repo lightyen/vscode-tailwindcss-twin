@@ -155,8 +155,13 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 					item.data = { type: "color" }
 
 					if (value.endsWith("-transparent")) {
-						item.documentation = "rgba(0, 0, 0, 0)"
-						item.data.type = "color"
+						item.documentation = "rgba(0, 0, 0, 0.0)"
+						return item
+					}
+					if (value.endsWith("-current")) {
+						return item
+					}
+					if (value.endsWith("-inherit")) {
 						return item
 					}
 					item.documentation = colorDesc.backgroundColor || colorDesc.color || colorDesc.borderColor
