@@ -119,17 +119,14 @@
         }
       }
     },
-    "languages": [
-      {
-        "id": "source.css.scss.tw",
-        "aliases": [
-          "SCSS (customized)"
-        ]
-      }
-    ],
     "grammars": [
       {
-        "language": "source.css.scss.tw",
+        "injectTo": [
+          "source.tsx",
+          "source.jsx",
+          "source.ts",
+          "source.js"
+        ],
         "scopeName": "source.css.scss.tw",
         "path": "./syntaxes/scss.tm.json"
       },
