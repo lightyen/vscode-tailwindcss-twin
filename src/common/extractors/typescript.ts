@@ -384,10 +384,10 @@ export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): Ext
 }
 
 export const typescriptExtractor: Extractor = {
-	find(document, position, hover, option) {
-		const pos = document.offsetAt(position) + (hover ? 1 : 0)
+	find(languageId, code, position, hover, jsxPropImportChecking) {
+		const pos = position + (hover ? 1 : 0)
 		let scriptKind: ts.ScriptKind | undefined
-		switch (document.languageId) {
+		switch (languageId) {
 			case "typescript":
 				scriptKind = ts.ScriptKind.TS
 				break
@@ -404,8 +404,8 @@ export const typescriptExtractor: Extractor = {
 				scriptKind = undefined
 		}
 		if (scriptKind) {
-			const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
-			const token = findToken(source, pos, option.jsxPropImportChecking)
+			const source = ts.createSourceFile("", code, ts.ScriptTarget.Latest, false, scriptKind)
+			const token = findToken(source, pos, jsxPropImportChecking)
 			if (!token) {
 				return undefined
 			}
@@ -413,9 +413,9 @@ export const typescriptExtractor: Extractor = {
 		}
 		return undefined
 	},
-	findAll(document, options) {
+	findAll(languageId, code, jsxPropImportChecking) {
 		let scriptKind: ts.ScriptKind | undefined
-		switch (document.languageId) {
+		switch (languageId) {
 			case "typescript":
 				scriptKind = ts.ScriptKind.TS
 				break
@@ -432,9 +432,9 @@ export const typescriptExtractor: Extractor = {
 				scriptKind = undefined
 		}
 		if (scriptKind) {
-			const source = ts.createSourceFile("", document.getText(), ts.ScriptTarget.Latest, false, scriptKind)
+			const source = ts.createSourceFile("", code, ts.ScriptTarget.Latest, false, scriptKind)
 			try {
-				return findAllToken(source, options.jsxPropImportChecking)
+				return findAllToken(source, jsxPropImportChecking)
 			} catch {
 				return []
 			}

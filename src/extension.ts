@@ -1,5 +1,4 @@
 import { defaultLogger as console } from "@/logger"
-import { importFrom } from "@/module"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
 import packageInfo from "../package.json"
@@ -30,10 +29,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	function getLibVersion(lib: "tailwindcss" | "postcss") {
 		return packageInfo.dependencies[lib]
 	}
-	console.info(
-		`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-		importFrom("typescript", { base: context.extensionUri.fsPath }).version,
-	)
 	console.info(`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("tailwindcss"))
 	console.info(`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("postcss"))
 
