@@ -1,5 +1,4 @@
 import { defaultLogger as console } from "@/logger"
-import { importFrom } from "@/module"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
 import packageInfo from "../package.json"
@@ -27,15 +26,18 @@ export async function deactivate() {
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.outputMode = context.extensionMode === vscode.ExtensionMode.Development ? "all" : "outputChannel"
-	function getLibVersion(lib: "tailwindcss" | "postcss") {
-		return packageInfo.dependencies[lib]
-	}
 	console.info(
 		`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-		importFrom("typescript", { base: context.extensionUri.fsPath }).version,
+		packageInfo.devDependencies["typescript"],
 	)
-	console.info(`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("tailwindcss"))
-	console.info(`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`, getLibVersion("postcss"))
+	console.info(
+		`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+		packageInfo.dependencies["tailwindcss"],
+	)
+	console.info(
+		`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
+		packageInfo.dependencies["postcss"],
+	)
 
 	if (vscode.workspace.workspaceFolders) {
 		for (const ws of vscode.workspace.workspaceFolders) {

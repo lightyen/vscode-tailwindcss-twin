@@ -159,7 +159,17 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	async function onCompletion(document: TextDocument, position: unknown) {
 		return wait(document, undefined, extractor =>
 			completion(
-				tryRun(() => extractor.find(document, position, false, options), undefined),
+				tryRun(
+					() =>
+						extractor.find(
+							document.languageId,
+							document.getText(),
+							document.offsetAt(position),
+							false,
+							options.jsxPropImportChecking,
+						),
+					undefined,
+				),
 				document,
 				position,
 				state,
@@ -176,7 +186,17 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
 		return wait(document, undefined, extractor =>
 			hover(
-				tryRun(() => extractor.find(document, position, false, options), undefined),
+				tryRun(
+					() =>
+						extractor.find(
+							document.languageId,
+							document.getText(),
+							document.offsetAt(position),
+							true,
+							options.jsxPropImportChecking,
+						),
+					undefined,
+				),
 				document,
 				position,
 				state,
@@ -189,7 +209,15 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	async function renderColorDecoration(editor: vscode.TextEditor) {
 		return wait(editor.document, undefined, extractor =>
 			_colorProvider?.render(
-				tryRun(() => extractor.findAll(editor.document, options), []),
+				tryRun(
+					() =>
+						extractor.findAll(
+							editor.document.languageId,
+							editor.document.getText(),
+							options.jsxPropImportChecking,
+						),
+					[],
+				),
 				editor,
 			),
 		)
@@ -198,7 +226,10 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	async function provideDiagnostics(document: TextDocument) {
 		return wait(document, [], extractor =>
 			validate(
-				tryRun(() => extractor.findAll(document, options), []),
+				tryRun(
+					() => extractor.findAll(document.languageId, document.getText(), options.jsxPropImportChecking),
+					[],
+				),
 				document,
 				state,
 				options,
@@ -209,7 +240,10 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	async function onDocumentColors(document: TextDocument) {
 		return wait(document, undefined, extractor =>
 			documentColors(
-				tryRun(() => extractor.findAll(document, options), []),
+				tryRun(
+					() => extractor.findAll(document.languageId, document.getText(), options.jsxPropImportChecking),
+					[],
+				),
 				document,
 				state,
 				options,
