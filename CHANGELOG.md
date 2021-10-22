@@ -1,5 +1,26 @@
 # CHANGELOG.md
 
+## tw3
+
+- typescript-eslint/typescript-estree
+- tailwindcss v3.0.0-alpha.1
+
+## 0.11.2
+
+- Fix duplicate warnings [#24](https://github.com/lightyen/vscode-tailwindcss-twin/issues/24)
+- Feature: document colors in css value (default to `false`)
+
+## 0.11.1
+
+- Fix using with default tailwind config
+
+## 0.11.0
+
+- Support arbitrary variant syntax
+- Remove language server
+- Detect activeTextEditor tab size
+- Improve textmate grammars
+
 ## 0.10.4
 
 - Fix parser
