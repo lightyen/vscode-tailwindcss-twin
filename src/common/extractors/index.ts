@@ -1,7 +1,6 @@
 import { URI } from "vscode-uri"
-import { Settings } from "~/shared"
 import { Token } from "../twin-parser"
-export { typescriptExtractor } from "./typescript"
+export { typescriptExtractor } from "./typescript-eslint"
 
 type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | string
 
@@ -26,7 +25,13 @@ export interface ExtractedToken {
 	kind: ExtractedTokenKind
 }
 
-export interface Extractor<Position = unknown> {
-	find(document: TextDocument, position: Position, hover: boolean, option: Settings): ExtractedToken | undefined
-	findAll(document: TextDocument, option: Settings): ExtractedToken[]
+export interface Extractor {
+	find(
+		languageId: string,
+		code: string,
+		position: number,
+		hover: boolean,
+		jsxPropImportChecking: boolean,
+	): ExtractedToken | undefined
+	findAll(languageId: string, code: string, jsxPropImportChecking: boolean): ExtractedToken[]
 }

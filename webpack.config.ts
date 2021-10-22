@@ -63,7 +63,7 @@ const configExtension: Configuration = {
 				configFile: path.resolve(clientWorkspaceFolder, "tsconfig.json"),
 			},
 		}),
-		new ExternalsVendorPlugin("vscode", "typescript"),
+		new ExternalsVendorPlugin("vscode"),
 		new ESLintPlugin({ extensions: ["ts"] }),
 		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
 	],
