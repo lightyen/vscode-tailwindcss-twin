@@ -85,7 +85,7 @@ export default async function hover(
 				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const codes = new vscode.MarkdownString()
-					let code = selection.value // selection.target.value.slice(1, -1)
+					let code = selection.value
 					if (!code) {
 						return {
 							range,
@@ -149,17 +149,7 @@ export default async function hover(
 				}
 
 				if (selection.target.type === parser.NodeType.ArbitraryClassname) {
-					if (selection.target.closed) {
-						let t = `${selection.target.prop.value}[${selection.target.expr?.value.trim()}]`
-						if (selection.target.e) {
-							if (selection.target.e.type === parser.NodeType.WithOpacity && selection.target.e.closed) {
-								t += `/[${selection.target.e.opacity.value.trim()}]`
-							} else if (selection.target.e.type === parser.NodeType.EndOpacity) {
-								t += `/${selection.target.e.value.trim()}`
-							}
-						}
-						value = t
-					}
+					value = parser.formatArbitraryClassname(selection.target, value)
 				}
 
 				let code = state.tw.renderClassname({

@@ -101,7 +101,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	})
 	process(result)
 
-	__config.mode = "aot"
+	__config.mode = "jit"
 	const context = createContext(__config)
 	const _getPlugin = createGetPluginByName(__config)
 
@@ -492,7 +492,9 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-
+		root.walkAtRules("defaults", rule => {
+			rule.remove()
+		})
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
 				decl.important = important

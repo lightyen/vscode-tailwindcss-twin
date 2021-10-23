@@ -250,7 +250,10 @@ function validateTwin({
 					continue
 				}
 
-				const label = text.slice(item.target.range[0], item.target.range[1])
+				let label = text.slice(item.target.range[0], item.target.range[1])
+				if (item.target.type === parser.NodeType.ArbitraryClassname) {
+					label = parser.formatArbitraryClassname(item.target, label)
+				}
 				const decls = state.tw.renderDecls(label)
 				if (decls.size === 0) {
 					continue
