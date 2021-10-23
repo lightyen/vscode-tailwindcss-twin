@@ -2,6 +2,7 @@
 
 ## tw3
 
+- new ast parser
 - typescript-eslint/typescript-estree
 - tailwindcss v3.0.0-alpha.1
 
