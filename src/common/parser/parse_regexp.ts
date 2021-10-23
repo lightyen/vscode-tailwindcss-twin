@@ -158,12 +158,24 @@ export function parseExpressions({
 	return expressions
 }
 
-const separator = ":".replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
+function escapeRegexp(value: string) {
+	return value.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
+}
 
-const regexp = new RegExp(
-	`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${separator})|(\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|!?((?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
-	"gs",
-)
+function compileRegexp(sep: string) {
+	return new RegExp(
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${sep})|(\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|!?((?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		"gs",
+	)
+}
+
+let separator = escapeRegexp(":")
+let regexp = compileRegexp(separator)
+
+export function setSeparator(sep: string) {
+	separator = escapeRegexp(sep)
+	regexp = compileRegexp(separator)
+}
 
 function parseExpression({
 	text,

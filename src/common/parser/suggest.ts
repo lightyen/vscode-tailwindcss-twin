@@ -1,5 +1,5 @@
 import * as nodes from "./nodes"
-import { parse } from "./parse_regexp"
+import * as parser from "./parse_regexp"
 import { getVariant } from "./util"
 
 export interface SuggestionResult {
@@ -19,11 +19,13 @@ export function suggest({
 	text,
 	start = 0,
 	end = text.length,
+	separator = ":",
 }: {
 	position: number
 	text: string
 	start?: number
 	end?: number
+	separator?: string
 }): SuggestionResult {
 	interface Context {
 		variants: string[]
@@ -38,7 +40,8 @@ export function suggest({
 			| nodes.ArbitraryVariant
 	}
 
-	const result = travel(parse({ text, start, end, breac: position }), { variants: [] })
+	parser.setSeparator(separator)
+	const result = travel(parser.parse({ text, start, end, breac: position }), { variants: [] })
 
 	if (!result.target) {
 		return {

@@ -112,7 +112,7 @@ export function validate(
 						}
 					}
 				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
-					const result = parser.spread({ text: value })
+					const result = parser.spread({ text: value, separator: state.separator })
 					validateTwin({
 						document,
 						text: value,
