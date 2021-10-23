@@ -1,9 +1,8 @@
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
+import * as parser from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
-import * as parser from "@/twin-parser"
-import * as nodes from "@/twin-parser/twNodes"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import vscode from "vscode"
@@ -65,8 +64,8 @@ export function validate(
 
 	function doValidate() {
 		try {
-			for (const { token, kind } of tokens) {
-				const [start, end, value] = token
+			for (const token of tokens) {
+				const { kind, start, end, value } = token
 				if (kind === ExtractedTokenKind.TwinTheme) {
 					const result = parseThemeValue(value)
 					for (const err of result.errors) {
@@ -113,9 +112,10 @@ export function validate(
 						}
 					}
 				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
-					const result = parser.spread({ text: value, separator: state.separator })
+					const result = parser.spread({ text: value })
 					validateTwin({
 						document,
+						text: value,
 						offset: start,
 						kind,
 						diagnostics: options.diagnostics,
@@ -139,6 +139,7 @@ export function validate(
 
 function validateTwin({
 	document,
+	text,
 	offset,
 	kind,
 	state,
@@ -150,6 +151,7 @@ function validateTwin({
 	result,
 }: {
 	document: TextDocument
+	text: string
 	offset: number
 	kind: ExtractedTokenKind
 	state: TailwindLoader
@@ -161,7 +163,10 @@ function validateTwin({
 			!result.push({
 				source: DIAGNOSTICS_ID,
 				message: "Bracket is not closed.",
-				range: new vscode.Range(document.positionAt(offset + e.start), document.positionAt(offset + e.end)),
+				range: new vscode.Range(
+					document.positionAt(offset + e.range[0]),
+					document.positionAt(offset + e.range[1]),
+				),
 				severity: vscode.DiagnosticSeverity.Error,
 			})
 		) {
@@ -172,9 +177,9 @@ function validateTwin({
 	if (kind === ExtractedTokenKind.Twin) {
 		for (let i = 0; i < items.length; i++) {
 			const c = items[i]
-			switch (c.type) {
-				case parser.SpreadResultType.ClassName: {
-					const ans = checkTwinClassName(c, document, offset, state)
+			switch (c.target.type) {
+				case parser.NodeType.ClassName: {
+					const ans = checkTwinClassName(c, document, text, offset, state)
 					for (let k = 0; k < ans.length; k++) {
 						if (!result.push(ans[k])) {
 							return
@@ -182,7 +187,7 @@ function validateTwin({
 					}
 					break
 				}
-				case parser.SpreadResultType.CssProperty: {
+				case parser.NodeType.CssDeclaration: {
 					const ans = checkTwinCssProperty(c, document, offset, state)
 					for (let k = 0; k < ans.length; k++) {
 						if (!result.push(ans[k])) {
@@ -195,25 +200,22 @@ function validateTwin({
 		}
 	}
 
-	function travel(obj: Record<string, parser.TokenList>) {
+	function travel(obj: Record<string, parser.Range[]>) {
 		for (const k in obj) {
-			const t = obj[k]
+			const ranges = obj[k]
 			const parts = k.split(".")
 			const prop = parts[parts.length - 1]
-			if (t.length > 1) {
-				for (const token of t) {
+			if (ranges.length > 1) {
+				for (const [a, b] of ranges) {
 					const message =
 						diagnostics.conflict === "strict"
-							? `${token.value} is duplicated on property: ${prop}`
-							: `${token.value} is duplicated`
+							? `${text.slice(a, b)} is duplicated on property: ${prop}`
+							: `${text.slice(a, b)} is duplicated`
 					if (
 						!result.push({
 							source: DIAGNOSTICS_ID,
 							message,
-							range: new vscode.Range(
-								document.positionAt(offset + token.start),
-								document.positionAt(offset + token.end),
-							),
+							range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
 							severity: vscode.DiagnosticSeverity.Warning,
 						})
 					) {
@@ -225,7 +227,7 @@ function validateTwin({
 	}
 
 	if (diagnostics.conflict !== "none") {
-		const map: Record<string, parser.TokenList> = {}
+		const map: Record<string, parser.Range[]> = {}
 
 		if (kind === ExtractedTokenKind.Twin) {
 			for (let i = 0; i < items.length; i++) {
@@ -234,21 +236,21 @@ function validateTwin({
 					continue
 				}
 
-				const variants = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " ")).sort()
-				if (item.type === parser.SpreadResultType.CssProperty) {
+				const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+				if (item.target.type === parser.NodeType.CssDeclaration) {
 					// same as loose
-					const property = item.prop?.toKebab()
+					const property = parser.toKebab(item.target.prop.value)
 					const key = [...variants, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(item.target)
+						target.push(item.target.range)
 					} else {
-						map[key] = parser.createTokenList([item.target])
+						map[key] = [item.target.range]
 					}
 					continue
 				}
 
-				const label = item.target.value
+				const label = text.slice(item.target.range[0], item.target.range[1])
 				const decls = state.tw.renderDecls(label)
 				if (decls.size === 0) {
 					continue
@@ -275,18 +277,18 @@ function validateTwin({
 					const key = [...variants, Array.from(s).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
-						target.push(item.target)
+						target.push(item.target.range)
 					} else {
-						map[key] = parser.createTokenList([item.target])
+						map[key] = [item.target.range]
 					}
 				} else if (diagnostics.conflict === "strict") {
 					for (const [prop] of decls) {
 						const key = [undefined, ...variants, prop].join(".")
 						const target = map[key]
 						if (target instanceof Array) {
-							target.push(item.target)
+							target.push(item.target.range)
 						} else {
-							map[key] = parser.createTokenList([item.target])
+							map[key] = [item.target.range]
 						}
 					}
 				}
@@ -295,7 +297,7 @@ function validateTwin({
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i]
 
-				if (item.type === parser.SpreadResultType.ClassName) {
+				if (item.target.type === parser.NodeType.ClassName) {
 					let message = `Invalid token '${item.target.value}'`
 					if (cssDataManager.getProperty(item.target.value)) {
 						message += ", missing square brackets?"
@@ -304,22 +306,22 @@ function validateTwin({
 						source: DIAGNOSTICS_ID,
 						message,
 						range: new vscode.Range(
-							document.positionAt(offset + item.target.start),
-							document.positionAt(offset + item.target.end),
+							document.positionAt(offset + item.target.range[0]),
+							document.positionAt(offset + item.target.range[1]),
 						),
 						severity: vscode.DiagnosticSeverity.Error,
 					})
 					continue
 				}
 
-				const twinKeys = item.variants.map(v => v.child.value.trim().replace(/\s{2,}/g, " ")).sort()
-				const property = item.target.toKebab()
+				const twinKeys = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+				const property = parser.toKebab(item.target.prop.value)
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
-					target.push(item.target)
+					target.push(item.target.range)
 				} else {
-					map[key] = parser.createTokenList([item.target])
+					map[key] = [item.target.range]
 				}
 			}
 		}
@@ -335,8 +337,8 @@ function validateTwin({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
 					range: new vscode.Range(
-						document.positionAt(offset + item.end),
-						document.positionAt(offset + item.end + 1),
+						document.positionAt(offset + item.range[1]),
+						document.positionAt(offset + item.range[1] + 1),
 					),
 					severity: vscode.DiagnosticSeverity.Warning,
 				})
@@ -354,8 +356,8 @@ function validateTwin({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
 					range: new vscode.Range(
-						document.positionAt(offset + item.start),
-						document.positionAt(offset + item.end),
+						document.positionAt(offset + item.range[0]),
+						document.positionAt(offset + item.range[1]),
 					),
 					severity: vscode.DiagnosticSeverity.Warning,
 				})
@@ -374,10 +376,13 @@ function checkTwinCssProperty(
 ) {
 	const result: IDiagnostic[] = []
 	for (const node of item.variants) {
-		if (!nodes.isVariant(node)) {
+		if (node.type === parser.NodeType.ArbitraryVariant) {
 			continue
 		}
-		const [a, b, variant] = node.child
+		const {
+			value: variant,
+			range: [a, b],
+		} = node
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -401,17 +406,20 @@ function checkTwinCssProperty(
 		}
 	}
 
-	if (item.type !== parser.SpreadResultType.CssProperty) {
+	if (item.target.type !== parser.NodeType.CssDeclaration) {
 		return result
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const prop = item.prop!
-	const { value, start, end } = prop
+	const prop = item.target.prop
+	const {
+		value,
+		range: [start, end],
+	} = prop
 	if (value.startsWith("--")) {
 		return result
 	}
-	const ret = csspropSearcher.search(prop.toKebab())
+	const ret = csspropSearcher.search(parser.toKebab(value))
 	const score = ret?.[0]?.score
 	if (score == undefined) {
 		result.push({
@@ -435,15 +443,19 @@ function checkTwinCssProperty(
 function checkTwinClassName(
 	item: parser.SpreadDescription,
 	document: TextDocument,
+	text: string,
 	offset: number,
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
 	for (const node of item.variants) {
-		if (!nodes.isVariant(node)) {
+		if (node.type === parser.NodeType.ArbitraryVariant) {
 			continue
 		}
-		const [a, b, variant] = node.child
+		const {
+			value: variant,
+			range: [a, b],
+		} = node
 		if (state.tw.isVariant(variant)) {
 			continue
 		}
@@ -467,64 +479,56 @@ function checkTwinClassName(
 		}
 	}
 
-	if (item.target.value) {
-		const { start, end } = item.target
-		const value = item.target.value
-		if (state.tw.renderDecls(value).size === 0) {
-			const ret = guess(state, value)
-			if (ret.score === 0) {
-				switch (ret.kind) {
-					case PredictionKind.CssProperty:
-						result.push({
-							source: DIAGNOSTICS_ID,
-							message: `Invalid token '${value}', missing square brackets?`,
-							range: new vscode.Range(
-								document.positionAt(offset + start),
-								document.positionAt(offset + end),
-							),
-							severity: vscode.DiagnosticSeverity.Error,
-						})
-						break
-					case PredictionKind.Variant:
-						result.push({
-							source: DIAGNOSTICS_ID,
-							message: `Invalid token '${value}', missing separator?`,
-							range: new vscode.Range(
-								document.positionAt(offset + start),
-								document.positionAt(offset + end),
-							),
-							severity: vscode.DiagnosticSeverity.Error,
-						})
-						break
-					default:
-						result.push({
-							source: DIAGNOSTICS_ID,
-							message: `Unknown: ${value}`,
-							range: new vscode.Range(
-								document.positionAt(offset + start),
-								document.positionAt(offset + end),
-							),
-							severity: vscode.DiagnosticSeverity.Error,
-						})
-				}
-			} else if (ret.value) {
-				result.push({
-					source: DIAGNOSTICS_ID,
-					message: `Unknown: ${value}, did you mean ${ret.value}?`,
-					range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-					data: { text: value, newText: ret.value },
-					severity: vscode.DiagnosticSeverity.Error,
-				})
-			} else {
-				result.push({
-					source: DIAGNOSTICS_ID,
-					message: `Unknown: ${value}`,
-					range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-					severity: vscode.DiagnosticSeverity.Error,
-				})
+	const {
+		range: [start, end],
+	} = item.target
+	const value = text.slice(start, end)
+	if (state.tw.renderDecls(value).size === 0) {
+		const ret = guess(state, value)
+		if (ret.score === 0) {
+			switch (ret.kind) {
+				case PredictionKind.CssProperty:
+					result.push({
+						source: DIAGNOSTICS_ID,
+						message: `Invalid token '${value}', missing square brackets?`,
+						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						severity: vscode.DiagnosticSeverity.Error,
+					})
+					break
+				case PredictionKind.Variant:
+					result.push({
+						source: DIAGNOSTICS_ID,
+						message: `Invalid token '${value}', missing separator?`,
+						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						severity: vscode.DiagnosticSeverity.Error,
+					})
+					break
+				default:
+					result.push({
+						source: DIAGNOSTICS_ID,
+						message: `Unknown: ${value}`,
+						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						severity: vscode.DiagnosticSeverity.Error,
+					})
 			}
+		} else if (ret.value) {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `Unknown: ${value}, did you mean ${ret.value}?`,
+				range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+				data: { text: value, newText: ret.value },
+				severity: vscode.DiagnosticSeverity.Error,
+			})
+		} else {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `Unknown: ${value}`,
+				range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+				severity: vscode.DiagnosticSeverity.Error,
+			})
 		}
 	}
+
 	return result
 }
 

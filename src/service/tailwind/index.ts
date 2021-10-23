@@ -1,5 +1,4 @@
 import { importFrom } from "@/module"
-import { SuggestionResult } from "@/twin-parser"
 import Fuse from "fuse.js"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
@@ -124,7 +123,7 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 	}
 
 	function createUtilitiesCompletionItemsProvider() {
-		return (suggestion: SuggestionResult): ICompletionItem[] => {
+		return (): ICompletionItem[] => {
 			if (utilitiesCompletionItems != undefined) {
 				for (let i = 0; i < utilitiesCompletionItems.length; i++) {
 					utilitiesCompletionItems[i].range = undefined

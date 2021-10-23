@@ -1,8 +1,8 @@
 import * as extractColors from "@/extractColors"
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
+import * as parser from "@/parser"
 import { transformSourceMap } from "@/sourcemap"
-import * as parser from "@/twin-parser"
 import * as vscode from "vscode"
 import { ServiceOptions } from "."
 import { TailwindLoader } from "./tailwind"
@@ -23,30 +23,35 @@ export default function documentColors(
 
 	function doDocumentColors(tokens: ExtractedToken[]) {
 		try {
-			for (const { token, kind } of tokens) {
-				const [offset, , value] = token
+			for (const token of tokens) {
+				const { kind, start: offset } = token
 				if (kind === ExtractedTokenKind.TwinTheme || kind === ExtractedTokenKind.TwinScreen) continue
-				const { items } = parser.spread({ text: value, separator: state.separator })
-				for (const { content } of items) {
-					if (content) {
-						const colorTokens = extractColors.default(content.value)
+				const { items } = parser.spread({ text: token.value })
+				for (const { target } of items) {
+					if (
+						(target.type === parser.NodeType.CssDeclaration ||
+							target.type === parser.NodeType.ArbitraryClassname) &&
+						target.expr
+					) {
+						const expr = target.expr
+						const colorTokens = extractColors.default(expr.value)
 						for (const t of colorTokens) {
 							if (extractColors.isColorHexValue(t)) {
-								const color = extractColors.colorFromHex(t)
+								const color = extractColors.colorFromHex(expr.value.slice(...t.range))
 								colorInformations.push({
 									color,
 									range: new vscode.Range(
-										document.positionAt(offset + content.start + t.raw.start),
-										document.positionAt(offset + content.start + t.raw.end),
+										document.positionAt(offset + expr.range[0] + t.range[0]),
+										document.positionAt(offset + expr.range[0] + t.range[1]),
 									),
 								})
 							} else if (extractColors.isColorIdentifier(t)) {
-								const color = extractColors.colorFromIdentifier(t)
+								const color = extractColors.colorFromIdentifier(expr.value, t)
 								colorInformations.push({
 									color,
 									range: new vscode.Range(
-										document.positionAt(offset + content.start + t.raw.start),
-										document.positionAt(offset + content.start + t.raw.end),
+										document.positionAt(offset + expr.range[0] + t.range[0]),
+										document.positionAt(offset + expr.range[0] + t.range[1]),
 									),
 								})
 							} else if (extractColors.isColorFunction(t)) {
@@ -55,8 +60,8 @@ export default function documentColors(
 									colorInformations.push({
 										color,
 										range: new vscode.Range(
-											document.positionAt(offset + content.start + t.raw.start),
-											document.positionAt(offset + content.start + t.raw.end),
+											document.positionAt(offset + expr.range[0] + t.range[0]),
+											document.positionAt(offset + expr.range[0] + t.range[1]),
 										),
 									})
 								}

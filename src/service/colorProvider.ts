@@ -1,8 +1,8 @@
 import { md5 } from "@"
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
+import * as parser from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
-import * as parser from "@/twin-parser"
 import chroma from "chroma-js"
 import vscode from "vscode"
 import { ColorDesc, TwContext } from "./tailwind/tw"
@@ -73,47 +73,48 @@ export function createColorProvider(tw: TwContext) {
 				desc.borderColor === "inherit"
 			)
 		}
-		for (const { token, kind } of tokens) {
-			const [offset, end, value] = token
+		for (const token of tokens) {
+			const { start: offset, end, kind } = token
 			switch (kind) {
 				case ExtractedTokenKind.Twin: {
-					const result = parser.spread({ text: value })
+					const result = parser.spread({ text: token.value })
 					for (const item of result.items) {
-						if (item.type === parser.SpreadResultType.ClassName) {
-							const color = tw.colors.get(item.target.value)
+						if (item.target.type === parser.NodeType.ClassName) {
+							const color = tw.getColorDesc(item.value)
 							if (!test(color)) {
 								const i = item.target.value.lastIndexOf("/")
 								if (i === -1) continue
 							}
 							if (test(color)) {
 								const range = new vscode.Range(
-									document.positionAt(offset + item.target.start),
-									document.positionAt(offset + item.target.end),
+									document.positionAt(offset + item.target.range[0]),
+									document.positionAt(offset + item.target.range[1]),
 								)
 								colors.push([color, range])
 							} else {
-								const i = item.target.value.lastIndexOf("/")
+								const i = item.value.lastIndexOf("/")
 								if (i === -1) continue
-								const value = item.target.value.slice(0, i)
-								const color = tw.colors.get(value)
+								const value = item.value.slice(0, i)
+								const color = tw.getColorDesc(value)
 								if (test(color)) {
-									const start = offset + item.target.start
+									const start = offset + item.target.range[0]
 									const end = start + value.length
 									const range = new vscode.Range(document.positionAt(start), document.positionAt(end))
 									colors.push([color, range])
 								}
 							}
-						} else if (item.type === parser.SpreadResultType.ArbitraryStyle) {
-							const i = item.target.value.lastIndexOf("/")
+						} else if (item.target.type === parser.NodeType.ArbitraryClassname) {
+							const i = item.target.prop.value.lastIndexOf("/")
 							if (i === -1) continue
-							const n = item.target.value.slice(i + 1)
+							let value = token.value.slice(...item.target.range)
+							const n = value.slice(i + 1)
 							if (Number.isNaN(+n)) {
 								if (n.charCodeAt(0) !== 91) continue
 							}
-							const value = item.target.value.slice(0, i)
-							const color = tw.colors.get(value)
+							value = value.slice(0, i)
+							const color = tw.getColorDesc(value)
 							if (test(color)) {
-								const start = offset + item.target.start
+								const start = offset + item.target.range[0]
 								const end = start + value.length
 								const range = new vscode.Range(document.positionAt(start), document.positionAt(end))
 								colors.push([color, range])
@@ -123,7 +124,7 @@ export function createColorProvider(tw: TwContext) {
 					break
 				}
 				case ExtractedTokenKind.TwinTheme: {
-					const color = getThemeDecoration(value, tw)
+					const color = getThemeDecoration(token.value, tw)
 					if (color) {
 						const range = new vscode.Range(document.positionAt(offset), document.positionAt(end))
 						colors.push([{ backgroundColor: color }, range])

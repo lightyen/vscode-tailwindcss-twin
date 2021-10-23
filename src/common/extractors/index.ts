@@ -1,5 +1,4 @@
 import { URI } from "vscode-uri"
-import { Token } from "../twin-parser"
 export { typescriptExtractor } from "./typescript-eslint"
 
 type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | string
@@ -20,8 +19,13 @@ export enum ExtractedTokenKind {
 	TwinScreen = "screen",
 }
 
-export interface ExtractedToken {
-	token: Token
+export interface Token {
+	start: number
+	end: number
+	value: string
+}
+
+export interface ExtractedToken extends Token {
 	kind: ExtractedTokenKind
 }
 

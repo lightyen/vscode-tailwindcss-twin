@@ -1,8 +1,8 @@
-import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
+import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
+import * as parser from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
-import * as parser from "@/twin-parser"
 import { cssDataManager, getEntryDescription } from "@/vscode-css-languageservice"
 import vscode from "vscode"
 import type { ServiceOptions } from "."
@@ -23,7 +23,7 @@ export default async function hover(
 
 	function doHover(result: ExtractedToken) {
 		try {
-			const { token, kind } = result
+			const { kind, ...token } = result
 			if (kind === ExtractedTokenKind.TwinTheme) {
 				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveThemeValue({ kind, range, token, state, options })
@@ -34,21 +34,20 @@ export default async function hover(
 				const selection = parser.hover({
 					text: token.value,
 					position: document.offsetAt(position) - token.start,
-					separator: state.separator,
 				})
 				if (!selection) return undefined
 
-				const { start, end } = selection.target
-				let value = selection.target.value
+				const [start, end] = selection.target.range
+				let value = selection.value
 
 				const range = new vscode.Range(
 					document.positionAt(token.start + start),
 					document.positionAt(token.start + end),
 				)
 
-				if (selection.type === parser.HoverResultType.CssProperty) {
-					const prop = selection.prop?.toKebab() ?? ""
-					const value = selection.value?.value ?? ""
+				if (selection.target.type === parser.NodeType.CssDeclaration) {
+					const prop = parser.toKebab(selection.target.prop.value)
+					const value = selection.value
 					const important = selection.important
 
 					const header = new vscode.MarkdownString()
@@ -82,10 +81,10 @@ export default async function hover(
 
 				if (kind !== ExtractedTokenKind.Twin) return undefined
 
-				if (selection.type === parser.HoverResultType.ArbitraryVariant) {
+				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const codes = new vscode.MarkdownString()
-					let code = selection.target.value.slice(1, -1)
+					let code = selection.value // selection.target.value.slice(1, -1)
 					if (!code) {
 						return {
 							range,
@@ -100,7 +99,7 @@ export default async function hover(
 					}
 				}
 
-				if (selection.type === parser.HoverResultType.Variant) {
+				if (selection.target.type === parser.NodeType.SimpleVariant) {
 					const header = new vscode.MarkdownString()
 					if (options.references) {
 						const desc =
@@ -197,7 +196,7 @@ function resolveThemeValue({
 }: {
 	kind: ExtractedTokenKind
 	range: vscode.Range
-	token: parser.Token
+	token: Token
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
@@ -231,7 +230,7 @@ function resolveScreenValue({
 }: {
 	kind: ExtractedTokenKind
 	range: vscode.Range
-	token: parser.Token
+	token: Token
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {

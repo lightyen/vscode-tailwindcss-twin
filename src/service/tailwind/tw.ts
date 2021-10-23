@@ -344,7 +344,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 				let color: chroma.Color | undefined
 
 				if (extractColors.isColorIdentifier(firstColor) || extractColors.isColorHexValue(firstColor)) {
-					if (firstColor.raw.value === "transparent") {
+					if (value.slice(firstColor.range[0], firstColor.range[1]) === "transparent") {
 						if (isBorder) {
 							desc.borderColor = "transparent"
 						}
@@ -357,7 +357,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 						continue
 					}
 					try {
-						color = chroma(firstColor.raw.value).alpha(1.0)
+						color = chroma(value.slice(firstColor.range[0], firstColor.range[1])).alpha(1.0)
 					} catch {}
 				} else {
 					try {
