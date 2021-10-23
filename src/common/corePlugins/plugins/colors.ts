@@ -70,7 +70,7 @@ function isColor(value: string, colors: string[], check: boolean, opacities?: st
 }
 
 export const backgroundColor: PluginConstructor = (context: Context): Plugin => {
-	if (!context.config.corePlugins.some(c => c === "borderColor")) throw ErrorNotEnable
+	if (!context.config.corePlugins.some(c => c === "backgroundColor")) throw ErrorNotEnable
 	const colors = findColors(context.config.theme.backgroundColor)
 	const opacities = context.config.corePlugins.some(c => c === "backgroundOpacity")
 		? Object.keys(context.config.theme.backgroundOpacity)
