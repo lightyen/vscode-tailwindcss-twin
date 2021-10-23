@@ -1,5 +1,5 @@
 import * as nodes from "./nodes"
-import { parse } from "./parse_regexp"
+import * as parser from "./parse_regexp"
 import { getVariant } from "./util"
 
 interface HoverResult {
@@ -19,11 +19,13 @@ export function hover({
 	text,
 	start = 0,
 	end = text.length,
+	separator = ":",
 }: {
 	position: number
 	text: string
 	start?: number
 	end?: number
+	separator?: string
 }): HoverResult | undefined {
 	interface Context {
 		important: boolean
@@ -103,7 +105,8 @@ export function hover({
 		return undefined
 	}
 
-	return travel(parse({ text, start, end, breac: position }), {
+	parser.setSeparator(separator)
+	return travel(parser.parse({ text, start, end, breac: position }), {
 		important: false,
 		variants: [],
 	})

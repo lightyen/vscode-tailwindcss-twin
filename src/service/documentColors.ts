@@ -26,7 +26,7 @@ export default function documentColors(
 			for (const token of tokens) {
 				const { kind, start: offset } = token
 				if (kind === ExtractedTokenKind.TwinTheme || kind === ExtractedTokenKind.TwinScreen) continue
-				const { items } = parser.spread({ text: token.value })
+				const { items } = parser.spread({ text: token.value, separator: state.separator })
 				for (const { target } of items) {
 					if (
 						(target.type === parser.NodeType.CssDeclaration ||

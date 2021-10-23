@@ -34,6 +34,7 @@ export default async function hover(
 				const selection = parser.hover({
 					text: token.value,
 					position: document.offsetAt(position) - token.start,
+					separator: state.separator,
 				})
 				if (!selection) return undefined
 
@@ -144,6 +145,20 @@ export default async function hover(
 							header.appendMarkdown("\n")
 							header.appendMarkdown(links.map(ref => `[Reference](${ref.url}) `).join("\n"))
 						}
+					}
+				}
+
+				if (selection.target.type === parser.NodeType.ArbitraryClassname) {
+					if (selection.target.closed) {
+						let t = `${selection.target.prop.value}[${selection.target.expr?.value.trim()}]`
+						if (selection.target.e) {
+							if (selection.target.e.type === parser.NodeType.WithOpacity && selection.target.e.closed) {
+								t += `/[${selection.target.e.opacity.value.trim()}]`
+							} else if (selection.target.e.type === parser.NodeType.EndOpacity) {
+								t += `/${selection.target.e.value.trim()}`
+							}
+						}
+						value = t
 					}
 				}
 

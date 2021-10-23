@@ -109,7 +109,7 @@ function twinCompletion(
 	const offset = match.start
 	const text = match.value
 	const position = index - offset
-	const suggestion = parser.suggest({ text, position })
+	const suggestion = parser.suggest({ text, position, separator: state.separator })
 	const isIncomplete = false
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilities = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)

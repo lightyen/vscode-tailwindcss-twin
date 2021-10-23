@@ -1,5 +1,5 @@
 import * as nodes from "./nodes"
-import { parse } from "./parse_regexp"
+import * as parser from "./parse_regexp"
 import { getVariant } from "./util"
 
 interface VariantToken extends nodes.TokenString {
@@ -13,7 +13,17 @@ export type SpreadDescription = {
 	important: boolean
 }
 
-export function spread({ text, start = 0, end = text.length }: { text: string; start?: number; end?: number }) {
+export function spread({
+	text,
+	start = 0,
+	end = text.length,
+	separator = ":",
+}: {
+	text: string
+	start?: number
+	end?: number
+	separator?: string
+}) {
 	interface Context {
 		variants: VariantToken[]
 		important: boolean
@@ -90,7 +100,8 @@ export function spread({ text, start = 0, end = text.length }: { text: string; s
 		}
 	}
 
-	const program = parse({ text, start, end })
+	parser.setSeparator(separator)
+	const program = parser.parse({ text, start, end })
 	program.expressions.forEach(expr => walk(expr, { variants: [], important: false }))
 
 	return { items, emptyGroup, emptyVariants, notClosed }

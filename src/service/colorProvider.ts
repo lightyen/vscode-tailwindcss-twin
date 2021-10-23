@@ -7,7 +7,7 @@ import chroma from "chroma-js"
 import vscode from "vscode"
 import { ColorDesc, TwContext } from "./tailwind/tw"
 
-export function createColorProvider(tw: TwContext) {
+export function createColorProvider(tw: TwContext, separator: string) {
 	const colors = new Map<string, vscode.TextEditorDecorationType>()
 	return {
 		dispose() {
@@ -77,7 +77,7 @@ export function createColorProvider(tw: TwContext) {
 			const { start: offset, end, kind } = token
 			switch (kind) {
 				case ExtractedTokenKind.Twin: {
-					const result = parser.spread({ text: token.value })
+					const result = parser.spread({ text: token.value, separator })
 					for (const item of result.items) {
 						if (item.target.type === parser.NodeType.ClassName) {
 							const color = tw.getColorDesc(item.value)
