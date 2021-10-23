@@ -1,7 +1,6 @@
 import * as ast from "@typescript-eslint/types/dist/ast-spec"
 import { AST_NODE_TYPES, parse } from "@typescript-eslint/typescript-estree"
 import { ExtractedToken, ExtractedTokenKind, Extractor } from "."
-import { createToken } from "../twin-parser"
 
 const twinLabel = "twin.macro"
 
@@ -62,7 +61,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
 					kind: ExtractedTokenKind.Twin,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				})
 			}
 		} else if (ctx.themeTemplate.has(node.tag.name)) {
@@ -70,7 +71,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
 					kind: ExtractedTokenKind.TwinTheme,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				})
 			}
 		} else if (ctx.screenTemplate.has(node.tag.name)) {
@@ -78,7 +81,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
 					kind: ExtractedTokenKind.TwinScreen,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				})
 			}
 		} else {
@@ -120,7 +125,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 					if (typeof node.value === "string") {
 						tokens.push({
 							kind,
-							token: createToken(node.range[0] + 1, node.range[1] - 1, node.value),
+							start: node.range[0] + 1,
+							end: node.range[1] - 1,
+							value: node.value,
 						})
 					}
 					break
@@ -129,11 +136,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 						if (typeof node.expression.value === "string") {
 							tokens.push({
 								kind,
-								token: createToken(
-									node.expression.range[0] + 1,
-									node.expression.range[1] - 1,
-									node.expression.value,
-								),
+								start: node.expression.range[0] + 1,
+								end: node.expression.range[1] - 1,
+								value: node.expression.value,
 							})
 						}
 					} else if (node.expression.type !== AST_NODE_TYPES.JSXEmptyExpression) {
@@ -666,7 +671,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 				if (!inRange(n)) return
 				token = {
 					kind: ExtractedTokenKind.Twin,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				}
 				return
 			}
@@ -676,7 +683,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 				if (!inRange(n)) return
 				token = {
 					kind: ExtractedTokenKind.TwinTheme,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				}
 				return
 			}
@@ -686,7 +695,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 				if (!inRange(n)) return
 				token = {
 					kind: ExtractedTokenKind.TwinScreen,
-					token: createToken(n.range[0] + 1, n.range[1] - 1, n.value.cooked),
+					start: n.range[0] + 1,
+					end: n.range[1] - 1,
+					value: n.value.cooked,
 				}
 				return
 			}
@@ -730,7 +741,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 					if (typeof node.value === "string") {
 						token = {
 							kind,
-							token: createToken(node.range[0] + 1, node.range[1] - 1, node.value),
+							start: node.range[0] + 1,
+							end: node.range[1] - 1,
+							value: node.value,
 						}
 						return
 					}
@@ -741,11 +754,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 						if (typeof node.expression.value === "string") {
 							token = {
 								kind,
-								token: createToken(
-									node.expression.range[0] + 1,
-									node.expression.range[1] - 1,
-									node.expression.value,
-								),
+								start: node.expression.range[0] + 1,
+								end: node.expression.range[1] - 1,
+								value: node.expression.value,
 							}
 						}
 					} else if (node.expression.type !== AST_NODE_TYPES.JSXEmptyExpression) {

@@ -6,7 +6,7 @@ import * as languageFacts from "vscode-css-languageservice/lib/esm/languageFacts
 import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
 // @ts-ignore TS/7016
 import { Parser } from "vscode-css-languageservice/lib/esm/parser/cssParser"
-import { createToken, Token } from "./twin-parser/token"
+import { NodeToken } from "./parser"
 
 const parser = new Parser()
 
@@ -16,21 +16,18 @@ export enum ColorTokenKind {
 	Function,
 }
 
-interface ColorIdentifier {
+interface ColorIdentifier extends NodeToken {
 	kind: ColorTokenKind.Identifier
-	raw: Token
 }
 
-interface ColorHexValue {
+interface ColorHexValue extends NodeToken {
 	kind: ColorTokenKind.HexValue
-	raw: Token
 }
 
-interface ColorFunction {
+interface ColorFunction extends NodeToken {
 	kind: ColorTokenKind.Function
 	fnName: string
 	args: string[]
-	raw: Token
 }
 
 export type ColorToken = ColorIdentifier | ColorHexValue | ColorFunction
@@ -59,12 +56,12 @@ export default function extractColors(value: string): ColorToken[] {
 				const color = node.getText().toLowerCase()
 				if (color === "transparent") {
 					colors.push({
-						raw: createToken(node.offset, node.offset + node.length, color),
+						range: [node.offset, node.offset + node.length],
 						kind: ColorTokenKind.Identifier,
 					})
 				} else if (color in languageFacts.colors) {
 					colors.push({
-						raw: createToken(node.offset, node.offset + node.length, color),
+						range: [node.offset, node.offset + node.length],
 						kind: ColorTokenKind.Identifier,
 					})
 				}
@@ -74,7 +71,7 @@ export default function extractColors(value: string): ColorToken[] {
 				const color = node.getText()
 				if (/(^#[0-9A-F]{8}$)|(^#[0-9A-F]{6}$)|(^#[0-9A-F]{4}$)|(^#[0-9A-F]{3}$)/i.test(color)) {
 					colors.push({
-						raw: createToken(node.offset, node.offset + node.length, color),
+						range: [node.offset, node.offset + node.length],
 						kind: ColorTokenKind.HexValue,
 					})
 				}
@@ -98,11 +95,7 @@ export default function extractColors(value: string): ColorToken[] {
 						kind: ColorTokenKind.Function,
 						fnName,
 						args,
-						raw: createToken(
-							node.offset,
-							node.offset + node.length,
-							value.substr(node.offset, node.length),
-						),
+						range: [node.offset, node.offset + node.length],
 					})
 				}
 				break
@@ -128,45 +121,45 @@ export function hexDigit(charCode: number | undefined) {
 	return 0
 }
 
-export function colorFromHex(c: ColorHexValue): vscode.Color {
-	const text = c.raw.value
-	switch (text.length) {
+export function colorFromHex(hexValue: string): vscode.Color {
+	switch (hexValue.length) {
 		case 4:
 			return {
-				red: (hexDigit(text.charCodeAt(1)) * 0x11) / 255.0,
-				green: (hexDigit(text.charCodeAt(2)) * 0x11) / 255.0,
-				blue: (hexDigit(text.charCodeAt(3)) * 0x11) / 255.0,
+				red: (hexDigit(hexValue.charCodeAt(1)) * 0x11) / 255.0,
+				green: (hexDigit(hexValue.charCodeAt(2)) * 0x11) / 255.0,
+				blue: (hexDigit(hexValue.charCodeAt(3)) * 0x11) / 255.0,
 				alpha: 1,
 			}
 		case 5:
 			return {
-				red: (hexDigit(text.charCodeAt(1)) * 0x11) / 255.0,
-				green: (hexDigit(text.charCodeAt(2)) * 0x11) / 255.0,
-				blue: (hexDigit(text.charCodeAt(3)) * 0x11) / 255.0,
-				alpha: (hexDigit(text.charCodeAt(4)) * 0x11) / 255.0,
+				red: (hexDigit(hexValue.charCodeAt(1)) * 0x11) / 255.0,
+				green: (hexDigit(hexValue.charCodeAt(2)) * 0x11) / 255.0,
+				blue: (hexDigit(hexValue.charCodeAt(3)) * 0x11) / 255.0,
+				alpha: (hexDigit(hexValue.charCodeAt(4)) * 0x11) / 255.0,
 			}
 		case 7:
 			return {
-				red: (hexDigit(text.charCodeAt(1)) * 0x10 + hexDigit(text.charCodeAt(2))) / 255.0,
-				green: (hexDigit(text.charCodeAt(3)) * 0x10 + hexDigit(text.charCodeAt(4))) / 255.0,
-				blue: (hexDigit(text.charCodeAt(5)) * 0x10 + hexDigit(text.charCodeAt(6))) / 255.0,
+				red: (hexDigit(hexValue.charCodeAt(1)) * 0x10 + hexDigit(hexValue.charCodeAt(2))) / 255.0,
+				green: (hexDigit(hexValue.charCodeAt(3)) * 0x10 + hexDigit(hexValue.charCodeAt(4))) / 255.0,
+				blue: (hexDigit(hexValue.charCodeAt(5)) * 0x10 + hexDigit(hexValue.charCodeAt(6))) / 255.0,
 				alpha: 1,
 			}
 	}
 	return {
-		red: (hexDigit(text.charCodeAt(1)) * 0x10 + hexDigit(text.charCodeAt(2))) / 255.0,
-		green: (hexDigit(text.charCodeAt(3)) * 0x10 + hexDigit(text.charCodeAt(4))) / 255.0,
-		blue: (hexDigit(text.charCodeAt(5)) * 0x10 + hexDigit(text.charCodeAt(6))) / 255.0,
-		alpha: (hexDigit(text.charCodeAt(7)) * 0x10 + hexDigit(text.charCodeAt(8))) / 255.0,
+		red: (hexDigit(hexValue.charCodeAt(1)) * 0x10 + hexDigit(hexValue.charCodeAt(2))) / 255.0,
+		green: (hexDigit(hexValue.charCodeAt(3)) * 0x10 + hexDigit(hexValue.charCodeAt(4))) / 255.0,
+		blue: (hexDigit(hexValue.charCodeAt(5)) * 0x10 + hexDigit(hexValue.charCodeAt(6))) / 255.0,
+		alpha: (hexDigit(hexValue.charCodeAt(7)) * 0x10 + hexDigit(hexValue.charCodeAt(8))) / 255.0,
 	}
 }
 
-export function colorFromIdentifier(c: ColorIdentifier): vscode.Color {
-	if (c.raw.value === "transparent") {
+export function colorFromIdentifier(text: string, c: ColorIdentifier): vscode.Color {
+	const value = text.slice(...c.range)
+	if (value === "transparent") {
 		return { red: 0, green: 0, blue: 0, alpha: 0 }
 	}
-	const hexValue = languageFacts.colors[c.raw.value]
-	return colorFromHex({ kind: ColorTokenKind.HexValue, raw: createToken(0, 0, hexValue) })
+	const hexValue = languageFacts.colors[value]
+	return colorFromHex(hexValue)
 }
 
 export function getNumericValue(value: string | undefined, factor: number) {
