@@ -1,3 +1,4 @@
+import { is, isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const accessibility: PluginConstructor = (context: Context): Plugin => {
@@ -871,12 +872,17 @@ export const backgroundImage: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^bg-(.*)/.exec(value)
+		const match = /^bg-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
 
-		const val = match[1]
+		let val = match[1]
+
+		if (isArbitraryValue(val)) {
+			val = val.slice(1, -1).trim()
+			return is(val, "image")
+		}
 
 		return values.some(c => c === val)
 	}
@@ -895,7 +901,7 @@ export const backgroundPosition: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^bg-(.*)/.exec(value)
+		const match = /^bg-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -919,14 +925,19 @@ export const backgroundSize: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^bg-(.*)/.exec(value)
+		const match = /^bg-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
 
-		const val = match[1]
+		let val = match[1]
+
+		if (isArbitraryValue(val)) {
+			val = val.slice(1, -1)
+			return is(val, "length", "percentage")
+		}
 
 		return values.some(c => c === val)
 	}
 }
-backgroundSize.canArbitraryValue = false
+backgroundSize.canArbitraryValue = true

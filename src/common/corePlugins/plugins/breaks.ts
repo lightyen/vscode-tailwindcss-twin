@@ -11,7 +11,7 @@ export const breakBefore: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^break-before-(.*)/.exec(value)
+		const match = /^break-before-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -43,7 +43,7 @@ export const breakInside: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^break-inside-(.*)/.exec(value)
+		const match = /^break-inside-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -66,7 +66,7 @@ export const breakAfter: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^break-after-(.*)/.exec(value)
+		const match = /^break-after-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

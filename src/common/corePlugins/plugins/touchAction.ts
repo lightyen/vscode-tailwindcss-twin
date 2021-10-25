@@ -11,7 +11,7 @@ export const touchAction: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^touch-(.*)/.exec(value)
+		const match = /^touch-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

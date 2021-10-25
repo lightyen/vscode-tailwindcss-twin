@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const scrollSnapType: PluginConstructor = (context: Context): Plugin => {
@@ -12,7 +12,7 @@ export const scrollSnapType: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^snap-(.*)/.exec(value)
+		const match = /^snap-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -37,7 +37,7 @@ export const scrollSnapAlign: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^snap-(.*)/.exec(value)
+		const match = /^snap-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -60,7 +60,7 @@ export const scrollSnapStop: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^snap-(.*)/.exec(value)
+		const match = /^snap-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -84,7 +84,7 @@ export const scrollMargin: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?scroll-(?:m|mx|my|mt|mr|mb|ml)-(.*)/.exec(value)
+		const match = /^-?scroll-(?:m|mx|my|mt|mr|mb|ml)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -117,7 +117,7 @@ export const scrollPadding: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^scroll-(?:p|px|py|pt|pr|pb|pl)-(.*)/.exec(value)
+		const match = /^scroll-(?:p|px|py|pt|pr|pb|pl)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

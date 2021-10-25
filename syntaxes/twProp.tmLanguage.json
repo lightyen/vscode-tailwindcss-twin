@@ -272,7 +272,7 @@
           "include": "#css-value-content-bracket"
         },
         {
-          "include": "source.css#property-values"
+          "include": "source.css.scss#property_values"
         }
       ]
     },
@@ -310,7 +310,7 @@
           "include": "#css-value-content-bracket"
         },
         {
-          "include": "source.css#property-values"
+          "include": "source.css.scss#property_values"
         }
       ]
     },
@@ -371,7 +371,7 @@
           "include": "#css-value-content-bracket"
         },
         {
-          "include": "source.css#property-values"
+          "include": "source.css.scss#property_values"
         }
       ]
     },
@@ -412,7 +412,7 @@
           "include": "#css-value-content-bracket"
         },
         {
-          "include": "source.css#property-values"
+          "include": "source.css.scss#property_values"
         }
       ]
     },

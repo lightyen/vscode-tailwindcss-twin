@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const filter: PluginConstructor = (context: Context): Plugin => {
@@ -45,7 +45,7 @@ export const brightness: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^brightness-(.*)/.exec(value)
+		const match = /^brightness-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -73,7 +73,7 @@ export const backdropBrightness: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-brightness-(.*)/.exec(value)
+		const match = /^backdrop-brightness-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -101,7 +101,7 @@ export const contrast: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^contrast-(.*)/.exec(value)
+		const match = /^contrast-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -129,7 +129,7 @@ export const backdropContrast: PluginConstructor = (context: Context): Plugin =>
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-contrast-(.*)/.exec(value)
+		const match = /^backdrop-contrast-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -157,7 +157,7 @@ export const hueRotate: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?hue-rotate-(.*)/.exec(value)
+		const match = /^-?hue-rotate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -190,7 +190,7 @@ export const backdropHueRotate: PluginConstructor = (context: Context): Plugin =
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?backdrop-hue-rotate-(.*)/.exec(value)
+		const match = /^-?backdrop-hue-rotate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -223,7 +223,7 @@ export const saturate: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^saturate-(.*)/.exec(value)
+		const match = /^saturate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -251,7 +251,7 @@ export const backdropSaturate: PluginConstructor = (context: Context): Plugin =>
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-saturate-(.*)/.exec(value)
+		const match = /^backdrop-saturate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -285,7 +285,7 @@ export const grayscale: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^grayscale(?:-|\b)(.*)/.exec(value)
+		const match = /^grayscale(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -316,7 +316,7 @@ export const backdropGrayscale: PluginConstructor = (context: Context): Plugin =
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-grayscale(?:-|\b)(.*)/.exec(value)
+		const match = /^backdrop-grayscale(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -347,7 +347,7 @@ export const invert: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^invert(?:-|\b)(.*)/.exec(value)
+		const match = /^invert(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -378,7 +378,7 @@ export const backdropInvert: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-invert(?:-|\b)(.*)/.exec(value)
+		const match = /^backdrop-invert(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -409,7 +409,7 @@ export const sepia: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^sepia(?:-|\b)(.*)/.exec(value)
+		const match = /^sepia(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -440,7 +440,7 @@ export const backdropSepia: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-sepia(?:-|\b)(.*)/.exec(value)
+		const match = /^backdrop-sepia(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

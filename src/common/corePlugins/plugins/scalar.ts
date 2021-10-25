@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const order: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const order: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^order-(.*)/.exec(value)
+		const match = /^order-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -41,7 +41,7 @@ export const zIndex: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^z-(.*)/.exec(value)
+		const match = /^z-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

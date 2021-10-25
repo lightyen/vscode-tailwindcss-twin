@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const willChange: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const willChange: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^will-change-(.*)/.exec(value)
+		const match = /^will-change-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

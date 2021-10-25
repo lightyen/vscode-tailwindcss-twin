@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const textIndent: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const textIndent: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?indent-(.*)/.exec(value)
+		const match = /^-?indent-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

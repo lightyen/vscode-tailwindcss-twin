@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const textOpacity: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const textOpacity: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^text-opacity-(.*)/.exec(value)
+		const match = /^text-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -41,7 +41,7 @@ export const backgroundOpacity: PluginConstructor = (context: Context): Plugin =
 	}
 
 	function isMatch(value: string) {
-		const match = /^bg-opacity-(.*)/.exec(value)
+		const match = /^bg-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -69,7 +69,7 @@ export const borderOpacity: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^border-opacity-(.*)/.exec(value)
+		const match = /^border-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -97,7 +97,7 @@ export const placeholderOpacity: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^placeholder-opacity-(.*)/.exec(value)
+		const match = /^placeholder-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -125,7 +125,7 @@ export const divideOpacity: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^divide-opacity-(.*)/.exec(value)
+		const match = /^divide-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -153,7 +153,7 @@ export const ringOpacity: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^ring-opacity-(.*)/.exec(value)
+		const match = /^ring-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -181,7 +181,7 @@ export const opacity: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^opacity-(.*)/.exec(value)
+		const match = /^opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -209,7 +209,7 @@ export const backdropOpacity: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^backdrop-opacity-(.*)/.exec(value)
+		const match = /^backdrop-opacity-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

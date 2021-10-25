@@ -467,7 +467,9 @@ const mappingArbitraryPropToCssProp: Record<
 	Array<(currentWord: string, range: vscode.Range) => ICompletionItem[]>
 > = {
 	"divide-": [fromCssProp("border-color")],
-	"bg-": [fromCssProp("background-color")],
+	"divide-x-": [fromCssProp("border-width")],
+	"divide-y-": [fromCssProp("border-width")],
+	"bg-": [fromCssProp("background-color"), fromCssProp("background-image"), fromCssProp("background-size")],
 	"from-": [fromRestrictions("color")],
 	"via-": [fromRestrictions("color")],
 	"to-": [fromRestrictions("color")],
@@ -524,7 +526,7 @@ const mappingArbitraryPropToCssProp: Record<
 	"border-y-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
 	"text-": [fromRestrictions("color", "length", "percentage")],
 	"ring-": [fromRestrictions("length", "color")],
-	"stroke-": [fromCssProp("stroke-width"), fromCssProp("stroke")],
+	"stroke-": [fromCssProp("stroke"), fromCssProp("stroke-width")],
 	"caret-": [fromCssProp("caret-color")],
 	"aspect-": [fromCssProp("aspect-ratio")],
 	"accent-": [fromRestrictions("color")],

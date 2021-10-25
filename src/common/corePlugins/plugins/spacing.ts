@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const inset: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const inset: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?(?:inset-x-|inset-y-|inset-|top-|right-|bottom-|left-)(.*)/.exec(value)
+		const match = /^-?(?:inset-x-|inset-y-|inset-|top-|right-|bottom-|left-)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -46,7 +46,7 @@ export const margin: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?(?:m|mx|my|mt|mr|mb|ml)-(.*)/.exec(value)
+		const match = /^-?(?:m|mx|my|mt|mr|mb|ml)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -79,7 +79,7 @@ export const space: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?space-(?:x|y)-(.*)/.exec(value)
+		const match = /^-?space-(?:x|y)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -112,7 +112,7 @@ export const padding: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^(?:p|px|py|pt|pr|pb|pl)-(.*)/.exec(value)
+		const match = /^(?:p|px|py|pt|pr|pb|pl)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -140,7 +140,7 @@ export const gap: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^(?:gap-x-|gap-y-|gap-)(.*)/.exec(value)
+		const match = /^(?:gap-x-|gap-y-|gap-)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -168,7 +168,7 @@ export const height: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^h-(.*)/.exec(value)
+		const match = /^h-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -196,7 +196,7 @@ export const minHeight: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^min-h-(.*)/.exec(value)
+		const match = /^min-h-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -224,7 +224,7 @@ export const maxHeight: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^max-h-(.*)/.exec(value)
+		const match = /^max-h-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -252,7 +252,7 @@ export const width: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^w-(.*)/.exec(value)
+		const match = /^w-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -280,7 +280,7 @@ export const minWidth: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^min-w-(.*)/.exec(value)
+		const match = /^min-w-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -308,7 +308,7 @@ export const maxWidth: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^max-w-(.*)/.exec(value)
+		const match = /^max-w-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
