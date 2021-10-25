@@ -1,10 +1,6 @@
-// @ts-ignore TS/7016
 import * as vscode from "vscode"
-// @ts-ignore TS/7016
 import * as languageFacts from "vscode-css-languageservice/lib/esm/languageFacts/facts"
-// @ts-ignore TS/7016
 import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
-// @ts-ignore TS/7016
 import { Parser } from "vscode-css-languageservice/lib/esm/parser/cssParser"
 import { NodeToken } from "./parser"
 
@@ -44,63 +40,68 @@ export function isColorFunction(c: ColorToken): c is ColorFunction {
 	return c.kind === ColorTokenKind.Function
 }
 
+function isIdentifierNode(node: nodes.Node): node is nodes.Identifier {
+	return node.type === nodes.NodeType.Identifier
+}
+
+function isHexColorValueNode(node: nodes.Node): node is nodes.HexColorValue {
+	return node.type === nodes.NodeType.HexColorValue
+}
+
+function isFunctionNode(node: nodes.Node): node is nodes.Function {
+	return node.type === nodes.NodeType.Function
+}
+
 export default function extractColors(value: string): ColorToken[] {
 	const colors: ColorToken[] = []
 	const node = parser.internalParse(value, parser._parseExpr.bind(parser))
 	if (!node) return colors
-	// @ts-ignore TS/7016
 	node.accept(node => {
-		switch (node.type) {
-			case nodes.NodeType.Identifier: {
-				if (node.parent?.type !== nodes.NodeType.Term) break
-				const color = node.getText().toLowerCase()
-				if (color === "transparent") {
-					colors.push({
-						range: [node.offset, node.offset + node.length],
-						kind: ColorTokenKind.Identifier,
-					})
-				} else if (color in languageFacts.colors) {
-					colors.push({
-						range: [node.offset, node.offset + node.length],
-						kind: ColorTokenKind.Identifier,
-					})
-				}
-				break
+		if (isIdentifierNode(node)) {
+			if (node.parent?.type !== nodes.NodeType.Term) return true
+			const color = node.getText().toLowerCase()
+			if (color === "transparent") {
+				colors.push({
+					range: [node.offset, node.offset + node.length],
+					kind: ColorTokenKind.Identifier,
+				})
+			} else if (color in languageFacts.colors) {
+				colors.push({
+					range: [node.offset, node.offset + node.length],
+					kind: ColorTokenKind.Identifier,
+				})
 			}
-			case nodes.NodeType.HexColorValue: {
-				const color = node.getText()
-				if (/(^#[0-9A-F]{8}$)|(^#[0-9A-F]{6}$)|(^#[0-9A-F]{4}$)|(^#[0-9A-F]{3}$)/i.test(color)) {
-					colors.push({
-						range: [node.offset, node.offset + node.length],
-						kind: ColorTokenKind.HexValue,
-					})
-				}
-				break
+		} else if (isHexColorValueNode(node)) {
+			const color = node.getText()
+			if (/(^#[0-9A-F]{8}$)|(^#[0-9A-F]{6}$)|(^#[0-9A-F]{4}$)|(^#[0-9A-F]{3}$)/i.test(color)) {
+				colors.push({
+					range: [node.offset, node.offset + node.length],
+					kind: ColorTokenKind.HexValue,
+				})
 			}
-			case nodes.NodeType.Function: {
-				const fnName: string = node.getName()
-				if (fnName && /^(rgb|rgba|hsl|hsla)/i.test(fnName)) {
-					let args: string[] = node
-						.getArguments()
-						.getChildren() // @ts-ignore TS/7016
-						.map(token => value.substr(token.offset, token.length))
+		} else if (isFunctionNode(node)) {
+			const fnName: string = node.getName()
+			if (fnName && /^(rgb|rgba|hsl|hsla)/i.test(fnName)) {
+				let args: string[] = node
+					.getArguments()
+					.getChildren()
+					.map(token => value.substr(token.offset, token.length))
 
-					if (args.length === 1) {
-						args = args[0].split(/\s+/).filter(t => t && t !== "/")
-					}
-
-					if (args.length < 3) break
-
-					colors.push({
-						kind: ColorTokenKind.Function,
-						fnName,
-						args,
-						range: [node.offset, node.offset + node.length],
-					})
+				if (args.length === 1) {
+					args = args[0].split(/\s+/).filter(t => t && t !== "/")
 				}
-				break
+
+				if (args.length < 3) return true
+
+				colors.push({
+					kind: ColorTokenKind.Function,
+					fnName,
+					args,
+					range: [node.offset, node.offset + node.length],
+				})
 			}
 		}
+
 		return true
 	})
 	return colors

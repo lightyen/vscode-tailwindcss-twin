@@ -9,6 +9,8 @@ extends:
   - "plugin:prettier/recommended"
 parserOptions:
   sourceType: module
+ignorePatterns:
+  - "src/typings/*"
 rules:
   spaced-comment: error
   no-var: error
@@ -28,8 +30,7 @@ rules:
   "@typescript-eslint/camelcase": off
   "@typescript-eslint/explicit-function-return-type": off
   "@typescript-eslint/array-type":
-    - error
-    - default: array-simple
+    - off
   "@typescript-eslint/no-var-requires": warn
   "@typescript-eslint/member-delimiter-style":
     - error
