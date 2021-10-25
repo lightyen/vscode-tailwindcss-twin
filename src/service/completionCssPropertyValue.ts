@@ -1,7 +1,9 @@
-import * as languageFacts from "@/vscode-css-languageservice"
-import { cssDataManager, getEntryDescription, units } from "@/vscode-css-languageservice"
+import { cssDataManager } from "@/vscode-css-languageservice"
 import { CompletionItemKind, CompletionItemTag, Range, SnippetString } from "vscode"
 import { IPropertyData } from "vscode-css-languageservice"
+import { units } from "vscode-css-languageservice/lib/esm/languageFacts/builtinData"
+import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
+import * as languageFacts from "vscode-css-languageservice/lib/esm/languageFacts/facts"
 import type { ICompletionItem } from "~/typings/completion"
 
 function isDeprecated(entry: IPropertyData): boolean {
