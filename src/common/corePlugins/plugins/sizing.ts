@@ -1,5 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
-import isLengthValue from "./common/isLengthValue"
+import { is, isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const fontSize: PluginConstructor = (context: Context): Plugin => {
@@ -14,7 +13,7 @@ export const fontSize: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^text-(.*)/.exec(value)
+		const match = /^text-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -23,7 +22,7 @@ export const fontSize: PluginConstructor = (context: Context): Plugin => {
 
 		if (isArbitraryValue(val)) {
 			val = val.slice(1, -1).trim()
-			return isLengthValue(val)
+			return is(val, "absolute-size", "relative-size", "length", "percentage")
 		}
 
 		return values.some(c => c === val)
@@ -43,7 +42,7 @@ export const lineHeight: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^leading-(.*)/.exec(value)
+		const match = /^leading-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -71,7 +70,7 @@ export const strokeWidth: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^stroke-(.*)/.exec(value)
+		const match = /^stroke-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -80,7 +79,7 @@ export const strokeWidth: PluginConstructor = (context: Context): Plugin => {
 
 		if (isArbitraryValue(val)) {
 			val = val.slice(1, -1).trim()
-			return isLengthValue(val)
+			return is(val, "length", "number", "percentage")
 		}
 
 		return values.some(c => c === val)
@@ -100,7 +99,7 @@ export const ringOffsetWidth: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^ring-offset-(.*)/.exec(value)
+		const match = /^ring-offset-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -109,7 +108,7 @@ export const ringOffsetWidth: PluginConstructor = (context: Context): Plugin => 
 
 		if (isArbitraryValue(val)) {
 			val = val.slice(1, -1).trim()
-			return isLengthValue(val)
+			return is(val, "length")
 		}
 
 		return values.some(c => c === val)
@@ -135,7 +134,7 @@ export const borderRadius: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^rounded(?:-tl\b|-tr\b|-br\b|-bl\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/.exec(value)
+		const match = /^rounded(?:-tl\b|-tr\b|-br\b|-bl\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -167,7 +166,7 @@ export const boxShadow: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^shadow(?:-|\b)(.*)/.exec(value)
+		const match = /^shadow(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -199,7 +198,7 @@ export const dropShadow: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^drop-shadow(?:-|\b)(.*)/.exec(value)
+		const match = /^drop-shadow(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -231,7 +230,7 @@ export const blur: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^blur(?:-|\b)(.*)/.exec(value)
+		const match = /^blur(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -266,7 +265,7 @@ export const backdropBlur: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^backdrop-blur(?:-|\b)(.*)/.exec(value)
+		const match = /^backdrop-blur(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -301,7 +300,7 @@ export const borderWidth: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^border(?:-x\b|-y\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/.exec(value)
+		const match = /^border(?:-x\b|-y\b|-t\b|-r\b|-b\b|-l\b|\b)(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -314,7 +313,7 @@ export const borderWidth: PluginConstructor = (context: Context): Plugin => {
 
 		if (isArbitraryValue(val)) {
 			val = val.slice(1, -1).trim()
-			return isLengthValue(val)
+			return is(val, "line-width", "length")
 		}
 		return values.some(c => c === val)
 	}
@@ -337,7 +336,7 @@ export const divideWidth: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^divide-(?:x|y)(?:-|\b)(.*)/.exec(value)
+		const match = /^divide-(?:x|y)(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -372,7 +371,7 @@ export const ringWidth: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const match = /^ring(?:-|\b)(.*)/.exec(value)
+		const match = /^ring(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -385,7 +384,7 @@ export const ringWidth: PluginConstructor = (context: Context): Plugin => {
 
 		if (isArbitraryValue(val)) {
 			val = val.slice(1, -1).trim()
-			return isLengthValue(val)
+			return is(val, "length")
 		}
 		return values.some(c => c === val) || value === "ring-inset"
 	}

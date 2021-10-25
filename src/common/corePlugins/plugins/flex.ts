@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const flex: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const flex: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^flex-(.*)/.exec(value)
+		const match = /^flex-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -81,7 +81,7 @@ export const flexGrow: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^flex-grow(?:-|\b)(.*)/.exec(value)
+		const match = /^flex-grow(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -112,7 +112,7 @@ export const flexShrink: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^flex-shrink(?:-|\b)(.*)/.exec(value)
+		const match = /^flex-shrink(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

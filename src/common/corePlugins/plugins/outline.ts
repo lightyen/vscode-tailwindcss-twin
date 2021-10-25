@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const outline: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const outline: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^outline-(.*)/.exec(value)
+		const match = /^outline-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

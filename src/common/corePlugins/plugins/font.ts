@@ -12,7 +12,7 @@ export const fontFamily: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^font-(.*)/.exec(value)
+		const match = /^font-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -36,7 +36,7 @@ export const fontWeight: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^font-(.*)/.exec(value)
+		const match = /^font-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const gridTemplateColumns: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const gridTemplateColumns: PluginConstructor = (context: Context): Plugin
 	}
 
 	function isMatch(value: string) {
-		const match = /^grid-cols-(.*)/.exec(value)
+		const match = /^grid-cols-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -41,7 +41,7 @@ export const gridTemplateRows: PluginConstructor = (context: Context): Plugin =>
 	}
 
 	function isMatch(value: string) {
-		const match = /^grid-rows-(.*)/.exec(value)
+		const match = /^grid-rows-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -90,7 +90,7 @@ export const gridAutoColumns: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^auto-cols-(.*)/.exec(value)
+		const match = /^auto-cols-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -118,7 +118,7 @@ export const gridAutoRows: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^auto-rows-(.*)/.exec(value)
+		const match = /^auto-rows-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -146,7 +146,7 @@ export const gridColumn: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^col-(.*)/.exec(value)
+		const match = /^col-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -174,7 +174,7 @@ export const gridColumnStart: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^col-start-(.*)/.exec(value)
+		const match = /^col-start-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -202,7 +202,7 @@ export const gridColumnEnd: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^col-end-(.*)/.exec(value)
+		const match = /^col-end-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -230,7 +230,7 @@ export const gridRow: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^row-(.*)/.exec(value)
+		const match = /^row-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -258,7 +258,7 @@ export const gridRowStart: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^row-start-(.*)/.exec(value)
+		const match = /^row-start-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -286,7 +286,7 @@ export const gridRowEnd: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^row-end-(.*)/.exec(value)
+		const match = /^row-end-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

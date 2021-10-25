@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
@@ -19,7 +19,7 @@ export const transitionProperty: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^transition(?:-|\b)(.*)/.exec(value)
+		const match = /^transition(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -51,7 +51,7 @@ export const transitionDelay: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^delay-(.*)/.exec(value)
+		const match = /^delay-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -79,7 +79,7 @@ export const transitionDuration: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^duration-(.*)/.exec(value)
+		const match = /^duration-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -107,7 +107,7 @@ export const transitionTimingFunction: PluginConstructor = (context: Context): P
 	}
 
 	function isMatch(value: string) {
-		const match = /^ease-(.*)/.exec(value)
+		const match = /^ease-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

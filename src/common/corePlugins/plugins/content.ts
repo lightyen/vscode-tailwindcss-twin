@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 function getDefault(obj: Record<string, unknown>): [boolean, string[]] {
@@ -19,7 +19,7 @@ export const content: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^content(?:-|\b)(.*)/.exec(value)
+		const match = /^content(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

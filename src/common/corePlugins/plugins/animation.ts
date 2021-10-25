@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const animation: PluginConstructor = (context: Context): Plugin => {
@@ -13,7 +13,7 @@ export const animation: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^animate-(.*)/.exec(value)
+		const match = /^animate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}

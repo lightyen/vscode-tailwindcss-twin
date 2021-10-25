@@ -1,5 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
-import isColorValue from "./common/isColorValue"
+import { is, isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 function findColors(palette: Tailwind.ResolvedPalette): string[] {
@@ -39,14 +38,14 @@ function findColors(palette: Tailwind.ResolvedPalette): string[] {
 /**
  * @param value form: `color`, `[color]`, `[color]/number`, `[color]/[number]`
  */
-function isColor(value: string, colors: string[], check: boolean, opacities?: string[] | null | undefined) {
+function isColor(value: string, colors: string[], checkValueType: boolean, opacities?: string[] | null | undefined) {
 	const index = value.lastIndexOf("/")
 	const n = value.charCodeAt(index + 1)
 	if (index === -1 || Number.isNaN(n) || (n !== 91 && (n < 48 || n > 57))) {
 		if (isArbitraryValue(value)) {
-			if (check) {
+			if (checkValueType) {
 				const val = value.slice(1, -1).trim()
-				return isColorValue(val)
+				return is(val, "color")
 			}
 			return true
 		}
@@ -84,9 +83,9 @@ export const backgroundColor: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^bg-(.*)/.exec(value)
+		const match = /^bg-(.*)/s.exec(value)
 		if (!match) return false
-		return isColor(match[1], colors, false, opacities)
+		return isColor(match[1], colors, true, opacities)
 	}
 }
 backgroundColor.canArbitraryValue = true
@@ -106,7 +105,7 @@ export const placeholderColor: PluginConstructor = (context: Context): Plugin =>
 	}
 
 	function isMatch(value: string) {
-		const match = /^placeholder-(.*)/.exec(value)
+		const match = /^placeholder-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, false, opacities)
 	}
@@ -128,7 +127,7 @@ export const divideColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^divide-(.*)/.exec(value)
+		const match = /^divide-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, false, opacities)
 	}
@@ -150,7 +149,7 @@ export const caretColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^caret-(.*)/.exec(value)
+		const match = /^caret-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, false, opacities)
 	}
@@ -172,7 +171,7 @@ export const gradientColorStops: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		const match = /^(?:from-|to-|via-)(.*)/.exec(value)
+		const match = /^(?:from-|to-|via-)(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, false, opacities)
 	}
@@ -194,7 +193,7 @@ export const fill: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^fill-(.*)/.exec(value)
+		const match = /^fill-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, false, opacities)
 	}
@@ -216,7 +215,7 @@ export const textColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^text-(.*)/.exec(value)
+		const match = /^text-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, true, opacities)
 	}
@@ -238,7 +237,7 @@ export const borderColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^border-(?:x-|y-|t-|r-|b-|l-)?(.*)/.exec(value)
+		const match = /^border-(?:x-|y-|t-|r-|b-|l-)?(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, true, opacities)
 	}
@@ -260,9 +259,34 @@ export const stroke: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^stroke-(.*)/.exec(value)
+		const match = /^stroke-(.*)/s.exec(value)
 		if (!match) return false
-		return isColor(match[1], colors, true, opacities)
+
+		value = match[1]
+		const index = value.lastIndexOf("/")
+		const n = value.charCodeAt(index + 1)
+		if (index === -1 || Number.isNaN(n) || (n !== 91 && (n < 48 || n > 57))) {
+			if (isArbitraryValue(value)) {
+				const val = value.slice(1, -1).trim()
+				return is(val, "color", "url")
+			}
+			return colors.some(c => c === value)
+		}
+
+		if (!opacities) {
+			return false
+		}
+
+		if (value.indexOf("/") !== index) {
+			return false
+		}
+
+		const opacity = value.slice(index + 1)
+		if (isArbitraryValue(opacity)) {
+			return true
+		}
+
+		return opacities.some(c => c === opacity)
 	}
 }
 stroke.canArbitraryValue = true
@@ -282,7 +306,7 @@ export const ringColor: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^ring-(.*)/.exec(value)
+		const match = /^ring-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, true, opacities)
 	}
@@ -304,7 +328,7 @@ export const ringOffsetColor: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^ring-offset-(.*)/.exec(value)
+		const match = /^ring-offset-(.*)/s.exec(value)
 		if (!match) return false
 		return isColor(match[1], colors, true, opacities)
 	}

@@ -1,4 +1,4 @@
-import isArbitraryValue from "./common/isArbitraryValue"
+import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const transform: PluginConstructor = (context: Context): Plugin => {
@@ -34,7 +34,7 @@ export const rotate: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?rotate-(.*)/.exec(value)
+		const match = /^-?rotate-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -67,7 +67,7 @@ export const skew: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?skew-(?:x-|y-)(.*)/.exec(value)
+		const match = /^-?skew-(?:x-|y-)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -100,7 +100,7 @@ export const scale: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^scale-(?:x-|y-)?(.*)/.exec(value)
+		const match = /^scale-(?:x-|y-)?(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -128,7 +128,7 @@ export const translate: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?translate-(?:x|y)-(.*)/.exec(value)
+		const match = /^-?translate-(?:x|y)-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -161,7 +161,7 @@ export const transformOrigin: PluginConstructor = (context: Context): Plugin => 
 	}
 
 	function isMatch(value: string) {
-		const match = /^origin-(.*)/.exec(value)
+		const match = /^origin-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
