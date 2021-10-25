@@ -1,5 +1,4 @@
 import { URI } from "vscode-uri"
-export { typescriptExtractor } from "./typescript-eslint"
 
 type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | string
 

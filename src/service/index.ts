@@ -1,4 +1,5 @@
-import { Extractor, TextDocument, typescriptExtractor } from "@/extractors"
+import { Extractor, TextDocument } from "@/extractors"
+import { typescriptExtractor } from "@/extractors/typescript"
 import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
 import * as parser from "@/parser"
