@@ -2,6 +2,7 @@ import { importFrom } from "@/module"
 import Fuse from "fuse.js"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
+import { calcFraction } from "~/common"
 import { ICompletionItem } from "~/typings/completion"
 import { createTwContext, TwContext } from "./tw"
 import { ContextModule, twin } from "./twin"
@@ -172,21 +173,14 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 			return utilitiesCompletionItems
 
 			function formatLabel(label: string) {
-				const reg = /((?:[\w-]+-)+)+([\d/.]+)/
-				const m = label.match(reg)
-				if (!m) {
-					return label
-				}
-				try {
-					const val = eval(m[2])
-					if (typeof val !== "number") {
-						return label
-					}
-					const prefix = m[1] + (/^[\d.]+$/.test(m[2]) ? "@" : "_")
-					return prefix + val.toFixed(3).padStart(7, "0")
-				} catch {
-					return label
-				}
+				const reg = /([a-zA-Z-]+)([0-9/.]+)/
+				const match = label.match(reg)
+				if (!match) return label
+				let val = Number(match[2])
+				if (Number.isNaN(val)) val = calcFraction(match[2])
+				if (Number.isNaN(val)) return label
+				const prefix = match[1] + (Number.isNaN(Number(match[2])) ? "_" : "@")
+				return prefix + val.toFixed(3).padStart(7, "0")
 			}
 		}
 	}

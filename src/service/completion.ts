@@ -7,6 +7,7 @@ import { transformSourceMap } from "@/sourcemap"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import chroma from "chroma-js"
 import vscode from "vscode"
+import { calcFraction } from "~/common"
 import type { ICompletionItem } from "~/typings/completion"
 import type { ServiceOptions } from "."
 import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
@@ -590,29 +591,29 @@ function twinThemeCompletion(
 
 	const candidates = Object.keys(value)
 
-	function formatCandidates(label: string) {
-		let prefix = ""
-		if (label.charCodeAt(0) === 45) {
-			prefix = "~~~"
-			label = label.slice(1)
-		}
-		try {
-			const val = eval(label)
-			if (typeof val !== "number") {
-				return prefix + label
-			}
-			return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
-		} catch {
-			return prefix + label
-		}
+	function formatCandidates(value: string) {
+		const reg = /^[-0-9/.]+$/
+		const match = value.match(reg)
+		if (!match) return value
+		value = match[0]
+		const isNegtive = value.charCodeAt(0) === 45
+		if (isNegtive) value = value.slice(1)
+		let val = Number(value)
+		if (Number.isNaN(val)) val = calcFraction(value)
+		if (Number.isNaN(val)) return value
+		return (isNegtive ? "" : "+") + (Number.isNaN(Number(value)) ? "_" : "@") + val.toFixed(3).padStart(7, "0")
 	}
+
+	const isScreen = text.startsWith("screen")
 
 	return {
 		isIncomplete: false,
 		items: candidates.map(label => {
 			const item: ICompletionItem = {
 				label,
-				sortText: formatCandidates(label),
+				sortText: isScreen
+					? state.tw.screens.indexOf(label).toString().padStart(5, " ")
+					: formatCandidates(label),
 				data: { type: "theme" },
 			}
 			const value = state.tw.getTheme([...keys, label])
@@ -692,30 +693,13 @@ function twinScreenCompletion(
 
 	const candidates = Object.keys(value)
 
-	function formatCandidates(label: string) {
-		let prefix = ""
-		if (label.charCodeAt(0) === 45) {
-			prefix = "~~~"
-			label = label.slice(1)
-		}
-		try {
-			const val = eval(label)
-			if (typeof val !== "number") {
-				return prefix + label
-			}
-			return prefix + Math.abs(val).toFixed(3).padStart(7, "0")
-		} catch {
-			return prefix + label
-		}
-	}
-
 	return {
 		isIncomplete: false,
 		items: candidates.map(label => {
 			const index = state.tw.screens.indexOf(label)
 			const item: ICompletionItem = {
 				label,
-				sortText: index.toString().padStart(5, " ") ?? formatCandidates(label),
+				sortText: index.toString().padStart(5, " "),
 				data: { type: "theme" },
 			}
 			const value = state.tw.getTheme(["screens", label])
