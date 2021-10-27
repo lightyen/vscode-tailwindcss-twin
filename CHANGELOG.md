@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.11.5
+
+- Fix variant completion item
+- Arbitrary variant css beautify
+- Enhance parser
+
 ## 0.11.4
 
 - Disable auto-complete in arbitrary variant
