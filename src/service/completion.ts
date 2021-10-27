@@ -150,8 +150,10 @@ function variantsCompletion(
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant:
-			case parser.NodeType.ArbitraryVariant:
 				b = b + state.separator.length
+				break
+			case parser.NodeType.ArbitraryVariant:
+				if (position !== b) variantEnabled = false
 				break
 			case parser.NodeType.CssDeclaration:
 			case parser.NodeType.ArbitraryClassname:
