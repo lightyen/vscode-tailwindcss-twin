@@ -102,6 +102,7 @@ function findRightBlockComment(text: string, start = 0, end = text.length): numb
 }
 
 function isSpace(char: number) {
+	if (Number.isNaN(char)) return true
 	switch (char) {
 		case 32:
 		case 12:
