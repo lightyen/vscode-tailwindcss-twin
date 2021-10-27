@@ -136,7 +136,7 @@ function variantsCompletion(
 	{ preferVariantWithParentheses }: ServiceOptions,
 ) {
 	const a = suggestion.target?.range[0] ?? 0
-	let b = suggestion.target?.range[1] ?? 0
+	const b = suggestion.target?.range[1] ?? 0
 	const nextCharacter = text.charCodeAt(position)
 	const userVariants = new Set(suggestion.variants)
 
@@ -150,7 +150,6 @@ function variantsCompletion(
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant:
-				b = b + state.separator.length
 				break
 			case parser.NodeType.ArbitraryVariant:
 				if (position !== b) variantEnabled = false
@@ -233,8 +232,10 @@ function variantsCompletion(
 		if (suggestion.target.type === parser.NodeType.SimpleVariant) {
 			if (position > a && position < b) {
 				doReplace(variantItems, document, offset, a, b, item => item.label)
-			} else if ((preferVariantWithParentheses && position === a) || (position === b && nextNotSpace)) {
+			} else if (preferVariantWithParentheses && position === a) {
 				doInsert(variantItems, document, offset, a, item => item.label)
+			} else if (position === b) {
+				doInsert(variantItems, document, offset, b, item => item.label)
 			}
 		} else if (
 			suggestion.target.type === parser.NodeType.ClassName ||
@@ -282,7 +283,6 @@ function utilitiesCompletion(
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant: {
 				const isVariantWord = state.tw.isVariant(value)
-				b = b + state.separator.length
 				if (position === b && !isVariantWord) {
 					classNameEnabled = false
 				}
