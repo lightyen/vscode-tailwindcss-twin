@@ -37,15 +37,7 @@ const configExtension: Configuration = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules|\.test\.ts$/,
-				use: [
-					{
-						loader: "babel-loader",
-						options: {
-							presets: ["@babel/preset-env", "@babel/preset-typescript"],
-							plugins: ["@babel/plugin-transform-runtime"],
-						},
-					},
-				],
+				use: "babel-loader",
 			},
 			{
 				test: /\.ya?ml$/,

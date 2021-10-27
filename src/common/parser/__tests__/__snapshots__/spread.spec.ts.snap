@@ -1,0 +1,326 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser util spread 1`] = `
+Object {
+  "emptyGroup": Array [
+    Object {
+      "closed": true,
+      "expressions": Array [],
+      "important": false,
+      "range": Array [
+        161,
+        163,
+      ],
+      "type": "Group",
+    },
+  ],
+  "emptyVariants": Array [
+    Object {
+      "range": Array [
+        273,
+        279,
+      ],
+      "type": "VariantSpan",
+      "variant": Object {
+        "id": Object {
+          "range": Array [
+            273,
+            278,
+          ],
+          "type": "Identifier",
+          "value": "hover",
+        },
+        "range": Array [
+          273,
+          279,
+        ],
+        "type": "SimpleVariant",
+      },
+    },
+  ],
+  "items": Array [
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          0,
+          11,
+        ],
+        "type": "ClassName",
+        "value": "bg-gray-500",
+      },
+      "value": "bg-gray-500",
+      "variants": Array [],
+    },
+    Object {
+      "important": true,
+      "target": Object {
+        "closed": true,
+        "expr": Object {
+          "range": Array [
+            20,
+            26,
+          ],
+          "type": "CssExpression",
+          "value": " 3rem ",
+        },
+        "important": true,
+        "prop": Object {
+          "range": Array [
+            12,
+            19,
+          ],
+          "type": "Identifier",
+          "value": "padding",
+        },
+        "range": Array [
+          12,
+          27,
+        ],
+        "type": "CssDeclaration",
+      },
+      "value": "padding[ 3rem ]",
+      "variants": Array [],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          38,
+          46,
+        ],
+        "type": "ClassName",
+        "value": "border-4",
+      },
+      "value": "border-4",
+      "variants": Array [
+        Object {
+          "range": Array [
+            31,
+            36,
+          ],
+          "type": "SimpleVariant",
+          "value": "hover",
+        },
+      ],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          47,
+          62,
+        ],
+        "type": "ClassName",
+        "value": "border-blue-500",
+      },
+      "value": "border-blue-500",
+      "variants": Array [
+        Object {
+          "range": Array [
+            31,
+            36,
+          ],
+          "type": "SimpleVariant",
+          "value": "hover",
+        },
+      ],
+    },
+    Object {
+      "important": true,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          111,
+          123,
+        ],
+        "type": "ClassName",
+        "value": "text-red-700",
+      },
+      "value": "text-red-700",
+      "variants": Array [
+        Object {
+          "range": Array [
+            67,
+            107,
+          ],
+          "type": "ArbitraryVariant",
+          "value": "
+			.group:hover,
+			// .group:focus]
+		",
+        },
+      ],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          166,
+          175,
+        ],
+        "type": "ClassName",
+        "value": "custom/30",
+      },
+      "value": "custom/30",
+      "variants": Array [],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          176,
+          194,
+        ],
+        "type": "ClassName",
+        "value": "text-yellow-600/80",
+      },
+      "value": "text-yellow-600/80",
+      "variants": Array [],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "closed": true,
+        "e": Object {
+          "closed": true,
+          "opacity": Object {
+            "range": Array [
+              208,
+              210,
+            ],
+            "type": "Identifier",
+            "value": ".3",
+          },
+          "range": Array [
+            211,
+            211,
+          ],
+          "type": "WithOpacity",
+        },
+        "expr": undefined,
+        "important": false,
+        "prop": Object {
+          "range": Array [
+            195,
+            207,
+          ],
+          "type": "Identifier",
+          "value": "bg-gray-500/",
+        },
+        "range": Array [
+          195,
+          211,
+        ],
+        "type": "ArbitraryClassname",
+      },
+      "value": "bg-gray-500/[.3]",
+      "variants": Array [],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "closed": true,
+        "e": undefined,
+        "expr": Object {
+          "range": Array [
+            218,
+            237,
+          ],
+          "type": "CssExpression",
+          "value": "url(http://example)",
+        },
+        "important": false,
+        "prop": Object {
+          "range": Array [
+            214,
+            217,
+          ],
+          "type": "Identifier",
+          "value": "bg-",
+        },
+        "range": Array [
+          214,
+          238,
+        ],
+        "type": "ArbitraryClassname",
+      },
+      "value": "bg-[url(http://example)]",
+      "variants": Array [],
+    },
+    Object {
+      "important": false,
+      "target": Object {
+        "closed": true,
+        "e": Object {
+          "closed": true,
+          "opacity": Object {
+            "range": Array [
+              266,
+              268,
+            ],
+            "type": "Identifier",
+            "value": ".2",
+          },
+          "range": Array [
+            265,
+            269,
+          ],
+          "type": "WithOpacity",
+        },
+        "expr": Object {
+          "range": Array [
+            247,
+            263,
+          ],
+          "type": "CssExpression",
+          "value": "rgba(3 3 3 / .8)",
+        },
+        "important": false,
+        "prop": Object {
+          "range": Array [
+            241,
+            246,
+          ],
+          "type": "Identifier",
+          "value": "text-",
+        },
+        "range": Array [
+          241,
+          269,
+        ],
+        "type": "ArbitraryClassname",
+      },
+      "value": "text-[rgba(3 3 3 / .8)]/[.2]",
+      "variants": Array [],
+    },
+  ],
+  "notClosed": Array [
+    Object {
+      "closed": false,
+      "expressions": Array [
+        Object {
+          "important": false,
+          "range": Array [
+            282,
+            288,
+          ],
+          "type": "ClassName",
+          "value": "q-test",
+        },
+      ],
+      "important": false,
+      "range": Array [
+        280,
+        288,
+      ],
+      "type": "Group",
+    },
+  ],
+}
+`;

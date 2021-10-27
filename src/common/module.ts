@@ -116,6 +116,7 @@ export function requireModule(moduleName: string, options: string | requireModul
 
 	const __module = new Module(filename)
 	__module.paths = paths
+	if (process.env.NODE_ENV === "test") return require(moduleName)
 	return __module.require(moduleName)
 }
 
