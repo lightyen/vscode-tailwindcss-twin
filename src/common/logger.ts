@@ -1,3 +1,6 @@
+import { formatWithOptions } from "util"
+import type { OutputChannel } from "vscode"
+
 enum LogLevel {
 	None,
 	Error,
@@ -8,13 +11,46 @@ enum LogLevel {
 }
 
 export type LogLevelString = "none" | "error" | "warning" | "info" | "debug" | "trace"
-import { format } from "util"
-import type { OutputChannel } from "vscode"
+
+function level2LevelString(logLevel: LogLevel | LogLevelString) {
+	switch (logLevel) {
+		case LogLevel.None:
+			return "none"
+		case LogLevel.Error:
+			return "error"
+		case LogLevel.Warning:
+			return "warning"
+		case LogLevel.Info:
+			return "info"
+		case LogLevel.Debug:
+			return "debug"
+		case LogLevel.Trace:
+			return "trace"
+		default:
+			return logLevel
+	}
+}
+
+function levelString2LogLevel(logLevel: LogLevel | LogLevelString) {
+	switch (logLevel) {
+		case "error":
+			return LogLevel.Error
+		case "warning":
+			return LogLevel.Warning
+		case "info":
+			return LogLevel.Info
+		case "debug":
+			return LogLevel.Debug
+		case "trace":
+			return LogLevel.Trace
+		default:
+			return LogLevel.None
+	}
+}
 
 interface Options {
 	logLevel: LogLevel | LogLevelString
 	colors?: boolean
-	getPrefix?(): string
 	outputChannel?: OutputChannel
 }
 
@@ -42,31 +78,11 @@ const FgMagenta = "\x1b[35m"
 export function createLogger({
 	logLevel = LogLevel.Info,
 	colors = true,
-	getPrefix = () => `[${new Date().toLocaleString()}]`,
 	outputChannel: _outputChannel,
 }: Partial<Options> = {}): Logger {
 	let _mode: "debugConsole" | "outputChannel" | "all" = "outputChannel"
 	if (typeof logLevel === "string") {
-		switch (logLevel) {
-			case "none":
-				logLevel = LogLevel.None
-				break
-			case "error":
-				logLevel = LogLevel.Error
-				break
-			case "warning":
-				logLevel = LogLevel.Warning
-				break
-			case "info":
-				logLevel = LogLevel.Info
-				break
-			case "debug":
-				logLevel = LogLevel.Debug
-				break
-			case "trace":
-				logLevel = LogLevel.Trace
-				break
-		}
+		logLevel = levelString2LogLevel(logLevel)
 	}
 
 	return {
@@ -83,44 +99,10 @@ export function createLogger({
 			_mode = mode
 		},
 		set level(level: LogLevelString) {
-			switch (level) {
-				case "none":
-					logLevel = LogLevel.None
-					break
-				case "error":
-					logLevel = LogLevel.Error
-					break
-				case "warning":
-					logLevel = LogLevel.Warning
-					break
-				case "info":
-					logLevel = LogLevel.Info
-					break
-				case "debug":
-					logLevel = LogLevel.Debug
-					break
-				case "trace":
-					logLevel = LogLevel.Trace
-					break
-			}
+			logLevel = levelString2LogLevel(level)
 		},
 		get level() {
-			switch (logLevel) {
-				case LogLevel.None:
-					return "none"
-				case LogLevel.Error:
-					return "error"
-				case LogLevel.Warning:
-					return "warning"
-				case LogLevel.Info:
-					return "info"
-				case LogLevel.Debug:
-					return "debug"
-				case LogLevel.Trace:
-					return "trace"
-				default:
-					return "none"
-			}
+			return level2LevelString(logLevel)
 		},
 	}
 
@@ -128,19 +110,14 @@ export function createLogger({
 		if (logLevel < level) {
 			return
 		}
-		const prefix = getPrefix()
-		if (prefix) {
-			args.unshift(prefix)
-		}
+		const datetime = `[${new Date().toLocaleString()}]`
+		const lv = `[${level2LevelString(level)}]`
 		if (_mode === "outputChannel" || _mode === "all") {
-			_outputChannel?.appendLine(format(...args))
+			_outputChannel?.appendLine(formatWithOptions({ colors: false, depth: 3 }, datetime, lv, ...args))
 			if (_mode === "outputChannel") return
 		}
-		if (colors) {
-			args = args.map(arg => {
-				if (typeof arg === "string") return arg
-				return format(arg)
-			})
+		if (colors && typeof args[0] === "string") {
+			args.unshift(lv)
 			switch (level) {
 				case LogLevel.Error:
 					args.unshift(FgRed)
@@ -164,6 +141,7 @@ export function createLogger({
 					break
 			}
 		}
+
 		switch (level) {
 			case LogLevel.Error:
 				console.error(...args)
@@ -175,10 +153,10 @@ export function createLogger({
 				console.info(...args)
 				break
 			case LogLevel.Debug:
-				console.log(...args)
+				console.debug(...args)
 				break
 			case LogLevel.Trace:
-				console.log(...args)
+				console.debug(...args)
 				break
 		}
 	}
