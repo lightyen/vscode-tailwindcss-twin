@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.11.3
+
+- Support untitled
+- Refactor parser
+- Remove `eval()`
+
 ## 0.11.2
 
 - Fix duplicate warnings [#24](https://github.com/lightyen/vscode-tailwindcss-twin/issues/24)
