@@ -1,9 +1,11 @@
 import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
+import { removeComment } from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
 import { transformSourceMap } from "@/sourcemap"
 import { cssDataManager } from "@/vscode-css-languageservice"
+import { css_beautify } from "js-beautify"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 import type { ServiceOptions } from "."
@@ -86,15 +88,20 @@ export default async function hover(
 				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const codes = new vscode.MarkdownString()
-					let code = selection.value
+					let code = removeComment(selection.value)
+
+					code = beautify(code)
+
 					if (!code) {
 						return {
 							range,
 							contents: [header, codes],
 						}
 					}
-					code = state.tw.renderArbitraryVariant(code, tabSize)
-					if (code) codes.appendCodeblock(code, "scss")
+
+					code += ` {\n${" ".repeat(tabSize)}/* ... */\n}`
+					codes.appendCodeblock(code, "scss")
+
 					return {
 						range,
 						contents: [header, codes],
@@ -188,6 +195,14 @@ export default async function hover(
 		}
 
 		return undefined
+	}
+
+	function beautify(code: string) {
+		return css_beautify(code, {
+			indent_char: " ",
+			indent_size: tabSize,
+			selector_separator_newline: false,
+		})
 	}
 }
 

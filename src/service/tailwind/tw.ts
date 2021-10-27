@@ -104,7 +104,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		screens,
 		isVariant,
 		renderVariant,
-		renderArbitraryVariant,
 		renderClassname,
 		renderCssProperty,
 		renderDecls,
@@ -176,13 +175,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return indent(tabSize, data.join(", ") + " {\n    /* ... */\n}")
 	}
 
-	function renderArbitraryVariant(code: string, tabSize = 4) {
-		code = code.trim().replace(/\s{2,}/g, " ")
-		code = code + " {\n    /* ... */\n}"
-		const root = postcss.parse(code)
-		return indent(tabSize, root.toString())
-	}
-
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
 		if (rootFontSize <= 0) {
 			return cssValue
@@ -201,17 +193,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return cssValue.replace(reg, text + `/** ${(rootFontSize * val).toFixed(0)}px */`)
 	}
 
-	function renderClassname({
-		classname,
-		important = false,
-		rootFontSize = 0,
-		tabSize = 4,
-	}: {
-		classname: string
-		important?: boolean
-		rootFontSize?: number
-		tabSize?: number
-	}): CssText {
+	function render(classname: string) {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1
@@ -226,7 +208,21 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		root.walkAtRules("defaults", rule => {
 			rule.remove()
 		})
+		return root
+	}
 
+	function renderClassname({
+		classname,
+		important = false,
+		rootFontSize = 0,
+		tabSize = 4,
+	}: {
+		classname: string
+		important?: boolean
+		rootFontSize?: number
+		tabSize?: number
+	}): CssText {
+		const root = render(classname)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
 				decl.important = important
@@ -412,17 +408,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	}
 
 	function renderDecls(classname: string) {
-		const items = generateRules([classname], context).sort(([a], [b]) => {
-			if (a < b) {
-				return -1
-			} else if (a > b) {
-				return 1
-			} else {
-				return 0
-			}
-		})
-
-		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		const root = render(classname)
 		const decls: Map<string, string[]> = new Map()
 		root.walkDecls(({ prop, value, variable, important }) => {
 			const values = decls.get(prop)
