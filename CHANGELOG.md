@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.11.4
+
+- Disable auto-complete in arbitrary variant
+
 ## 0.11.3
 
 - Support untitled
