@@ -2,7 +2,7 @@ import { CleanWebpackPlugin } from "clean-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
 import path from "path"
-import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
+import { TsPathsResolvePlugin } from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
 import { ExternalsPlugin } from "webpack"
 
@@ -47,9 +47,9 @@ const configExtension: Configuration = {
 	},
 	resolve: {
 		extensions: [".ts", ".js", ".json"],
-		plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(clientWorkspaceFolder, "tsconfig.json") })],
 	},
 	plugins: [
+		new TsPathsResolvePlugin({ tsConfigPath: path.resolve(clientWorkspaceFolder, "tsconfig.json") }),
 		new ForkTsCheckerPlugin({
 			typescript: {
 				configFile: path.resolve(clientWorkspaceFolder, "tsconfig.json"),

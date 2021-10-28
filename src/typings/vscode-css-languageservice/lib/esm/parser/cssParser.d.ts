@@ -101,9 +101,12 @@ declare module "vscode-css-languageservice/lib/esm/parser/cssParser" {
 		_parseMediaDeclaration(isNested?: boolean): nodes.Node | null
 		_parseMedia(isNested?: boolean): nodes.Node | null
 		_parseMediaQueryList(): nodes.Medialist
-		_parseMediaQuery(resyncStopToken: TokenType[]): nodes.Node | null
-		_parseMediaContentStart(): nodes.Node | null
+		_parseMediaQuery(): nodes.Node | null
+		_parseRatio(): nodes.Node | null
+		_parseMediaCondition(): nodes.Node | null
+		_parseMediaFeature(): nodes.Node | null
 		_parseMediaFeatureName(): nodes.Node | null
+		_parseMediaFeatureValue(): nodes.Node | null
 		_parseMedium(): nodes.Node | null
 		_parsePageDeclaration(): nodes.Node | null
 		_parsePage(): nodes.Node | null
