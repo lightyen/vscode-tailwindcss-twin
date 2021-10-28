@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.11.6
+
+- Fix utilites complettion list after variant
+
 ## 0.11.5
 
 - Fix variant completion item
