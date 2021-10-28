@@ -282,10 +282,7 @@ function utilitiesCompletion(
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant: {
-				const isVariantWord = state.tw.isVariant(value)
-				if (position === b && !isVariantWord) {
-					classNameEnabled = false
-				}
+				if (position < b) classNameEnabled = false
 				break
 			}
 			case parser.NodeType.ArbitraryVariant:
