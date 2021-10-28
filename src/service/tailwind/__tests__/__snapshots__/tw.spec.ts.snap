@@ -1,0 +1,110 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tw suit: classname 1`] = `
+".text-green-300 {
+    --tw-text-opacity: 1;
+    color: rgba(110, 231, 183, var(--tw-text-opacity))
+}"
+`;
+
+exports[`tw suit: classname 2`] = `
+".p-3 {
+    padding: 0.75rem/** 12px */
+}"
+`;
+
+exports[`tw suit: classname 3`] = `
+".bg-\\\\[rgb\\\\(3\\\\2c \\\\ 3\\\\2c \\\\ 3\\\\)\\\\] {
+    --tw-bg-opacity: 1;
+    background-color: rgba(3, 3, 3, var(--tw-bg-opacity))
+}"
+`;
+
+exports[`tw suit: classname 4`] = `""`;
+
+exports[`tw suit: classname 5`] = `
+".divide-black > :not([hidden]) ~ :not([hidden]) {
+    --tw-divide-opacity: 1 !important;
+    border-color: rgba(0, 0, 0, var(--tw-divide-opacity)) !important
+}"
+`;
+
+exports[`tw suit: classname 6`] = `
+".text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem
+}"
+`;
+
+exports[`tw suit: classname 7`] = `
+".text-\\\\[2px\\\\] {
+    font-size: 2px
+}"
+`;
+
+exports[`tw suit: classname 8`] = `
+".text-\\\\[red\\\\] {
+    --tw-text-opacity: 1;
+    color: rgba(255, 0, 0, var(--tw-text-opacity))
+}"
+`;
+
+exports[`tw suit: classname 9`] = `""`;
+
+exports[`tw suit: classname 10`] = `
+".text-red-300\\\\/\\\\[\\\\.2\\\\] {
+    color: rgba(252, 165, 165, .2)
+}"
+`;
+
+exports[`tw suit: css declaration 1`] = `
+"& {
+    background: rgb(3 3 3 / .2)
+}"
+`;
+
+exports[`tw suit: css declaration 2`] = `
+"& {
+    background: rgb(3 3 3 / .2) !important
+}"
+`;
+
+exports[`tw suit: css declaration 3`] = `
+"& {
+    padding: 2.5rem/** 30px */
+}"
+`;
+
+exports[`tw suit: decls 1`] = `
+Map {
+  "font-size" => Array [
+    "1.5rem",
+  ],
+  "line-height" => Array [
+    "2rem",
+  ],
+}
+`;
+
+exports[`tw suit: decls 2`] = `
+Map {
+  "--tw-gradient-from" => Array [
+    "#fbcfe8",
+  ],
+  "--tw-gradient-stops" => Array [
+    "var(--tw-gradient-from), var(--tw-gradient-to, rgba(251, 207, 232, 0))",
+  ],
+}
+`;
+
+exports[`tw suit: decls 3`] = `
+Map {
+  "border-style" => Array [
+    "double",
+  ],
+}
+`;
+
+exports[`tw suit: not supported 1`] = `""`;
+
+exports[`tw suit: not supported 2`] = `Map {}`;

@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser util hover 1`] = `
+Object {
+  "important": true,
+  "target": Object {
+    "important": false,
+    "range": Array [
+      106,
+      118,
+    ],
+    "type": "ClassName",
+    "value": "text-red-700",
+  },
+  "value": "text-red-700",
+  "variants": Array [
+    "
+		.group:hover,
+		// .group:focus]
+	",
+  ],
+}
+`;

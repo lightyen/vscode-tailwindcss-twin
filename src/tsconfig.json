@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "target": "ES2020",
     "lib": ["ESNext"],
-    "types": ["node", "vscode", "webpack-env", "tailwind-types"],
+    "types": ["node", "vscode", "webpack-env", "tailwind-types", "@types/jest"],
     "rootDir": "..",
     "paths": {
       "~/*": ["./*"],
@@ -13,6 +13,5 @@
       "@/*": ["./common/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.json", "../package.json", "../package.nls*.json"],
-  "exclude": ["**/__tests__/**", "**/*.test.ts"]
+  "include": ["**/*.ts", "**/*.json", "../package.json", "../package.nls*.json"]
 }
