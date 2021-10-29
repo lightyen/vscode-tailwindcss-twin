@@ -1,4 +1,5 @@
 import { importFrom } from "@/module"
+import type { PnpApi } from "@/pnp"
 import Fuse from "fuse.js"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
@@ -109,9 +110,10 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 		return cfg
 	}
 
-	function readTailwindConfig() {
+	function readTailwindConfig(pnp?: PnpApi) {
 		const moduleName = configPath.fsPath
 		let __config = importFrom(moduleName, {
+			pnp,
 			cache: false,
 			header:
 				extensionMode === ExtensionMode.Development

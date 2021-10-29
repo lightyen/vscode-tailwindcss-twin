@@ -1,4 +1,5 @@
 import { defaultLogger as console } from "@/logger"
+import { findPnpApi } from "@/pnp"
 import { deepStrictEqual } from "assert"
 import path from "path"
 import vscode, { CodeAction } from "vscode"
@@ -110,6 +111,9 @@ export async function workspaceClient(
 	if (typeof settings.colorDecorators === "boolean") {
 		settings.colorDecorators = settings.colorDecorators ? "on" : "off"
 	}
+
+	const pnpContext = findPnpApi(workspaceFolder.fsPath)
+	if (pnpContext) pnpContext.setup()
 
 	for (const configPath of tailwindConfigs) {
 		addService(URI.parse(configPath.toString()), settings)
@@ -417,6 +421,7 @@ export async function workspaceClient(
 			extensionUri,
 			workspaceFolder,
 			extensionMode,
+			pnpContext,
 		})
 		services.set(ws.uri.toString(), srv)
 		if (startNow) srv.start()
@@ -448,6 +453,7 @@ export async function workspaceClient(
 				extensionUri,
 				workspaceFolder,
 				extensionMode,
+				pnpContext,
 			})
 			services.set(key, srv)
 			if (startNow) srv.start()
@@ -462,6 +468,7 @@ export async function workspaceClient(
 					extensionUri,
 					workspaceFolder,
 					extensionMode,
+					pnpContext,
 				})
 				console.info("remove:", path.relative(workspaceFolder.path, srv.configPath.path))
 				services.delete(key)
@@ -495,6 +502,7 @@ export async function workspaceClient(
 						extensionUri,
 						workspaceFolder,
 						extensionMode,
+						pnpContext,
 					})
 					services.set(folder, srv)
 					if (startNow) srv.start()
