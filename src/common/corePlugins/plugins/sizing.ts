@@ -145,6 +145,10 @@ export const borderRadius: PluginConstructor = (context: Context): Plugin => {
 			return true
 		}
 
+		if (isArbitraryValue(val)) {
+			return true // NO CHECKING
+		}
+
 		return values.some(c => c === val)
 	}
 }
