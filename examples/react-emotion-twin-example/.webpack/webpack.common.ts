@@ -7,7 +7,6 @@ import { Configuration } from "webpack"
 // Plugins
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import MiniCssExtractPlugin from "mini-css-extract-plugin"
-import WebpackBarPlugin from "webpackbar"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import glob from "glob"
 
@@ -37,7 +36,6 @@ export default function (): Configuration {
 	return {
 		target: "web",
 		plugins: [
-			new WebpackBarPlugin({ color: "blue", name: "React" }),
 			new EnvironmentPlugin({
 				NODE_ENV: "development",
 				PUBLIC_URL: "",

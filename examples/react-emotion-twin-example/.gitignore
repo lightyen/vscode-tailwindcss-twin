@@ -12,3 +12,4 @@ npm-debug.log.*
 package-lock.json
 thumbs.db
 stat.json
+yarn.lock

@@ -1,9 +1,10 @@
-import "twin.macro"
+import { screen } from "twin.macro"
 
 export default function Logo() {
 	return (
 		<a
 			tw="w-32 mb-10 p-5 block opacity-100 transition hover:opacity-60"
+			css={[theme => ({ background: theme.colors.primary }), screen`lg`({ background: "transparent" })]}
 			href="https://github.com/ben-rogerson/twin.macro"
 			target="_blank"
 			rel="noopener noreferrer"

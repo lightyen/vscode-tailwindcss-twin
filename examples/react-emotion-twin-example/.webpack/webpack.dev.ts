@@ -1,3 +1,4 @@
+/// <reference types="@types/webpack-dev-server" />
 import { merge } from "webpack-merge"
 import createBaseConfig from "./webpack.common"
 import type { Configuration } from "webpack"
@@ -30,6 +31,9 @@ const config: Configuration = {
 		new ForkTsCheckerPlugin({
 			typescript: {
 				configFile: path.resolve(process.cwd(), "src", "tsconfig.json"),
+			},
+			logger: {
+				devServer: false,
 			},
 		}),
 		new ReactRefreshPlugin(),
