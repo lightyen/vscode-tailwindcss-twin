@@ -3,6 +3,7 @@ import { typescriptExtractor } from "@/extractors/typescript"
 import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
 import * as parser from "@/parser"
+import type { PnpApi } from "@/pnp"
 import { transformSourceMap } from "@/sourcemap"
 import EventEmitter from "events"
 import path from "path"
@@ -24,6 +25,7 @@ interface Environment {
 	extensionUri: URI
 	serverSourceMapUri: URI
 	extensionMode: ExtensionMode
+	pnpContext: PnpApi | undefined
 }
 
 export type ServiceOptions = Settings & Environment
@@ -112,7 +114,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			loading = true
 			console.info("loading:", configPathString)
 			const start = process.hrtime.bigint()
-			state.readTailwindConfig()
+			state.readTailwindConfig(options.pnpContext)
 			await state.createContext()
 			_colorProvider = createColorProvider(state.tw, state.separator)
 			const end = process.hrtime.bigint()
@@ -134,7 +136,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			loading = true
 			console.info("reloading:", configPathString)
 			const start = process.hrtime.bigint()
-			state.readTailwindConfig()
+			state.readTailwindConfig(options.pnpContext)
 			await state.createContext()
 			_colorProvider?.dispose()
 			_colorProvider = createColorProvider(state.tw, state.separator)

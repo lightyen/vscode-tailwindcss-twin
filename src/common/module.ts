@@ -3,55 +3,32 @@ import path from "path"
 import ts from "typescript"
 import * as tp from "typescript-paths"
 import { defaultLogger as console } from "./logger"
-
-interface PnpEntry {
-	setup?(): void
-	resolveRequest(moduleId: string, issuer?: string): string
-}
-
-function tryPnP(ws: string) {
-	let pnp: PnpEntry | undefined
-	try {
-		let pnpJs = path.join(ws, ".pnp.js")
-		if (!path.isAbsolute(pnpJs) && !pnpJs.startsWith("./") && !pnpJs.startsWith("../")) {
-			pnpJs = "./" + pnpJs
-		}
-		// @ts-ignore TS/7016
-		const filename = Module["_resolveFilename"](pnpJs, { paths: Module["_nodeModulePaths"](ws) })
-		const module = new Module("")
-		pnp = module.require(filename)
-	} catch {}
-
-	pnp?.setup?.()
-
-	return pnp
-}
-
-let pnp: PnpEntry | undefined
-if (!pnp) {
-	pnp = tryPnP(process.cwd())
-}
+import type { PnpApi } from "./pnp"
 
 interface resolveModuleNameOptions {
+	filename?: string
 	paths?: string[] | string | undefined
-	pnp?: PnpEntry | undefined
+	pnp?: PnpApi | undefined
 }
 
 export function resolveModuleName(
 	moduleName: string,
 	options: string | resolveModuleNameOptions = {},
 ): string | undefined {
-	let pnp: PnpEntry | undefined
+	let pnp: PnpApi | undefined
 	let paths: string | string[] | undefined
+	let filename = ""
 	if (typeof options === "string") {
 		paths = options
 	} else {
 		pnp = options.pnp
 		paths = options.paths
+		filename = options.filename || ""
 	}
 
 	if (pnp) {
-		return pnp.resolveRequest(moduleName, "empty")
+		if (!path.isAbsolute(filename)) filename = path.resolve(filename)
+		moduleName = pnp.resolveRequest(moduleName, filename)
 	}
 	if (paths) {
 		if (typeof paths === "string") {
@@ -69,13 +46,13 @@ export function resolveModuleName(
 
 interface requireModuleOptions {
 	paths?: string[] | string | undefined
-	pnp?: PnpEntry | undefined
+	pnp?: PnpApi | undefined
 	cache?: boolean | undefined
 	filename?: string | undefined
 }
 
 export function requireModule(moduleName: string, options: string | requireModuleOptions = {}) {
-	let pnp: PnpEntry | undefined
+	let pnp: PnpApi | undefined
 	let paths: string | string[] | undefined
 	let cache = true
 	let filename = ""
@@ -89,7 +66,8 @@ export function requireModule(moduleName: string, options: string | requireModul
 	}
 
 	if (pnp) {
-		moduleName = pnp.resolveRequest(moduleName, filename || "empty")
+		if (!path.isAbsolute(filename)) filename = path.resolve(filename)
+		moduleName = pnp.resolveRequest(moduleName, filename)
 	}
 	if (typeof paths === "string") {
 		// @ts-ignore TS/7016
@@ -144,7 +122,7 @@ function requireModuleFromCode(
 	code: string,
 	filename: string,
 	host: ts.ModuleResolutionHost,
-	pnp?: PnpEntry | undefined,
+	pnp?: PnpApi | undefined,
 	mappings?: Mappings | undefined,
 	base = path.dirname(filename),
 ) {
@@ -226,6 +204,7 @@ interface importFromOptions {
 	base?: string | undefined
 	cache?: boolean | undefined
 	header?: string | undefined
+	pnp?: PnpApi | undefined
 }
 
 const logger = tp.createLogger({ logLevel: tp.LogLevel.Error })
@@ -239,12 +218,14 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	let base = ""
 	let header = ""
 	let cache = true
+	let pnp: PnpApi | undefined
 	if (typeof options === "string") {
 		base = options
 	} else if (options && typeof options === "object") {
 		header = options.header || ""
 		base = options.base || ""
 		cache = options.cache || true
+		pnp = options.pnp
 	}
 
 	const compilerOptions: ts.CompilerOptions = {
@@ -302,7 +283,6 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 			case ".js":
 			case ".cjs":
 			case ".mjs": {
-				const pnp = tryPnP(currentDirectory)
 				if (pnp) compilerOptions.strict = false
 				return interopExport(
 					requireModuleFromCode(
@@ -316,7 +296,6 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 				)
 			}
 			default: {
-				const pnp = tryPnP(currentDirectory)
 				if (pnp) compilerOptions.strict = false
 				const containingFile = path.resolve(currentDirectory, "empty")
 				const { resolvedModule } = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host)
@@ -354,7 +333,6 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 			}
 		}
 
-		const pnp = tryPnP(base)
 		const containingFile = path.resolve(base, "empty")
 		const { resolvedModule } = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host)
 		if (resolvedModule?.resolvedFileName) moduleName = resolvedModule.resolvedFileName
