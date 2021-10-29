@@ -1,4 +1,4 @@
-import tw, { css, styled, theme } from "twin.macro"
+import tw, { css, styled } from "twin.macro"
 
 interface Props {
 	isPrimary?: boolean
@@ -6,7 +6,7 @@ interface Props {
 	isSmall?: boolean
 }
 
-const Button = styled.button(({ isPrimary, isSecondary, isSmall }: Props) => [
+const Button = styled.button<Props>(({ theme, isPrimary, isSecondary, isSmall }) => [
 	// The common button styles added with the tw import
 	tw`text-lg px-8 py-2 rounded focus:outline-none`,
 	tw`duration-75`,
@@ -25,7 +25,7 @@ const Button = styled.button(({ isPrimary, isSecondary, isSmall }: Props) => [
 
 	// The theme import can supply values from your tailwind.config.js
 	css`
-		color: ${theme`colors.white`};
+		color: ${theme.colors.primary};
 	`,
 ])
 

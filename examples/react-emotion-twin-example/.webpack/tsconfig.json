@@ -6,8 +6,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["esnext"],
+    "types": ["@types/webpack-dev-server"],
     "target": "es6",
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./*"]
     }

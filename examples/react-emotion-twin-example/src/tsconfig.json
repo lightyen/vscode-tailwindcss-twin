@@ -5,8 +5,8 @@
     "module": "esnext",
     "moduleResolution": "node",
     "target": "esnext",
+    "typeRoots": ["./typings"],
     "lib": ["esnext", "dom", "dom.iterable", "webworker"],
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
       "assets/*": ["./assets/*"]

@@ -4,6 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["esnext"],
+    "types": ["tailwind-types"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
