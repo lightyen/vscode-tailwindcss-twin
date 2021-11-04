@@ -3,7 +3,6 @@ import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import { removeComment } from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
-import { transformSourceMap } from "@/sourcemap"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import { css_beautify } from "js-beautify"
 import vscode from "vscode"
@@ -191,9 +190,7 @@ export default async function hover(
 				}
 			}
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("hover failed.")
 		}
 

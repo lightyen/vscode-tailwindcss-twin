@@ -2,7 +2,6 @@ import * as extractColors from "@/extractColors"
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
-import { transformSourceMap } from "@/sourcemap"
 import * as vscode from "vscode"
 import { ServiceOptions } from "."
 import { TailwindLoader } from "./tailwind"
@@ -71,9 +70,7 @@ export default function documentColors(
 				}
 			}
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("do document colors failed.")
 		}
 	}
