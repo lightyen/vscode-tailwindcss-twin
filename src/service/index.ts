@@ -4,7 +4,6 @@ import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
 import * as parser from "@/parser"
 import type { PnpApi } from "@/pnp"
-import { transformSourceMap } from "@/sourcemap"
 import EventEmitter from "events"
 import path from "path"
 import vscode from "vscode"
@@ -121,9 +120,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			activated.emit("signal")
 			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("load failed: " + configPathString + "\n")
 		} finally {
 			loading = false
@@ -144,9 +141,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			activated.emit("signal")
 			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("reload failed: " + configPathString + "\n")
 		} finally {
 			loading = false
@@ -259,9 +254,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		try {
 			return callback()
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			return defaultValue
 		}
 	}

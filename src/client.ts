@@ -363,7 +363,6 @@ export async function workspaceClient(
 	) {
 		collection.delete(document.uri)
 		const awaitedDiagnostics = await diagnostics
-		console.debug("awaitedDiagnostics", awaitedDiagnostics?.length)
 		if (awaitedDiagnostics) collection.set(document.uri, awaitedDiagnostics)
 	}
 

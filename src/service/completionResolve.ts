@@ -1,6 +1,5 @@
 import { defaultLogger as console } from "@/logger"
 import { CodeKind, createFencedCodeBlock } from "@/markdown"
-import { transformSourceMap } from "@/sourcemap"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 import { ICompletionItem } from "~/typings/completion"
@@ -36,9 +35,7 @@ export default function completionResolve(
 		}
 		return item
 	} catch (error) {
-		const err = error as Error
-		if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-		console.error(err)
+		console.error(error)
 		return item
 	}
 }

@@ -2,7 +2,6 @@ import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import parseThemeValue from "@/parseThemeValue"
-import { transformSourceMap } from "@/sourcemap"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import vscode from "vscode"
@@ -127,9 +126,7 @@ export function validate(
 			}
 			return diagnostics
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("do validation failed.")
 		}
 

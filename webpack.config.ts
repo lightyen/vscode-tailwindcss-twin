@@ -32,6 +32,10 @@ const configExtension: Configuration = {
 		libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "[absolute-resource-path]",
 	},
+	experiments: {
+		asyncWebAssembly: true,
+		syncWebAssembly: true,
+	},
 	module: {
 		rules: [
 			{

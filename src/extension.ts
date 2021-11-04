@@ -1,10 +1,13 @@
 import { defaultLogger as console } from "@/logger"
+import { install } from "source-map-support"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
 import packageInfo from "../package.json"
 import { workspaceClient } from "./client"
 import { intl } from "./locale"
 import { NAME } from "./shared"
+
+install()
 
 const outputChannel = vscode.window.createOutputChannel(NAME)
 console.outputChannel = outputChannel

@@ -3,7 +3,6 @@ import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as nodes from "@/parser/nodes"
 import { findThemeValueKeys } from "@/parseThemeValue"
-import { transformSourceMap } from "@/sourcemap"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import chroma from "chroma-js"
 import vscode from "vscode"
@@ -60,9 +59,7 @@ export default function completion(
 				return list
 			}
 		} catch (error) {
-			const err = error as Error
-			if (err.stack) err.stack = transformSourceMap(options.serverSourceMapUri.fsPath, err.stack)
-			console.error(err)
+			console.error(error)
 			console.error("build completion list failed.")
 		}
 		return undefined
