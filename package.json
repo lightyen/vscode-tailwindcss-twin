@@ -2,7 +2,7 @@
   "name": "tailwindcss-intellisense-twin",
   "displayName": "Tailwind Twin IntelliSense",
   "markdownDescription": "Tailwind VSCode Extension for twin.macro",
-  "version": "0.0.0-tailwind3.alpha.8",
+  "version": "0.0.0-tailwind3.alpha.9",
   "author": "lightyen",
   "license": "MIT",
   "private": true,
