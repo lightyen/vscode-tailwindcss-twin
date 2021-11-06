@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.11.7
+
+- Enhance yarn2 feature
+- Enhance diagnostics #27
+- Enhance crash dump
+- Enhance corePlugins
+
 ## 0.11.6
 
 - Fix utilites complettion list after variant
