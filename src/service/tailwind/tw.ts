@@ -127,7 +127,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	function escape(className: string) {
 		const node = parser.attribute() as Attribute
 		node.value = className
-		return node.raws.value
+		return node.raws.value || node.value
 	}
 
 	function indent(tabSize: number, value: string) {
@@ -386,7 +386,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	}
 
 	function getColorDecls(classname: string): Map<string, string[]> | undefined {
-		const decls = renderDecls(classname)
+		const { decls } = renderDecls(classname)
 		for (const [prop] of decls) {
 			if (colorProps.indexOf(prop) !== -1) {
 				return decls
@@ -422,7 +422,17 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			}
 		})
 
-		return decls
+		// TODO: use more common method to get the scope
+		const scopes: string[] = []
+		const selector = "." + escape(classname)
+		root.walkRules(rule => {
+			if (rule.selector.startsWith(selector)) {
+				const scope = rule.selector.replace(selector, "")
+				if (scope) scopes.push(scope)
+			}
+		})
+
+		return { decls, scopes }
 	}
 
 	function isVariant(value: string) {

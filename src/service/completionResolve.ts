@@ -118,7 +118,7 @@ function getRemUnit(classname: string, rootFontSize: number, state: TailwindLoad
 		return ""
 	}
 
-	const decls = state.tw.renderDecls(classname)
+	const decls = state.tw.renderDecls(classname).decls
 	const reg = /(-?\d[.\d+e]*)rem/
 
 	for (const [, values] of decls) {

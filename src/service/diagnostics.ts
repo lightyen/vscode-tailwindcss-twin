@@ -248,7 +248,7 @@ function validateTwin({
 				}
 
 				const label = text.slice(item.target.range[0], item.target.range[1])
-				const decls = state.tw.renderDecls(label)
+				const { decls, scopes } = state.tw.renderDecls(label)
 				if (decls.size === 0) {
 					continue
 				}
@@ -271,7 +271,7 @@ function validateTwin({
 					for (const [prop] of decls) {
 						s.add(prop)
 					}
-					const key = [...variants, Array.from(s).sort().join(":")].join(".")
+					const key = [...variants, ...scopes, Array.from(s).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
 						target.push(item.target.range)
@@ -280,7 +280,7 @@ function validateTwin({
 					}
 				} else if (diagnostics.conflict === "strict") {
 					for (const [prop] of decls) {
-						const key = [undefined, ...variants, prop].join(".")
+						const key = [undefined, ...variants, ...scopes, prop].join(".")
 						const target = map[key]
 						if (target instanceof Array) {
 							target.push(item.target.range)
@@ -480,7 +480,7 @@ function checkTwinClassName(
 		range: [start, end],
 	} = item.target
 	const value = text.slice(start, end)
-	if (state.tw.renderDecls(value).size === 0) {
+	if (state.tw.renderDecls(value).decls.size === 0) {
 		const ret = guess(state, value)
 		if (ret.score === 0) {
 			switch (ret.kind) {
