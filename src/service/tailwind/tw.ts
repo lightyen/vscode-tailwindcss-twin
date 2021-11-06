@@ -5,7 +5,7 @@ import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
 import chroma from "chroma-js"
 import type { Postcss, Result, Rule } from "postcss"
-import type { Processor } from "postcss-selector-parser"
+import type { Attribute, Processor } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 
 const colorProps = [
@@ -401,9 +401,9 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	}
 
 	function escape(classname: string): string {
-		const node = parser.attribute()
+		const node = parser.attribute() as Attribute
 		node.value = classname
-		return node.raws.value
+		return node.raws.value || node.value
 	}
 
 	function renderVariant(variant: string, tabSize = 4) {
@@ -547,7 +547,17 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			}
 		})
 
-		return decls
+		// TODO: use more common method to get the scope
+		const scopes: string[] = []
+		const selector = "." + escape(classname)
+		root.walkRules(rule => {
+			if (rule.selector.startsWith(selector)) {
+				const scope = rule.selector.replace(selector, "")
+				if (scope) scopes.push(scope)
+			}
+		})
+
+		return { decls, scopes }
 	}
 
 	function isVariant(value: string) {
