@@ -356,3 +356,24 @@ export const ringOffsetColor: PluginConstructor = (context: Context): Plugin => 
 	}
 }
 ringOffsetColor.canArbitraryValue = true
+
+export const outlineColor: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "outlineColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.outlineColor)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
+		: null
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "outlineColor"
+		},
+	}
+
+	function isMatch(value: string) {
+		const match = /^outline-(.*)/s.exec(value)
+		if (!match) return false
+		return isColor(match[1], colors, true, opacities)
+	}
+}
+outlineColor.canArbitraryValue = true

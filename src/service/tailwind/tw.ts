@@ -49,9 +49,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	const generateRules: Tailwind.generateRules = importFrom("tailwindcss/lib/lib/generateRules", {
 		base: extensionUri.fsPath,
 	}).generateRules
-	// const expandApplyAtRules: Tailwind.expandApplyAtRules = importFrom("tailwindcss/lib/lib/expandApplyAtRules", {
-	// 	base: extensionUri.fsPath,
-	// })
+	const expandApplyAtRules: Tailwind.expandApplyAtRules = importFrom("tailwindcss/lib/lib/expandApplyAtRules", {
+		base: extensionUri.fsPath,
+	})
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath }) as Postcss
 	const parser = importFrom("postcss-selector-parser", { base: extensionUri.fsPath })
 	const context = createContext(config) as Tailwind.Context
@@ -62,17 +62,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		console.info("function prefix is not supported.")
 	}
 
-	if (typeof config.prefix === "function") {
-		const getPrefix = config.prefix
-		config.prefix = function (classname: string) {
-			const prefix = getPrefix(classname)
-			fn(prefix, classname)
-			return prefix
-			function fn(prefix: string, classname: string) {
-				//
-			}
-		}
-	} else if (typeof config.prefix !== "string") {
+	if (typeof config.prefix !== "string") {
 		config.prefix = ""
 	}
 
@@ -90,6 +80,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	]
 	const variables = new Set<string>()
 	const classnames = context.getClassList()
+	// XXX: Handle tailwindcss bug: exclude the '*' classname
+	if (classnames.indexOf("*") !== -1) classnames.splice(classnames.indexOf("*"), 1)
 	const classnamesMap = new Set(classnames)
 
 	for (const classname of classnames) {
@@ -138,7 +130,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	}
 
 	function renderVariant(variant: string, tabSize = 4): ScssText {
-		const data: string[] = []
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
 			return ""
@@ -150,29 +141,51 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				}),
 			],
 		})
-		const re = new RegExp(
-			("." + escape(variant + config.separator + "☕")).replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
-			"g",
-		)
+
+		const css: string[] = []
+
 		for (const [, fn] of meta) {
 			const container = fakeRoot.clone()
-			fn({ container, separator: config.separator })
-			container.walkDecls(decl => {
-				decl.remove()
+			let wrapper: string[] = []
+			let selector: string | undefined
+
+			const returnValue = fn({
+				container,
+				separator: config.separator,
+				wrap(node) {
+					wrapper.push(node.toString())
+				},
+				format(selectorFormat) {
+					selector = selectorFormat.replace(/:merge\((.*?)\)/g, "$1")
+				},
 			})
-			container.walk(node => {
-				switch (node.type) {
-					case "atrule":
-						data.push(`@${node.name} ${node.params}`)
-						return false
-					case "rule":
-						data.push(node.selector.replace(re, "&"))
-				}
-				return
-			})
+
+			if (!selector && returnValue) selector = returnValue
+			if (!selector && wrapper.length > 0) {
+				selector = wrapper[0]
+				wrapper = wrapper.slice(1)
+			}
+			if (!selector) continue
+
+			let code = selector + " {\n    /* ... */\n}"
+			code = wrapper.reduce((code, w) => renderWrapper(w, code), code)
+
+			css.push(code)
 		}
 
-		return indent(tabSize, data.join(", ") + " {\n    /* ... */\n}")
+		return indent(tabSize, css.join("\n"))
+
+		function renderWrapper(wrapper: string, css: string) {
+			return (
+				wrapper +
+				" {\n" +
+				css
+					.split("\n")
+					.map(s => "    " + s)
+					.join("\n") +
+				"\n}"
+			)
+		}
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
@@ -205,9 +218,13 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+
+		expandApplyAtRules(context)(root)
+
 		root.walkAtRules("defaults", rule => {
 			rule.remove()
 		})
+
 		return root
 	}
 
@@ -229,6 +246,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
+
 		return indent(tabSize, root.toString())
 	}
 
@@ -410,6 +428,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	function renderDecls(classname: string) {
 		const root = render(classname)
 		const decls: Map<string, string[]> = new Map()
+
 		root.walkDecls(({ prop, value, variable, important }) => {
 			const values = decls.get(prop)
 			if (values) {
@@ -422,14 +441,12 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			}
 		})
 
+		// NOTE: handle special selector like: `.divide-red-500 > :not([hidden]) ~ :not([hidden])`
 		// TODO: use more common method to get the scope
 		const scopes: string[] = []
-		const selector = "." + escape(classname)
 		root.walkRules(rule => {
-			if (rule.selector.startsWith(selector)) {
-				const scope = rule.selector.replace(selector, "")
-				if (scope) scopes.push(scope)
-			}
+			const scope = rule.selector.replaceAll("." + escape(classname), "")
+			if (scope) scopes.push(scope)
 		})
 
 		return { decls, scopes }

@@ -266,7 +266,6 @@ peer-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 peer-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 peer-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 peer-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
-peer-open: ""
 
 tw.before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
 tw.after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after

@@ -43,14 +43,9 @@ export enum CompletionItemTag {
 
 export function createTailwindLoader(configPath: URI, extensionUri: URI, extensionMode: ExtensionMode) {
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath })
-	const {
-		applyStateToMarker,
-		updateLastClasses,
-		updateAllClasses,
-		transformAllSelectors,
-		transformAllClasses,
-		transformLastClasses,
-	}: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", { base: extensionUri.fsPath })
+	const { updateAllClasses }: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", {
+		base: extensionUri.fsPath,
+	})
 	const prefixSelector: Tailwind.prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", {
 		base: extensionUri.fsPath,
 	})
@@ -65,12 +60,7 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 		plugin,
 		postcss,
 		prefixSelector,
-		applyStateToMarker,
-		updateLastClasses,
 		updateAllClasses,
-		transformAllSelectors,
-		transformAllClasses,
-		transformLastClasses,
 	}
 
 	let config: Tailwind.ResolvedConfigJS

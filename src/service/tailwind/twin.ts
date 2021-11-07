@@ -21,216 +21,61 @@ export interface ContextModule extends Tailwind.pluginUtils {
 }
 
 export function twin(context: ContextModule): Tailwind.ConfigJS {
-	const {
-		plugin,
-		postcss,
-		transformAllSelectors,
-		applyStateToMarker,
-		prefixSelector,
-		updateLastClasses,
-		updateAllClasses,
-		transformLastClasses,
-	} = context
+	const { plugin } = context
 	return {
 		plugins: [
-			// @media (prefers-color-scheme: light)
-			plugin(({ config, addVariant }) => {
-				let mode = config("darkMode", "media")
-				if (mode === false) {
-					mode = "media"
-				}
-
-				if (mode === "class") {
-					addVariant(
-						"light",
-						transformAllSelectors(selector => {
-							const variantSelector = updateLastClasses(
-								selector,
-								className => `light${config("separator")}${className}`,
-							)
-
-							if (variantSelector === selector) {
-								return null
-							}
-
-							const darkSelector = prefixSelector(config("prefix"), `.light`)
-
-							return `${darkSelector} ${variantSelector}`
-						}),
-					)
-				} else if (mode === "media") {
-					addVariant(
-						"light",
-						transformLastClasses((className: string) => `light${config("separator")}${className}`, {
-							wrap: () =>
-								postcss.atRule({
-									name: "media",
-									params: "(prefers-color-scheme: light)",
-								}),
-						}),
-					)
-				}
-			}),
 			plugin(({ config, addVariant, addUtilities }) => {
+				let mode = config("darkMode", "media")
+				if (mode === false) mode = "media"
+				if (mode === "class") addVariant("light", ".light &")
+				else if (mode === "media") addVariant("light", "@media (prefers-color-scheme: light)")
+
 				addUtilities({
 					".content": {
 						content: '""',
 					},
 				})
 
-				addPseudo("placeholder", "::placeholder")
+				addVariant("placeholder", "&::placeholder")
 
-				addMedia("screen", "screen")
-				addMedia("print", "print")
-				addMedia("landscape", "(orientation: landscape)")
-				addMedia("portrait", "(orientation: portrait)")
-				addMedia("any-pointer-none", "(any-pointer: none)")
-				addMedia("any-pointer-fine", "(any-pointer: fine)")
-				addMedia("any-pointer-coarse", "(any-pointer: coarse)")
-				addMedia("pointer-none", "(pointer: none)")
-				addMedia("pointer-fine", "(pointer: fine)")
-				addMedia("pointer-coarse", "(pointer: coarse)")
-				addMedia("any-hover", "(any-hover: hover)")
-				addMedia("any-hover-none", "(any-hover: none)")
-				addMedia("can-hover", "(hover: hover)")
-				addMedia("cant-hover", "(hover: none)")
+				addVariant("screen", "@media screen")
+				addVariant("print", "@media print")
+				addVariant("landscape", "@media (orientation: landscape)")
+				addVariant("portrait", "@media (orientation: portrait)")
+				addVariant("any-pointer-none", "@media (any-pointer: none)")
+				addVariant("any-pointer-fine", "@media (any-pointer: fine)")
+				addVariant("any-pointer-coarse", "@media (any-pointer: coarse)")
+				addVariant("pointer-none", "@media (pointer: none)")
+				addVariant("pointer-fine", "@media (pointer: fine)")
+				addVariant("pointer-coarse", "@media (pointer: coarse)")
+				addVariant("any-hover", "@media (any-hover: hover)")
+				addVariant("any-hover-none", "@media (any-hover: none)")
+				addVariant("can-hover", "@media (hover: hover)")
+				addVariant("cant-hover", "@media (hover: none)")
 
-				addPseudo("not-first", ":not(:first-child)")
-				addPseudo("not-last", ":not(:last-child)")
-				addPseudo("not-only", ":not(:only-child)")
-				addPseudo("not-first-of-type", ":not(:first-of-type)")
-				addPseudo("not-last-of-type", ":not(:last-of-type)")
-				addPseudo("not-only-of-type", ":not(:only-of-type)")
-				addPseudo("not-checked", ":not(:checked)")
-				addPseudo("not-disabled", ":not(:disabled)")
+				addVariant("not-first", "&:not(:first-child)")
+				addVariant("not-last", "&:not(:last-child)")
+				addVariant("not-only", "&:not(:only-child)")
+				addVariant("not-first-of-type", "&:not(:first-of-type)")
+				addVariant("not-last-of-type", "&:not(:last-of-type)")
+				addVariant("not-only-of-type", "&:not(:only-of-type)")
+				addVariant("not-checked", "&:not(:checked)")
+				addVariant("not-disabled", "&:not(:disabled)")
+				addVariant("even-of-type", "&:nth-of-type(even)")
+				addVariant("odd-of-type", "&:nth-of-type(odd)")
+				addVariant("enabled", "&:enabled")
+				addVariant("link", "&:link")
+				addVariant("optional", "&:optional")
+				addVariant("read-write", "&:read-write")
 
-				addPseudo("even-of-type", ":nth-of-type(even)")
-				addPseudo("odd-of-type", ":nth-of-type(odd)")
-				addPseudo("enabled", ":enabled")
-				addPseudo("link", ":link")
-				addPseudo("optional", ":optional")
-				addPseudo("read-write", ":read-write")
+				addVariant("all", "*")
+				addVariant("sibling", "~ *")
+				addVariant("svg", "svg")
+				addVariant("all-child", "> *")
 
-				addVariant("hocus", [
-					transformAllSelectors(selectors => {
-						return updateAllClasses(selectors, (className, { withPseudo }) => {
-							return withPseudo(`hocus${config("separator")}${className}`, ":hover")
-						})
-					}),
-					transformAllSelectors(selectors => {
-						return updateAllClasses(selectors, (className, { withPseudo }) => {
-							return withPseudo(`hocus${config("separator")}${className}`, ":focus")
-						})
-					}),
-				])
-
-				addSelector("all", "*")
-				addSelector("sibling", "~ *")
-				addSelector("svg", "svg")
-				addSelector("all-child", "> *")
-
-				const groupVariantName = `group-hocus`
-				const groupMarker = prefixSelector(config("prefix"), ".group")
-
-				addVariant(groupVariantName, [
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === groupMarker) return className
-							return `${groupVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return applyStateToMarker(
-							variantSelector,
-							groupMarker,
-							":hover",
-							(marker, selector) => `${marker} ${selector}`,
-						)
-					}),
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === groupMarker) return className
-							return `${groupVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return applyStateToMarker(
-							variantSelector,
-							groupMarker,
-							":focus",
-							(marker, selector) => `${marker} ${selector}`,
-						)
-					}),
-				])
-
-				const peerVariantName = `peer-hocus`
-				const peerMarker = prefixSelector(config("prefix"), ".peer")
-				addVariant(peerVariantName, [
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === peerMarker) return className
-							return `${peerVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return applyStateToMarker(variantSelector, peerMarker, ":hover", (marker, selector) =>
-							selector.trim().startsWith("~") ? `${marker}${selector}` : `${marker} ~ ${selector}`,
-						)
-					}),
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === peerMarker) return className
-							return `${peerVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return applyStateToMarker(variantSelector, peerMarker, ":focus", (marker, selector) =>
-							selector.trim().startsWith("~") ? `${marker}${selector}` : `${marker} ~ ${selector}`,
-						)
-					}),
-				])
-
-				return
-
-				function addMedia(variant: string, value: string) {
-					addVariant(
-						variant,
-						transformLastClasses(className => `${variant}${config("separator")}${className}`, {
-							wrap: () =>
-								postcss.atRule({
-									name: "media",
-									params: value,
-								}),
-						}),
-					)
-				}
-
-				function addPseudo(variant: string, value: string) {
-					addVariant(
-						variant,
-						transformAllSelectors(selectors => {
-							return updateAllClasses(selectors, (className, { withPseudo }) => {
-								return withPseudo(`${variant}${config("separator")}${className}`, value)
-							})
-						}),
-					)
-				}
-
-				function addSelector(variant: string, value: string) {
-					addPseudo(variant, " " + value)
-				}
+				addVariant("hocus", "&:hover, &:focus")
+				addVariant("group-hocus", ":merge(.group):hover &, :merge(.group):focus &")
+				addVariant("peer-hocus", ":merge(.peer):hover ~ &, :merge(.peer):focus ~ &")
 			}),
 		],
 	}
