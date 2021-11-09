@@ -292,7 +292,7 @@ export const grayscale: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -323,7 +323,7 @@ export const backdropGrayscale: PluginConstructor = (context: Context): Plugin =
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -354,7 +354,7 @@ export const invert: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -385,7 +385,7 @@ export const backdropInvert: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -416,7 +416,7 @@ export const sepia: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -447,7 +447,7 @@ export const backdropSepia: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 

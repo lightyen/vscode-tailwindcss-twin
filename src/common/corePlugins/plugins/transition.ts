@@ -26,7 +26,7 @@ export const transitionProperty: PluginConstructor = (context: Context): Plugin 
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
