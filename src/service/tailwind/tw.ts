@@ -407,9 +407,12 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		// NOTE: handle special selector like: `.divide-red-500 > :not([hidden]) ~ :not([hidden])`
 		// TODO: use more common method to get the scope
 		const scopes: string[] = []
+		const selector = "." + escape(classname)
 		root.walkRules(rule => {
-			const scope = rule.selector.replaceAll("." + escape(classname), "")
-			if (scope) scopes.push(scope)
+			if (rule.selector.startsWith(selector)) {
+				const scope = rule.selector.replaceAll("." + escape(classname), "")
+				if (scope) scopes.push(scope)
+			}
 		})
 
 		return { decls, scopes }
