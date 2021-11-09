@@ -55,13 +55,12 @@ Support ONLY `*.tsx` and `*.jsx`
 // example
 {
   "workbench.colorCustomizations": {
-    "[One Dark Pro]": {
-      "editorHoverWidget.background": "#17202ee5",
-      "editorHoverWidget.border": "#6a7473",
-      "editorSuggestWidget.background": "#17202ee5",
-      "editorSuggestWidget.border": "#6a7473",
-      "editorSuggestWidget.selectedBackground": "#009c70d0",
-      "editor.wordHighlightBackground": "#0000"
+    "[One Dark Pro Darker]": {
+      "editorHoverWidget.background": "#1f2229e8",
+      "editorSuggestWidget.background": "#1f2229e8",
+      "editor.wordHighlightBackground": "#0000",
+      "editor.wordHighlightBorder": "#3f3f3f3d",
+      "editor.wordHighlightStrongBorder": "#3f3f3f3d"
     }
   }
 }
@@ -72,12 +71,18 @@ Support ONLY `*.tsx` and `*.jsx`
 ```json5
 {
   "editor.tokenColorCustomizations": {
-    "[One Dark Pro]": {
+    "[One Dark Pro Darker]": {
       "textMateRules": [
+        {
+          "scope": "support.constant.classname.twin",
+          "settings": {
+            "foreground": "#abb2bf"
+          }
+        },
         {
           "scope": "entity.other.inherited-class.variant.twin",
           "settings": {
-            "foreground": "#C678DD"
+            "foreground": "#c678dd"
           }
         },
         {
