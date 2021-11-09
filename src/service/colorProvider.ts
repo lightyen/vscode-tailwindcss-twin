@@ -141,47 +141,27 @@ export function createColorProvider(tw: TwContext, separator: string) {
 	}
 
 	function createTextEditorDecorationType(desc: ColorDesc) {
-		const transparent = "rgba(255, 255, 0, 0.0)"
+		const transparent = "rgba(0, 0, 0, 0.0)"
 		const options: vscode.DecorationRenderOptions = { light: {}, dark: {} }
 		if (desc.backgroundColor) {
 			const backgroundColor = chroma(desc.backgroundColor === "transparent" ? transparent : desc.backgroundColor)
 			options.backgroundColor = backgroundColor.css()
 			if (desc.backgroundColor === "transparent") {
-				if (options.light) {
-					options.light.borderWidth = "3px"
-					options.light.borderStyle = "dashed"
-					options.light.color = "rgb(28, 28, 28, 0.93)"
-					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				}
-				if (options.dark) {
-					options.dark.borderWidth = "3px"
-					options.dark.borderStyle = "dashed"
-					options.dark.color = "rgba(255, 255, 255, 0.93)"
-					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
-				}
+				setTransparent(options)
 			} else {
 				options.color =
 					backgroundColor.luminance() < 0.3 ? "rgba(255, 255, 255, 0.93)" : "rgba(28, 28, 28, 0.93)"
 			}
 		}
+
+		options.borderRadius = "3px"
 		if (desc.borderColor) {
 			const borderColor = chroma(desc.borderColor === "transparent" ? transparent : desc.borderColor)
 			options.borderColor = borderColor.css()
-			options.borderWidth = "1.5px"
+			options.borderWidth = "2px"
 			options.borderStyle = "solid"
 			if (desc.borderColor === "transparent") {
-				if (options.light) {
-					options.light.borderWidth = "3px"
-					options.light.borderStyle = "dashed"
-					options.light.color = "rgb(28, 28, 28, 0.93)"
-					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				}
-				if (options.dark) {
-					options.dark.borderWidth = "3px"
-					options.dark.borderStyle = "dashed"
-					options.dark.color = "rgba(255, 255, 255, 0.93)"
-					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
-				}
+				setTransparent(options)
 			}
 		}
 		if (desc.color) {
@@ -200,21 +180,25 @@ export function createColorProvider(tw: TwContext, separator: string) {
 					}
 				}
 			} else {
-				if (options.light) {
-					options.light.borderWidth = "3px"
-					options.light.borderStyle = "dashed"
-					options.light.color = "rgb(28, 28, 28, 0.93)"
-					options.light.borderColor = "rgba(28, 28, 28, 0.1)"
-				}
-				if (options.dark) {
-					options.dark.borderWidth = "3px"
-					options.dark.borderStyle = "dashed"
-					options.dark.color = "rgb(255, 255, 255, 0.93)"
-					options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
-				}
+				setTransparent(options)
 			}
 		}
 		return vscode.window.createTextEditorDecorationType(options)
+
+		function setTransparent(options: vscode.DecorationRenderOptions) {
+			if (options.light) {
+				options.light.borderWidth = "medium"
+				options.light.borderStyle = "dashed"
+				options.light.color = "rgb(28, 28, 28, 0.93)"
+				options.light.borderColor = "rgba(28, 28, 28, 0.1)"
+			}
+			if (options.dark) {
+				options.dark.borderWidth = "medium"
+				options.dark.borderStyle = "dashed"
+				options.dark.color = "rgba(255, 255, 255, 0.93)"
+				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
+			}
+		}
 	}
 
 	function getThemeDecoration(text: string, tw: TwContext): string | undefined {
