@@ -56,12 +56,14 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	const generateRules: Tailwind.generateRules = importFrom("tailwindcss/lib/jit/lib/generateRules", {
 		base: extensionUri.fsPath,
 	}).generateRules
+	const expandApplyAtRules: Tailwind.expandApplyAtRules = importFrom("tailwindcss/lib/jit/lib/expandApplyAtRules", {
+		base: extensionUri.fsPath,
+	})
 	const variables = new Set<string>()
 	const classnames = new Set<string>()
 	const _colors = new Map<string, Map<string, string[]>>()
 	const colors = new Map<string, ColorDesc>()
 	const __config = { ...config }
-	__config.separator = "☕"
 	const re = new RegExp(`^([\\w-]+${__config.separator})+`, "g")
 
 	if (typeof __config.prefix === "function") {
@@ -425,7 +427,10 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		)
 		for (const [, fn] of meta) {
 			const container = fakeRoot.clone()
-			fn({ container, separator: __config.separator })
+			fn({
+				container,
+				separator: __config.separator,
+			})
 			container.walkDecls(decl => {
 				decl.remove()
 			})
@@ -484,6 +489,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		expandApplyAtRules(context)(root)
 		root.walkAtRules("defaults", rule => {
 			rule.remove()
 		})
@@ -534,6 +540,8 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		expandApplyAtRules(context)(root)
+
 		const decls: Map<string, string[]> = new Map()
 		root.walkDecls(({ prop, value, variable, important }) => {
 			const values = decls.get(prop)
