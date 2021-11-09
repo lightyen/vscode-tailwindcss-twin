@@ -8,20 +8,22 @@ import type { Postcss, Result, Rule } from "postcss"
 import type { Attribute, Processor } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 
-const colorProps = [
-	"background-color",
-	"color",
+const ColorProps_Foreground = new Set<string>(["color"])
+const ColorProps_Border = new Set<string>([
+	"outline-color",
 	"border-color",
 	"border-top-color",
 	"border-right-color",
 	"border-bottom-color",
 	"border-left-color",
+])
+const ColorProps_Background = new Set<string>([
+	"background-color",
 	"text-decoration-color",
 	"accent-color",
 	"caret-color",
 	"fill",
 	"stroke",
-	"outline-color",
 	"stop-color",
 	"column-rule-color",
 	"--tw-ring-color",
@@ -29,7 +31,10 @@ const colorProps = [
 	"--tw-gradient-from",
 	"--tw-gradient-to",
 	"--tw-gradient-stops",
-]
+	"--tw-shadow-color",
+])
+
+const ColorProps = new Set([...ColorProps_Foreground, ...ColorProps_Border, ...ColorProps_Background])
 
 export type ColorDesc = {
 	color?: string
@@ -249,7 +254,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 
 	function isColorDecls(decls: Map<string, string[]>) {
 		for (const [prop] of decls) {
-			if (colorProps.indexOf(prop) !== -1) {
+			if (ColorProps.has(prop)) {
 				return true
 			}
 		}
@@ -284,56 +289,34 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		const decls = getColorDecls(classname)
 		if (!decls) return undefined
 
-		const desc: ColorDesc = {}
-		const props = Array.from(decls.keys())
-		const isForeground = props.some(prop => prop === "color")
-		const isBackground = props.some(prop => prop.startsWith("background"))
-		const isBorder = props.some(prop => prop.startsWith("border") || prop === "text-decoration-color")
-		const isOther = !isForeground && !isBackground && !isBorder
+		const desc = buildDesc(classname, decls)
+		addCache(classname, desc)
+		return desc
 
-		if (classname.endsWith("-current")) {
-			if (isForeground) {
-				desc.color = "currentColor"
+		function buildDesc(classname: string, decls: Map<string, string[]>): ColorDesc {
+			const desc: ColorDesc = {}
+			for (const [prop, values] of decls) {
+				if (!desc.color && ColorProps_Foreground.has(prop)) {
+					const val = getColorValue(classname, values)
+					if (val) desc.color = val
+				}
+				if (!desc.borderColor && ColorProps_Border.has(prop)) {
+					const val = getColorValue(classname, values)
+					if (val) desc.borderColor = val
+				}
+				if (!desc.backgroundColor && ColorProps_Background.has(prop)) {
+					const val = getColorValue(classname, values)
+					if (val) desc.backgroundColor = val
+				}
 			}
-			if (isBorder) {
-				desc.borderColor = "currentColor"
-			}
-			if (isBackground || isOther) {
-				desc.backgroundColor = "currentColor"
-			}
-			addCache(classname, desc)
 			return desc
 		}
 
-		if (classname.endsWith("-inherit")) {
-			if (isForeground) {
-				desc.color = "inherit"
-			}
-			if (isBorder) {
-				desc.borderColor = "inherit"
-			}
-			if (isBackground || isOther) {
-				desc.backgroundColor = "inherit"
-			}
-			addCache(classname, desc)
-			return desc
-		}
+		function getColorValue(classname: string, values: string[]) {
+			if (classname.endsWith("-current")) return "currentColor"
+			else if (classname.endsWith("-inherit")) return "inherit"
+			else if (classname.endsWith("-transparent")) return "transparent"
 
-		if (classname.endsWith("-transparent")) {
-			if (isForeground) {
-				desc.color = "transparent"
-			}
-			if (isBorder) {
-				desc.borderColor = "transparent"
-			}
-			if (isBackground || isOther) {
-				desc.backgroundColor = "transparent"
-			}
-			addCache(classname, desc)
-			return desc
-		}
-
-		for (const values of decls.values()) {
 			for (const value of values) {
 				const colors = extractColors.default(value)
 				if (colors.length <= 0) {
@@ -346,16 +329,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 
 				if (extractColors.isColorIdentifier(firstColor) || extractColors.isColorHexValue(firstColor)) {
 					if (value.slice(firstColor.range[0], firstColor.range[1]) === "transparent") {
-						if (isBorder) {
-							desc.borderColor = "transparent"
-						}
-						if (isForeground) {
-							desc.color = "transparent"
-						}
-						if (isBackground || isOther) {
-							desc.backgroundColor = "transparent"
-						}
-						continue
+						return "transparent"
 					}
 					try {
 						color = chroma(value.slice(firstColor.range[0], firstColor.range[1])).alpha(1.0)
@@ -372,22 +346,11 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 
 				if (!color) continue
 
-				const val = color.hex()
-
-				if (isBorder) {
-					desc.borderColor = val
-				}
-				if (isForeground) {
-					desc.color = val
-				}
-				if (isBackground || isOther) {
-					desc.backgroundColor = val
-				}
+				return color.hex()
 			}
-		}
 
-		addCache(classname, desc)
-		return desc
+			return ""
+		}
 	}
 
 	function screenSorter(a: string, b: string) {
