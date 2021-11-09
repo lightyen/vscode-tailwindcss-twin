@@ -141,7 +141,7 @@ export const borderRadius: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -177,7 +177,7 @@ export const boxShadow: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -209,7 +209,7 @@ export const dropShadow: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -241,7 +241,7 @@ export const blur: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -276,7 +276,7 @@ export const backdropBlur: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -311,7 +311,7 @@ export const borderWidth: PluginConstructor = (context: Context): Plugin => {
 
 		let val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -347,7 +347,7 @@ export const divideWidth: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -382,7 +382,7 @@ export const ringWidth: PluginConstructor = (context: Context): Plugin => {
 
 		let val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 

@@ -88,7 +88,7 @@ export const flexGrow: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
@@ -119,7 +119,7 @@ export const flexShrink: PluginConstructor = (context: Context): Plugin => {
 
 		const val = match[1]
 
-		if (hasDefault && val === "") {
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
 			return true
 		}
 
