@@ -377,3 +377,25 @@ export const outlineColor: PluginConstructor = (context: Context): Plugin => {
 	}
 }
 outlineColor.canArbitraryValue = true
+
+export const boxShadowColor: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "boxShadowColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.boxShadowColor)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
+		: null
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "boxShadowColor"
+		},
+	}
+
+	function isMatch(value: string) {
+		const match = /^shadow-(.*)/s.exec(value)
+		if (!match) return false
+		return isColor(match[1], colors, true, opacities)
+	}
+}
+boxShadowColor.canArbitraryValue = true

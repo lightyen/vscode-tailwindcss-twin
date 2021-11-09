@@ -181,14 +181,10 @@ export const boxShadow: PluginConstructor = (context: Context): Plugin => {
 			return true
 		}
 
-		if (isArbitraryValue(val)) {
-			return true
-		}
-
 		return values.some(c => c === val)
 	}
 }
-boxShadow.canArbitraryValue = true
+boxShadow.canArbitraryValue = false
 
 export const dropShadow: PluginConstructor = (context: Context): Plugin => {
 	if (!context.config.corePlugins.some(c => c === "dropShadow")) throw ErrorNotEnable

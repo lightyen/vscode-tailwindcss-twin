@@ -593,6 +593,7 @@ function isIgnored(plugin: keyof Tailwind.CorePluginFeatures | undefined) {
 		case "backdropSaturate":
 		case "backdropOpacity":
 		case "dropShadow":
+		case "boxShadowColor":
 			return true
 		default:
 			return false

@@ -82,7 +82,7 @@
     "js-yaml-loader": "1.2.2",
     "prettier": "2.4.1",
     "source-map-support": "0.5.20",
-    "tailwind-types": "3.0.0-alpha.2.2",
+    "tailwind-types": "3.0.0-alpha.2.3",
     "ts-jest": "^27",
     "ts-node": "10.4.0",
     "ts-paths-resolve-plugin": "5.4.1",
