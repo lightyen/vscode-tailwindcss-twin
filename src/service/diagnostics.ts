@@ -256,25 +256,8 @@ function validateTwin({
 					continue
 				}
 
-				// [except case] font-variant-numeric
-				if (label.match(/^slashed-zero|ordinal$/)) {
-					continue
-				}
-
-				if (label.match(/^(?:lining|oldstyle|proportional|tabular)-nums$/)) {
-					continue
-				}
-
-				if (label.match(/^(?:diagonal|stacked)-fractions$/)) {
-					continue
-				}
-
-				if (diagnostics.conflict === "loose" || isIgnored(label)) {
-					const s = new Set<string>()
-					for (const [prop] of decls) {
-						s.add(prop)
-					}
-					const key = [...variants, ...scopes, Array.from(s).sort().join(":")].join(".")
+				if (diagnostics.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.name)) {
+					const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
 						target.push(item.target.range)
@@ -572,100 +555,49 @@ function guess(state: TailwindLoader, text: string): { kind: PredictionKind; val
 	}
 }
 
-// TODO: detect confliction on css shorthand properties
-
-function isIgnored(label: string) {
-	// top, right, bottom, left
-	if (label.match(/^-?(?:top|right|bottom|left)-/)) {
-		return true
+function isIgnored(plugin: keyof Tailwind.CorePluginFeatures | undefined) {
+	if (!plugin) return false
+	switch (plugin) {
+		case "fontVariantNumeric":
+		case "inset":
+		case "margin":
+		case "padding":
+		case "borderRadius":
+		case "borderWidth":
+		case "lineHeight":
+		case "backgroundOpacity":
+		case "textOpacity":
+		case "ringOpacity":
+		case "borderOpacity":
+		case "divideOpacity":
+		case "placeholderOpacity":
+		case "transitionDuration":
+		case "transitionDelay":
+		case "transitionTimingFunction":
+		case "scale":
+		case "rotate":
+		case "skew":
+		case "translate":
+		case "gradientColorStops":
+		case "space":
+		case "hueRotate":
+		case "brightness":
+		case "contrast":
+		case "grayscale":
+		case "invert":
+		case "sepia":
+		case "saturate":
+		case "backdropHueRotate":
+		case "backdropBrightness":
+		case "backdropContrast":
+		case "backdropGrayscale":
+		case "backdropInvert":
+		case "backdropSepia":
+		case "backdropSaturate":
+		case "backdropOpacity":
+		case "dropShadow":
+			return true
+		default:
+			return false
 	}
-
-	if (label.match(/^-?(?:mt|mr|mb|ml)-(?:auto|px|[\d.]+)$/)) {
-		return true
-	}
-
-	if (label.match(/^(?:pt|pr|pb|pl)-(?:px|[\d.]+)$/)) {
-		return true
-	}
-
-	if (label.match(/^rounded-(?:t|r|b|l)(?:-\d?[a-z]+)?/)) {
-		return true
-	}
-
-	if (label.match(/^border-(?:x|y|t|r|b|l)-/)) {
-		return true
-	}
-
-	// text
-	if (label.match(/^(?:leading)-(?:\d+|[a-z]+)$/)) {
-		return true
-	}
-
-	// opactiy
-	if (label.match(/^(?:bg|ring|text|border|divide|placeholder)-opacity-\d+$/)) {
-		return true
-	}
-
-	// transition
-	if (label.match(/^duration-\d+$/)) {
-		return true
-	}
-
-	if (label.match(/^delay-\d+$/)) {
-		return true
-	}
-
-	if (label.match(/^ease-(?:linear|in|out|in-out)$/)) {
-		return true
-	}
-
-	// transform
-	if (label.match(/^scale(?:-(?:x|y))?-\d+$/)) {
-		return true
-	}
-
-	if (label.match(/^-?rotate-\d+$/)) {
-		return true
-	}
-
-	if (label.match(/^-?translate-(?:x|y)-(?:[\d./]+|px|full)$/)) {
-		return true
-	}
-
-	if (label.match(/^-?skew(?:-(?:x|y))?-\d+$/)) {
-		return true
-	}
-
-	// gradient
-	if (label.match(/^(?:via|to)-(?:[a-z]+)-\d+$/)) {
-		return true
-	}
-
-	// reverse
-	if (label.match(/^(?:divide|space)-(?:x|y)-reverse$/)) {
-		return true
-	}
-
-	// filter
-	if (label.match(/^(?:backdrop-)?blur(?:-(?:0|none|sm|md|lg|\d+xl))?$/)) {
-		return true
-	}
-
-	if (label.match(/^-?(?:backdrop-)?hue-rotate-\d+$/)) {
-		return true
-	}
-
-	if (label.match(/^(?:backdrop-)?(?:brightness|contrast|grayscale|invert|sepia|saturate)(?:-\d+)?$/)) {
-		return true
-	}
-
-	if (label.match(/^drop-shadow(?:-(?:0|none|sm|md|lg|\d+xl))?$/)) {
-		return true
-	}
-
-	if (label.match(/^backdrop-opacity-\d+$/)) {
-		return true
-	}
-
-	return false
 }
