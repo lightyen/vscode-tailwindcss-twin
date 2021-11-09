@@ -9,15 +9,14 @@ import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 
 const ColorProps_Foreground = new Set<string>(["color"])
-const ColorProps_Border = new Set<string>([
+const ColorProps_Border = new Set<string>([])
+const ColorProps_Background = new Set<string>([
 	"outline-color",
 	"border-color",
 	"border-top-color",
 	"border-right-color",
 	"border-bottom-color",
 	"border-left-color",
-])
-const ColorProps_Background = new Set<string>([
 	"background-color",
 	"text-decoration-color",
 	"accent-color",
