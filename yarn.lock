@@ -6182,10 +6182,10 @@ symbol-tree@^3.2.4:
   resolved "https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.4.tgz"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
-tailwind-types@3.0.0-alpha.2.1:
-  version "3.0.0-alpha.2.1"
-  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-3.0.0-alpha.2.1.tgz#79cc9632c7c1b8f5454126145d99e4f8a23574a5"
-  integrity sha512-BdME5IMRkpE0XQFRokfU/S1/FjPzvHt68czKhzP8sfjwYakYbDDb66Ns2Igl9w5ttHX0accMZXa2tpP//CojFg==
+tailwind-types@3.0.0-alpha.2.2:
+  version "3.0.0-alpha.2.2"
+  resolved "https://registry.yarnpkg.com/tailwind-types/-/tailwind-types-3.0.0-alpha.2.2.tgz#cc744c9973faa9a1772c6950c6201811bfe640f5"
+  integrity sha512-mwJBI7eY79rS7feNhjpWvbSUZhP0FDGYOZHctpGLbgVi+aml8eddo6JTgk39lp9oo5SPhrqL5e3ba1g14NDJDA==
   dependencies:
     csstype "3.0.9"
 
