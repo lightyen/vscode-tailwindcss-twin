@@ -4,7 +4,7 @@ import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
 import chroma from "chroma-js"
-import type { Postcss } from "postcss"
+import type { AtRule, Postcss, Rule } from "postcss"
 import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 
@@ -126,13 +126,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return node.raws.value || node.value
 	}
 
-	function indent(tabSize: number, value: string) {
-		return value
-			.split(/(\r\n|\n)/g)
-			.map(line => line.replace(/^(\t| {4})+/g, match => "".padStart((match.length >> 2) * tabSize)))
-			.join("")
-	}
-
 	function renderVariant(variant: string, tabSize = 4): ScssText {
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
@@ -146,18 +139,18 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			],
 		})
 
-		const css: string[] = []
+		const rules: Array<AtRule | Rule> = []
 
 		for (const [, fn] of meta) {
 			const container = fakeRoot.clone()
-			let wrapper: string[] = []
+			let wrapper: AtRule[] = []
 			let selector: string | undefined
 
 			const returnValue = fn({
 				container,
 				separator: config.separator,
 				wrap(node) {
-					wrapper.push(node.toString())
+					wrapper.push(node)
 				},
 				format(selectorFormat) {
 					selector = selectorFormat.replace(/:merge\((.*?)\)/g, "$1")
@@ -166,7 +159,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 
 			if (!selector && returnValue) selector = returnValue
 			if (!selector && wrapper.length > 0) {
-				selector = wrapper[0]
+				selector = `@${wrapper[0].name} ${wrapper[0].params}`
 				wrapper = wrapper.slice(1)
 			}
 			if (!selector) {
@@ -177,7 +170,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				container.walk(node => {
 					switch (node.type) {
 						case "atrule":
-							wrapper.push(`@${node.name} ${node.params}`)
+							wrapper.push(node)
 							return false
 						case "rule":
 							selector = node.selector.replace(re, "&")
@@ -186,31 +179,27 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 					return
 				})
 				if (!selector && wrapper.length > 0) {
-					selector = wrapper[0]
+					selector = `@${wrapper[0].name} ${wrapper[0].params}`
 					wrapper = wrapper.slice(1)
 				}
 				console.debug("fallback", container)
 			}
 			if (!selector) continue
 
-			let code = selector + " {\n    /* ... */\n}"
-			code = wrapper.reduce((code, w) => renderWrapper(w, code), code)
-
-			css.push(code)
+			const rule: AtRule | Rule = postcss.rule({ selector, nodes: [postcss.comment({ text: "..." })] })
+			const raws = rule.raws as { indent: string }
+			raws.indent = "".padStart(tabSize)
+			const result = wrapper.reduce<AtRule | Rule>((rule, wrapper) => renderWrapper(wrapper, rule), rule)
+			rules.push(result)
 		}
 
-		return indent(tabSize, css.join("\n"))
+		return rules.map(r => r.toString()).join("\n")
 
-		function renderWrapper(wrapper: string, css: string) {
-			return (
-				wrapper +
-				" {\n" +
-				css
-					.split("\n")
-					.map(s => "    " + s)
-					.join("\n") +
-				"\n}"
-			)
+		function renderWrapper(wrapper: AtRule, rule: AtRule | Rule) {
+			const raws = wrapper.raws as { indent: string }
+			raws.indent = "".padStart(tabSize)
+			wrapper.append(rule)
+			return wrapper
 		}
 	}
 
@@ -232,7 +221,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return cssValue.replace(reg, text + `/** ${(rootFontSize * val).toFixed(0)}px */`)
 	}
 
-	function render(classname: string) {
+	function render(classname: string, tabSize = 4) {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1
@@ -244,11 +233,15 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-
+		const raws = root.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
 		expandApplyAtRules(context)(root)
 
 		root.walkAtRules("defaults", rule => {
 			rule.remove()
+		})
+		root.walkRules(rule => {
+			rule.raws.semicolon = true
 		})
 
 		return root
@@ -265,15 +258,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		rootFontSize?: number
 		tabSize?: number
 	}): CssText {
-		const root = render(classname)
+		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
 				decl.important = important
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
-
-		return indent(tabSize, root.toString())
+		return root.toString()
 	}
 
 	function renderCssProperty({
@@ -289,16 +281,12 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		rootFontSize?: number
 		tabSize?: number
 	}): ScssText {
-		const decl = postcss.decl()
-		decl.prop = prop
-		decl.value = value
-		if (important) decl.important = important
+		const decl = postcss.decl({ prop, value, important })
 		if (rootFontSize) decl.value = toPixelUnit(decl.value, rootFontSize)
-		const rule = postcss.rule()
-		rule.selector = "&"
-		rule.append(decl)
-		const root = postcss.root({ nodes: [rule] })
-		return indent(tabSize, root.toString())
+		const rule = postcss.rule({ selector: "&", nodes: [decl], raws: { semicolon: true } })
+		const raws = rule.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
+		return rule.toString()
 	}
 
 	function getColorDesc(classname: string): ColorDesc | undefined {
