@@ -4,7 +4,7 @@ import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
 import chroma from "chroma-js"
-import type { Postcss, Result, Rule } from "postcss"
+import type { AtRule, Postcss, Result, Rule } from "postcss"
 import type { Attribute, Processor } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 
@@ -175,13 +175,6 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 	}
 
-	function indent(tabSize: number, value: string) {
-		return value
-			.split(/(\r\n|\n)/g)
-			.map(line => line.replace(/^(\t| {4})+/g, match => "".padStart((match.length >> 2) * tabSize)))
-			.join("")
-	}
-
 	function getColorNames(resloved: Tailwind.ResolvedConfigJS): string[] {
 		const colors = resloved.theme.colors
 		const names: string[] = []
@@ -226,7 +219,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		return decls
 	}
 
-	function getDecls(classname: string) {
+	function render(classname: string, tabSize = 4) {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1
@@ -238,6 +231,22 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		})
 
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		const raws = root.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
+		expandApplyAtRules(context)(root)
+
+		root.walkAtRules("defaults", rule => {
+			rule.remove()
+		})
+		root.walkRules(rule => {
+			rule.raws.semicolon = true
+		})
+
+		return root
+	}
+
+	function getDecls(classname: string) {
+		const root = render(classname)
 		const decls = new Map<string, string[]>()
 		root.walkDecls(({ prop, value, variable, important }) => {
 			const values = decls.get(prop)
@@ -371,7 +380,6 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	}
 
 	function renderVariant(variant: string, tabSize = 4) {
-		const data: string[] = []
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
 			return ""
@@ -383,12 +391,18 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 				}),
 			],
 		})
+
+		const rules: Array<AtRule | Rule> = []
 		const re = new RegExp(
 			("." + escape(variant + __config.separator + "☕")).replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
 			"g",
 		)
 		for (const [, fn] of meta) {
+			if (typeof fn !== "function") continue
 			const container = fakeRoot.clone()
+			let wrapper: AtRule[] = []
+			let selector: string | undefined
+
 			fn({
 				container,
 				separator: __config.separator,
@@ -399,16 +413,33 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			container.walk(node => {
 				switch (node.type) {
 					case "atrule":
-						data.push(`@${node.name} ${node.params}`)
+						wrapper.push(node)
 						return false
 					case "rule":
-						data.push(node.selector.replace(re, "&"))
+						selector = node.selector.replace(re, "&")
+						return false
 				}
 				return
 			})
+			if (!selector && wrapper.length > 0) {
+				selector = `@${wrapper[0].name} ${wrapper[0].params}`
+				wrapper = wrapper.slice(1)
+			}
+
+			const rule: AtRule | Rule = postcss.rule({ selector, nodes: [postcss.comment({ text: "..." })] })
+			const raws = rule.raws as { indent: string }
+			raws.indent = "".padStart(tabSize)
+			rules.push(wrapper.reduce<AtRule | Rule>((rule, wrapper) => renderWrapper(wrapper, rule), rule))
 		}
 
-		return indent(tabSize, data.join(", ") + " {\n    /* ... */\n}")
+		return rules.map(r => r.toString()).join("\n")
+
+		function renderWrapper(wrapper: AtRule, rule: AtRule | Rule) {
+			const raws = wrapper.raws as { indent: string }
+			raws.indent = "".padStart(tabSize)
+			wrapper.append(rule)
+			return wrapper
+		}
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
@@ -440,29 +471,14 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		rootFontSize?: number
 		tabSize?: number
 	}) {
-		const items = generateRules([classname], context).sort(([a], [b]) => {
-			if (a < b) {
-				return -1
-			} else if (a > b) {
-				return 1
-			} else {
-				return 0
-			}
-		})
-
-		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		expandApplyAtRules(context)(root)
-		root.walkAtRules("defaults", rule => {
-			rule.remove()
-		})
+		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
 				decl.important = important
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
-
-		return indent(tabSize, root.toString())
+		return root.toString()
 	}
 
 	function renderCssProperty({
@@ -478,33 +494,18 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		rootFontSize?: number
 		tabSize?: number
 	}) {
-		const decl = postcss.decl()
-		decl.prop = prop
-		decl.value = value
-		if (important) decl.important = important
+		const decl = postcss.decl({ prop, value, important })
 		if (rootFontSize) decl.value = toPixelUnit(decl.value, rootFontSize)
-		const rule = postcss.rule()
-		rule.selector = "&"
-		rule.append(decl)
-		const root = postcss.root({ nodes: [rule] })
-		return indent(tabSize, root.toString())
+		const rule = postcss.rule({ selector: "&", nodes: [decl], raws: { semicolon: true } })
+		const raws = rule.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
+		return rule.toString()
 	}
 
 	function renderDecls(classname: string) {
-		const items = generateRules([classname], context).sort(([a], [b]) => {
-			if (a < b) {
-				return -1
-			} else if (a > b) {
-				return 1
-			} else {
-				return 0
-			}
-		})
-
-		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		expandApplyAtRules(context)(root)
-
+		const root = render(classname)
 		const decls: Map<string, string[]> = new Map()
+
 		root.walkDecls(({ prop, value, variable, important }) => {
 			const values = decls.get(prop)
 			if (values) {

@@ -97,6 +97,8 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 					},
 				})
 
+				const separator = config("separator")
+
 				addPseudo("placeholder", "::placeholder")
 
 				addMedia("screen", "screen")
@@ -130,18 +132,19 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 				addPseudo("optional", ":optional")
 				addPseudo("read-write", ":read-write")
 
-				addVariant("hocus", [
+				addVariant(
+					"hocus",
 					transformAllSelectors(selectors => {
-						return updateAllClasses(selectors, (className, { withPseudo }) => {
-							return withPseudo(`hocus${config("separator")}${className}`, ":hover")
-						})
+						return [
+							updateAllClasses(selectors, (className, { withPseudo }) => {
+								return withPseudo(`hocus${separator}${className}`, ":hover")
+							}),
+							updateAllClasses(selectors, (className, { withPseudo }) => {
+								return withPseudo(`hocus${separator}${className}`, ":focus")
+							}),
+						].join(", ")
 					}),
-					transformAllSelectors(selectors => {
-						return updateAllClasses(selectors, (className, { withPseudo }) => {
-							return withPseudo(`hocus${config("separator")}${className}`, ":focus")
-						})
-					}),
-				])
+				)
 
 				addSelector("all", "*")
 				addSelector("sibling", "~ *")
@@ -151,61 +154,36 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 				const groupVariantName = `group-hocus`
 				const groupMarker = prefixSelector(config("prefix"), ".group")
 
-				addVariant(groupVariantName, [
+				addVariant(
+					groupVariantName,
 					transformAllSelectors(selector => {
 						const variantSelector = updateAllClasses(selector, className => {
 							if (`.${className}` === groupMarker) return className
-							return `${groupVariantName}${config("separator")}${className}`
+							return `${groupVariantName}${separator}${className}`
 						})
 
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return `${groupMarker}:hover ${variantSelector}`
+						return [
+							`${groupMarker}:hover ${variantSelector}`,
+							`${groupMarker}:focus ${variantSelector}`,
+						].join(", ")
 					}),
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === groupMarker) return className
-							return `${groupVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return `${groupMarker}:focus ${variantSelector}`
-					}),
-				])
+				)
 
 				const peerVariantName = `peer-hocus`
 				const peerMarker = prefixSelector(config("prefix"), ".peer")
-				addVariant(peerVariantName, [
+				addVariant(
+					peerVariantName,
 					transformAllSelectors(selector => {
 						const variantSelector = updateAllClasses(selector, className => {
 							if (`.${className}` === peerMarker) return className
 							return `${peerVariantName}${config("separator")}${className}`
 						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return `${peerMarker}:hover ~ ${variantSelector}`
+						return [
+							`${peerMarker}:hover ~ ${variantSelector}`,
+							`${peerMarker}:focus ~ ${variantSelector}`,
+						].join(", ")
 					}),
-					transformAllSelectors(selector => {
-						const variantSelector = updateAllClasses(selector, className => {
-							if (`.${className}` === peerMarker) return className
-							return `${peerVariantName}${config("separator")}${className}`
-						})
-
-						if (variantSelector === selector) {
-							return null
-						}
-
-						return `${peerMarker}:focus ~ ${variantSelector}`
-					}),
-				])
+				)
 
 				return
 
