@@ -41,7 +41,7 @@ const configExtension: Configuration = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules|\.test\.ts$/,
-				use: "babel-loader",
+				use: "swc-loader",
 			},
 			{
 				test: /\.ya?ml$/,
