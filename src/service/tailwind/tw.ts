@@ -169,6 +169,28 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				selector = wrapper[0]
 				wrapper = wrapper.slice(1)
 			}
+			if (!selector) {
+				const re = new RegExp(
+					("." + escape(variant + config.separator + "☕")).replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
+					"g",
+				)
+				container.walk(node => {
+					switch (node.type) {
+						case "atrule":
+							wrapper.push(`@${node.name} ${node.params}`)
+							return false
+						case "rule":
+							selector = node.selector.replace(re, "&")
+							return false
+					}
+					return
+				})
+				if (!selector && wrapper.length > 0) {
+					selector = wrapper[0]
+					wrapper = wrapper.slice(1)
+				}
+				console.debug("fallback", container)
+			}
 			if (!selector) continue
 
 			let code = selector + " {\n    /* ... */\n}"
