@@ -2,7 +2,7 @@
 
 ## tw3
 
-- Base on tailwindcss v3.0.0-alpha.1
+- Base on tailwindcss v3.0.0-alpha.2
 
 ## 0.11.2
 
