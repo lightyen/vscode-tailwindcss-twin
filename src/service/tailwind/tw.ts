@@ -429,11 +429,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		const scopes: string[] = []
 		const selector = "." + escape(classname)
 		root.walkRules(rule => {
-			if (rule.selector.startsWith(selector)) {
-				// const scope = rule.selector.replaceAll("." + escape(classname), "") // https://github.com/swc-project/swc/issues/2607
-				const scope = rule.selector.split("." + escape(classname)).join("")
-				if (scope) scopes.push(scope)
-			}
+			// const scope = rule.selector.replaceAll("." + escape(classname), "") // https://github.com/swc-project/swc/issues/2607
+			const scope = rule.selector.split(selector).join("")
+			if (scope) scopes.push(scope)
 		})
 
 		const ret = { decls, scopes }
