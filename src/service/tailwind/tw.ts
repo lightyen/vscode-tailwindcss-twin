@@ -75,6 +75,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	)
 
 	const colors: Map<string, ColorDesc> = new Map()
+	const declsCache: Map<string, ReturnType<typeof renderDecls>> = new Map()
 	// sorted variants
 	const variants: [string[], string[], string[], string[]] = [
 		screens,
@@ -397,7 +398,17 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return getWidth(renderVariant(a)) - getWidth(renderVariant(b))
 	}
 
-	function renderDecls(classname: string) {
+	function renderDecls(classname: string): {
+		decls: Map<string, string[]>
+		scopes: string[]
+	} {
+		const cached = declsCache.get(classname)
+		if (cached) {
+			declsCache.delete(classname)
+			declsCache.set(classname, cached)
+			return cached
+		}
+
 		const root = render(classname)
 		const decls: Map<string, string[]> = new Map()
 
@@ -425,7 +436,17 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			}
 		})
 
-		return { decls, scopes }
+		const ret = { decls, scopes }
+		addCache(classname, ret)
+		return ret
+
+		function addCache(key: string, value: ReturnType<typeof renderDecls>) {
+			if (declsCache.size >= 16000) {
+				const first = colors.keys().next().value
+				declsCache.delete(first)
+			}
+			declsCache.set(key, value)
+		}
 	}
 
 	function isVariant(value: string) {
