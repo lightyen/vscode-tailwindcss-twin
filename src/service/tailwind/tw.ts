@@ -67,6 +67,7 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 	const classnames = new Set<string>()
 	const _colors = new Map<string, Map<string, string[]>>()
 	const colors = new Map<string, ColorDesc>()
+	const declsCache: Map<string, ReturnType<typeof renderDecls>> = new Map()
 	const __config = { ...config }
 	const re = new RegExp(`^([\\w-]+${__config.separator})+`, "g")
 
@@ -502,7 +503,17 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 		return rule.toString()
 	}
 
-	function renderDecls(classname: string) {
+	function renderDecls(classname: string): {
+		decls: Map<string, string[]>
+		scopes: string[]
+	} {
+		const cached = declsCache.get(classname)
+		if (cached) {
+			declsCache.delete(classname)
+			declsCache.set(classname, cached)
+			return cached
+		}
+
 		const root = render(classname)
 		const decls: Map<string, string[]> = new Map()
 
@@ -528,7 +539,17 @@ export async function createTwContext(config: Tailwind.ResolvedConfigJS, extensi
 			}
 		})
 
-		return { decls, scopes }
+		const ret = { decls, scopes }
+		addCache(classname, ret)
+		return ret
+
+		function addCache(key: string, value: ReturnType<typeof renderDecls>) {
+			if (declsCache.size >= 16000) {
+				const first = colors.keys().next().value
+				declsCache.delete(first)
+			}
+			declsCache.set(key, value)
+		}
 	}
 
 	function isVariant(value: string) {
