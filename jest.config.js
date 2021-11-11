@@ -1,9 +1,6 @@
-export default {
-	preset: "ts-jest",
-	globals: {
-		"ts-jest": {
-			tsconfig: "<rootDir>/src/tsconfig.json",
-		},
+module.exports = {
+	transform: {
+		"^.+\\.(t|j)sx?$": "@swc/jest",
 	},
 	modulePathIgnorePatterns: ["examples"],
 	moduleNameMapper: {
