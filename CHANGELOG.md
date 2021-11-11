@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.12.0
+
+- Change color decoration style
+- Remove `babel` and `ts-node`, replace with `swc`
+- Render css preview with postcss
+- Support classname `xxx-DEFAULT`
+- Support `@apply` in user plugin
+- Change vscode version to 1.60
+
 ## 0.11.7
 
 - Enhance yarn2 feature
