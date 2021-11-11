@@ -2,119 +2,130 @@
 
 exports[`tw render arbitrary classname 1`] = `
 ".text-\\\\[2px\\\\] {
-    font-size: 2px
+    font-size: 2px;
 }"
 `;
 
 exports[`tw render arbitrary classname 2`] = `
 ".text-\\\\[red\\\\] {
     --tw-text-opacity: 1;
-    color: rgb(255 0 0 / var(--tw-text-opacity))
+    color: rgb(255 0 0 / var(--tw-text-opacity));
 }"
 `;
 
 exports[`tw render arbitrary classname 3`] = `
 ".text-\\\\[red\\\\]\\\\/\\\\[\\\\.2\\\\] {
-    color: rgb(255 0 0 / .2)
+    color: rgb(255 0 0 / .2);
 }"
 `;
 
 exports[`tw render arbitrary classname 4`] = `
 ".text-red-300\\\\/\\\\[\\\\.2\\\\] {
-    color: rgb(252 165 165 / .2)
+    color: rgb(252 165 165 / .2);
 }"
 `;
 
 exports[`tw render arbitrary classname 5`] = `
 ".text-\\\\[red\\\\]\\\\/30 {
-    color: rgb(255 0 0 / 0.3)
+    color: rgb(255 0 0 / 0.3);
 }"
 `;
 
 exports[`tw render classname 1`] = `
 ".text-green-300 {
     --tw-text-opacity: 1;
-    color: rgb(134 239 172 / var(--tw-text-opacity))
+    color: rgb(134 239 172 / var(--tw-text-opacity));
 }"
 `;
 
 exports[`tw render classname 2`] = `
 ".p-3 {
-    padding: 0.75rem/** 12px */
+    padding: 0.75rem/** 12px */;
 }"
 `;
 
 exports[`tw render classname 3`] = `
 ".bg-\\\\[rgb\\\\(3\\\\2c \\\\ 3\\\\2c \\\\ 3\\\\)\\\\] {
     --tw-bg-opacity: 1;
-    background-color: rgb(3 3 3 / var(--tw-bg-opacity))
+    background-color: rgb(3 3 3 / var(--tw-bg-opacity));
 }"
 `;
 
 exports[`tw render classname 4`] = `
 ".bg-\\\\[image\\\\:url\\\\(https\\\\:\\\\/\\\\/example\\\\.png\\\\)\\\\] {
-    background-image: url(https://example.png)
+    background-image: url(https://example.png);
 }"
 `;
 
 exports[`tw render classname 5`] = `
 ".divide-black > :not([hidden]) ~ :not([hidden]) {
     --tw-divide-opacity: 1 !important;
-    border-color: rgb(0 0 0 / var(--tw-divide-opacity)) !important
+    border-color: rgb(0 0 0 / var(--tw-divide-opacity)) !important;
 }"
 `;
 
 exports[`tw render classname 6`] = `
 ".text-xl {
   font-size: 1.25rem;
-  line-height: 1.75rem
+  line-height: 1.75rem;
 }"
 `;
 
 exports[`tw render css declaration 1`] = `
 "& {
-    background: rgb(3 3 3 / .2)
+    background: rgb(3 3 3 / .2);
 }"
 `;
 
 exports[`tw render css declaration 2`] = `
 "& {
-    background: rgb(3 3 3 / .2) !important
+    background: rgb(3 3 3 / .2) !important;
 }"
 `;
 
 exports[`tw render css declaration 3`] = `
 "& {
-    padding: 2.5rem/** 30px */
+    padding: 2.5rem/** 30px */;
 }"
 `;
 
 exports[`tw render decls 1`] = `
-Map {
-  "font-size" => Array [
-    "1.5rem",
-  ],
-  "line-height" => Array [
-    "2rem",
-  ],
+Object {
+  "decls": Map {
+    "font-size" => Array [
+      "1.5rem",
+    ],
+    "line-height" => Array [
+      "2rem",
+    ],
+  },
+  "scopes": Array [],
 }
 `;
 
 exports[`tw render decls 2`] = `
-Map {
-  "--tw-gradient-from" => Array [
-    "#fbcfe8",
-  ],
-  "--tw-gradient-stops" => Array [
-    "var(--tw-gradient-from), var(--tw-gradient-to, rgb(251 207 232 / 0))",
-  ],
+Object {
+  "decls": Map {
+    "--tw-gradient-from" => Array [
+      "#fbcfe8",
+    ],
+    "--tw-gradient-stops" => Array [
+      "var(--tw-gradient-from), var(--tw-gradient-to, rgb(251 207 232 / 0))",
+    ],
+  },
+  "scopes": Array [],
 }
 `;
 
 exports[`tw render decls 3`] = `
-Map {
-  "border-style" => Array [
-    "double",
+Object {
+  "decls": Map {
+    "border-style" => Array [
+      "double",
+    ],
+  },
+  "scopes": Array [
+    " > :not([hidden]) ~ :not([hidden])",
   ],
 }
 `;
