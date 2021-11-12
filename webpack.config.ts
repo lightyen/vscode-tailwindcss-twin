@@ -2,6 +2,7 @@ import { CleanWebpackPlugin } from "clean-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
 import path from "path"
+import TerserPlugin from "terser-webpack-plugin"
 import { TsPathsResolvePlugin } from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
 import { ExternalsPlugin } from "webpack"
@@ -32,9 +33,13 @@ const configExtension: Configuration = {
 		libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "[absolute-resource-path]",
 	},
-	experiments: {
-		asyncWebAssembly: true,
-		syncWebAssembly: true,
+	optimization: {
+		minimize: true,
+		minimizer: [
+			new TerserPlugin({
+				minify: TerserPlugin.esbuildMinify,
+			}),
+		],
 	},
 	module: {
 		rules: [
