@@ -68,10 +68,10 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 				addVariant("optional", "&:optional")
 				addVariant("read-write", "&:read-write")
 
-				addVariant("all", "*")
-				addVariant("sibling", "~ *")
-				addVariant("svg", "svg")
-				addVariant("all-child", "> *")
+				addVariant("all", "& *")
+				addVariant("sibling", "& ~ *")
+				addVariant("svg", "& svg")
+				addVariant("all-child", "& > *")
 
 				addVariant("hocus", "&:hover, &:focus")
 				addVariant("group-hocus", ":merge(.group):hover &, :merge(.group):focus &")
