@@ -90,14 +90,10 @@ export const scrollMargin: PluginConstructor = (context: Context): Plugin => {
 		}
 
 		const isNegative = match[0].charCodeAt(0) === 45
-		let val = match[1]
+		const val = match[1]
 
-		if (!isNegative && isArbitraryValue(val)) {
-			return true
-		}
-
-		if (isNegative) {
-			val = "-" + val
+		if (isArbitraryValue(val)) {
+			return !isNegative
 		}
 
 		return values.some(c => c === val)
