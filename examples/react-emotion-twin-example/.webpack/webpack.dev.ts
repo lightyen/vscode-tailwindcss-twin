@@ -1,18 +1,21 @@
-/// <reference types="@types/webpack-dev-server" />
+import ReactRefreshPlugin from "@pmmmwh/react-refresh-webpack-plugin"
+import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
+import path from "path"
 import { merge } from "webpack-merge"
 import createBaseConfig from "./webpack.common"
-import type { Configuration } from "webpack"
-import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
-import ReactRefreshPlugin from "@pmmmwh/react-refresh-webpack-plugin"
-
-import path from "path"
 
 process.env.NODE_ENV = "development"
 process.env.PUBLIC_URL = ""
 
-const config: Configuration = {
+export default merge(createBaseConfig(), {
 	mode: "development",
 	devtool: "inline-source-map",
+	devServer: {
+		hot: true,
+		compress: true,
+		open: true,
+		historyApiFallback: true,
+	},
 	stats: {
 		children: false,
 		modules: false,
@@ -30,7 +33,7 @@ const config: Configuration = {
 	plugins: [
 		new ForkTsCheckerPlugin({
 			typescript: {
-				configFile: path.resolve(process.cwd(), "src", "tsconfig.json"),
+				configFile: path.resolve(__dirname, "../src/tsconfig.json"),
 			},
 			logger: {
 				devServer: false,
@@ -38,12 +41,4 @@ const config: Configuration = {
 		}),
 		new ReactRefreshPlugin(),
 	],
-	devServer: {
-		hot: true,
-		compress: true,
-		open: true,
-		historyApiFallback: true,
-	},
-}
-
-export default merge(createBaseConfig(), config)
+})

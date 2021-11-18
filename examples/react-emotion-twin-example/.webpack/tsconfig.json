@@ -1,15 +1,6 @@
 {
   "extends": "../tsconfig",
   "compilerOptions": {
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "lib": ["esnext"],
-    "types": ["@types/webpack-dev-server"],
-    "target": "es6",
-    "paths": {
-      "~/*": ["./*"]
-    }
+    "types": ["@types/webpack-dev-server"]
   }
 }
