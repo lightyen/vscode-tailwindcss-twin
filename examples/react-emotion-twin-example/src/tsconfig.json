@@ -2,10 +2,9 @@
   "extends": "../tsconfig",
   "compilerOptions": {
     "jsx": "preserve",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "target": "esnext",
-    "typeRoots": ["./typings"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "types": ["@types/webpack-env"],
     "lib": ["esnext", "dom", "dom.iterable", "webworker"],
     "paths": {
       "~/*": ["./*"],

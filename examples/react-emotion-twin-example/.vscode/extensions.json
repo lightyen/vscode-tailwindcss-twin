@@ -1,12 +1,12 @@
 {
   "recommendations": [
-    "naumovs.color-highlight",
-    "dbaeumer.vscode-eslint",
     "christian-kohler.npm-intellisense",
-    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
     "editorconfig.editorconfig",
-    "stylelint.vscode-stylelint",
+    "esbenp.prettier-vscode",
     "jpoissonnier.vscode-styled-components",
-    "pkief.material-icon-theme"
+    "lightyen.tailwindcss-intellisense-twin",
+    "pkief.material-icon-theme",
+    "naumovs.color-highlight"
   ]
 }

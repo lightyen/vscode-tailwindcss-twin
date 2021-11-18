@@ -1,14 +1,10 @@
-import packageJSON from "../package.json"
-
-import path from "path"
-import { EnvironmentPlugin } from "webpack"
-import { Configuration } from "webpack"
-
-// Plugins
+import glob from "glob"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import MiniCssExtractPlugin from "mini-css-extract-plugin"
+import path from "path"
 import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
-import glob from "glob"
+import { Configuration, EnvironmentPlugin } from "webpack"
+import packageJSON from "../package.json"
 
 export default function (): Configuration {
 	const workspaceFolder = path.resolve(__dirname, "..")
@@ -36,6 +32,7 @@ export default function (): Configuration {
 	return {
 		target: "web",
 		plugins: [
+			new TsPathsResolvePlugin({ tsConfigPath: path.resolve(src, "tsconfig.json") }),
 			new EnvironmentPlugin({
 				NODE_ENV: "development",
 				PUBLIC_URL: "",
@@ -46,17 +43,15 @@ export default function (): Configuration {
 				chunkFilename: join_network(outputCSS, "[name].chunk.css?[fullhash:8]"),
 			}),
 			new HtmlWebpackPlugin({
-				title: "React App",
+				title: "",
 				inject: true,
 				minify: true,
 				template: path.join(workspaceFolder, "public", "index.html"),
 				favicon: path.join(workspaceFolder, "public", "favicon.ico"),
 			}),
 		],
-		// NOTE: https://webpack.js.org/configuration/resolve/
 		resolve: {
 			extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
-			plugins: [new TsPathsResolvePlugin({ tsConfigPath: path.resolve(src, "tsconfig.json") })],
 		},
 		entry,
 		output: {
@@ -68,12 +63,12 @@ export default function (): Configuration {
 		module: {
 			rules: [
 				{
-					test: /\.(j|t)sx?$/,
-					exclude: /node_modules|__tests?__|\.test\.(j|t)sx?$|\.worker\.(j|t)s$/,
-					use: ["babel-loader"],
+					test: /\.[jt]sx?$/,
+					exclude: /node_modules|__tests?__|\.(test|spec)\.[jt]sx?$|\.worker\.[jt]s$/,
+					use: "babel-loader",
 				},
 				{
-					test: /\.worker\.(j|t)s$/,
+					test: /\.worker\.[jt]s$/,
 					exclude: /node_modules/,
 					use: ["worker-loader", "babel-loader"],
 				},
@@ -105,7 +100,6 @@ export default function (): Configuration {
 					test: /\.ya?ml$/,
 					use: "js-yaml-loader",
 				},
-				// For user space:
 				{
 					exclude: /node_modules/,
 					test: /\.css$/,
@@ -120,10 +114,9 @@ export default function (): Configuration {
 						},
 					],
 				},
-				// For node_modules:
 				{
 					include: /node_modules/,
-					test: /.css$/,
+					test: /\.css$/,
 					use: [styleLoader, "css-loader"],
 				},
 			],

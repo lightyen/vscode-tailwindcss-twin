@@ -8,7 +8,7 @@ interface Props {
 
 const Button = styled.button<Props>(({ theme, isPrimary, isSecondary, isSmall }) => [
 	// The common button styles added with the tw import
-	tw`text-lg px-8 py-2 rounded focus:outline-none`,
+	tw`text-lg px-8 py-2 rounded`,
 	tw`duration-75`,
 
 	// Use the variant grouping feature to add variants to multiple classes

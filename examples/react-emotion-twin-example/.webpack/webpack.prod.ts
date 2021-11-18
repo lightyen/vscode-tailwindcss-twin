@@ -1,12 +1,11 @@
-import { merge } from "webpack-merge"
-import createBaseConfig from "./webpack.common"
-import type { Configuration } from "webpack"
-import TerserPlugin from "terser-webpack-plugin"
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
-
 import path from "path"
+import TerserPlugin from "terser-webpack-plugin"
+import type { Configuration } from "webpack"
+import { merge } from "webpack-merge"
+import createBaseConfig from "./webpack.common"
 
 process.env.NODE_ENV = "production"
 
@@ -29,6 +28,7 @@ const config: Configuration = {
 		minimizer: [
 			new TerserPlugin({
 				parallel: true,
+				minify: TerserPlugin.swcMinify,
 			}),
 			new CssMinimizerPlugin(),
 		],
@@ -36,10 +36,10 @@ const config: Configuration = {
 	plugins: [
 		new ForkTsCheckerPlugin({
 			typescript: {
-				configFile: path.resolve(process.cwd(), "src", "tsconfig.json"),
+				configFile: path.resolve(__dirname, "../src/tsconfig.json"),
 			},
 		}),
-		new ESLintPlugin({ context: path.join(process.cwd(), "src"), extensions: ["js", "jsx", "ts", "tsx"] }),
+		new ESLintPlugin({ context: path.resolve(__dirname, "../src"), extensions: ["js", "jsx", "ts", "tsx"] }),
 	],
 }
 

@@ -1,7 +1,6 @@
 import { Global, ThemeProvider } from "@emotion/react"
 import FiraCodeFont from "assets/fonts/FiraCode-Regular.woff2"
-import tw, { screen, css, GlobalStyles } from "twin.macro"
-
+import tw, { css, GlobalStyles, screen } from "twin.macro"
 import Button from "./components/Button"
 import Logo from "./components/Logo"
 
@@ -11,15 +10,8 @@ const globalStyle = css`
 		src: local("Fira Code"), url(${FiraCodeFont}) format("woff2");
 	}
 	body {
-		${tw`m-0 leading-normal overflow-hidden fill-current bg-gray-900`}
-		font-family: Roboto, 微軟正黑體, Microsoft JhengHei, Helvetica Neue,
-		Helvetica, Arial, PingFang TC, 黑體-繁, Heiti TC, 蘋果儷中黑,
-		Apple LiGothic Medium, sans-serif;
+		${tw`m-0 leading-normal overflow-hidden fill-current bg-gray-900 font-sans`}
 	}
-	/* ::selection {
-		background: rgb(115, 80, 196);
-		${tw`text-gray-100`}
-	} */
 	button:-moz-focusring,
 	[type="button"]:-moz-focusring,
 	[type="reset"]:-moz-focusring,
@@ -34,9 +26,11 @@ function BaseButton(props: JSX.IntrinsicElements["button"]) {
 	return <button {...props} />
 }
 
-const StyledButton = tw(BaseButton)`bg-red-500 rounded-3xl ring-4 hover:ring-red-300/70`
+const StyledButton = tw(BaseButton)`
+py-2 rounded-3xl ring-4 transition ring-offset-2
+bg-red-700/70 text-white ring-offset-gray-500
+hover:(bg-red-500 ring-offset-red-400/50)`
 
-// for React Fast Refresh, need a name here
 export default function App() {
 	return (
 		<>
@@ -45,7 +39,7 @@ export default function App() {
 			<ThemeProvider theme={{ colors: { primary: "#abcaca9f" } }}>
 				<div
 					css={[
-						tw`flex flex-col items-center justify-center h-screen font-family[Fira Code]`,
+						tw`flex flex-col items-center justify-center h-screen`,
 						tw`bg-gradient-to-b from-blue-900 to-blue-400`,
 					]}
 				>
