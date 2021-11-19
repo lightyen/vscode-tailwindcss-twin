@@ -37,6 +37,7 @@ const configExtension: Configuration = {
 		minimize: true,
 		minimizer: [
 			new TerserPlugin({
+				parallel: true,
 				minify: TerserPlugin.esbuildMinify,
 			}),
 		],
@@ -46,7 +47,20 @@ const configExtension: Configuration = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules|\.test\.ts$/,
-				use: "swc-loader",
+				use: {
+					loader: "swc-loader",
+					options: {
+						jsc: {
+							parser: {
+								syntax: "typescript",
+							},
+							target: "es2020",
+						},
+						module: {
+							type: "commonjs",
+						},
+					},
+				},
 			},
 			{
 				test: /\.ya?ml$/,
