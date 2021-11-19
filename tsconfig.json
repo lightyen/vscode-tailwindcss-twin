@@ -11,6 +11,5 @@
     "forceConsistentCasingInFileNames": true,
     "exactOptionalPropertyTypes": false,
     "resolveJsonModule": true
-  },
-  "exclude": ["./webpack.config.*"]
+  }
 }
