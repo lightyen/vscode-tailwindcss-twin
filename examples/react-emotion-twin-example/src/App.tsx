@@ -1,8 +1,11 @@
 import { Global, ThemeProvider } from "@emotion/react"
 import FiraCodeFont from "assets/fonts/FiraCode-Regular.woff2"
+import { useRef } from "react"
 import tw, { css, GlobalStyles, screen } from "twin.macro"
+import { v4 } from "uuid"
 import Button from "./components/Button"
 import Logo from "./components/Logo"
+import Switch from "./components/Switch"
 
 const globalStyle = css`
 	@font-face {
@@ -49,10 +52,23 @@ export default function App() {
 						<Button isSecondary>Cancel</Button>
 						<Button isSmall>Close</Button>
 						<StyledButton>Styled</StyledButton>
+						<Control />
 					</div>
 					<Logo />
 				</div>
 			</ThemeProvider>
 		</>
+	)
+}
+
+function Control() {
+	const idRef = useRef(v4())
+	return (
+		<div tw="flex items-center justify-between">
+			<label htmlFor={idRef.current} tw="select-none text-white mr-3">
+				Enabled
+			</label>
+			<Switch id={idRef.current} />
+		</div>
 	)
 }
