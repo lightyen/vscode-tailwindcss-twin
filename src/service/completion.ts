@@ -555,11 +555,20 @@ function arbitraryValueCompletion(
 
 		const [start, end, word] = getWord(text.slice(...range), range[0], range[1], position)
 
+		let items: ICompletionItem[] = []
 		for (const fn of mappingArbitraryPropToCssProp[prop]) {
-			cssValueItems.push(
+			items = items.concat(
 				...fn(word, new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))),
 			)
 		}
+
+		// filter duplicated items
+		const m = new Map<string, ICompletionItem>()
+		for (const i of items) {
+			m.set(i.label, i)
+		}
+		items = Array.from(m.values())
+		cssValueItems.push(...items)
 	}
 
 	return cssValueItems
