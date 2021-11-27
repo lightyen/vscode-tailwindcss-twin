@@ -1,4 +1,14 @@
-import * as extractColors from "@/extractColors"
+import {
+	colorFromFunction,
+	colorFromHex,
+	colorFromIdentifier,
+	colorFromTransparent,
+	isColorFunction,
+	isColorHexValue,
+	isColorIdentifier,
+	isColorTransparent,
+	parse as parseColors,
+} from "@/color"
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
@@ -33,10 +43,10 @@ export default function documentColors(
 						target.expr
 					) {
 						const expr = target.expr
-						const colorTokens = extractColors.default(expr.value)
+						const colorTokens = parseColors(expr.value)
 						for (const t of colorTokens) {
-							if (extractColors.isColorHexValue(t)) {
-								const color = extractColors.colorFromHex(expr.value.slice(...t.range))
+							if (isColorHexValue(t)) {
+								const color = colorFromHex(expr.value.slice(...t.range))
 								colorInformations.push({
 									color,
 									range: new vscode.Range(
@@ -44,8 +54,8 @@ export default function documentColors(
 										document.positionAt(offset + expr.range[0] + t.range[1]),
 									),
 								})
-							} else if (extractColors.isColorIdentifier(t)) {
-								const color = extractColors.colorFromIdentifier(expr.value, t)
+							} else if (isColorIdentifier(t)) {
+								const color = colorFromIdentifier(expr.value, t)
 								colorInformations.push({
 									color,
 									range: new vscode.Range(
@@ -53,8 +63,17 @@ export default function documentColors(
 										document.positionAt(offset + expr.range[0] + t.range[1]),
 									),
 								})
-							} else if (extractColors.isColorFunction(t)) {
-								const color = extractColors.colorFromFunction(t)
+							} else if (isColorTransparent(t)) {
+								const color = colorFromTransparent()
+								colorInformations.push({
+									color,
+									range: new vscode.Range(
+										document.positionAt(offset + expr.range[0] + t.range[0]),
+										document.positionAt(offset + expr.range[0] + t.range[1]),
+									),
+								})
+							} else if (isColorFunction(t)) {
+								const color = colorFromFunction(t)
 								if (color) {
 									colorInformations.push({
 										color,

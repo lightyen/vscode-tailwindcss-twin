@@ -97,6 +97,7 @@ export async function workspaceClient(
 			emptyGroup: true,
 		},
 		documentColors: false,
+		hoverColorHint: "none",
 	})
 	console.level = settings.logLevel
 
@@ -286,6 +287,12 @@ export async function workspaceClient(
 			if (settings.documentColors !== extSettings.documentColors) {
 				settings.documentColors = extSettings.documentColors
 				console.info(`documentColors = ${settings.documentColors}`)
+			}
+
+			if (settings.hoverColorHint !== extSettings.hoverColorHint) {
+				settings.hoverColorHint = extSettings.hoverColorHint
+				needToUpdate = true
+				console.info(`hoverColorHint = ${settings.hoverColorHint}`)
 			}
 
 			try {

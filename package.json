@@ -271,6 +271,16 @@
           "type": "number",
           "default": 16
         },
+        "tailwindcss.hoverColorHint": {
+          "type": "string",
+          "enum": [
+            "none",
+            "hex",
+            "rgb",
+            "hsl"
+          ],
+          "default": "none"
+        },
         "tailwindcss.logLevel": {
           "type": "string",
           "description": "%ext.settings.logging.level%",
