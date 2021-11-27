@@ -102,28 +102,6 @@
     "tailwindcss": "3.0.0-alpha.2"
   },
   "contributes": {
-    "configurationDefaults": {
-      "[javascript]": {
-        "editor.quickSuggestions": {
-          "strings": true
-        }
-      },
-      "[typescript]": {
-        "editor.quickSuggestions": {
-          "strings": true
-        }
-      },
-      "[javascriptreact]": {
-        "editor.quickSuggestions": {
-          "strings": true
-        }
-      },
-      "[typescriptreact]": {
-        "editor.quickSuggestions": {
-          "strings": true
-        }
-      }
-    },
     "grammars": [
       {
         "injectTo": [
