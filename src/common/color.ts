@@ -4,16 +4,21 @@ import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
 import { Parser } from "vscode-css-languageservice/lib/esm/parser/cssParser"
 import { NodeToken } from "./parser"
 
-const parser = new Parser()
+export const parser = new Parser()
 
 export enum ColorTokenKind {
 	Identifier,
 	HexValue,
 	Function,
+	Transparent,
 }
 
 interface ColorIdentifier extends NodeToken {
 	kind: ColorTokenKind.Identifier
+}
+
+interface ColorTransparent extends NodeToken {
+	kind: ColorTokenKind.Transparent
 }
 
 interface ColorHexValue extends NodeToken {
@@ -26,10 +31,14 @@ interface ColorFunction extends NodeToken {
 	args: string[]
 }
 
-export type ColorToken = ColorIdentifier | ColorHexValue | ColorFunction
+export type ColorToken = ColorIdentifier | ColorTransparent | ColorHexValue | ColorFunction
 
 export function isColorIdentifier(c: ColorToken): c is ColorIdentifier {
 	return c.kind === ColorTokenKind.Identifier
+}
+
+export function isColorTransparent(c: ColorToken): c is ColorTransparent {
+	return c.kind === ColorTokenKind.Transparent
 }
 
 export function isColorHexValue(c: ColorToken): c is ColorHexValue {
@@ -52,9 +61,9 @@ function isFunctionNode(node: nodes.Node): node is nodes.Function {
 	return node.type === nodes.NodeType.Function
 }
 
-export default function extractColors(value: string): ColorToken[] {
+export function parse(cssValue: string): ColorToken[] {
 	const colors: ColorToken[] = []
-	const node = parser.internalParse(value, parser._parseExpr.bind(parser))
+	const node = parser.internalParse(cssValue, parser._parseExpr.bind(parser))
 	if (!node) return colors
 	node.accept(node => {
 		if (isIdentifierNode(node)) {
@@ -63,7 +72,7 @@ export default function extractColors(value: string): ColorToken[] {
 			if (color === "transparent") {
 				colors.push({
 					range: [node.offset, node.offset + node.length],
-					kind: ColorTokenKind.Identifier,
+					kind: ColorTokenKind.Transparent,
 				})
 			} else if (color in languageFacts.colors) {
 				colors.push({
@@ -85,7 +94,7 @@ export default function extractColors(value: string): ColorToken[] {
 				let args: string[] = node
 					.getArguments()
 					.getChildren()
-					.map(token => value.substr(token.offset, token.length))
+					.map(token => cssValue.substr(token.offset, token.length))
 
 				if (args.length === 1) {
 					args = args[0].split(/\s+/).filter(t => t && t !== "/")
@@ -156,11 +165,12 @@ export function colorFromHex(hexValue: string): vscode.Color {
 
 export function colorFromIdentifier(text: string, c: ColorIdentifier): vscode.Color {
 	const value = text.slice(...c.range)
-	if (value === "transparent") {
-		return { red: 0, green: 0, blue: 0, alpha: 0 }
-	}
 	const hexValue = languageFacts.colors[value]
 	return colorFromHex(hexValue)
+}
+
+export function colorFromTransparent(): vscode.Color {
+	return { red: 0, green: 0, blue: 0, alpha: 0 }
 }
 
 export function getNumericValue(value: string | undefined, factor: number) {

@@ -19,6 +19,7 @@ export interface Settings {
 	rootFontSize: number
 	logLevel: "none" | "error" | "warning" | "info" | "debug" | "trace"
 	documentColors: boolean
+	hoverColorHint: "none" | "hex" | "rgb" | "hsl"
 }
 
 export interface ColorDecoration {

@@ -69,6 +69,7 @@ export default async function hover(
 						value,
 						important,
 						rootFontSize: options.rootFontSize,
+						colorHint: options.hoverColorHint,
 						tabSize,
 					})
 					const codes = new vscode.MarkdownString()
@@ -159,6 +160,7 @@ export default async function hover(
 					classname: value,
 					important: selection.important,
 					rootFontSize: options.rootFontSize,
+					colorHint: options.hoverColorHint,
 					tabSize,
 				})
 
@@ -172,6 +174,7 @@ export default async function hover(
 						classname: value,
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
+						colorHint: options.hoverColorHint,
 						tabSize,
 					})
 				}

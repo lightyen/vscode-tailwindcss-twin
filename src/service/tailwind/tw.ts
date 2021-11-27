@@ -1,5 +1,5 @@
+import { isColorFunction, isColorHexValue, isColorIdentifier, isColorTransparent, parse as parseColors } from "@/color"
 import { createGetPluginByName } from "@/corePlugins"
-import * as extractColors from "@/extractColors"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import { importFrom } from "@/module"
@@ -222,6 +222,68 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		return cssValue.replace(reg, text + `/** ${(rootFontSize * val).toFixed(0)}px */`)
 	}
 
+	function extendColorValue(cssValue: string, colorHint: "hex" | "rgb" | "hsl") {
+		let ret = ""
+		let start = 0
+		for (const c of parseColors(cssValue)) {
+			const [a, b] = c.range
+			const val = cssValue.slice(a, b)
+			let colorVal = ""
+			try {
+				if (isColorFunction(c)) {
+					if (!c.fnName.startsWith(colorHint)) {
+						if (c.fnName === "rgb") {
+							colorVal = getValue(chroma(c.args.slice(0, 3).map(Number)))
+						} else if (c.fnName === "rgba") {
+							const args = c.args.map(Number)
+							if (args[3] >= 0 && args[3] <= 1) colorVal = getValue(chroma(args))
+							else colorVal = getValue(chroma(args.slice(0, 3)))
+						} else if (c.fnName === "hsl") {
+							colorVal = getValue(chroma(`hsl(${c.args.slice(0, 3).join()})`))
+						} else if (c.fnName === "hsla") {
+							if (c.args.length > 3 && !Number.isNaN(Number(c.args[3][0]))) {
+								colorVal = getValue(chroma(`hsla(${c.args.join()})`))
+							} else {
+								colorVal = getValue(chroma(`hsl(${c.args.slice(0, 3).join()})`))
+							}
+						}
+					}
+				} else if (isColorHexValue(c) && colorHint !== "hex") {
+					colorVal = getValue(chroma(val))
+				} else if (isColorIdentifier(c)) {
+					colorVal = getValue(chroma(val))
+				}
+			} catch {}
+			ret += cssValue.slice(start, b)
+			if (colorVal) ret += `/** ${colorVal} */`
+			start = b
+		}
+		if (start < cssValue.length) {
+			ret += cssValue.slice(start)
+		}
+
+		return ret
+
+		function getValue(color: chroma.Color) {
+			switch (colorHint) {
+				case "hex":
+					return color.hex()
+				case "rgb": {
+					const r = color.get("rgb.r")
+					const g = color.get("rgb.g")
+					const b = color.get("rgb.b")
+					return color.alpha() < 1 ? `rgba(${r} ${g} ${b} / ${color.alpha()})` : `rgb(${r} ${g} ${b})`
+				}
+				case "hsl": {
+					const h = Math.round(color.get("hsl.h"))
+					const s = Math.round(color.get("hsl.s") * 100)
+					const l = Math.round(color.get("hsl.l") * 100)
+					return color.alpha() < 1 ? `hsla(${h} ${s}% ${l}% / ${color.alpha()})` : `hsl(${h} ${s}% ${l}%)`
+				}
+			}
+		}
+	}
+
 	function render(classname: string, tabSize = 4) {
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
@@ -253,16 +315,19 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		important = false,
 		rootFontSize = 0,
 		tabSize = 4,
+		colorHint = "none",
 	}: {
 		classname: string
 		important?: boolean
 		rootFontSize?: number
 		tabSize?: number
+		colorHint?: "none" | "hex" | "rgb" | "hsl"
 	}): CssText {
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
 				decl.important = important
+				if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
@@ -275,14 +340,17 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		important,
 		rootFontSize,
 		tabSize = 4,
+		colorHint = "none",
 	}: {
 		prop: string
 		value: string
 		important?: boolean
 		rootFontSize?: number
 		tabSize?: number
+		colorHint?: "none" | "hex" | "rgb" | "hsl"
 	}): ScssText {
 		const decl = postcss.decl({ prop, value, important })
+		if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 		if (rootFontSize) decl.value = toPixelUnit(decl.value, rootFontSize)
 		const rule = postcss.rule({ selector: "&", nodes: [decl], raws: { semicolon: true } })
 		const raws = rule.raws as { indent: string }
@@ -341,7 +409,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 			else if (classname.endsWith("-transparent")) return "transparent"
 
 			for (const value of values) {
-				const colors = extractColors.default(value)
+				const colors = parseColors(value)
 				if (colors.length <= 0) {
 					continue
 				}
@@ -350,10 +418,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 
 				let color: chroma.Color | undefined
 
-				if (extractColors.isColorIdentifier(firstColor) || extractColors.isColorHexValue(firstColor)) {
-					if (value.slice(firstColor.range[0], firstColor.range[1]) === "transparent") {
-						return "transparent"
-					}
+				if (isColorTransparent(firstColor)) {
+					return "transparent"
+				} else if (isColorIdentifier(firstColor) || isColorHexValue(firstColor)) {
 					try {
 						color = chroma(value.slice(firstColor.range[0], firstColor.range[1])).alpha(1.0)
 					} catch {}
