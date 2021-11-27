@@ -17,28 +17,7 @@ const documentSelector = DEFAULT_SUPPORT_LANGUAGES.map<vscode.DocumentFilter[]>(
 	{ scheme: "untitled", language },
 ]).flat()
 
-const triggerCharacters = [
-	'"',
-	"'",
-	"`",
-	" ",
-	"(",
-	":",
-	"-",
-	"/",
-	".",
-	"0",
-	"1",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-	"9",
-	"[",
-]
+const triggerCharacters = ['"', "'", "`", " ", ":", "-", "/", ".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 const priority = [".ts", ".js", ".cjs"]
 
