@@ -45,7 +45,8 @@ Support ONLY `*.tsx` and `*.jsx`
   "tailwindcss.jsxPropImportChecking": true,
   "tailwindcss.rootFontSize": 16,
   "tailwindcss.logLevel": "info",
-  "tailwindcss.documentColors": false
+  "tailwindcss.documentColors": false,
+  "tailwindcss.hoverColorHint": "none"
 }
 ```
 

@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.12.1
+
+- Add new option: `hoverColorHint` (something like `rootFontSize` but for colors)
+- Remove configurationDefaults from the extension
+- Fix: Duplicate completion label
+
 ## 0.12.0
 
 - Change color decoration style
