@@ -1,19 +1,35 @@
 import { Global, ThemeProvider } from "@emotion/react"
-import FiraCodeFont from "assets/fonts/FiraCode-Regular.woff2"
+import CascadiaCode from "assets/fonts/CascadiaCode.ttf"
+import CascadiaCodeItalic from "assets/fonts/CascadiaCodeItalic.ttf"
 import { useRef } from "react"
 import tw, { css, GlobalStyles, screen } from "twin.macro"
 import { v4 } from "uuid"
-import Button from "./components/Button"
-import Logo from "./components/Logo"
-import Switch from "./components/Switch"
+import { Button } from "./components/Button"
+import { Logo } from "./components/Logo"
+import { Switch } from "./components/Switch"
+
+const Cascadia = css`
+	@font-face {
+		font-family: "Cascadia Code";
+		font-style: normal;
+		font-display: swap;
+		src: local("Cascadia Code"), url(${CascadiaCode}) format("opentype");
+		unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074,
+			U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+	}
+	@font-face {
+		font-family: "Cascadia Code";
+		font-style: italic;
+		font-display: swap;
+		src: local("Cascadia Code"), url(${CascadiaCodeItalic}) format("opentype");
+		unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074,
+			U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+	}
+`
 
 const globalStyle = css`
-	@font-face {
-		font-family: Fira Code;
-		src: local("Fira Code"), url(${FiraCodeFont}) format("woff2");
-	}
 	body {
-		${tw`m-0 leading-normal overflow-hidden fill-current bg-gray-900 font-sans`}
+		${tw`m-0 leading-normal overflow-hidden bg-gray-900 font-sans`}
 	}
 	button:-moz-focusring,
 	[type="button"]:-moz-focusring,
@@ -38,7 +54,7 @@ export default function App() {
 	return (
 		<>
 			<GlobalStyles />
-			<Global styles={globalStyle} />
+			<Global styles={[Cascadia, globalStyle]} />
 			<ThemeProvider theme={{ colors: { primary: "#abcaca9f" } }}>
 				<div
 					css={[
@@ -65,7 +81,7 @@ function Control() {
 	const idRef = useRef(v4())
 	return (
 		<div tw="flex items-center justify-between">
-			<label htmlFor={idRef.current} tw="select-none text-white mr-3">
+			<label htmlFor={idRef.current} tw="select-none text-white font-bold mr-3">
 				Enabled
 			</label>
 			<Switch id={idRef.current} />

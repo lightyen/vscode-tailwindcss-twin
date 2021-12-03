@@ -2,7 +2,6 @@ root: true
 parser: "@typescript-eslint/parser"
 plugins:
   - "@typescript-eslint"
-  - "@emotion"
 extends:
   - "eslint:recommended"
   - "plugin:@typescript-eslint/eslint-recommended"
@@ -31,9 +30,6 @@ rules:
   "@typescript-eslint/no-empty-interface": "off"
   "@typescript-eslint/camelcase": "off"
   "@typescript-eslint/explicit-function-return-type": "off"
-  "@typescript-eslint/array-type":
-    - error
-    - default: array-simple
   "@typescript-eslint/no-var-requires": warn
   "@typescript-eslint/member-delimiter-style":
     - error

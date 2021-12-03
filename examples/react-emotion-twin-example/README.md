@@ -5,12 +5,12 @@ This is a full typescript example for Webpack + Emotion + Twin
 ## Getting Started
 
 ```sh
-yarn install
-yarn start
+pnpm install
+pnpm start
 ```
 
 ## Build
 
 ```sh
-yarn build
+pnpm build
 ```

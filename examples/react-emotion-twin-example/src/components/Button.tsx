@@ -6,7 +6,7 @@ interface Props {
 	isSmall?: boolean
 }
 
-const Button = styled.button<Props>(({ theme, isPrimary, isSecondary, isSmall }) => [
+export const Button = styled.button<Props>(({ theme, isPrimary, isSecondary, isSmall }) => [
 	// The common button styles added with the tw import
 	tw`text-lg px-8 py-2 rounded`,
 	tw`duration-75`,
@@ -28,5 +28,3 @@ const Button = styled.button<Props>(({ theme, isPrimary, isSecondary, isSmall })
 		color: ${theme.colors.primary};
 	`,
 ])
-
-export default Button

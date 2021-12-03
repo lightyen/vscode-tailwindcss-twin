@@ -1,13 +1,13 @@
 import { forwardRef, InputHTMLAttributes } from "react"
-import tw, { styled } from "twin.macro"
+import tw, { css } from "twin.macro"
 import { v4 } from "uuid"
 
 const InputControl = tw.input`hidden`
 
-const CustomInput = styled.label`
+const styles = css`
 	${tw`
 		w-[3.7rem] h-[1.8rem]
-		relative transition rounded-full bg-gray-300
+		relative transition rounded-full bg-gray-100
 		px-0 py-[0.4rem]
 		flex items-center justify-between
 		cursor-pointer select-none
@@ -21,7 +21,7 @@ const CustomInput = styled.label`
 			content transition cursor-pointer rounded-full absolute bg-white
 			border border-[#597a64]
 		)
-		[&:hover::after]:(box-shadow[0 0 1px 2px rgba(66, 153, 225, 0.5)])
+		[&:hover::after]:(box-shadow[0 0 1px 2px rgba(66, 225, 106, 0.5)])
 	`}
 
 	${InputControl}:checked + & {
@@ -33,15 +33,17 @@ const CustomInput = styled.label`
 	}
 
 	${InputControl}:checked + &:hover::after {
-		${tw`box-shadow[0 0 1px 2px rgba(68, 0, 255, 0.5)]`}
+		${tw`box-shadow[0 0 1px 2px rgba(187, 255, 0, 0.5)]`}
 	}
 `
 
-export default forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ id = v4(), ...props }, ref) => {
-	return (
-		<div tw="inline-block relative">
-			<InputControl ref={ref} id={id} type="checkbox" {...props} />
-			<CustomInput htmlFor={id} />
-		</div>
-	)
-})
+export const Switch = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+	({ id = v4(), className, ...props }, ref) => {
+		return (
+			<div tw="inline-block relative">
+				<InputControl ref={ref} id={id} type="checkbox" {...props} />
+				<label htmlFor={id} className={className} css={styles} />
+			</div>
+		)
+	},
+)
