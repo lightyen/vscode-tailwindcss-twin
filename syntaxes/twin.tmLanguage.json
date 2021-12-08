@@ -5,15 +5,22 @@
   "patterns": [
     {
       "name": "meta.tag.twin",
-      "begin": "(tw)(?:(?:\\.(\\w+))?|\\(\\w*\\))(`)",
+      "begin": "tw(?:(?:\\.[\\w$]+)?|\\(([^\\)]*)\\))(`)",
       "beginCaptures": {
         "1": {
-          "name": "entity.name.function.twin"
+          "patterns": [
+            {
+              "include": "source.ts#expression"
+            },
+            {
+              "include": "source.ts#string"
+            },
+            {
+              "include": "source.ts#comment"
+            }
+          ]
         },
         "2": {
-          "name": "entity.name.function.tagged-template.twin"
-        },
-        "3": {
           "name": "punctuation.definition.string.template.begin.twin"
         }
       },
