@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.12.2
+
+Enhance syntaxes(#28)
+
 ## 0.12.1
 
 - Add new option: `hoverColorHint` (something like `rootFontSize` but for colors)
