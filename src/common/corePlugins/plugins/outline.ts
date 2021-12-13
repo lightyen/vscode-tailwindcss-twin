@@ -1,4 +1,4 @@
-import { isArbitraryValue } from "../util"
+import { is, isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
 export const outlineStyle: PluginConstructor = (context: Context): Plugin => {
@@ -45,10 +45,11 @@ export const outlineWidth: PluginConstructor = (context: Context): Plugin => {
 			return false
 		}
 
-		const val = match[1]
+		let val = match[1]
 
 		if (isArbitraryValue(val)) {
-			return true
+			val = val.slice(1, -1).trim()
+			return is(val, "length", "number")
 		}
 
 		return values.some(c => c === val)

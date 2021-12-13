@@ -36,12 +36,7 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 					},
 				})
 
-				addVariant("placeholder", "&::placeholder")
-
 				addVariant("screen", "@media screen")
-				addVariant("print", "@media print")
-				addVariant("landscape", "@media (orientation: landscape)")
-				addVariant("portrait", "@media (orientation: portrait)")
 				addVariant("any-pointer-none", "@media (any-pointer: none)")
 				addVariant("any-pointer-fine", "@media (any-pointer: fine)")
 				addVariant("any-pointer-coarse", "@media (any-pointer: coarse)")

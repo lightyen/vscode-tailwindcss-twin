@@ -11,9 +11,9 @@ import * as letterSpacing from "./letterSpacing"
 import * as list from "./list"
 import * as object from "./object"
 import * as opacity from "./opacity"
+import * as order from "./order"
 import * as others from "./others"
 import * as outline from "./outline"
-import * as scalar from "./scalar"
 import * as sizing from "./sizing"
 import * as spacing from "./spacing"
 import * as transform from "./transform"
@@ -24,6 +24,8 @@ import * as columns from "./columns"
 import * as textIndent from "./textIndent"
 import * as breaks from "./breaks"
 import * as willChange from "./willChange"
+import * as zIndex from "./zIndex"
+import * as decoration from "./decoration"
 
 export default {
 	...animation,
@@ -39,8 +41,8 @@ export default {
 	...list,
 	...object,
 	...opacity,
+	...order,
 	...outline,
-	...scalar,
 	...sizing,
 	...spacing,
 	...transform,
@@ -52,4 +54,6 @@ export default {
 	...breaks,
 	...textIndent,
 	...willChange,
+	...zIndex,
+	...decoration,
 }

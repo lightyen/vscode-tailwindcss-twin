@@ -523,12 +523,17 @@ const mappingArbitraryPropToCssProp: Record<
 	"border-y-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
 	"text-": [fromRestrictions("color", "length", "percentage")],
 	"ring-": [fromRestrictions("length", "color")],
+	"fill-": [fromCssProp("fill")],
+	"shadow-": [fromCssProp("color")],
 	"stroke-": [fromCssProp("stroke"), fromCssProp("stroke-width")],
 	"caret-": [fromCssProp("caret-color")],
 	"aspect-": [fromCssProp("aspect-ratio")],
 	"accent-": [fromRestrictions("color")],
 	"indent-": [fromCssProp("text-indent")],
 	"columns-": [fromCssProp("columns")],
+	"underline-offset-": [fromRestrictions("length", "percentage")],
+	"outline-": [fromCssProp("outline-color"), fromCssProp("outline-width")],
+	"decoration-": [fromCssProp("text-decoration-color"), fromRestrictions("length", "percentage")],
 }
 
 function arbitraryValueCompletion(

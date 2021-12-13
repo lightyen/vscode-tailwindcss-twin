@@ -92,15 +92,16 @@ export const scale: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^scale-(?:x-|y-)?(.*)/s.exec(value)
+		const match = /^-?scale-(?:x-|y-)?(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
 
+		const isNegative = match[0].charCodeAt(0) === 45
 		const val = match[1]
 
 		if (isArbitraryValue(val)) {
-			return true
+			return !isNegative
 		}
 
 		return values.some(c => c === val)

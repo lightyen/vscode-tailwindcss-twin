@@ -83,7 +83,12 @@ export const boxDecorationBreak: PluginConstructor = (context: Context): Plugin 
 	}
 
 	function isMatch(value: string) {
-		return value === "decoration-slice" || value === "decoration-clone"
+		return (
+			value === "decoration-slice" || // deprecated
+			value === "decoration-clone" || // deprecated
+			value === "box-decoration-slice" ||
+			value === "box-decoration-clone"
+		)
 	}
 }
 boxDecorationBreak.canArbitraryValue = false
@@ -390,22 +395,6 @@ export const tableLayout: PluginConstructor = (context: Context): Plugin => {
 	}
 }
 tableLayout.canArbitraryValue = false
-
-export const textDecoration: PluginConstructor = (context: Context): Plugin => {
-	if (!context.config.corePlugins.some(c => c === "textDecoration")) throw ErrorNotEnable
-
-	return {
-		isMatch,
-		get name(): keyof Tailwind.CorePluginFeatures {
-			return "textDecoration"
-		},
-	}
-
-	function isMatch(value: string) {
-		return value === "underline" || value === "line-through" || value === "no-underline"
-	}
-}
-textDecoration.canArbitraryValue = false
 
 export const textTransform: PluginConstructor = (context: Context): Plugin => {
 	if (!context.config.corePlugins.some(c => c === "textTransform")) throw ErrorNotEnable

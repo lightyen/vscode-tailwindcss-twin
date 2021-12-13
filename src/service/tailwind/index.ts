@@ -41,6 +41,17 @@ export enum CompletionItemTag {
 	Deprecated = 1,
 }
 
+const deprecated = new Set([
+	"content",
+	"overflow-ellipsis",
+	"flex-grow",
+	"flex-grow-0",
+	"flex-shrink",
+	"flex-shrink-0",
+	"decoration-slice",
+	"decoration-clone",
+])
+
 export function createTailwindLoader(configPath: URI, extensionUri: URI, extensionMode: ExtensionMode) {
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath })
 	const { updateAllClasses }: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", {
@@ -140,6 +151,8 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 					kind: CompletionItemKind.Constant,
 					sortText: (value.startsWith("-") ? "~~" : "~") + formatLabel(value),
 				}
+
+				if (deprecated.has(value)) item.tags = [CompletionItemTag.Deprecated]
 
 				const colorDesc = tw.getColorDesc(value)
 				if (colorDesc) {

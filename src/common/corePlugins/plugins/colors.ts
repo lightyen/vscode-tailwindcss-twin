@@ -395,7 +395,28 @@ export const boxShadowColor: PluginConstructor = (context: Context): Plugin => {
 	function isMatch(value: string) {
 		const match = /^shadow-(.*)/s.exec(value)
 		if (!match) return false
-		return isColor(match[1], colors, true, opacities)
+		return isColor(match[1], colors, false, opacities)
 	}
 }
 boxShadowColor.canArbitraryValue = true
+
+export const textDecorationColor: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "textDecorationColor")) throw ErrorNotEnable
+	const colors = findColors(context.config.theme.textDecorationColor)
+	const opacities = context.config.corePlugins.some(c => c === "opacity")
+		? Object.keys(context.config.theme.opacity)
+		: null
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "textDecorationColor"
+		},
+	}
+
+	function isMatch(value: string) {
+		const match = /^decoration-(.*)/s.exec(value)
+		if (!match) return false
+		return isColor(match[1], colors, true, opacities)
+	}
+}
+textDecorationColor.canArbitraryValue = true

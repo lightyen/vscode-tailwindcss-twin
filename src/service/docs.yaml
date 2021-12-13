@@ -172,9 +172,6 @@
 "https://tailwindcss.com/docs/opacity":
   name: Opacity
   desc: Utilities for controlling the opacity of an element.
-"https://tailwindcss.com/docs/outline":
-  name: Outline
-  desc: Utilities for controlling an element's outline.
 "https://tailwindcss.com/docs/overflow":
   name: Overflow
   desc: Utilities for controlling how an element handles content that is too large for the container.
@@ -343,24 +340,6 @@
 "https://tailwindcss.com/docs/animation":
   name: Animation
   desc: Utilities for animating elements with CSS animations.
-"https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover":
-  name: Group-hover
-  desc: "If you need to style a child element when hovering over a specific parent element, add the group class to the parent element and add the `group-hover:` prefix to the utility on the child element."
-"https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus":
-  name: Group-focus
-  desc: "The `group-focus` variant works just like `group-hover` except for focus."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion":
-  name: prefers-reduced-motion
-  desc: "The **prefers-reduced-motion** CSS media feature is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses."
-"https://tailwindcss.com/docs/hover-focus-and-other-states#disabled":
-  name: Disabled
-  desc: "Add the `disabled:` prefix to only apply a utility when an element is disabled."
-"https://tailwindcss.com/docs/dark-mode":
-  name: Dark Mode
-  desc: Using Tailwind CSS to style your site in dark mode.
-"https://tailwindcss.com/docs/responsive-design":
-  name: Responsive Design
-  desc: Using responsive utility variants to build adaptive user interfaces.
 "https://tailwindcss.com/docs/box-decoration-break":
   name: Box Decoration Break
   desc: Utilities for controlling how element fragments should be rendered across multiple lines, columns, or pages.
@@ -433,51 +412,108 @@
 "https://tailwindcss.com/docs/background-origin":
   name: Background Origin
   desc: Utilities for controlling how an element's background is positioned relative to borders, padding, and content.
-"https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color":
-  name: caret-color
-  desc: "The **caret-color** CSS property sets the color of the **insertion caret**, the visible marker where the next character typed will be inserted. This is sometimes referred to as the **text input cursor**. The caret appears in elements such as `<input>` or those with the `contenteditable` attribute. The caret is typically a thin vertical line that flashes to help make it more noticeable. By default, it is black, but its color can be altered with this property."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color":
-  name: accent-color
-  desc: 'The **accent-color** CSS property sets the color of the elements accent. An accent appears in elements such as <input> of type="checkbox", or type="radio".'
-"https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent":
-  name: text-indent
-  desc: "The **text-indent** CSS property sets the length of empty space (indentation) that is put before lines of text in a block."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/will-change":
-  name: will-change
-  desc: "The **will-change** CSS property hints to browsers how an element is expected to change. Browsers may set up optimizations before an element is actually changed. These kinds of optimizations can increase the responsiveness of a page by doing potentially expensive work before they are actually required."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action":
-  name: touch-action
-  desc: "The **touch-action** CSS property sets how an element's region can be manipulated by a touchscreen user (for example, by zooming features built into the browser)."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/break-before":
-  name: break-before
-  desc: "The **break-before** CSS property sets how page, column, or region breaks should behave before a generated box. If there is no generated box, the property is ignored."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/break-inside":
-  name: break-inside
-  desc: "The **break-inside** CSS property sets how page, column, or region breaks should behave inside a generated box. If there is no generated box, the property is ignored."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/break-after":
-  name: break-after
-  desc: "The **break-after** CSS property sets how page, column, or region breaks should behave after a generated box. If there is no generated box, the property is ignored."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type":
-  name: scroll-snap-type
-  desc: "The **scroll-snap-type** CSS property sets how strictly snap points are enforced on the scroll container in case there is one."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align":
-  name: scroll-snap-align
-  desc: "The *scroll-snap-align* property specifies the box’s snap position as an alignment of its snap area (as the alignment subject) within its snap container’s snapport (as the alignment container). The two values specify the snapping alignment in the block axis and inline axis, respectively. If only one value is specified, the second value defaults to the same value."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-stop":
-  name: scroll-snap-stop
-  desc: 'The **scroll-snap-stop** CSS property defines whether the scroll container is allowed to "pass over" possible snap positions.'
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin":
-  name: scroll-margin
-  desc: "The **scroll-margin** *shorthand property* sets all of the scroll margins of an element at once, assigning values much like the `margin` property does for margins of an element."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding":
-  name: scroll-padding
-  desc: "The **scroll-padding** *shorthand property* sets scroll padding on all sides of an element at once, much like the `padding` property does for padding on an element."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior":
-  name: scroll-behavior
-  desc: "The **scroll-behavior** CSS property sets the behavior for a scrolling box when scrolling is triggered by the navigation or CSSOM scrolling APIs."
-"https://developer.mozilla.org/en-US/docs/Web/CSS/columns":
-  name: columns
-  desc: "The **columns** CSS shorthand property sets the number of columns to use when drawing an element's contents, as well as those columns' widths."
+
+###
+
+"https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover":
+  name: Group-hover
+  desc: "If you need to style a child element when hovering over a specific parent element, add the group class to the parent element and add the `group-hover:` prefix to the utility on the child element."
+"https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus":
+  name: Group-focus
+  desc: "The `group-focus` variant works just like `group-hover` except for focus."
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion":
+  name: prefers-reduced-motion
+  desc: "The **prefers-reduced-motion** CSS media feature is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses."
+"https://tailwindcss.com/docs/hover-focus-and-other-states#disabled":
+  name: Disabled
+  desc: "Add the `disabled:` prefix to only apply a utility when an element is disabled."
+"https://tailwindcss.com/docs/dark-mode":
+  name: Dark Mode
+  desc: Using Tailwind CSS to style your site in dark mode.
+"https://tailwindcss.com/docs/responsive-design":
+  name: Responsive Design
+  desc: Using responsive utility variants to build adaptive user interfaces.
+"https://tailwindcss.com/docs/hover-focus-and-other-states#open-closed-state":
+  name: Attribute selector
+  desc: Use the open modifier to conditionally add styles when a <details> or <dialog> element is in an open state.
+
+###
+"https://tailwindcss.com/docs/aspect-ratio":
+  name: Aspect Ratio
+  desc: Utilities for controlling the aspect ratio of an element.
+"https://tailwindcss.com/docs/accent-color":
+  name: Accent Color
+  desc: Utilities for controlling the accented color of a form control.
+"https://tailwindcss.com/docs/box-shadow-color":
+  name: Box Shadow Color
+  desc: Utilities for controlling the color of a box shadow.
+"https://tailwindcss.com/docs/text-decoration-color":
+  name: Text Decoration Color
+  desc: Utilities for controlling the color of text decorations.
+"https://tailwindcss.com/docs/flex-basis":
+  name: Flex Basis
+  desc: Utilities for controlling the initial size of flex items.
+"https://tailwindcss.com/docs/outline-color":
+  name: Outline Color
+  desc: Utilities for controlling the color of an element's outline.
+"https://tailwindcss.com/docs/outline-style":
+  name: Outline Style
+  desc: Utilities for controlling the style of an element's outline.
+"https://tailwindcss.com/docs/outline-width":
+  name: Outline Width
+  desc: Utilities for controlling the width of an element's outline.
+"https://tailwindcss.com/docs/outline-offset":
+  name: Outline Offset
+  desc: Utilities for controlling the offset of an element's outline.
+"https://tailwindcss.com/docs/touch-action":
+  name: Touch Action
+  desc: Utilities for controlling how an element can be scrolled and zoomed on touchscreens.
+"https://tailwindcss.com/docs/scroll-snap-type":
+  name: Scroll Snap Type
+  desc: Utilities for controlling how strictly snap points are enforced in a snap container.
+"https://tailwindcss.com/docs/scroll-snap-align":
+  name: Scroll Snap Align
+  desc: Utilities for controlling the scroll snap alignment of an element.
+"https://tailwindcss.com/docs/scroll-snap-stop":
+  name: Scroll Snap Stop
+  desc: Utilities for controlling whether you can skip past possible snap positions.
+"https://tailwindcss.com/docs/scroll-margin":
+  name: Scroll Margin
+  desc: Utilities for controlling the scroll offset around items in a snap container.
+"https://tailwindcss.com/docs/scroll-padding":
+  name: Scroll Padding
+  desc: Utilities for controlling an element's scroll offset within a snap container.
+"https://tailwindcss.com/docs/scroll-behavior":
+  name: Scroll Behavior
+  desc: Utilities for controlling the scroll behavior of an element.
+"https://tailwindcss.com/docs/columns":
+  name: Columns
+  desc: Utilities for controlling the number of columns within an element.
+"https://tailwindcss.com/docs/break-before":
+  name: Break Before
+  desc: Utilities for controlling how a column or page should break before an element.
+"https://tailwindcss.com/docs/break-inside":
+  name: Break Inside
+  desc: Utilities for controlling how a column or page should break within an element.
+"https://tailwindcss.com/docs/break-after":
+  name: Break After
+  desc: Utilities for controlling how a column or page should break after an element.
+"https://tailwindcss.com/docs/text-indent":
+  name: Text Indent
+  desc: Utilities for controlling the amount of empty space shown before text in a block.
+"https://tailwindcss.com/docs/will-change":
+  name: Will Change
+  desc: Utilities for optimizing upcoming animations of elements that are expected to change.
+"https://tailwindcss.com/docs/text-decoration-style":
+  name: Text Decoration Style
+  desc: Utilities for controlling the style of text decorations.
+"https://tailwindcss.com/docs/text-decoration-thickness":
+  name: Text Decoration Thickness
+  desc: Utilities for controlling the thickness of text decorations.
+"https://tailwindcss.com/docs/text-underline-offset":
+  name: Text Underline Offset
+  desc: Utilities for controlling the offset of a text underline.
+
 "https://developer.mozilla.org/en-US/docs/Web/CSS/content":
   name: Content
   desc: "The **content** CSS property replaces an element with a generated value. Objects inserted using the `content` property are **anonymous** replaced elements*.*"
@@ -623,7 +659,7 @@
   name: general sibling combinator
   desc: ""
 "https://developer.mozilla.org/en-US/docs/Web/CSS/@media":
-  name: "@media"
+  name: "Media query"
   desc: |
     The **@media** CSS [at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/At-rule) can be used to apply part of a style sheet based on the result of one or more [media queries](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries). With it, you specify a media query and a block of CSS to apply to the document if and only if the media query matches the device on which the content is being used.
 
@@ -646,9 +682,12 @@
 "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover":
   name: "@media/hover"
   desc: "The **hover** CSS [media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries#media_features) can be used to test whether the user's *primary* input mechanism can hover over elements."
+"https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes":
+  name: Global attributes
+  desc: Global attributes are attributes common to all HTML elements; they can be used on all elements, though they may have no effect on some elements.
 "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir":
-  name: global attribute
+  name: RTL support
   desc: The **dir** global attribute is an enumerated attribute that indicates the directionality of the element's text.
 "https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors":
-  name: attribute selector
-  desc: ""
+  name: Attribute selector
+  desc: "The CSS **attribute selector** matches elements based on the presence or value of a given attribute."

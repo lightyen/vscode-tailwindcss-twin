@@ -1,19 +1,19 @@
 import { isArbitraryValue } from "../util"
 import { Context, ErrorNotEnable, Plugin, PluginConstructor } from "./plugin"
 
-export const letterSpacing: PluginConstructor = (context: Context): Plugin => {
-	if (!context.config.corePlugins.some(c => c === "letterSpacing")) throw ErrorNotEnable
-	const values = Object.keys(context.config.theme.letterSpacing)
+export const order: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "order")) throw ErrorNotEnable
+	const values = Object.keys(context.config.theme.order)
 
 	return {
 		isMatch,
 		get name(): keyof Tailwind.CorePluginFeatures {
-			return "letterSpacing"
+			return "order"
 		},
 	}
 
 	function isMatch(value: string) {
-		const match = /^-?tracking-(.*)/s.exec(value)
+		const match = /^-?order-(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -28,4 +28,4 @@ export const letterSpacing: PluginConstructor = (context: Context): Plugin => {
 		return values.some(c => c === val)
 	}
 }
-letterSpacing.canArbitraryValue = true
+order.canArbitraryValue = true

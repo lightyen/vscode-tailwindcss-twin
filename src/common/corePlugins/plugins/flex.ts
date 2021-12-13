@@ -81,7 +81,7 @@ export const flexGrow: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^flex-grow(?:-|\b)(.*)/s.exec(value)
+		const match = /^(?:flex-)?grow(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -112,7 +112,7 @@ export const flexShrink: PluginConstructor = (context: Context): Plugin => {
 	}
 
 	function isMatch(value: string) {
-		const match = /^flex-shrink(?:-|\b)(.*)/s.exec(value)
+		const match = /^(?:flex-)?shrink(?:-|\b)(.*)/s.exec(value)
 		if (!match) {
 			return false
 		}
@@ -130,3 +130,34 @@ export const flexShrink: PluginConstructor = (context: Context): Plugin => {
 	}
 }
 flexShrink.canArbitraryValue = true
+
+export const flexBasis: PluginConstructor = (context: Context): Plugin => {
+	if (!context.config.corePlugins.some(c => c === "flexBasis")) throw ErrorNotEnable
+	const [hasDefault, values] = getDefault(context.config.theme.flexBasis)
+
+	return {
+		isMatch,
+		get name(): keyof Tailwind.CorePluginFeatures {
+			return "flexBasis"
+		},
+	}
+
+	function isMatch(value: string) {
+		const match = /^basis(?:-|\b)(.*)/s.exec(value)
+		if (!match) {
+			return false
+		}
+
+		const val = match[1]
+
+		if (hasDefault && (val === "" || val === "DEFAULT")) {
+			return true
+		}
+
+		if (isArbitraryValue(val)) {
+			return true
+		}
+		return values.some(c => c === val)
+	}
+}
+flexBasis.canArbitraryValue = true

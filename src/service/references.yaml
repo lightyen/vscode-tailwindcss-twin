@@ -99,7 +99,6 @@ objectFit: "https://tailwindcss.com/docs/object-fit"
 objectPosition: "https://tailwindcss.com/docs/object-position"
 opacity: "https://tailwindcss.com/docs/opacity"
 order: "https://tailwindcss.com/docs/order"
-outline: "https://tailwindcss.com/docs/outline"
 overflow: "https://tailwindcss.com/docs/overflow"
 overscrollBehavior: "https://tailwindcss.com/docs/overscroll-behavior"
 padding: "https://tailwindcss.com/docs/padding"
@@ -145,37 +144,67 @@ whitespace: "https://tailwindcss.com/docs/whitespace"
 width: "https://tailwindcss.com/docs/width"
 wordBreak: "https://tailwindcss.com/docs/word-break"
 zIndex: "https://tailwindcss.com/docs/z-index"
-accentColor: "https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color"
-textIndent: "https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent"
-willChange: "https://developer.mozilla.org/en-US/docs/Web/CSS/will-change"
-touchAction: "https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action"
-breakBefore: "https://developer.mozilla.org/en-US/docs/Web/CSS/break-before"
-breakInside: "https://developer.mozilla.org/en-US/docs/Web/CSS/break-inside"
-breakAfter: "https://developer.mozilla.org/en-US/docs/Web/CSS/break-after"
-scrollSnapType: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type"
-scrollSnapAlign: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align"
-scrollSnapStop: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-stop"
-scrollMargin: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin"
-scrollPadding: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding"
-scrollBehavior: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior"
-columns: "https://developer.mozilla.org/en-US/docs/Web/CSS/columns"
+
+# V3
+
+aspectRatio: "https://tailwindcss.com/docs/aspect-ratio"
+accentColor: "https://tailwindcss.com/docs/accent-color"
+boxShadowColor: "https://tailwindcss.com/docs/box-shadow-color"
+flexBasis: "https://tailwindcss.com/docs/flex-basis"
+outlineColor: "https://tailwindcss.com/docs/outline-color"
+outlineStyle: "https://tailwindcss.com/docs/outline-style"
+outlineWidth: "https://tailwindcss.com/docs/outline-width"
+outlineOffset: "https://tailwindcss.com/docs/outline-offset"
+touchAction: "https://tailwindcss.com/docs/touch-action"
+scrollSnapType: "https://tailwindcss.com/docs/scroll-snap-type"
+scrollSnapAlign: "https://tailwindcss.com/docs/scroll-snap-align"
+scrollSnapStop: "https://tailwindcss.com/docs/scroll-snap-stop"
+scrollMargin: "https://tailwindcss.com/docs/scroll-margin"
+scrollPadding: "https://tailwindcss.com/docs/scroll-padding"
+scrollBehavior: "https://tailwindcss.com/docs/scroll-behavior"
+columns: "https://tailwindcss.com/docs/columns"
+breakBefore: "https://tailwindcss.com/docs/break-before"
+breakInside: "https://tailwindcss.com/docs/break-inside"
+breakAfter: "https://tailwindcss.com/docs/break-after"
+textIndent: "https://tailwindcss.com/docs/text-indent"
+willChange: "https://tailwindcss.com/docs/will-change"
+textDecorationColor: "https://tailwindcss.com/docs/text-decoration-color"
+textDecorationStyle: "https://tailwindcss.com/docs/text-decoration-style"
+textDecorationThickness: "https://tailwindcss.com/docs/text-decoration-thickness"
+textUnderlineOffset: "https://tailwindcss.com/docs/text-underline-offset"
 
 # customs
 
 screens: "https://tailwindcss.com/docs/responsive-design"
 colors: "https://tailwindcss.com/docs/customizing-colors"
 
-# variants
-
 dark: "https://tailwindcss.com/docs/dark-mode"
+
+# media queries
 
 motion-safe: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
 motion-reduce: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
+print: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
+tw.landscape: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
+tw.portrait: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
 
+# pseudo elements
+
+before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
+after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after
 first-letter: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-letter
 first-line: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-line
 marker: https://developer.mozilla.org/en-US/docs/Web/CSS/::marker
 selection: https://developer.mozilla.org/en-US/docs/Web/CSS/::selection
+file: https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button
+
+# attribute selectors
+
+ltr: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
+rtl: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
+open: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
+
+# pseudo classes
 
 first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -205,8 +234,8 @@ in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
-file: https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button
-open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
+
+# extend
 
 group-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 group-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -236,7 +265,7 @@ group-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 group-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 group-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 group-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
-group-open: ""
+group-open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
 
 peer-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 peer-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -266,15 +295,10 @@ peer-in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 peer-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 peer-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 peer-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
-
-tw.before: https://developer.mozilla.org/en-US/docs/Web/CSS/::before
-tw.after: https://developer.mozilla.org/en-US/docs/Web/CSS/::after
+peer-open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
 
 tw.light: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
 tw.screen: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
-tw.print: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
-tw.landscape: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
-tw.portrait: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
 tw.any-pointer-none: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-pointer
 tw.any-pointer-fine: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-pointer
 tw.any-pointer-coarse: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-pointer
@@ -285,8 +309,6 @@ tw.any-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover
 tw.any-hover-none: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/any-hover
 tw.can-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover
 tw.cant-hover: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/hover
-tw.ltr: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
-tw.rtl: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
 
 tw.all: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
 tw.svg: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
