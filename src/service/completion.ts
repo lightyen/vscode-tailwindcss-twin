@@ -307,7 +307,8 @@ function utilitiesCompletion(
 			) {
 				const p = state.tw.getPlugin(value)
 				if (p && /color$/i.test(p.name)) {
-					shrinkB += value.lastIndexOf("/") - value.length
+					const slash = value.lastIndexOf("/")
+					if (slash !== -1) shrinkB += slash - value.length
 				}
 			}
 
