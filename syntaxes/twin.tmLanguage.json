@@ -5,7 +5,7 @@
   "patterns": [
     {
       "name": "meta.tag.twin",
-      "begin": "tw(?:(?:\\.[\\w$]+)?|\\(([^\\)]*)\\))(`)",
+      "begin": "tw(?:(?:(?:\\.[\\w$]+)*|\\(([^\\)]*)\\)))*(`)",
       "beginCaptures": {
         "1": {
           "patterns": [
