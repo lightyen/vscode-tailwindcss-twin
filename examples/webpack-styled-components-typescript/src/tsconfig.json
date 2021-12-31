@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "target": "ESNext",
+    "module": "ESNext",
+    "types": ["@types/webpack-env"],
+    "lib": ["esnext", "dom", "dom.iterable", "webworker"],
+    "paths": {
+      "~/*": ["./*"],
+      "assets/*": ["./assets/*"]
+    }
+  }
+}

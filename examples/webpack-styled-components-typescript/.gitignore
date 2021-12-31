@@ -1,0 +1,15 @@
+node_modules
+dist
+test
+build
+.cache
+.DS_Store
+.directory
+*.log
+*.pfx
+npm-debug.log
+npm-debug.log.*
+package-lock.json
+thumbs.db
+stat.json
+yarn-error.log

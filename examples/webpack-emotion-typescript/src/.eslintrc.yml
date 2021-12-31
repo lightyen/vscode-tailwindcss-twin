@@ -1,0 +1,56 @@
+root: true
+parser: "@typescript-eslint/parser"
+plugins:
+  - "@typescript-eslint"
+extends:
+  - "eslint:recommended"
+  - "plugin:@typescript-eslint/eslint-recommended"
+  - "plugin:@typescript-eslint/recommended"
+  - "plugin:react/recommended"
+  - "plugin:react-hooks/recommended"
+parserOptions:
+  project: ./tsconfig.json
+ignorePatterns:
+  - typings
+rules:
+  spaced-comment: error
+  no-var: error
+  no-extra-bind: error
+  prefer-arrow-callback: error
+  no-empty:
+    - error
+    - allowEmptyCatch: true
+  "@typescript-eslint/no-unused-vars":
+    - error
+    - vars: all
+      args: none
+      ignoreRestSiblings: true
+      caughtErrors: none
+  "@typescript-eslint/no-empty-interface": "off"
+  "@typescript-eslint/camelcase": "off"
+  "@typescript-eslint/explicit-function-return-type": "off"
+  "@typescript-eslint/no-var-requires": warn
+  "@typescript-eslint/member-delimiter-style":
+    - error
+    - multiline:
+        delimiter: none
+      singleline:
+        delimiter: semi
+        requireLast: false
+  "@typescript-eslint/explicit-module-boundary-types": "off"
+  "@typescript-eslint/ban-types":
+    - error
+    - extendDefaults: true
+      types:
+        "{}": false
+  react/display-name: "off"
+  react/prop-types: "off"
+  react-hooks/rules-of-hooks: error
+  react-hooks/exhaustive-deps: error
+  react/jsx-uses-react: "off"
+  react/react-in-jsx-scope: "off"
+settings:
+  react:
+    version: detect
+env:
+  browser: true

@@ -1,0 +1,32 @@
+{
+  "editor.formatOnSave": true,
+  "editor.snippetSuggestions": "none",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "emmet.excludeLanguages": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "formatFiles.excludePattern": "node_modules,build,.gitignore,.editorconfig,.browserslistrc,yarn.lock",
+  "search.exclude": {
+    "**/build": true,
+    "**/node_modules": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "npm.autoDetect": "off",
+  "typescript.tsc.autoDetect": "off",
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "files.watcherExclude": {
+    "**/.cache": true,
+    "**/build": true
+  },
+  "javascript.suggestionActions.enabled": false
+}
