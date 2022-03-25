@@ -52,7 +52,12 @@ const deprecated = new Set([
 	"decoration-clone",
 ])
 
-export function createTailwindLoader(configPath: URI, extensionUri: URI, extensionMode: ExtensionMode) {
+export function createTailwindLoader(
+	configPath: URI,
+	extensionUri: URI,
+	isDefaultConfig: boolean,
+	extensionMode: ExtensionMode,
+) {
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath })
 	const { updateAllClasses }: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", {
 		base: extensionUri.fsPath,
@@ -114,7 +119,7 @@ export function createTailwindLoader(configPath: URI, extensionUri: URI, extensi
 	function readTailwindConfig(pnp?: PnpApi) {
 		const moduleName = configPath.fsPath
 		let __config = importFrom(moduleName, {
-			pnp,
+			pnp: isDefaultConfig ? undefined : pnp,
 			cache: false,
 			header:
 				extensionMode === ExtensionMode.Development
