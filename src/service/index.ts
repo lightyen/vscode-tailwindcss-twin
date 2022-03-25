@@ -37,9 +37,9 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		resolveModuleName("tailwindcss/defaultConfig", { paths: options.extensionUri.fsPath })!,
 	)
 	const configPath = options.configPath ?? defaultConfigUri
-	const state = createTailwindLoader(configPath, options.extensionUri, options.extensionMode)
-	const isDefault = options.configPath == undefined
-	const configPathString = isDefault ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
+	const isDefaultConfig = options.configPath == undefined
+	const state = createTailwindLoader(configPath, options.extensionUri, isDefaultConfig, options.extensionMode)
+	const configPathString = isDefaultConfig ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
 	let loading = false
 	let _colorProvider: ReturnType<typeof createColorProvider> | undefined
 
