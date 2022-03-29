@@ -1,4 +1,4 @@
-import * as ast from "@typescript-eslint/types/dist/ast-spec"
+import * as ast from "@typescript-eslint/types/dist/generated/ast-spec"
 import { AST_NODE_TYPES, parse } from "@typescript-eslint/typescript-estree"
 import { ExtractedToken, ExtractedTokenKind, Extractor } from "."
 
