@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 0.12.3
+
+- Fix loading pnp project with default tailwind.config
+- Fix completion item insertion
+
 ## 0.12.2
 
 Enhance syntaxes(#28)
