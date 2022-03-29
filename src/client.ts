@@ -93,7 +93,10 @@ export async function workspaceClient(
 	}
 
 	const pnpContext = findPnpApi(workspaceFolder.fsPath)
-	if (pnpContext) pnpContext.setup()
+	if (pnpContext) {
+		console.info("Enable PnP")
+		pnpContext.setup()
+	}
 
 	for (const configPath of tailwindConfigs) {
 		addService(URI.parse(configPath.toString()), settings)
