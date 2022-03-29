@@ -100,18 +100,16 @@ export function requireModule(moduleName: string, options: string | requireModul
 
 export function transpile(compilerOptions: ts.CompilerOptions, moduleName: string): string {
 	const code = ts.sys.readFile(moduleName)
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const { outputText: transpiledCode, diagnostics } = ts.transpileModule(code!, {
+	if (typeof code !== "string") return ""
+	const { outputText: transpiledCode, diagnostics } = ts.transpileModule(code, {
 		moduleName,
 		compilerOptions,
 	})
-
 	if (diagnostics) {
 		for (const diagnostic of diagnostics) {
 			console.info(diagnostic.messageText)
 		}
 	}
-
 	return transpiledCode
 }
 
@@ -253,7 +251,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	function loadTsConfig(ws: string) {
 		let mappings: Mappings | undefined
 		const tsConfigPath = ts.findConfigFile(ws, ts.sys.fileExists)
-		if (tsConfigPath) {
+		if (tsConfigPath && !path.relative(ws, tsConfigPath).startsWith("../")) {
 			const { error, config } = ts.readConfigFile(tsConfigPath, host.readFile)
 			if (!error) {
 				const { options, errors } = ts.parseJsonConfigFileContent(config, ts.sys, path.resolve(ws))
@@ -274,7 +272,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	const isAbs = path.isAbsolute(moduleName)
 	if (isAbs || moduleName.startsWith("./") || moduleName.startsWith("../")) {
 		const currentDirectory = path.dirname(moduleName)
-		const mappings = loadTsConfig(currentDirectory)
+		const mappings: tp.Mapping[] | undefined = loadTsConfig(currentDirectory)
 		if (mappings) compilerOptions.baseUrl = currentDirectory
 		switch (path.extname(moduleName)) {
 			case ".json":
