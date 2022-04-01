@@ -263,7 +263,7 @@ function utilitiesCompletion(
 	_: ServiceOptions,
 ) {
 	const a = suggestion.target?.range[0] ?? 0
-	let b = suggestion.target?.range[1] ?? 0
+	const b = suggestion.target?.range[1] ?? 0
 	const value = suggestion.value
 	let classNameItems: ICompletionItem[] = []
 	let classNameEnabled = true
@@ -278,13 +278,11 @@ function utilitiesCompletion(
 
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
-			case parser.NodeType.SimpleVariant: {
+			case parser.NodeType.SimpleVariant:
+			case parser.NodeType.ArbitraryVariant: {
 				if (position < b) classNameEnabled = false
 				break
 			}
-			case parser.NodeType.ArbitraryVariant:
-				b = b + state.separator.length
-				break
 			case parser.NodeType.CssDeclaration:
 				classNameEnabled = false
 				break
