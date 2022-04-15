@@ -74,11 +74,11 @@ Support ONLY `*.tsx` and `*.jsx`
   "editor.tokenColorCustomizations": {
     "[One Dark Pro Darker]": {
       "textMateRules": [
-        {
-          "scope": "support.constant.classname.twin",
-          "settings": {
-            "foreground": "#abb2bf"
-          }
+         {
+           "scope": "support.constant.classname.twin",
+           "settings": {
+             "foreground": "#7ddb89"
+           }
         },
         {
           "scope": "entity.other.inherited-class.variant.twin",
