@@ -1,68 +1,45 @@
 {
-  "name": "source.twin",
+  "name": "twin",
   "scopeName": "source.twin",
-  "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "name": "meta.tag.twin",
-      "begin": "tw(?:(?:(?:\\.[\\w$]+)*|\\(([^\\)]*)\\)))*(`)",
-      "beginCaptures": {
-        "1": {
-          "patterns": [
-            {
-              "include": "source.ts#expression"
-            },
-            {
-              "include": "source.ts#string"
-            },
-            {
-              "include": "source.ts#comment"
-            }
-          ]
-        },
-        "2": {
-          "name": "punctuation.definition.string.template.begin.twin"
-        }
-      },
-      "end": "(`)",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.string.template.end.twin"
-        }
-      },
-      "patterns": [{ "include": "#expression-backtick" }]
+      "include": "#line-comment-end-backtick"
+    },
+    {
+      "include": "#block-comment-end-backtick"
+    },
+    {
+      "include": "#expression"
     }
   ],
   "repository": {
-    "qstring-double": {
-      "name": "string.quoted.double.twin",
-      "begin": "\"",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin.twin"
+    "expression": {
+      "patterns": [
+        {
+          "include": "#expression-arbitrary-variant"
+        },
+        {
+          "include": "#expression-variant"
+        },
+        {
+          "include": "#expression-short-css"
+        },
+        {
+          "include": "#expression-arbitrary"
+        },
+        {
+          "include": "#expression-arbitrary-opacity"
+        },
+        {
+          "include": "#expression-variant-group"
+        },
+        {
+          "include": "#expression-classname"
+        },
+        {
+          "include": "#illegal"
         }
-      },
-      "end": "(\")",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.string.end.twin"
-        }
-      }
-    },
-    "qstring-single": {
-      "name": "string.quoted.single.twin",
-      "begin": "'",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin.twin"
-        }
-      },
-      "end": "(')",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.string.end.twin"
-        }
-      }
+      ]
     },
     "line-comment-end-backtick": {
       "match": "(//)[^`]*",
@@ -82,19 +59,16 @@
           "name": "punctuation.definition.comment.begin.twin"
         }
       },
-      "end": "(\\*/)|(`)",
+      "end": "(\\*/)|`",
       "endCaptures": {
         "1": {
           "name": "punctuation.definition.comment.end.twin"
-        },
-        "2": {
-          "name": "punctuation.definition.string.template.end.twin"
         }
       },
       "contentName": "comment.block.twin"
     },
     "expression-variant": {
-      "match": "([\\w-]+:)",
+      "match": "[\\w-]+:",
       "captures": {
         "0": {
           "name": "entity.other.inherited-class.variant.twin"
@@ -102,15 +76,15 @@
       }
     },
     "expression-arbitrary-variant": {
-      "begin": "\\[",
-      "end": "\\]:",
+      "begin": "(?<!/)(\\[)",
+      "end": "(\\]:)",
       "beginCaptures": {
-        "0": {
+        "1": {
           "name": "punctuation.section.embedded.arbitrary-variant.begin.twin"
         }
       },
       "endCaptures": {
-        "0": {
+        "1": {
           "name": "punctuation.section.embedded.arbitrary-variant.end.twin"
         }
       },
@@ -127,16 +101,81 @@
       ]
     },
     "expression-classname": {
-      "match": "(!?)((?:(?!\\/\\/|\\/\\*)[\\w\\-\\./])+)(!?)",
+      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)",
       "captures": {
-        "1": {
-          "name": "support.function.important-bang.classname.twin"
-        },
-        "2": {
+        "0": {
           "name": "support.constant.classname.twin"
         },
+        "1": {
+          "name": "support.function.important-bang.before.classname.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.after.classname.twin"
+        }
+      }
+    },
+    "expression-arbitrary": {
+      "name": "entity.name.variable.css-value.twin",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
+      "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.important-bang.before.arbitrary-style.twin"
+        },
+        "2": {
+          "name": "support.type.arbitrary-style.prop.twin"
+        },
         "3": {
-          "name": "support.function.important-bang.classname.twin"
+          "name": "punctuation.section.embedded.arbitrary-style.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.arbitrary-style.end.twin"
+        },
+        "2": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        },
+        "3": {
+          "name": "support.function.important-bang.after.arbitrary-style.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#line-comment-end-backtick"
+        },
+        {
+          "include": "#block-comment-end-backtick"
+        },
+        {
+          "include": "#css-value-content-bracket"
+        },
+        {
+          "include": "source.css.scss.tw#property_values"
+        }
+      ]
+    },
+    "expression-arbitrary-opacity": {
+      "contentName": "support.type.arbitrary-style.endOpacity.twin",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
+      "end": "(\\])(!?)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.important-bang.before.arbitrary-style.twin"
+        },
+        "2": {
+          "name": "support.type.arbitrary-style.prop.twin"
+        },
+        "3": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "support.type.arbitrary-style.endOpacity.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.after.arbitrary-style.twin"
         }
       }
     },
@@ -178,6 +217,35 @@
         }
       ]
     },
+    "expression-variant-group": {
+      "begin": "(!?)(\\()",
+      "end": "(\\))(!?)",
+      "name": "meta.block.variant-group.twin",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.important-bang.before.variant-group.twin"
+        },
+        "2": {
+          "name": "punctuation.definition.bracket.variant-group.begin.twin"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.bracket.variant-group.end.twin"
+        },
+        "2": {
+          "name": "support.function.important-bang.after.variant-group.twin"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
     "css-value-content-bracket": {
       "contentName": "string.twin",
       "begin": "(\\[)",
@@ -198,134 +266,9 @@
         }
       ]
     },
-    "expression-arbitrary-style": {
-      "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
-      "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.arbitrary-style.twin"
-        },
-        "2": {
-          "name": "support.type.arbitrary-style.prop.twin"
-        },
-        "3": {
-          "name": "punctuation.section.embedded.arbitrary-style.begin.twin"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.section.embedded.arbitrary-style.end.twin"
-        },
-        "2": {
-          "name": "support.type.arbitrary-style.endOpacity.twin"
-        },
-        "3": {
-          "name": "support.function.important-bang.arbitrary-style.twin"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        },
-        {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "source.css.scss#property_values"
-        }
-      ]
-    },
-    "expression-arbitrary-opacity": {
-      "contentName": "support.type.arbitrary-style.endOpacity.twin",
-      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
-      "end": "(\\])(!?)",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.arbitrary-style.twin"
-        },
-        "2": {
-          "name": "support.type.arbitrary-style.prop.twin"
-        },
-        "3": {
-          "name": "support.type.arbitrary-style.endOpacity.twin"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "support.type.arbitrary-style.endOpacity.twin"
-        },
-        "2": {
-          "name": "support.function.important-bang.arbitrary-style.twin"
-        }
-      }
-    },
-    "variant-group-expression": {
-      "begin": "(!?)(\\()",
-      "end": "(\\))(!?)",
-      "name": "meta.block.variant-group.twin",
-      "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.variant-group.twin"
-        },
-        "2": {
-          "name": "punctuation.definition.bracket.variant-group.begin.twin"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.bracket.variant-group.end.twin"
-        },
-        "2": {
-          "name": "support.function.important-bang.variant-group.twin"
-        }
-      },
-      "patterns": [
-        {
-          "include": "$self"
-        },
-        {
-          "include": "#expression-backtick"
-        }
-      ]
-    },
     "illegal": {
-      "name": "invalid.illegal.twin",
+      "name": "invalid.value.twin",
       "match": "(\\S+?)(?!(?://|\"|'|`))"
-    },
-    "expression-backtick": {
-      "patterns": [
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        },
-        {
-          "include": "#expression-arbitrary-variant"
-        },
-        {
-          "include": "#expression-variant"
-        },
-        {
-          "include": "#expression-short-css"
-        },
-        {
-          "include": "#expression-arbitrary-style"
-        },
-        {
-          "include": "#expression-arbitrary-opacity"
-        },
-        {
-          "include": "#expression-classname"
-        },
-        {
-          "include": "#variant-group-expression"
-        }
-      ]
     }
   }
 }
