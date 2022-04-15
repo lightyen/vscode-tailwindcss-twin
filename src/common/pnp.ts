@@ -1,8 +1,8 @@
+import type { PnpApi } from "@yarnpkg/pnp"
 import fs from "fs"
 import Module from "module"
 import path from "path"
 import { fileURLToPath, URL } from "url"
-
 export interface PackageLocator {
 	name: string
 	reference: string
@@ -15,34 +15,19 @@ export interface PackageInformation {
 	linkType: "HARD" | "SOFT"
 }
 
-declare module "module" {
-	export function findPnpApi(lookupSource: URL | string): PnpApi | undefined
-}
-
-export interface PnpApi {
-	setup(): void
-	topLevel: PackageLocator
-	VERSIONS: Record<string, number>
-	getDependencyTreeRoots(): PackageLocator[]
-	getLocator(name: string, referencish: string | [string, string]): PackageLocator
-	getAllLocators(): PackageLocator[]
-	getPackageInformation(locator: PackageLocator): PackageInformation
-	findPackageLocator(location: string): PackageLocator | null
-	resolveToUnqualified(request: string, issuer: string, options?: { considerBuiltins?: boolean }): string
-	resolveUnqualified(unqualified: string, opts?: { extensions?: string[] }): string
-	resolveRequest(
-		request: string,
-		issuer: string,
-		options?: { considerBuiltins?: boolean; extensions?: string[] },
-	): string
-	resolveVirtual(path: string): string | null
-}
-
-export function findPnpApi(lookupSource: URL | string): PnpApi | undefined {
+export function findPnpApi(lookupSource: URL | string):
+	| (PnpApi & {
+			setup: () => void
+	  })
+	| undefined {
 	const lookupPath = lookupSource instanceof URL ? fileURLToPath(lookupSource) : lookupSource
 	return findContext(lookupPath)
 
-	function findContext(workspace: string): PnpApi | undefined {
+	function findContext(workspace: string):
+		| (PnpApi & {
+				setup: () => void
+		  })
+		| undefined {
 		try {
 			let pnpPath = path.resolve(workspace, ".pnp")
 
