@@ -103,36 +103,30 @@
     "tailwindcss": "2.2.19"
   },
   "contributes": {
+    "languages": [
+      {
+        "id": "twin",
+        "extensions": [
+          ".twin"
+        ],
+        "aliases": [
+          "tw"
+        ],
+        "configuration": "./syntaxes/language-configuration.json"
+      }
+    ],
     "grammars": [
       {
-        "injectTo": [
-          "source.tsx",
-          "source.jsx",
-          "source.ts",
-          "source.js"
-        ],
-        "scopeName": "source.css.scss.tw",
-        "path": "./syntaxes/scss.tm.json"
-      },
-      {
-        "injectTo": [
-          "source.tsx",
-          "source.jsx",
-          "source.ts",
-          "source.js"
-        ],
+        "language": "twin",
         "scopeName": "source.twin",
         "path": "./syntaxes/twin.tmLanguage.json"
       },
       {
         "injectTo": [
-          "source.tsx",
-          "source.jsx",
-          "source.ts",
-          "source.js"
+          "source.twin"
         ],
-        "scopeName": "source.twin-theme",
-        "path": "./syntaxes/theme.tmLanguage.json"
+        "scopeName": "source.css.scss.tw",
+        "path": "./syntaxes/scss.tmLanguage.json"
       },
       {
         "injectTo": [
@@ -141,28 +135,16 @@
           "source.ts",
           "source.js"
         ],
-        "scopeName": "source.twin-screen",
-        "path": "./syntaxes/screen.tmLanguage.json"
+        "scopeName": "source.tsx.twin",
+        "path": "./syntaxes/injection.json"
       },
       {
         "injectTo": [
           "source.tsx",
-          "source.jsx",
-          "source.ts",
-          "source.js"
+          "source.jsx"
         ],
-        "scopeName": "source.twin-prop",
-        "path": "./syntaxes/twProp.tmLanguage.json"
-      },
-      {
-        "injectTo": [
-          "source.tsx",
-          "source.jsx",
-          "source.ts",
-          "source.js"
-        ],
-        "scopeName": "source.cs-prop",
-        "path": "./syntaxes/csProp.tmLanguage.json"
+        "scopeName": "source.tsx.csProp.twin",
+        "path": "./syntaxes/csProp.json"
       }
     ],
     "configuration": {
