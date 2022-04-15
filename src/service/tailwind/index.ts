@@ -1,5 +1,5 @@
 import { importFrom } from "@/module"
-import type { PnpApi } from "@/pnp"
+import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"

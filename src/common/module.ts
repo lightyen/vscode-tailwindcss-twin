@@ -1,9 +1,9 @@
+import type { PnpApi } from "@yarnpkg/pnp"
 import Module from "module"
 import path from "path"
 import ts from "typescript"
 import * as tp from "typescript-paths"
 import { defaultLogger as console } from "./logger"
-import type { PnpApi } from "./pnp"
 
 interface resolveModuleNameOptions {
 	filename?: string
@@ -28,7 +28,8 @@ export function resolveModuleName(
 
 	if (pnp) {
 		if (!path.isAbsolute(filename)) filename = path.resolve(filename)
-		moduleName = pnp.resolveRequest(moduleName, filename)
+		const resolved = pnp.resolveRequest(moduleName, filename)
+		if (resolved) moduleName = resolved
 	}
 	if (paths) {
 		if (typeof paths === "string") {
@@ -67,7 +68,8 @@ export function requireModule(moduleName: string, options: string | requireModul
 
 	if (pnp) {
 		if (!path.isAbsolute(filename)) filename = path.resolve(filename)
-		moduleName = pnp.resolveRequest(moduleName, filename)
+		const resolved = pnp.resolveRequest(moduleName, filename)
+		if (resolved) moduleName = resolved
 	}
 	if (typeof paths === "string") {
 		// @ts-ignore TS/7016
