@@ -76,7 +76,7 @@ Support ONLY `*.tsx` and `*.jsx`
         {
           "scope": "support.constant.classname.twin",
           "settings": {
-            "foreground": "#abb2bf"
+            "foreground": "#7ddb89"
           }
         },
         {
