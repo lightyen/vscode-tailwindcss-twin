@@ -1,6 +1,6 @@
 import { URI } from "vscode-uri"
 
-type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | string
+type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | "twin" | string
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface TextDocument<Position = any> {

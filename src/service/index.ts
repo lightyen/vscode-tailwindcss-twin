@@ -1,4 +1,5 @@
 import { Extractor, TextDocument } from "@/extractors"
+import { rawExtrator } from "@/extractors/raw"
 import { typescriptExtractor } from "@/extractors/typescript"
 import { defaultLogger as console } from "@/logger"
 import { resolveModuleName } from "@/module"
@@ -284,6 +285,8 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			case "typescript":
 			case "typescriptreact":
 				return feature(typescriptExtractor)
+			case "twin":
+				return feature(rawExtrator)
 			default:
 				return defaultValue
 		}

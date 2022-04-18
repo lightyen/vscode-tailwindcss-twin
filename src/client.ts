@@ -10,7 +10,7 @@ import { IDiagnostic } from "./service/diagnostics"
 import { SECTION_ID, Settings } from "./shared"
 import { ICompletionItem } from "./typings/completion"
 
-const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact"]
+const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "twin"]
 
 const documentSelector = DEFAULT_SUPPORT_LANGUAGES.map<vscode.DocumentFilter[]>(language => [
 	{ scheme: "file", language },
