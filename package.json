@@ -110,7 +110,7 @@
           ".twin"
         ],
         "aliases": [
-          "tw"
+          "twin.macro"
         ],
         "configuration": "./syntaxes/language-configuration.json"
       }
