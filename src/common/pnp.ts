@@ -15,19 +15,15 @@ export interface PackageInformation {
 	linkType: "HARD" | "SOFT"
 }
 
-export function findPnpApi(lookupSource: URL | string):
-	| (PnpApi & {
-			setup: () => void
-	  })
-	| undefined {
+interface FindPnpApiReturnValue extends PnpApi {
+	setup: () => void
+}
+
+export function findPnpApi(lookupSource: URL | string): FindPnpApiReturnValue | undefined {
 	const lookupPath = lookupSource instanceof URL ? fileURLToPath(lookupSource) : lookupSource
 	return findContext(lookupPath)
 
-	function findContext(workspace: string):
-		| (PnpApi & {
-				setup: () => void
-		  })
-		| undefined {
+	function findContext(workspace: string): FindPnpApiReturnValue | undefined {
 		try {
 			let pnpPath = path.resolve(workspace, ".pnp")
 
