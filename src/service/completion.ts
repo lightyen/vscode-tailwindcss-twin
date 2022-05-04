@@ -304,7 +304,7 @@ function utilitiesCompletion(
 				suggestion.target.type === parser.NodeType.ArbitraryClassname
 			) {
 				const p = state.tw.getPlugin(value)
-				if (p && /color$/i.test(p.name)) {
+				if (p && /Color|fill|stroke/.test(p.name)) {
 					const slash = value.lastIndexOf("/")
 					if (slash !== -1) shrinkB += slash - value.length
 				}
