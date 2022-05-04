@@ -253,7 +253,7 @@ function validateTwin({
 					continue
 				}
 
-				if (diagnostics.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.name)) {
+				if (diagnostics.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.getName())) {
 					const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {

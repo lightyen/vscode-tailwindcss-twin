@@ -1,19 +1,33 @@
 import resolveConfig from "tailwindcss/resolveConfig"
-import { createGetPluginByName } from "../index"
+import { createGetPluginByName } from ".."
 
-it("find the plugin name of a classname", () => {
+it("search the plugin name from a classname", () => {
 	const getPlugin = createGetPluginByName(resolveConfig({}))
-	expect(getPlugin("bg-red-500")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundColor")
-	expect(getPlugin("bg-[ivory]")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundColor")
-	expect(getPlugin("bg-[custom]")?.name).toBeUndefined()
-	expect(getPlugin("bg-[ivory]/[.3]")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundColor")
-	expect(getPlugin("bg-[ url() ]")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundImage")
-	expect(getPlugin("bg-left")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundPosition")
-	expect(getPlugin("bg-[10% 20%]")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("backgroundSize")
-	expect(getPlugin("text-[black]/30")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("textColor")
-	expect(getPlugin("text-[3px]")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("fontSize")
-	expect(getPlugin("text-xl")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("fontSize")
-	expect(getPlugin("font-mono")?.name).toEqual<keyof Tailwind.CorePluginFeatures>("fontFamily")
+	expect(getPlugin("bg-red-500")?.getName()).toEqual("backgroundColor")
+	expect(getPlugin("bg-[ivory]")?.getName()).toEqual("backgroundColor")
+	expect(getPlugin("bg-[custom]")?.getName()).toBeUndefined()
+	expect(getPlugin("bg-[ivory]/[.3]")?.getName()).toEqual("backgroundColor")
+	expect(getPlugin("bg-sdf-[ivory]/[.3]")?.getName()).toEqual(undefined)
+
+	expect(getPlugin("bg-[ url() ]")?.getName()).toEqual("backgroundImage")
+	expect(getPlugin("bg-[ linear-gradient(to bottom, rgba(255,255,0,0.5), rgba(0,0,255,0.5)) ]")?.getName()).toEqual(
+		"backgroundImage",
+	)
+
+	expect(getPlugin("bg-left")?.getName()).toEqual("backgroundPosition")
+	expect(getPlugin("bg-[top]")?.getName()).toEqual("backgroundPosition")
+	expect(getPlugin("bg-[10%]")?.getName()).toEqual(undefined)
+	expect(getPlugin("bg-[10% 12%]")?.getName()).toEqual(undefined)
+	expect(getPlugin("bg-[bottom 10px right 20px]")?.getName()).toEqual("backgroundPosition")
+	expect(getPlugin("bg-[cover]")?.getName()).toEqual("backgroundSize")
+	expect(getPlugin("bg-[auto]")?.getName()).toEqual("backgroundSize")
+	expect(getPlugin("bg-[position:10px]")?.getName()).toEqual("backgroundPosition")
+	expect(getPlugin("bg-[length:10px]")?.getName()).toEqual("backgroundSize")
+
+	expect(getPlugin("text-[black]/30")?.getName()).toEqual("textColor")
+	expect(getPlugin("text-[3px]")?.getName()).toEqual("fontSize")
+	expect(getPlugin("text-xl")?.getName()).toEqual("fontSize")
+	expect(getPlugin("font-mono")?.getName()).toEqual("fontFamily")
 })
 
 const checkList: [string, string | undefined][] = [
@@ -6798,6 +6812,7 @@ const checkList: [string, string | undefined][] = [
 	["font-bold", "fontWeight"],
 	["font-extrabold", "fontWeight"],
 	["font-black", "fontWeight"],
+	["font-[ 500 ]", "fontWeight"],
 	["uppercase", "textTransform"],
 	["lowercase", "textTransform"],
 	["capitalize", "textTransform"],
@@ -9181,6 +9196,7 @@ const checkList: [string, string | undefined][] = [
 	["via-[ivory]", "gradientColorStops"],
 	["to-[ivory]", "gradientColorStops"],
 	["placeholder-[ivory]", "placeholderColor"],
+	["placeholder-[theme('colors.white') theme(colors.white)]", "placeholderColor"],
 	["placeholder-[]", "placeholderColor"],
 	["accent-[ivory]", "accentColor"],
 	["accent-[]", "accentColor"],
@@ -9278,6 +9294,7 @@ const checkList: [string, string | undefined][] = [
 	["grid-cols-[repeat(1,minmax(0,1fr))]", "gridTemplateColumns"],
 	["grid-cols-[[linename],1fr,auto]", "gridTemplateColumns"],
 	["grid-rows-[repeat(1,minmax(0,1fr))]", "gridTemplateRows"],
+	["content-none", "content"],
 	["content-['sdf']", "content"],
 	["bg-[#000]", "backgroundColor"],
 	["bg-[url(img_flwr.gif), url(paper.gif)]", "backgroundImage"],
@@ -9301,9 +9318,14 @@ const checkList: [string, string | undefined][] = [
 	["stroke-[hsl(268 40% 24% / .7)]", "stroke"],
 	["animate-[spin]", "animation"],
 	["fill-[ivory]", "fill"],
+	["fill-[none]", "fill"],
+	["fill-[currentColor]", "fill"],
+	["fill-[url(#ididid)]", "fill"],
 	["stroke-[ivory]", "stroke"],
+	["stroke-[none]", undefined],
+	["stroke-[currentColor]", "stroke"],
 	["shadow-[#353213]", "boxShadowColor"],
-	["shadow-[]", "boxShadowColor"],
+	["shadow-[]", undefined],
 	["underline-offset-[1.5px]", "textUnderlineOffset"],
 	["underline-offset-[]", "textUnderlineOffset"],
 	["decoration-[0]", "textDecorationThickness"],
@@ -9322,11 +9344,13 @@ const checkList: [string, string | undefined][] = [
 	["stroke-[]", undefined],
 	["outline-[]", undefined],
 	["decoration-[]", undefined],
+	["font-[Cascadia Code, monospace]", "fontFamily"],
+	["font-[arbitrary,'arbitrary with space']", "fontFamily"],
 ]
 
 it("check all possible classname", () => {
 	const getPlugin = createGetPluginByName(resolveConfig({}))
 	for (const [classname, value] of checkList) {
-		expect([classname, getPlugin(classname)?.name]).toEqual([classname, value])
+		expect([classname, getPlugin(classname)?.getName()]).toEqual([classname, value])
 	}
 })

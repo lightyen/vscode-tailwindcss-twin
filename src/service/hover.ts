@@ -141,7 +141,7 @@ export default async function hover(
 				if (options.references) {
 					const plugin = state.tw.getPlugin(value)
 					let name = state.tw.trimPrefix(value)
-					if (plugin) name = plugin.name
+					if (plugin) name = plugin.getName()
 					if (name) {
 						const desc = getDescription(name)
 						if (typeof desc === "string") {

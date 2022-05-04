@@ -20,7 +20,7 @@ export default function completionResolve(
 
 		const plugin = state.tw.getPlugin(item.label)
 		let keyword = state.tw.trimPrefix(item.label)
-		if (plugin) keyword = plugin.name
+		if (plugin) keyword = plugin.getName()
 
 		item = resolve(item, keyword, state, tabSize, options, payload)
 
