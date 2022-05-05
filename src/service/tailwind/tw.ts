@@ -7,6 +7,9 @@ import chroma from "chroma-js"
 import type { AtRule, Postcss, Rule } from "postcss"
 import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
+import { findRightBracket } from "~/common/parser"
+import parseThemeValue from "~/common/parseThemeValue"
+import { unquote } from "~/common/unquote"
 
 const ColorProps_Foreground = new Set<string>(["color"])
 const ColorProps_Border = new Set<string>([])
@@ -326,6 +329,23 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
+				const regex = /theme\(/gs
+				let buffer = ""
+				let start = 0
+				for (let match = regex.exec(decl.value); match != null; match = regex.exec(decl.value)) {
+					const r = findRightBracket({ text: decl.value, start: regex.lastIndex - 1, end: decl.value.length })
+					if (r != undefined) {
+						const key = decl.value.slice(match.index + 6, r)
+						const ans = parseThemeValue(unquote(key))
+						const themeValue = getTheme(ans.keys(), true)
+						regex.lastIndex = r + 1
+						buffer += decl.value.slice(start, match.index) + `${themeValue}`
+					}
+					start = regex.lastIndex
+				}
+				if (start < decl.value.length) buffer += decl.value.slice(start, decl.value.length)
+				decl.value = buffer
+
 				decl.important = important
 				if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 				decl.value = toPixelUnit(decl.value, rootFontSize)
