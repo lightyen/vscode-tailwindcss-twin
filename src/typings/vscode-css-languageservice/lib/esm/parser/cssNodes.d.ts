@@ -33,55 +33,52 @@ declare module "vscode-css-languageservice/lib/esm/parser/cssNodes" {
 		Function = 30,
 		NumericValue = 31,
 		HexColorValue = 32,
-		RatioValue = 33,
-		MixinDeclaration = 34,
-		MixinReference = 35,
-		VariableName = 36,
-		VariableDeclaration = 37,
-		Prio = 38,
-		Interpolation = 39,
-		NestedProperties = 40,
-		ExtendsReference = 41,
-		SelectorPlaceholder = 42,
-		Debug = 43,
-		If = 44,
-		Else = 45,
-		For = 46,
-		Each = 47,
-		While = 48,
-		MixinContentReference = 49,
-		MixinContentDeclaration = 50,
-		Media = 51,
-		Keyframe = 52,
-		FontFace = 53,
-		Import = 54,
-		Namespace = 55,
-		Invocation = 56,
-		FunctionDeclaration = 57,
-		ReturnStatement = 58,
-		MediaQuery = 59,
-		MediaCondition = 60,
-		MediaFeature = 61,
-		FunctionParameter = 62,
-		FunctionArgument = 63,
-		KeyframeSelector = 64,
-		ViewPort = 65,
-		Document = 66,
-		AtApplyRule = 67,
-		CustomPropertyDeclaration = 68,
-		CustomPropertySet = 69,
-		ListEntry = 70,
-		Supports = 71,
-		SupportsCondition = 72,
-		NamespacePrefix = 73,
-		GridLine = 74,
-		Plugin = 75,
-		UnknownAtRule = 76,
-		Use = 77,
-		ModuleConfiguration = 78,
-		Forward = 79,
-		ForwardVisibility = 80,
-		Module = 81,
+		MixinDeclaration = 33,
+		MixinReference = 34,
+		VariableName = 35,
+		VariableDeclaration = 36,
+		Prio = 37,
+		Interpolation = 38,
+		NestedProperties = 39,
+		ExtendsReference = 40,
+		SelectorPlaceholder = 41,
+		Debug = 42,
+		If = 43,
+		Else = 44,
+		For = 45,
+		Each = 46,
+		While = 47,
+		MixinContentReference = 48,
+		MixinContentDeclaration = 49,
+		Media = 50,
+		Keyframe = 51,
+		FontFace = 52,
+		Import = 53,
+		Namespace = 54,
+		Invocation = 55,
+		FunctionDeclaration = 56,
+		ReturnStatement = 57,
+		MediaQuery = 58,
+		FunctionParameter = 59,
+		FunctionArgument = 60,
+		KeyframeSelector = 61,
+		ViewPort = 62,
+		Document = 63,
+		AtApplyRule = 64,
+		CustomPropertyDeclaration = 65,
+		CustomPropertySet = 66,
+		ListEntry = 67,
+		Supports = 68,
+		SupportsCondition = 69,
+		NamespacePrefix = 70,
+		GridLine = 71,
+		Plugin = 72,
+		UnknownAtRule = 73,
+		Use = 74,
+		ModuleConfiguration = 75,
+		Forward = 76,
+		ForwardVisibility = 77,
+		Module = 78,
 	}
 	export enum ReferenceType {
 		Mixin = 0,
@@ -405,14 +402,6 @@ declare module "vscode-css-languageservice/lib/esm/parser/cssNodes" {
 		constructor(offset: number, length: number)
 		get type(): NodeType
 	}
-	export class MediaCondition extends Node {
-		constructor(offset: number, length: number)
-		get type(): NodeType
-	}
-	export class MediaFeature extends Node {
-		constructor(offset: number, length: number)
-		get type(): NodeType
-	}
 	export class SupportsCondition extends Node {
 		lParent?: number
 		rParent?: number
@@ -477,10 +466,6 @@ declare module "vscode-css-languageservice/lib/esm/parser/cssNodes" {
 	}
 	export class HexColorValue extends Node {
 		private _hexColorValue
-		constructor(offset: number, length: number)
-		get type(): NodeType
-	}
-	export class RatioValue extends Node {
 		constructor(offset: number, length: number)
 		get type(): NodeType
 	}

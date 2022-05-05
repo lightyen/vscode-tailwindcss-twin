@@ -1,12 +1,5 @@
 declare module "vscode-css-languageservice/lib/esm/parser/cssSymbolScope" {
 	import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
-	export class Symbol {
-		name: string
-		value: string | undefined
-		type: nodes.ReferenceType
-		node: nodes.Node
-		constructor(name: string, value: string | undefined, node: nodes.Node, type: nodes.ReferenceType)
-	}
 	export class Scope {
 		parent: Scope | null
 		children: Scope[]
@@ -24,6 +17,13 @@ declare module "vscode-css-languageservice/lib/esm/parser/cssSymbolScope" {
 	}
 	export class GlobalScope extends Scope {
 		constructor()
+	}
+	export class Symbol {
+		name: string
+		value: string | undefined
+		type: nodes.ReferenceType
+		node: nodes.Node
+		constructor(name: string, value: string | undefined, node: nodes.Node, type: nodes.ReferenceType)
 	}
 	export class ScopeBuilder implements nodes.IVisitor {
 		scope: Scope
