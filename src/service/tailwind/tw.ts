@@ -5,7 +5,6 @@ import { importFrom } from "@/module"
 import { createGetPluginByName } from "@/plugins"
 import chroma from "chroma-js"
 import type { AtRule, Postcss, Rule } from "postcss"
-import type { Attribute } from "postcss-selector-parser"
 import { URI } from "vscode-uri"
 import { findRightBracket } from "~/common/parser"
 import parseThemeValue from "~/common/parseThemeValue"
@@ -59,8 +58,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	const expandApplyAtRules: Tailwind.expandApplyAtRules = importFrom("tailwindcss/lib/lib/expandApplyAtRules", {
 		base: extensionUri.fsPath,
 	})
+	const e: (value: string) => string = importFrom("tailwindcss/lib/util/escapeClassName", {
+		base: extensionUri.fsPath,
+	})
 	const postcss = importFrom("postcss", { base: extensionUri.fsPath }) as Postcss
-	const parser = importFrom("postcss-selector-parser", { base: extensionUri.fsPath })
 	const context = createContext(config) as Tailwind.Context
 	const _getPlugin = createGetPluginByName(config)
 	const screens = Object.keys(config.theme.screens).sort(screenSorter)
@@ -125,9 +126,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	}
 
 	function escape(className: string) {
-		const node = parser.attribute() as Attribute
-		node.value = className
-		return node.raws.value || node.value
+		return e(className)
 	}
 
 	function renderVariant(variant: string, tabSize = 4): ScssText {
