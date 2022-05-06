@@ -157,11 +157,11 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 					wrapper.push(node)
 				},
 				format(selectorFormat) {
-					selector = selectorFormat.replace(/:merge\((.*?)\)/g, "$1")
+					selector = selectorFormat
 				},
 			})
 
-			if (!selector && returnValue) selector = returnValue
+			if (!selector && returnValue) selector = returnValue.replace(/:merge\((.*?)\)/g, "$1")
 			if (!selector && wrapper.length > 0) {
 				selector = `@${wrapper[0].name} ${wrapper[0].params}`
 				wrapper = wrapper.slice(1)
@@ -186,7 +186,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 					selector = `@${wrapper[0].name} ${wrapper[0].params}`
 					wrapper = wrapper.slice(1)
 				}
-				console.debug("fallback", container)
 			}
 			if (!selector) continue
 
