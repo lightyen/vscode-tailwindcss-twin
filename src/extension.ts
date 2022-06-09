@@ -12,19 +12,106 @@ install()
 const outputChannel = vscode.window.createOutputChannel(NAME)
 console.outputChannel = outputChannel
 
-const clients: Map<string, vscode.Disposable> = new Map()
+function createWorkspacesHandler() {
+	let context: vscode.ExtensionContext
+	/** all opened workspaces, including not activated */
+	let workspaceFolders: vscode.WorkspaceFolder[] = []
+	/** all activated intances */
+	const clients: Map<string, Awaited<ReturnType<typeof workspaceClient>>> = new Map()
+	return {
+		clients,
+		initialize,
+		dispose,
+		onDidChangeWorkspaceFolders,
+	}
 
-async function addClient(context: vscode.ExtensionContext, ws: vscode.WorkspaceFolder) {
-	if (clients.has(ws.uri.toString())) return
-	const client = await workspaceClient(context, ws)
-	clients.set(ws.uri.toString(), client)
+	async function initialize(ctx: vscode.ExtensionContext) {
+		context = ctx
+		const folders = vscode.workspace.workspaceFolders
+		if (!folders) return
+		workspaceFolders = sortedWorkspaceFolders(folders.slice())
+		for await (const client of tidy(workspaceFolders).map(ws => workspaceClient(ctx, ws))) {
+			clients.set(client.ws.uri.toString(), client)
+		}
+	}
+
+	async function onDidChangeWorkspaceFolders(event: vscode.WorkspaceFoldersChangeEvent) {
+		const folders = vscode.workspace.workspaceFolders
+		if (!folders) return
+		const next = workspaceFolders.slice()
+		for (const ws of event.added) {
+			const i = next.findIndex(w => ws.uri.toString() === w.uri.toString())
+			if (i === -1) {
+				next.push(ws)
+			}
+		}
+		for (const ws of event.removed) {
+			const i = next.findIndex(w => ws.uri.toString() === w.uri.toString())
+			if (i >= 0) {
+				next.splice(i, 1)
+			}
+		}
+		workspaceFolders = sortedWorkspaceFolders(next)
+
+		const removed: Awaited<ReturnType<typeof workspaceClient>>[] = []
+		for (const [uri, c] of clients) {
+			const i = next.findIndex(w => w.uri.toString() === uri)
+			if (i === -1) removed.push(c)
+		}
+		const added: vscode.WorkspaceFolder[] = []
+		for (const ws of tidy(next)) {
+			if (!clients.has(ws.uri.toString())) added.push(ws)
+		}
+
+		for (const c of removed) {
+			clients.delete(c.ws.uri.toString())
+			c.dispose()
+		}
+		for await (const client of added.map(ws => workspaceClient(context, ws))) {
+			clients.set(client.ws.uri.toString(), client)
+		}
+	}
+
+	function sortedWorkspaceFolders(folders: vscode.WorkspaceFolder[]) {
+		return folders.sort((a, b) => {
+			return toString(a).length - toString(b).length
+		})
+		function toString(folder: vscode.WorkspaceFolder) {
+			let result = folder.uri.toString()
+			if (result.charAt(result.length - 1) !== "/") {
+				result = result + "/"
+			}
+			return result
+		}
+	}
+
+	function tidy(folders: vscode.WorkspaceFolder[]) {
+		const s = new Set<vscode.WorkspaceFolder>()
+		for (const ws of folders) {
+			let hasCreated = false
+			for (const k of s) {
+				if (ws.uri.toString().startsWith(k.uri.toString())) {
+					hasCreated = true
+					break
+				}
+			}
+			if (!hasCreated) s.add(ws)
+		}
+		return Array.from(s)
+	}
+
+	async function dispose() {
+		for (const client of clients.values()) {
+			await client.dispose()
+		}
+		clients.clear()
+	}
 }
 
+const h = createWorkspacesHandler()
+
 export async function deactivate() {
-	for (const client of clients.values()) {
-		client.dispose()
-	}
-	clients.clear()
+	await h.dispose()
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -41,27 +128,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 		packageInfo.dependencies["postcss"],
 	)
-
-	if (vscode.workspace.workspaceFolders) {
-		for (const ws of vscode.workspace.workspaceFolders) {
-			addClient(context, ws)
-		}
-	}
-
-	context.subscriptions.push(
-		vscode.workspace.onDidChangeWorkspaceFolders(event => {
-			for (const ws of event.removed) {
-				const client = clients.get(ws.uri.toString())
-				if (client) {
-					clients.delete(ws.uri.toString())
-					client.dispose()
-				}
-			}
-			for (const ws of event.added) {
-				addClient(context, ws)
-			}
-		}),
-	)
+	await h.initialize(context)
+	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(h.onDidChangeWorkspaceFolders))
 }
 
 // package.json

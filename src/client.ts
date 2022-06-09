@@ -42,10 +42,7 @@ function matchService(uri: URI, services: Map<string, ReturnType<typeof createTa
 	return list[0]
 }
 
-export async function workspaceClient(
-	context: vscode.ExtensionContext,
-	ws: vscode.WorkspaceFolder,
-): Promise<vscode.Disposable> {
+export async function workspaceClient(context: vscode.ExtensionContext, ws: vscode.WorkspaceFolder) {
 	const disposes: vscode.Disposable[] = []
 	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
 	const configFolders: Map<string, URI[]> = new Map()
@@ -331,7 +328,16 @@ export async function workspaceClient(
 
 	first_render()
 
-	return vscode.Disposable.from(...disposes)
+	const disposable = vscode.Disposable.from(...disposes)
+	return {
+		ws,
+		/**
+		 * Dispose this object.
+		 */
+		dispose() {
+			return disposable.dispose()
+		},
+	}
 
 	function getTabSize(defaultSize = 4): number {
 		let tabSize: number | undefined
