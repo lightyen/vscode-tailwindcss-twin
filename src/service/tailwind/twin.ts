@@ -58,9 +58,7 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 				addVariant("not-disabled", "&:not(:disabled)")
 				addVariant("even-of-type", "&:nth-of-type(even)")
 				addVariant("odd-of-type", "&:nth-of-type(odd)")
-				addVariant("enabled", "&:enabled")
 				addVariant("link", "&:link")
-				addVariant("optional", "&:optional")
 				addVariant("read-write", "&:read-write")
 
 				addVariant("all", "& *")

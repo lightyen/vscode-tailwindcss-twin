@@ -2670,6 +2670,7 @@ auto-cols-max
 auto-cols-fr
 grid-flow-row
 grid-flow-col
+grid-flow-dense
 grid-flow-row-dense
 grid-flow-col-dense
 auto-rows-auto
@@ -6677,6 +6678,8 @@ text-left
 text-center
 text-right
 text-justify
+text-start
+text-end
 indent-0
 indent-1
 indent-2
@@ -8048,6 +8051,7 @@ mix-blend-hue
 mix-blend-saturation
 mix-blend-color
 mix-blend-luminosity
+mix-blend-plus-lighter
 shadow-sm
 shadow
 shadow-md
@@ -9241,6 +9245,9 @@ border-x-[1px]
 border-x-[1px]
 border-y-[gray]
 border-y-[gray]
+border-spacing-[1px]
+border-spacing-x-[1px]
+border-spacing-y-[1px]
 text-[1px]
 text-[gray]
 ring-[1px]

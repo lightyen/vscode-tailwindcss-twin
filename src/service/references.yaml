@@ -32,6 +32,7 @@ borderColor: "https://tailwindcss.com/docs/border-color"
 borderOpacity: "https://tailwindcss.com/docs/border-opacity"
 borderRadius: "https://tailwindcss.com/docs/border-radius"
 borderStyle: "https://tailwindcss.com/docs/border-style"
+borderSpacing: "https://tailwindcss.com/docs/border-spacing"
 borderWidth: "https://tailwindcss.com/docs/border-width"
 boxDecorationBreak: "https://tailwindcss.com/docs/box-decoration-break"
 boxShadow: "https://tailwindcss.com/docs/box-shadow"
@@ -185,6 +186,8 @@ dark: "https://tailwindcss.com/docs/dark-mode"
 motion-safe: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
 motion-reduce: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
 print: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
+contrast-more: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast
+contrast-less: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast
 tw.landscape: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
 tw.portrait: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/orientation
 
@@ -197,14 +200,13 @@ first-line: https://developer.mozilla.org/en-US/docs/Web/CSS/::first-line
 marker: https://developer.mozilla.org/en-US/docs/Web/CSS/::marker
 selection: https://developer.mozilla.org/en-US/docs/Web/CSS/::selection
 file: https://developer.mozilla.org/en-US/docs/Web/CSS/::file-selector-button
+placeholder: https://developer.mozilla.org/en-US/docs/Web/CSS/::placeholder
+backdrop: https://developer.mozilla.org/fr/docs/Web/CSS/::backdrop
 
 # attribute selectors
 
 ltr: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
 rtl: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
-open: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
-
-# pseudo classes
 
 first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -234,8 +236,9 @@ in-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:in-range
 out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-range
 read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
-
-# extend
+open: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
+enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
+optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
 
 group-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 group-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -266,6 +269,8 @@ group-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-ran
 group-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 group-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
 group-open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
+group-enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
+group-optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
 
 peer-first: https://developer.mozilla.org/en-US/docs/Web/CSS/:first-child
 peer-last: https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child
@@ -296,6 +301,8 @@ peer-out-of-range: https://developer.mozilla.org/en-US/docs/Web/CSS/:out-of-rang
 peer-read-only: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-only
 peer-empty: https://developer.mozilla.org/en-US/docs/Web/CSS/:empty
 peer-open: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors
+peer-enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
+peer-optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
 
 tw.light: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
 tw.screen: https://developer.mozilla.org/en-US/docs/Web/CSS/@media
@@ -326,11 +333,8 @@ tw.not-disabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:disabled
 
 tw.even-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
 tw.odd-of-type: https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-of-type
-tw.enabled: https://developer.mozilla.org/en-US/docs/Web/CSS/:enabled
 tw.link: https://developer.mozilla.org/en-US/docs/Web/CSS/:link
-tw.optional: https://developer.mozilla.org/en-US/docs/Web/CSS/:optional
 tw.read-write: https://developer.mozilla.org/en-US/docs/Web/CSS/:read-write
-tw.placeholder: https://developer.mozilla.org/en-US/docs/Web/CSS/::placeholder
 
 tw.hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js
 tw.group-hocus: https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js

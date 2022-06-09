@@ -273,7 +273,7 @@ export function gridAutoFlow(context: Context): MatchPlugin | null {
 			const match = /^grid-flow-(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
-			return val === "row" || val === "col" || val === "row-dense" || val === "col-dense"
+			return val === "row" || val === "col" || val === "dense" || val === "row-dense" || val === "col-dense"
 		},
 	}
 }

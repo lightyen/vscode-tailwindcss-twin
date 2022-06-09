@@ -221,6 +221,10 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 		node.declarations.forEach(parseVariableDeclarator)
 	}
 
+	function parseSpreadElement(node: ast.SpreadElement) {
+		parseExpression(node.argument)
+	}
+
 	function parseExpression(node: ast.Expression) {
 		// LiteralExpression | LogicalExpression | MemberExpression | MetaProperty | NewExpression | ObjectPattern | Super | ThisExpression | TSAsExpression | TSNonNullExpression | TSTypeAssertion;
 		switch (node.type) {
@@ -605,7 +609,16 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 	}
 
 	function parseArrayExpression(node: ast.ArrayExpression) {
-		node.elements.forEach(parseExpression)
+		node.elements.forEach(e => {
+			switch (e.type) {
+				case AST_NODE_TYPES.SpreadElement:
+					parseSpreadElement(e)
+					break
+				default:
+					parseExpression(e)
+					break
+			}
+		})
 	}
 }
 
@@ -838,6 +851,10 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 
 	function parseVariableDeclaration(node: ast.VariableDeclaration) {
 		node.declarations.forEach(parseVariableDeclarator)
+	}
+
+	function parseSpreadElement(node: ast.SpreadElement) {
+		parseExpression(node.argument)
 	}
 
 	function parseExpression(node: ast.Expression) {
@@ -1229,7 +1246,16 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 	}
 
 	function parseArrayExpression(node: ast.ArrayExpression) {
-		node.elements.forEach(parseExpression)
+		node.elements.forEach(e => {
+			switch (e.type) {
+				case AST_NODE_TYPES.SpreadElement:
+					parseSpreadElement(e)
+					break
+				default:
+					parseExpression(e)
+					break
+			}
+		})
 	}
 }
 

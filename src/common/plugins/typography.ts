@@ -180,7 +180,12 @@ export function textAlign(context: Context): MatchPlugin | null {
 		},
 		isMatch(value) {
 			return (
-				value === "text-left" || value === "text-center" || value === "text-right" || value === "text-justify"
+				value === "text-left" ||
+				value === "text-center" ||
+				value === "text-right" ||
+				value === "text-justify" ||
+				value === "text-start" ||
+				value === "text-end"
 			)
 		},
 	}

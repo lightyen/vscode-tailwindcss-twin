@@ -82,7 +82,8 @@ export function mixBlendMode(context: Context): MatchPlugin | null {
 				val === "hue" ||
 				val === "saturation" ||
 				val === "color" ||
-				val === "luminosity"
+				val === "luminosity" ||
+				val === "plus-lighter"
 			)
 		},
 	}
