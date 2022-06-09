@@ -48,7 +48,7 @@ export default async function hover(
 					document.positionAt(token.start + end),
 				)
 
-				if (selection.target.type === parser.NodeType.CssDeclaration) {
+				if (selection.target.type === parser.NodeType.ShortCss) {
 					const prop = parser.toKebab(selection.target.prop.value)
 					const value = selection.value
 					const important = selection.important
@@ -71,6 +71,40 @@ export default async function hover(
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
+					})
+					const codes = new vscode.MarkdownString()
+					if (code) codes.appendCodeblock(code, "scss")
+
+					if (!header.value && !codes.value) return undefined
+
+					return {
+						range,
+						contents: [header, codes],
+					}
+				}
+
+				if (selection.target.type === parser.NodeType.ArbitraryProperty) {
+					let prop = selection.target.decl.value.trim()
+					const i = selection.target.decl.value.indexOf(":")
+					if (i >= 0) prop = selection.target.decl.value.slice(0, i).trim()
+					const header = new vscode.MarkdownString()
+					if (options.references) {
+						const entry = cssDataManager.getProperty(prop)
+						if (entry) {
+							const desc = getEntryDescription(entry, true)
+							if (desc) {
+								header.appendMarkdown(desc.value)
+							}
+						}
+					}
+
+					const code = state.tw.renderClassname({
+						classname: `[${selection.target.decl.value.trim()}]`,
+						important: selection.important,
+						rootFontSize: options.rootFontSize,
+						colorHint: options.hoverColorHint,
+						tabSize,
+						arbitraryProperty: true,
 					})
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
@@ -162,6 +196,7 @@ export default async function hover(
 					rootFontSize: options.rootFontSize,
 					colorHint: options.hoverColorHint,
 					tabSize,
+					arbitraryProperty: false,
 				})
 
 				if (!code) {

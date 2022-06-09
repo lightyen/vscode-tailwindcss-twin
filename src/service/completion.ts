@@ -6,19 +6,13 @@ import { findThemeValueKeys } from "@/parseThemeValue"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import chroma from "chroma-js"
 import vscode from "vscode"
+import { getCSSLanguageService } from "vscode-css-languageservice"
+import { TextDocument as LspTextDocument } from "vscode-languageserver-textdocument"
+import * as lsp from "vscode-languageserver-types"
 import { calcFraction } from "~/common"
 import type { ICompletionItem } from "~/typings/completion"
 import type { ServiceOptions } from "."
-import { getCompletionsForDeclarationValue, getCompletionsFromRestrictions } from "./completionCssPropertyValue"
 import type { TailwindLoader } from "./tailwind"
-
-function getWord(value: string, start: number, end: number, offset = end): [number, number, string] {
-	let i = offset - 1 - start
-	while (i >= 0 && ' \t\n\r":{[()]},*>+'.indexOf(value.charAt(i)) === -1) {
-		i--
-	}
-	return [i + 1 + start, offset, value.slice(i + 1, offset - start)]
-}
 
 export default function completion(
 	result: ExtractedToken | undefined,
@@ -108,17 +102,40 @@ function twinCompletion(
 	const text = match.value
 	const position = index - offset
 	const suggestion = parser.suggest({ text, position, separator: state.separator })
+
 	const isIncomplete = false
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilities = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const arbitraryValue = arbitraryValueCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const arbitraryProperty = arbitraryPropertyCompletion(
+		document,
+		text,
+		position,
+		offset,
+		kind,
+		suggestion,
+		state,
+		options,
+	)
+	const arbitraryVariant = arbitraryVariantCompletion(
+		document,
+		text,
+		position,
+		offset,
+		kind,
+		suggestion,
+		state,
+		options,
+	)
 	const completionList = new vscode.CompletionList<ICompletionItem>([], isIncomplete)
 	completionList.items = completionList.items
 		.concat(variants)
 		.concat(utilities)
 		.concat(shortcss)
 		.concat(arbitraryValue)
+		.concat(arbitraryProperty)
+		.concat(arbitraryVariant)
 	return completionList
 }
 
@@ -140,10 +157,7 @@ function variantsCompletion(
 	let variantItems: ICompletionItem[] = []
 	let variantEnabled = true
 
-	if (suggestion.inComment) {
-		variantEnabled = false
-	}
-
+	if (suggestion.inComment) variantEnabled = false
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant:
@@ -151,8 +165,9 @@ function variantsCompletion(
 			case parser.NodeType.ArbitraryVariant:
 				if (position !== b) variantEnabled = false
 				break
-			case parser.NodeType.CssDeclaration:
+			case parser.NodeType.ShortCss:
 			case parser.NodeType.ArbitraryClassname:
+			case parser.NodeType.ArbitraryProperty:
 				variantEnabled = false
 				break
 		}
@@ -236,7 +251,7 @@ function variantsCompletion(
 			}
 		} else if (
 			suggestion.target.type === parser.NodeType.ClassName ||
-			suggestion.target.type === parser.NodeType.CssDeclaration ||
+			suggestion.target.type === parser.NodeType.ShortCss ||
 			suggestion.target.type === parser.NodeType.ArbitraryClassname
 		) {
 			if (position > a) {
@@ -283,7 +298,8 @@ function utilitiesCompletion(
 				if (position < b) classNameEnabled = false
 				break
 			}
-			case parser.NodeType.CssDeclaration:
+			case parser.NodeType.ShortCss:
+			case parser.NodeType.ArbitraryProperty:
 				classNameEnabled = false
 				break
 		}
@@ -338,6 +354,136 @@ function utilitiesCompletion(
 	return classNameItems
 }
 
+function isTextEdit(te: lsp.TextEdit | lsp.InsertReplaceEdit | undefined): te is lsp.TextEdit {
+	if (te === undefined) return false
+	return (te as lsp.TextEdit).range !== undefined
+}
+
+const cssLanguageSrv = getCSSLanguageService()
+function getCssDeclarationCompletionList(
+	document: TextDocument,
+	position: number,
+	offset: number,
+	start: number,
+	css: string | [prop: string, value: string],
+): ICompletionItem[] {
+	const code = Array.isArray(css) ? `.generated {${css[0]}: ${css[1]}}` : `.generated {${css}}`
+	let delta = 12
+	if (Array.isArray(css)) {
+		delta = delta + css[0].length + 2
+	}
+	const doc = LspTextDocument.create("generated", "css", 0, code)
+	const sheet = cssLanguageSrv.parseStylesheet(doc)
+	const list = cssLanguageSrv.doComplete(doc, doc.positionAt(delta + position - start), sheet)
+	offset += start
+	return list.items.map<ICompletionItem>(item => {
+		const c: ICompletionItem = {
+			data: { type: "css" },
+			label: item.label,
+			sortText: item.sortText,
+			detail: item.detail,
+			command: item.command,
+			tags: item.tags,
+			commitCharacters: item.commitCharacters,
+			preselect: item.preselect,
+		}
+		if (isTextEdit(item.textEdit)) {
+			const start = doc.offsetAt(item.textEdit.range.start) - delta
+			const end = doc.offsetAt(item.textEdit.range.end) - delta
+			const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
+			c.insertText = item.textEdit.newText
+			if (c.insertText.endsWith(";")) {
+				c.insertText = c.insertText.slice(0, -1)
+			}
+			c.range = range
+			if (item.insertTextFormat === lsp.InsertTextFormat.Snippet) {
+				c.insertText = new vscode.SnippetString(c.insertText)
+			}
+			item.textEdit = undefined
+		}
+		if (item.kind) {
+			c.kind = item.kind - 1
+		}
+		if (item.documentation) {
+			if (typeof item.documentation !== "string") {
+				c.documentation = new vscode.MarkdownString(item.documentation.value)
+			} else {
+				c.documentation = item.documentation
+			}
+		}
+		return c
+	})
+}
+
+const scssLanguageSrv = getCSSLanguageService()
+function getScssSelectorCompletionList(
+	document: TextDocument,
+	position: number,
+	offset: number,
+	start: number,
+	code: string,
+): ICompletionItem[] {
+	const doc = LspTextDocument.create("generated", "css", 0, code)
+	const sheet = scssLanguageSrv.parseStylesheet(doc)
+	const list = scssLanguageSrv.doComplete(doc, doc.positionAt(position - start), sheet)
+	offset += start
+	return list.items.map<ICompletionItem>(item => {
+		const c: ICompletionItem = {
+			data: { type: "css" },
+			label: item.label,
+			sortText: item.sortText,
+			detail: item.detail,
+			command: item.command,
+			tags: item.tags,
+			commitCharacters: item.commitCharacters,
+			preselect: item.preselect,
+		}
+		if (isTextEdit(item.textEdit)) {
+			const start = doc.offsetAt(item.textEdit.range.start)
+			const end = doc.offsetAt(item.textEdit.range.end)
+			const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
+			c.insertText = item.textEdit.newText
+			if (c.insertText.endsWith(";")) {
+				c.insertText = c.insertText.slice(0, -1)
+			}
+			c.range = range
+			if (item.insertTextFormat === lsp.InsertTextFormat.Snippet) {
+				c.insertText = new vscode.SnippetString(c.insertText)
+			}
+			item.textEdit = undefined
+		}
+		if (item.kind) {
+			c.kind = item.kind - 1
+		}
+		if (item.documentation) {
+			if (typeof item.documentation !== "string") {
+				c.documentation = new vscode.MarkdownString(item.documentation.value)
+			} else {
+				c.documentation = item.documentation
+			}
+		}
+		return c
+	})
+}
+
+function arbitraryVariantCompletion(
+	document: TextDocument,
+	text: string,
+	position: number,
+	offset: number,
+	kind: ExtractedTokenKind,
+	suggestion: ReturnType<typeof parser.suggest>,
+	state: TailwindLoader,
+	_: ServiceOptions,
+) {
+	if (!suggestion.target) return []
+	if (suggestion.inComment) return []
+	if (nodes.NodeType.ArbitraryVariant !== suggestion.target.type) return []
+	const selector = suggestion.target.selector
+	if (position < selector.range[0] || position > selector.range[1]) return []
+	return getScssSelectorCompletionList(document, position, offset, selector.range[0], selector.value)
+}
+
 function shortcssCompletion(
 	document: TextDocument,
 	text: string,
@@ -353,12 +499,10 @@ function shortcssCompletion(
 	const value = suggestion.value
 
 	let cssPropItems: ICompletionItem[] = []
-	const cssValueItems: ICompletionItem[] = []
 	let cssPropEnabled = true
-	let cssValueEnabled = false
 
 	if (suggestion.inComment) {
-		cssPropEnabled = cssValueEnabled = false
+		cssPropEnabled = false
 	}
 
 	if (suggestion.target) {
@@ -368,11 +512,10 @@ function shortcssCompletion(
 			if (position === b && !isVariantWord) {
 				cssPropEnabled = false
 			}
-		} else if (suggestion.target.type === parser.NodeType.CssDeclaration) {
+		} else if (suggestion.target.type === parser.NodeType.ShortCss) {
 			const [a, b] = suggestion.target.expr.range
 			if (position >= a && position <= b) {
 				cssPropEnabled = false
-				cssValueEnabled = true
 			}
 		}
 	}
@@ -413,7 +556,7 @@ function shortcssCompletion(
 	}
 
 	if (suggestion.target) {
-		if (suggestion.target.type === parser.NodeType.CssDeclaration) {
+		if (suggestion.target.type === parser.NodeType.ShortCss) {
 			const [start, end] = suggestion.target.range
 			if (position > start && position <= end) {
 				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(item.label + "[$0]"))
@@ -435,104 +578,191 @@ function shortcssCompletion(
 		}
 	}
 
-	if (cssValueEnabled && suggestion.target && suggestion.target.type === parser.NodeType.CssDeclaration) {
-		const prop = suggestion.target.prop
-		const range = suggestion.target.prop.range
-		const [start, end, word] = getWord(suggestion.target.prop.value, range[0], range[1], position)
-		cssValueItems.push(
-			...getCompletionsForDeclarationValue(
-				parser.toKebab(prop.value),
-				word,
-				new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			),
-		)
+	let cssValueItems: ICompletionItem[] = []
+	if (suggestion.target && suggestion.target.type === parser.NodeType.ShortCss) {
+		cssValueItems = getCssDeclarationCompletionList(document, position, offset, suggestion.target.expr.range[0], [
+			suggestion.target.prop.value,
+			suggestion.target.expr.value,
+		])
 	}
-
-	return [...cssPropItems, ...cssValueItems]
+	return cssPropItems.concat(cssValueItems)
 }
 
-const fromCssProp = (cssprop: string) => (currentWord: string, range: vscode.Range) =>
-	getCompletionsForDeclarationValue(cssprop, currentWord, range)
-const fromRestrictions =
-	(...restrictions: string[]) =>
-	(currentWord: string, range: vscode.Range) =>
-		getCompletionsFromRestrictions(restrictions, currentWord, range)
+function arbitraryPropertyCompletion(
+	document: TextDocument,
+	text: string,
+	position: number,
+	offset: number,
+	kind: ExtractedTokenKind,
+	suggestion: ReturnType<typeof parser.suggest>,
+	state: TailwindLoader,
+	_: ServiceOptions,
+) {
+	if (!suggestion.target) return []
+	if (suggestion.inComment) return []
+	if (nodes.NodeType.ArbitraryProperty !== suggestion.target.type) return []
+	if (position <= suggestion.target.range[0] || position >= suggestion.target.range[1]) return []
+	return getCssDeclarationCompletionList(
+		document,
+		position,
+		offset,
+		suggestion.target.range[0] + 1,
+		suggestion.target.decl.value,
+	)
+}
 
-const mappingArbitraryPropToCssProp: Record<
-	string,
-	Array<(currentWord: string, range: vscode.Range) => ICompletionItem[]>
-> = {
-	"divide-": [fromCssProp("border-color")],
-	"divide-x-": [fromCssProp("border-width")],
-	"divide-y-": [fromCssProp("border-width")],
-	"bg-": [fromCssProp("background-color"), fromCssProp("background-image"), fromCssProp("background-size")],
-	"from-": [fromRestrictions("color")],
-	"via-": [fromRestrictions("color")],
-	"to-": [fromRestrictions("color")],
-	"space-x-": [fromRestrictions("length", "percentage")],
-	"space-y-": [fromRestrictions("length", "percentage")],
-	"w-": [fromCssProp("width")],
-	"h-": [fromCssProp("height")],
-	"leading-": [fromCssProp("line-height")],
-	"m-": [fromCssProp("margin")],
-	"mx-": [fromCssProp("margin-left")],
-	"my-": [fromCssProp("margin-top")],
-	"mt-": [fromCssProp("margin-top")],
-	"mr-": [fromCssProp("margin-right")],
-	"mb-": [fromCssProp("margin-bottom")],
-	"ml-": [fromCssProp("margin-left")],
-	"p-": [fromCssProp("padding")],
-	"px-": [fromCssProp("padding-left")],
-	"py-": [fromCssProp("padding-top")],
-	"pt-": [fromCssProp("padding-top")],
-	"pr-": [fromCssProp("padding-right")],
-	"pb-": [fromCssProp("padding-bottom")],
-	"pl-": [fromCssProp("padding-left")],
-	"max-w-": [fromCssProp("max-width")],
-	"max-h-": [fromCssProp("max-height")],
-	"inset-": [fromCssProp("top")],
-	"inset-x-": [fromCssProp("top")],
-	"inset-y-": [fromCssProp("left")],
-	"top-": [fromCssProp("top")],
-	"right-": [fromCssProp("right")],
-	"bottom-": [fromCssProp("bottom")],
-	"left-": [fromCssProp("left")],
-	"gap-": [fromCssProp("gap")],
-	"translate-x-": [fromRestrictions("length", "percentage")],
-	"translate-y-": [fromRestrictions("length", "percentage")],
-	"blur-": [fromRestrictions("length")],
-	"backdrop-blur": [fromRestrictions("length")],
-	"order-": [fromCssProp("order")],
-	"rotate-": [fromRestrictions("angle")],
-	"skew-x-": [fromRestrictions("angle")],
-	"skew-y-": [fromRestrictions("angle")],
-	"hue-rotate-": [fromRestrictions("angle")],
-	"backdrop-hue-rotate-": [fromRestrictions("angle")],
-	"duration-": [fromCssProp("transition-duration")],
-	"delay-": [fromCssProp("transition-delay")],
-	"ease-": [fromCssProp("transition-timing-function")],
-	"grid-cols-": [fromCssProp("grid-template-columns")],
-	"grid-rows-": [fromCssProp("grid-template-rows")],
-	"border-": [fromCssProp("border-width"), fromCssProp("border-color")],
-	"border-t-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
-	"border-r-": [fromCssProp("border-right-width"), fromCssProp("border-right-color")],
-	"border-b-": [fromCssProp("border-bottom-width"), fromCssProp("border-bottom-color")],
-	"border-l-": [fromCssProp("border-left-width"), fromCssProp("border-left-color")],
-	"border-x-": [fromCssProp("border-left-width"), fromCssProp("border-left-color")],
-	"border-y-": [fromCssProp("border-top-width"), fromCssProp("border-top-color")],
-	"text-": [fromRestrictions("color", "length", "percentage")],
-	"ring-": [fromRestrictions("length", "color")],
-	"fill-": [fromCssProp("fill")],
-	"shadow-": [fromCssProp("color")],
-	"stroke-": [fromCssProp("stroke"), fromCssProp("stroke-width")],
-	"caret-": [fromCssProp("caret-color")],
-	"aspect-": [fromCssProp("aspect-ratio")],
-	"accent-": [fromRestrictions("color")],
-	"indent-": [fromCssProp("text-indent")],
-	"columns-": [fromCssProp("columns")],
-	"underline-offset-": [fromRestrictions("length", "percentage")],
-	"outline-": [fromCssProp("outline-color"), fromCssProp("outline-width")],
-	"decoration-": [fromCssProp("text-decoration-color"), fromRestrictions("length", "percentage")],
+const mappingArbitraryProp: Record<string, string[]> = {
+	"inset-": ["top", "right", "bottom", "left"],
+	"inset-x-": ["left", "right"],
+	"inset-y-": ["top", "bottom"],
+	"top-": ["top"],
+	"right-": ["right"],
+	"bottom-": ["bottom"],
+	"left-": ["left"],
+	"z-": ["z-index"],
+	"order-": ["order"],
+	"grid-cols-": ["grid-template-columns"],
+	"grid-rows-": ["grid-template-rows"],
+	"auto-cols-": ["grid-auto-columns"],
+	"auto-rows-": ["grid-auto-rows"],
+	"col-": ["grid-column"],
+	"row-": ["grid-row"],
+	"columns-": ["columns"],
+	"m-": ["margin"],
+	"mt-": ["margin-top"],
+	"mr-": ["margin-right"],
+	"mb-": ["margin-buttom"],
+	"ml-": ["margin-left"],
+	"mx-": ["margin-left", "margin-right"],
+	"my-": ["margin-top", "margin-bottm"],
+	"space-x-": ["margin-left"],
+	"space-y-": ["margin-top"],
+	"p-": ["padding"],
+	"pt-": ["padding-top"],
+	"pr-": ["padding-right"],
+	"pb-": ["padding-bottm"],
+	"pl-": ["padding-left"],
+	"px-": ["padding-left", "padding-right"],
+	"py-": ["padding-top", "padding-bottm"],
+	"aspect-": ["aspect-ratio"],
+	"h-": ["height"],
+	"w-": ["width"],
+	"max-h-": ["max-height"],
+	"min-h-": ["min-height"],
+	"max-w-": ["max-width"],
+	"min-w-": ["min-width"],
+	"flex-": ["flex"],
+	"flex-shrink-": ["flex-shrink"],
+	"shrink-": ["flex-shrink"],
+	"flex-grow-": ["flex-grow"],
+	"grow-": ["flex-grow"],
+	"basis-": ["flex-basis"],
+	"gap-": ["gap"],
+	"gap-x-": ["column-gap"],
+	"gap-y-": ["row-gap"],
+	"origin-": ["transform-origin"],
+	"cursor-": ["cursor"],
+	"scroll-m-": ["scroll-margin"],
+	"scroll-mt-": ["scroll-margin-top"],
+	"scroll-mr-": ["scroll-margin-right"],
+	"scroll-mb-": ["scroll-margin-buttom"],
+	"scroll-ml-": ["scroll-margin-left"],
+	"scroll-mx-": ["scroll-margin-left", "scroll-margin-right"],
+	"scroll-my-": ["scroll-margin-top", "scroll-margin-buttom"],
+	"scroll-p-": ["scroll-padding"],
+	"scroll-pt-": ["scroll-padding-top"],
+	"scroll-pr-": ["scroll-padding-right"],
+	"scroll-pb-": ["scroll-padding-bottm"],
+	"scroll-pl-": ["scroll-padding-left"],
+	"scroll-px-": ["scroll-padding-left", "scroll-padding-right"],
+	"scroll-py-": ["scroll-padding-top", "scroll-padding-bottm"],
+	"list-": ["list-style-type"],
+	"rounded-": ["border-radius"],
+	"rounded-bl-": ["border-bottom-left-radius"],
+	"rounded-br-": ["border-bottom-right-radius"],
+	"rounded-tl-": ["border-top-left-radius"],
+	"rounded-tr-": ["border-top-right-radius"],
+	"rounded-t-": ["border-top-left-radius", "border-top-right-radius"],
+	"rounded-r-": ["border-top-right-radius", "border-bottom-right-radius"],
+	"rounded-b-": ["border-bottom-left-radius", "border-bottom-right-radius"],
+	"rounded-l-": ["border-top-left-radius", "border-bottom-left-radius"],
+	"border-opacity-": ["opacity"],
+	"border-": ["border-width", "border-color"],
+	"border-t-": ["border-top-width", "border-top-color"],
+	"border-r-": ["border-right-width", "border-right-color"],
+	"border-b-": ["border-bottom-width", "border-bottom-color"],
+	"border-l-": ["border-left-width", "border-left-color"],
+	"border-x-": ["border-left-width", "border-right-width", "border-left-color", "border-right-color"],
+	"border-y-": ["border-top-width", "border-bottom-width", "border-top-color", "border-bottom-color"],
+	"divide-": ["border-color"],
+	"divide-opacity-": ["opacity"],
+	"divide-x-": ["border-left-width", "border-right-width"],
+	"divide-y-": ["border-top-width", "border-bottom-width"],
+	"bg-": ["background-color", "background-image", "background-position", "background-size"],
+	"bg-opacity-": ["opacity"],
+	"from-": ["background-color"],
+	"via-": ["background-color"],
+	"to-": ["background-color"],
+	"object-": ["object-position"],
+	"fill-": ["fill"],
+	"stroke-": ["stroke", "stroke-width"],
+	"text-": ["color", "font-size"],
+	"text-opacity-": ["opacity"],
+	"font-": ["font-family", "font-weight"],
+	"leading-": ["line-height"],
+	"tracking-": ["letter-spacing"],
+	"decoration-": ["text-decoration-color", "text-decoration-thickness"],
+	"underline-offset-": ["text-underline-offset"],
+	"indent-": ["text-indent"],
+	"placeholder-": ["color"],
+	"placeholder-opacity-": ["opacity"],
+	"caret-": ["caret-color"],
+	"accent-": ["accent-color"],
+	"ring-opacity-": ["opacity"],
+	"ring-": ["padding", "color"],
+	"ring-offset-": ["padding", "color"],
+	"outline-": ["outline-width", "outline-color"],
+	"outline-offset-": ["outline-offset"],
+	"delay-": ["transition-delay"],
+	"duration-": ["transition-duration"],
+	"transition-": ["transition-property"],
+	"ease-": ["transition-timing-function"],
+	"will-change-": ["will-change"],
+	"content-": ["content"],
+	"animate-": ["animation"],
+	"shadow-": ["box-shadow"],
+	"drop-shadow-": ["box-shadow"],
+	"translate-x-": ["padding"],
+	"translate-y-": ["padding"],
+	"rotate-": ["order"],
+	"skew-x-": ["order"],
+	"skew-y-": ["order"],
+	"scale-": ["order"],
+	"scale-x-": ["order"],
+	"scale-y-": ["order"],
+	"opacity-": ["opacity"],
+	"blur-": ["padding"],
+	"brightness-": ["order"],
+	"contrast-": ["order"],
+	"grayscale-": ["order"],
+	"hue-rotate-": ["order"],
+	"invert-": ["order"],
+	"saturate-": ["order"],
+	"sepia-": ["order"],
+	"backdrop-opacity-": ["opacity"],
+	"backdrop-blur-": ["padding"],
+	"backdrop-brightness-": ["order"],
+	"backdrop-contrast-": ["order"],
+	"backdrop-grayscale-": ["order"],
+	"backdrop-hue-rotate-": ["order"],
+	"backdrop-invert-": ["order"],
+	"backdrop-saturate-": ["order"],
+	"backdrop-sepia-": ["order"],
+	// "<opacity>": ["opacity"],
+	// "<number>": ["order"],
+	// "<angle>": ["order"],
+	// "<percentage>": ["order"],
+	// "<length>": ["padding"],
 }
 
 function arbitraryValueCompletion(
@@ -545,37 +775,21 @@ function arbitraryValueCompletion(
 	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
-	const cssValueItems: ICompletionItem[] = []
-
-	if (!suggestion.target) return cssValueItems
-	if (suggestion.inComment) return cssValueItems
-	if (nodes.NodeType.ArbitraryClassname !== suggestion.target.type) return cssValueItems
-	if (!suggestion.target.expr) return cssValueItems
-	if (position < suggestion.target.expr.range[0] || position > suggestion.target.expr.range[1]) return cssValueItems
-
+	if (!suggestion.target) return []
+	if (suggestion.inComment) return []
+	if (nodes.NodeType.ArbitraryClassname !== suggestion.target.type) return []
+	const expr = suggestion.target.expr
+	if (!expr) return []
+	if (position < expr.range[0] || position > expr.range[1]) return []
+	const cssValueItems = new Map<string, ICompletionItem>()
 	const prop = suggestion.target.prop.value
-	if (mappingArbitraryPropToCssProp[prop]) {
-		const range = suggestion.target.range
-
-		const [start, end, word] = getWord(text.slice(...range), range[0], range[1], position)
-
-		let items: ICompletionItem[] = []
-		for (const fn of mappingArbitraryPropToCssProp[prop]) {
-			items = items.concat(
-				...fn(word, new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))),
-			)
-		}
-
-		// filter duplicated items
-		const m = new Map<string, ICompletionItem>()
-		for (const i of items) {
-			m.set(i.label, i)
-		}
-		items = Array.from(m.values())
-		cssValueItems.push(...items)
-	}
-
-	return cssValueItems
+	const props = mappingArbitraryProp[prop]
+	props.forEach(prop => {
+		getCssDeclarationCompletionList(document, position, offset, expr.range[0], [prop, expr.value]).forEach(item => {
+			cssValueItems.set(item.label, item)
+		})
+	})
+	return Array.from(cssValueItems.values())
 }
 
 function twinThemeCompletion(

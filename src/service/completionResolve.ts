@@ -49,7 +49,7 @@ function resolve(
 	payload: ICompletionItem["data"],
 ): ICompletionItem {
 	const { type, entry } = payload
-	if (type === "cssValue") return item
+	if (type === "css") return item
 	if (type === "cssProp") {
 		if (entry) {
 			const markdown = new vscode.MarkdownString()

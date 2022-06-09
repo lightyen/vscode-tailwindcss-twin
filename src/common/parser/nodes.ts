@@ -7,10 +7,11 @@ export enum NodeType {
 	CssSelector = "CssSelector",
 	Identifier = "Identifier",
 	ClassName = "ClassName",
+	ShortCss = "ShortCss",
 	CssDeclaration = "CssDeclaration",
-	CssProperty = "CssProperty",
 	CssExpression = "CssExpression",
 	ArbitraryClassname = "ArbitraryClassname",
+	ArbitraryProperty = "ArbitraryProperty",
 	WithOpacity = "WithOpacity",
 	EndOpacity = "EndOpacity",
 }
@@ -84,8 +85,17 @@ export interface ArbitraryClassname extends BaseNode, Important, Bracket {
 	e?: WithOpacity | EndOpacity
 }
 
-export interface CssDeclaration extends BaseNode, Important, Bracket {
+export interface CssDeclaration extends BaseNode, NodeData {
 	type: NodeType.CssDeclaration
+}
+
+export interface ArbitraryProperty extends BaseNode, NodeData, Important, Bracket {
+	type: NodeType.ArbitraryProperty
+	decl: CssDeclaration
+}
+
+export interface ShortCss extends BaseNode, Important, Bracket {
+	type: NodeType.ShortCss
 	prop: Identifier
 	expr: CssExpression
 }
@@ -96,7 +106,7 @@ export interface VariantSpan extends BaseNode {
 	child?: TwExpression
 }
 
-export type TwExpression = Classname | CssDeclaration | ArbitraryClassname | VariantSpan | Group
+export type TwExpression = Classname | ShortCss | ArbitraryClassname | ArbitraryProperty | VariantSpan | Group
 
 export interface Group extends BaseNode, Important, Bracket {
 	type: NodeType.Group
@@ -118,4 +128,4 @@ export type Node =
 	| WithOpacity
 	| EndOpacity
 
-export type BracketNode = Group | ArbitraryVariant | ArbitraryClassname | CssDeclaration | WithOpacity
+export type BracketNode = Group | ArbitraryVariant | ArbitraryClassname | ArbitraryProperty | ShortCss | WithOpacity

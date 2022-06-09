@@ -317,13 +317,18 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		rootFontSize = 0,
 		tabSize = 4,
 		colorHint = "none",
+		arbitraryProperty = false,
 	}: {
 		classname: string
 		important?: boolean
 		rootFontSize?: number
 		tabSize?: number
 		colorHint?: "none" | "hex" | "rgb" | "hsl"
+		arbitraryProperty?: boolean
 	}): CssText {
+		if (arbitraryProperty) {
+			classname = classname.replace(/ /g, "_")
+		}
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
@@ -347,6 +352,11 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 				decl.important = important
 				if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 				decl.value = toPixelUnit(decl.value, rootFontSize)
+			})
+		}
+		if (arbitraryProperty) {
+			root.walkRules(rule => {
+				rule.selector = "&"
 			})
 		}
 		return root.toString()

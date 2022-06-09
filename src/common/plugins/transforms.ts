@@ -87,6 +87,7 @@ export function transformOrigin(context: Context): MatchPlugin | null {
 			const match = /^origin-(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
+			if (isArbitraryValue(val)) return true
 			return (
 				val === "center" ||
 				val === "top" ||

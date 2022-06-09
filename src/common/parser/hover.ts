@@ -8,7 +8,8 @@ interface HoverResult {
 		| nodes.ArbitraryVariant
 		| nodes.Classname
 		| nodes.ArbitraryClassname
-		| nodes.CssDeclaration
+		| nodes.ArbitraryProperty
+		| nodes.ShortCss
 	value: string
 	variants: string[]
 	important: boolean
@@ -17,14 +18,10 @@ interface HoverResult {
 export function hover({
 	position,
 	text,
-	start = 0,
-	end = text.length,
 	separator = ":",
 }: {
 	position: number
 	text: string
-	start?: number
-	end?: number
 	separator?: string
 }): HoverResult | undefined {
 	interface Context {
@@ -67,10 +64,19 @@ export function hover({
 				}
 			}
 
-			if (nodes.NodeType.CssDeclaration === node.type) {
+			if (nodes.NodeType.ShortCss === node.type) {
 				return {
 					target: node,
 					value: text.slice(node.expr.range[0], node.expr.range[1]),
+					important: ctx.important || node.important,
+					variants: ctx.variants,
+				}
+			}
+
+			if (nodes.NodeType.ArbitraryProperty === node.type) {
+				return {
+					target: node,
+					value: text.slice(node.decl.range[0], node.decl.range[1]),
 					important: ctx.important || node.important,
 					variants: ctx.variants,
 				}
@@ -106,7 +112,7 @@ export function hover({
 	}
 
 	parser.setSeparator(separator)
-	return travel(parser.parse({ text, start, end, breac: position }), {
+	return travel(parser.parse(text, { breac: position }), {
 		important: false,
 		variants: [],
 	})

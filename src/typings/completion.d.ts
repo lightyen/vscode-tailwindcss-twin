@@ -1,7 +1,7 @@
 import type { CompletionItem } from "vscode"
 import type { IPropertyData } from "vscode-css-languageservice"
 import { URI } from "vscode-uri"
-export type CompletionItemPayloadType = "theme" | "screen" | "color" | "utility" | "variant" | "cssProp" | "cssValue"
+export type CompletionItemPayloadType = "theme" | "screen" | "color" | "utility" | "variant" | "cssProp" | "css"
 
 export type CompletionItemPayload = {
 	type: CompletionItemPayloadType

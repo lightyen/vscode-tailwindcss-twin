@@ -7,23 +7,13 @@ interface VariantToken extends nodes.TokenString {
 }
 
 export type SpreadDescription = {
-	target: nodes.Classname | nodes.CssDeclaration | nodes.ArbitraryClassname
+	target: nodes.Classname | nodes.ShortCss | nodes.ArbitraryClassname | nodes.ArbitraryProperty
 	value: string
 	variants: VariantToken[]
 	important: boolean
 }
 
-export function spread({
-	text,
-	start = 0,
-	end = text.length,
-	separator = ":",
-}: {
-	text: string
-	start?: number
-	end?: number
-	separator?: string
-}) {
+export function spread(text: string, { separator = ":" }: { separator?: string } = {}) {
 	interface Context {
 		variants: VariantToken[]
 		important: boolean
@@ -61,7 +51,7 @@ export function spread({
 			}
 
 			node.expressions.forEach(n => walk(n, { ...ctx, important: ctx.important || node.important }))
-		} else if (nodes.NodeType.CssDeclaration === node.type) {
+		} else if (nodes.NodeType.ShortCss === node.type) {
 			if (!node.closed) {
 				notClosed.push(node)
 				return
@@ -90,6 +80,18 @@ export function spread({
 				...ctx,
 				important: ctx.important || node.important,
 			})
+		} else if (nodes.NodeType.ArbitraryProperty === node.type) {
+			if (!node.closed) {
+				notClosed.push(node)
+				return
+			}
+
+			items.push({
+				target: node,
+				value: text.slice(...node.range),
+				...ctx,
+				important: ctx.important || node.important,
+			})
 		} else if (nodes.NodeType.ClassName === node.type) {
 			items.push({
 				target: node,
@@ -101,7 +103,7 @@ export function spread({
 	}
 
 	parser.setSeparator(separator)
-	const program = parser.parse({ text, start, end })
+	const program = parser.parse(text)
 	program.expressions.forEach(expr => walk(expr, { variants: [], important: false }))
 
 	return { items, emptyGroup, emptyVariants, notClosed }

@@ -116,21 +116,11 @@ function isSpace(char: number) {
 	}
 }
 
-export function parse({
-	text,
-	start = 0,
-	end = text.length,
-	breac = Infinity,
-}: {
-	text: string
-	start?: number
-	end?: number
-	breac?: number
-}): nodes.Program {
+export function parse(text: string, { breac = Infinity }: { breac?: number } = {}): nodes.Program {
 	return {
 		type: nodes.NodeType.Program,
-		range: [start, end],
-		expressions: parseExpressions({ text, breac, start, end }),
+		range: [0, text.length],
+		expressions: parseExpressions({ text, breac }),
 	}
 }
 
@@ -165,7 +155,7 @@ function escapeRegexp(value: string) {
 
 function compileRegexp(sep: string) {
 	return new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${sep})|(\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|!?((?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${sep})|(!?\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|!?((?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 }
@@ -193,7 +183,7 @@ function parseExpression({
 	text = text.slice(0, end)
 
 	if ((match = regexp.exec(text))) {
-		const [, lineComment, blockComment, variant, ar_variant, arbitrary, classnames, group, others] = match
+		const [, lineComment, blockComment, variant, leftSquareBracket, arbitrary, classnames, group, others] = match
 		start = match.index
 
 		if (variant) {
@@ -226,39 +216,51 @@ function parseExpression({
 			}
 
 			return { expr: span, lastIndex }
-		} else if (ar_variant) {
+		} else if (leftSquareBracket) {
+			let important = false
+			if (text.charCodeAt(start) === 33) {
+				important = true
+				start += 1
+			}
 			const ar_rb = findRightBracket({ text, start, end, brackets: [91, 93] })
 			if (ar_rb == undefined) {
-				const variant: nodes.ArbitraryVariant = {
-					type: nodes.NodeType.ArbitraryVariant,
+				const expr: nodes.ArbitraryProperty = {
+					type: nodes.NodeType.ArbitraryProperty,
 					range: [match.index, end],
-					selector: {
-						type: nodes.NodeType.CssSelector,
+					value: text.slice(match.index, end),
+					decl: {
+						type: nodes.NodeType.CssDeclaration,
 						range: [match.index + 1, end],
 						value: text.slice(match.index + 1, end),
 					},
 					closed: false,
+					important,
 				}
 
-				const span: nodes.VariantSpan = {
-					type: nodes.NodeType.VariantSpan,
-					variant,
-					range: [match.index, end],
-				}
-
-				return { expr: span, lastIndex: end }
+				return { expr, lastIndex: end }
 			}
 
+			// Does it end with separator?
 			for (let i = 0; i < separator.length; i++) {
-				if (text.charCodeAt(i + ar_rb + 1) !== separator.charCodeAt(i)) {
-					// unknown
-					const classname: nodes.Classname = {
-						type: nodes.NodeType.ClassName,
-						important: false,
-						range: [match.index, ar_rb + 1],
-						value: text.slice(match.index, ar_rb + 1),
+				if (text.charCodeAt(ar_rb + 1 + i) !== separator.charCodeAt(i)) {
+					let lastIndex = ar_rb + 1
+					if (text.charCodeAt(ar_rb + 1) === 33) {
+						important = true
+						lastIndex += 1
 					}
-					return { expr: classname, lastIndex: ar_rb + 1 }
+					const expr: nodes.ArbitraryProperty = {
+						type: nodes.NodeType.ArbitraryProperty,
+						important,
+						range: [start, ar_rb + 1],
+						value: text.slice(start, ar_rb + 1),
+						decl: {
+							type: nodes.NodeType.CssDeclaration,
+							range: [start + 1, ar_rb],
+							value: text.slice(start + 1, ar_rb),
+						},
+						closed: true,
+					}
+					return { expr, lastIndex }
 				}
 			}
 
@@ -340,11 +342,12 @@ function parseExpression({
 			if (rb != undefined) regexp.lastIndex = rb + 1
 			else regexp.lastIndex = end
 
+			// shortcss
 			if (!slash && !hyphen) {
 				const exclamationRight = text.charCodeAt(regexp.lastIndex) === 33
 				if (exclamationRight) regexp.lastIndex += 1
-				const decl: nodes.CssDeclaration = {
-					type: nodes.NodeType.CssDeclaration,
+				const decl: nodes.ShortCss = {
+					type: nodes.NodeType.ShortCss,
 					prop,
 					expr,
 					important: exclamationLeft || exclamationRight,

@@ -111,7 +111,7 @@ export function validate(
 						}
 					}
 				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
-					const result = parser.spread({ text: value, separator: state.separator })
+					const result = parser.spread(value, { separator: state.separator })
 					validateTwin({
 						document,
 						text: value,
@@ -184,7 +184,7 @@ function validateTwin({
 					}
 					break
 				}
-				case parser.NodeType.CssDeclaration: {
+				case parser.NodeType.ShortCss: {
 					const ans = checkTwinCssProperty(c, document, offset, state)
 					for (let k = 0; k < ans.length; k++) {
 						if (!result.push(ans[k])) {
@@ -234,9 +234,22 @@ function validateTwin({
 				}
 
 				const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-				if (item.target.type === parser.NodeType.CssDeclaration) {
+				if (item.target.type === parser.NodeType.ShortCss) {
 					// same as loose
 					const property = parser.toKebab(item.target.prop.value)
+					const key = [...variants, property].join(".")
+					const target = map[key]
+					if (target instanceof Array) {
+						target.push(item.target.range)
+					} else {
+						map[key] = [item.target.range]
+					}
+					continue
+				} else if (item.target.type === parser.NodeType.ArbitraryProperty) {
+					// same as loose
+					const i = item.target.decl.value.indexOf(":")
+					if (i < 0) continue
+					const property = item.target.decl.value.slice(0, i).trim()
 					const key = [...variants, property].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
@@ -295,7 +308,14 @@ function validateTwin({
 				}
 
 				const twinKeys = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-				const property = parser.toKebab(item.target.prop.value)
+				let property = ""
+				if (item.target.type === parser.NodeType.ArbitraryProperty) {
+					const i = item.target.decl.value.indexOf(":")
+					if (i < 0) continue
+					property = item.target.decl.value.slice(0, i).trim()
+				} else {
+					property = parser.toKebab(item.target.prop.value)
+				}
 				const key = [...twinKeys, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
@@ -386,7 +406,7 @@ function checkTwinCssProperty(
 		}
 	}
 
-	if (item.target.type !== parser.NodeType.CssDeclaration) {
+	if (item.target.type !== parser.NodeType.ShortCss) {
 		return result
 	}
 

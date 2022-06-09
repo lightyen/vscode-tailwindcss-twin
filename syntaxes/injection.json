@@ -4,63 +4,46 @@
   "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "name": "meta.template.twin",
       "begin": "(tw)(?:(?:(?:\\.[\\w$]+)*|\\(([^\\)]*)\\)))*(`)",
+      "end": "`",
       "beginCaptures": {
-        "1": {
-          "name": "entity.name.function.tagged-template"
-        },
+        "1": { "name": "entity.name.function.tagged-template" },
         "2": {
           "patterns": [
-            {
-              "include": "source.ts#expression"
-            },
-            {
-              "include": "source.ts#string"
-            },
-            {
-              "include": "source.ts#comment"
-            }
+            { "include": "source.ts#expression" },
+            { "include": "source.ts#string" },
+            { "include": "source.ts#comment" }
           ]
-        },
-        "3": {
-          "name": "punctuation.definition.string.template.begin"
         }
       },
-      "end": "(`)",
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.string.template.end"
+      "patterns": [
+        {
+          "end": "`",
+          "patterns": [{ "include": "source.twin" }]
         }
-      },
-      "patterns": [{ "include": "source.twin" }]
+      ]
     },
     {
       "name": "meta.jsxProp.twin",
       "begin": "\\s*(tw)(=){",
       "beginCaptures": {
-        "1": {
-          "name": "entity.other.attribute-name"
-        },
-        "2": {
-          "name": "keyword.operator.assignment"
-        }
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" }
       },
       "end": "}",
-      "patterns": [{ "include": "source.twin" }]
+      "patterns": [
+        {
+          "end": "}",
+          "patterns": [{ "include": "source.twin" }]
+        }
+      ]
     },
     {
       "begin": "\\s*(tw)(=)(')",
       "beginCaptures": {
-        "1": {
-          "name": "entity.other.attribute-name"
-        },
-        "2": {
-          "name": "keyword.operator.assignment"
-        },
-        "3": {
-          "name": "string.quoted.single"
-        }
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quoted.single" }
       },
       "end": "(')",
       "endCaptures": {
@@ -68,29 +51,31 @@
           "name": "string.quoted.single"
         }
       },
-      "patterns": [{ "include": "source.twin" }]
+      "patterns": [
+        {
+          "end": "'",
+          "patterns": [{ "include": "source.twin" }]
+        }
+      ]
     },
     {
       "name": "meta.jsxProp.twin",
       "begin": "\\s*?(tw)(=)(\")",
       "beginCaptures": {
-        "1": {
-          "name": "entity.other.attribute-name"
-        },
-        "2": {
-          "name": "keyword.operator.assignment"
-        },
-        "3": {
-          "name": "string.quoted.double"
-        }
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quoted.double" }
       },
       "end": "(\")",
       "endCaptures": {
-        "1": {
-          "name": "string.quoted.double"
-        }
+        "1": { "name": "string.quoted.double" }
       },
-      "patterns": [{ "include": "source.twin" }]
+      "patterns": [
+        {
+          "end": "\"",
+          "patterns": [{ "include": "source.twin" }]
+        }
+      ]
     }
   ]
 }

@@ -2,256 +2,152 @@
   "name": "twin",
   "scopeName": "source.twin",
   "patterns": [
-    {
-      "include": "#line-comment-end-backtick"
-    },
-    {
-      "include": "#block-comment-end-backtick"
-    },
-    {
-      "include": "#expression"
-    }
+    { "include": "#line-comment-end-backtick" },
+    { "include": "#block-comment-end-backtick" },
+    { "include": "#expression" }
   ],
   "repository": {
     "expression": {
       "patterns": [
-        {
-          "include": "#expression-arbitrary-variant"
-        },
-        {
-          "include": "#expression-variant"
-        },
-        {
-          "include": "#expression-short-css"
-        },
-        {
-          "include": "#expression-arbitrary-classname"
-        },
-        {
-          "include": "#expression-arbitrary-opacity"
-        },
-        {
-          "include": "#expression-variant-group"
-        },
-        {
-          "include": "#expression-classname"
-        },
-        {
-          "include": "#expression-arbitrary-property"
-        },
-        {
-          "include": "#illegal"
-        }
+        { "include": "#arbitrary-variant-or-property" },
+        { "include": "#variant" },
+        { "include": "#short-css" },
+        { "include": "#arbitrary-classname" },
+        { "include": "#arbitrary-opacity" },
+        { "include": "#group" },
+        { "include": "#classname" },
+        { "include": "#illegal" }
       ]
     },
     "line-comment-end-backtick": {
       "match": "(//)[^`]*",
       "captures": {
-        "0": {
-          "name": "comment.line.double-slash.twin"
-        },
-        "1": {
-          "name": "punctuation.definition.comment.twin"
-        }
+        "0": { "name": "comment.line.double-slash.twin" },
+        "1": { "name": "punctuation.definition.comment.twin" }
       }
     },
     "block-comment-end-backtick": {
       "begin": "(/\\*)",
       "beginCaptures": {
-        "1": {
-          "name": "punctuation.definition.comment.begin.twin"
-        }
+        "1": { "name": "punctuation.definition.comment.begin.twin" }
       },
       "end": "(\\*/)|`",
       "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.comment.end.twin"
-        }
+        "1": { "name": "punctuation.definition.comment.end.twin" }
       },
       "contentName": "comment.block.twin"
     },
-    "expression-variant": {
+    "variant": {
       "match": "[\\w-]+:",
       "captures": {
-        "0": {
-          "name": "entity.other.inherited-class.variant.twin"
-        }
+        "0": { "name": "entity.other.inherited-class.variant.twin" }
       }
     },
-    "expression-arbitrary-variant": {
-      "begin": "(?<!/)(\\[)",
-      "end": "(?<=\\]:)",
-      "patterns": [
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        },
-        {
-          "end": "(?<=\\]:)",
-          "patterns": [{ "include": "source.css.scss.tw" }]
-        }
-      ]
-    },
-    "expression-classname": {
-      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)",
-      "captures": {
-        "0": {
-          "name": "support.constant.classname.twin"
-        },
-        "1": {
-          "name": "support.function.important-bang.before.classname.twin"
-        },
-        "2": {
-          "name": "support.function.important-bang.after.classname.twin"
-        }
-      }
-    },
-    "expression-arbitrary-property": {
-      "begin": "(!?)(\\[)",
-      "end": "(?<=\\])(!?)",
+    "arbitrary-variant-or-property": {
+      "begin": "(?<!/)(!?)\\[",
+      "end": "(?<=\\]:)|(?<=\\])(!?)",
       "beginCaptures": {
-        "0": {
-          "name": "support.function.important-bang.before.classname.twin"
-        }
+        "1": { "name": "support.function.important-bang.before.twin" }
       },
       "endCaptures": {
-        "0": {
-          "name": "support.function.important-bang.after.classname.twin"
-        }
+        "1": { "name": "support.function.important-bang.after.twin" }
       },
       "patterns": [
         {
-          "name": "support.constant.classname.twin",
-          "end": "(\\])(!?)"
+          "end": "\\]:",
+          "patterns": [
+            { "include": "#line-comment-end-backtick" },
+            { "include": "#block-comment-end-backtick" },
+            { "include": "source.css.scss.tw" }
+          ]
+        },
+        {
+          "end": "\\]:",
+          "endCaptures": {
+            "0": { "name": "support.function.important-bang.after.twin" }
+          },
+          "patterns": [
+            { "include": "#line-comment-end-backtick" },
+            { "include": "#block-comment-end-backtick" },
+            { "include": "#css-value-content-bracket" },
+            { "include": "source.css.scss.tw#properties" }
+          ]
         }
       ]
     },
-    "expression-arbitrary-classname": {
+    "classname": {
+      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)",
+      "captures": {
+        "0": { "name": "support.constant.classname.twin" },
+        "1": { "name": "support.function.important-bang.before.twin" },
+        "2": { "name": "support.function.important-bang.after.twin" }
+      }
+    },
+    "arbitrary-classname": {
       "name": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
       "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
       "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.before.arbitrary-style.twin"
-        },
-        "2": {
-          "name": "support.type.arbitrary-style.prop.twin"
-        }
+        "1": { "name": "support.function.important-bang.before.twin" },
+        "2": { "name": "support.type.arbitrary-style.prop.twin" }
       },
       "endCaptures": {
-        "3": {
-          "name": "support.function.important-bang.after.arbitrary-style.twin"
-        }
+        "3": { "name": "support.function.important-bang.after.twin" }
       },
       "patterns": [
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        },
-        {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "source.css.scss.tw#property_values"
-        }
+        { "include": "#line-comment-end-backtick" },
+        { "include": "#block-comment-end-backtick" },
+        { "include": "#css-value-content-bracket" },
+        { "include": "source.css.scss.tw#property_values" }
       ]
     },
-    "expression-arbitrary-opacity": {
+    "arbitrary-opacity": {
       "contentName": "support.type.arbitrary-style.endOpacity.twin",
       "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.before.arbitrary-style.twin"
-        },
-        "2": {
-          "name": "support.type.arbitrary-style.prop.twin"
-        }
+        "1": { "name": "support.function.important-bang.before.twin" },
+        "2": { "name": "support.type.arbitrary-style.prop.twin" }
       },
       "endCaptures": {
-        "2": {
-          "name": "support.function.important-bang.after.arbitrary-style.twin"
-        }
+        "2": { "name": "support.function.important-bang.after.twin" }
       }
     },
-    "expression-short-css": {
+    "short-css": {
       "contentName": "entity.name.variable.css-value.twin",
       "begin": "(!?)((?:-{1,2})?(?:\\w+-)*\\w+)(\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.short-css.twin"
-        },
-        "2": {
-          "name": "support.type.short-css.prop.twin"
-        }
+        "1": { "name": "support.function.important-bang.short-css.twin" },
+        "2": { "name": "support.type.short-css.prop.twin" }
       },
       "endCaptures": {
-        "2": {
-          "name": "support.function.important-bang.short-css.twin"
-        }
+        "2": { "name": "support.function.important-bang.short-css.twin" }
       },
       "patterns": [
-        {
-          "include": "#line-comment-end-backtick"
-        },
-        {
-          "include": "#block-comment-end-backtick"
-        },
-        {
-          "include": "#css-value-content-bracket"
-        },
-        {
-          "include": "source.css.scss#property_values"
-        }
+        { "include": "#line-comment-end-backtick" },
+        { "include": "#block-comment-end-backtick" },
+        { "include": "#css-value-content-bracket" },
+        { "include": "source.css.scss#property_values" }
       ]
     },
-    "expression-variant-group": {
-      "begin": "(!?)(\\()",
-      "end": "(\\))(!?)",
+    "group": {
+      "begin": "(!?)\\(",
+      "end": "\\)(!?)",
       "name": "meta.block.variant-group.twin",
       "beginCaptures": {
-        "1": {
-          "name": "support.function.important-bang.before.variant-group.twin"
-        }
+        "1": { "name": "support.function.important-bang.before.twin" }
       },
       "endCaptures": {
-        "2": {
-          "name": "support.function.important-bang.after.variant-group.twin"
-        }
+        "1": { "name": "support.function.important-bang.after.twin" }
       },
-      "patterns": [
-        {
-          "include": "$self"
-        },
-        {
-          "include": "#expression"
-        }
-      ]
+      "patterns": [{ "include": "$self" }, { "include": "#expression" }]
     },
     "css-value-content-bracket": {
       "contentName": "string.twin",
-      "begin": "(\\[)",
-      "end": "(\\])",
-      "beginCaptures": {
-        "1": {
-          "name": "punctuation.section.begin.bracket.square.twin"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.section.end.bracket.square.twin"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#css-value-content-bracket"
-        }
-      ]
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [{ "include": "#css-value-content-bracket" }]
     },
     "illegal": {
       "name": "invalid.value.twin",

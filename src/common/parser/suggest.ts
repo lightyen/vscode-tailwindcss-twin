@@ -5,8 +5,9 @@ import { getVariant } from "./util"
 export interface SuggestionResult {
 	target?:
 		| nodes.Classname
-		| nodes.CssDeclaration
+		| nodes.ShortCss
 		| nodes.ArbitraryClassname
+		| nodes.ArbitraryProperty
 		| nodes.SimpleVariant
 		| nodes.ArbitraryVariant
 	value: string
@@ -17,14 +18,10 @@ export interface SuggestionResult {
 export function suggest({
 	position,
 	text,
-	start = 0,
-	end = text.length,
 	separator = ":",
 }: {
 	position: number
 	text: string
-	start?: number
-	end?: number
 	separator?: string
 }): SuggestionResult {
 	interface Context {
@@ -34,27 +31,28 @@ export function suggest({
 	interface TravelResult extends Context {
 		target?:
 			| nodes.Classname
-			| nodes.CssDeclaration
+			| nodes.ShortCss
 			| nodes.ArbitraryClassname
+			| nodes.ArbitraryProperty
 			| nodes.SimpleVariant
 			| nodes.ArbitraryVariant
 	}
 
 	parser.setSeparator(separator)
-	const result = travel(parser.parse({ text, start, end, breac: position }), { variants: [] })
+	const result = travel(parser.parse(text, { breac: position }), { variants: [] })
 
 	if (!result.target) {
 		return {
 			variants: result.variants,
 			value: "",
-			inComment: inComment({ position, text, start, end }),
+			inComment: inComment({ position, text }),
 		}
 	}
 
 	return {
 		...result,
 		value: result.target ? text.slice(result.target.range[0], result.target.range[1]) : "",
-		inComment: inComment({ position, text, start, end }),
+		inComment: inComment({ position, text }),
 	}
 
 	function inComment({
@@ -135,7 +133,11 @@ export function suggest({
 				)
 			}
 
-			if (nodes.NodeType.CssDeclaration === node.type || nodes.NodeType.ArbitraryClassname === node.type) {
+			if (
+				nodes.NodeType.ShortCss === node.type ||
+				nodes.NodeType.ArbitraryProperty === node.type ||
+				nodes.NodeType.ArbitraryClassname === node.type
+			) {
 				return { target: node, variants: ctx.variants }
 			}
 
