@@ -9,33 +9,7 @@ import { URI } from "vscode-uri"
 import { findRightBracket } from "~/common/parser"
 import parseThemeValue from "~/common/parseThemeValue"
 import { unquote } from "~/common/unquote"
-
-const ColorProps_Foreground = new Set<string>(["color"])
-const ColorProps_Border = new Set<string>([])
-const ColorProps_Background = new Set<string>([
-	"outline-color",
-	"border-color",
-	"border-top-color",
-	"border-right-color",
-	"border-bottom-color",
-	"border-left-color",
-	"background-color",
-	"text-decoration-color",
-	"accent-color",
-	"caret-color",
-	"fill",
-	"stroke",
-	"stop-color",
-	"column-rule-color",
-	"--tw-ring-color",
-	"--tw-ring-offset-color",
-	"--tw-gradient-from",
-	"--tw-gradient-to",
-	"--tw-gradient-stops",
-	"--tw-shadow-color",
-])
-
-const ColorProps = new Set([...ColorProps_Foreground, ...ColorProps_Border, ...ColorProps_Background])
+import { ColorProps, ColorProps_Background, ColorProps_Border, ColorProps_Foreground } from "./data"
 
 export type ColorDesc = {
 	color?: string

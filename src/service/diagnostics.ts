@@ -7,7 +7,8 @@ import Fuse from "fuse.js"
 import vscode from "vscode"
 import { DIAGNOSTICS_ID } from "~/shared"
 import type { ServiceOptions } from "."
-import { deprecated, TailwindLoader } from "./tailwind"
+import { TailwindLoader } from "./tailwind"
+import { arbitraryClassnames, deprecated } from "./tailwind/data"
 
 export interface IDiagnostic extends vscode.Diagnostic {
 	data?: {
@@ -21,7 +22,7 @@ const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSens
 
 function createDiagnosticArray() {
 	const arr: vscode.Diagnostic[] = []
-	const MAXSZIE = 20
+	const MAXSZIE = 200
 	return new Proxy(arr, {
 		get(target, prop, ...rest) {
 			switch (prop) {
@@ -171,51 +172,16 @@ function validateTwin({
 		}
 	}
 
-	if (kind === ExtractedTokenKind.Twin) {
-		for (let i = 0; i < items.length; i++) {
-			const item = items[i]
-			let results = checkVariants(item, document, offset, state)
-			switch (item.target.type) {
-				case parser.NodeType.ClassName: {
-					const ans = checkTwinClassName(item.target, document, text, offset, state)
-					if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
-						const message = deprecated.get(item.target.value)
-						if (message) {
-							ans.push({
-								message,
-								severity: vscode.DiagnosticSeverity.Hint,
-								range: new vscode.Range(
-									document.positionAt(offset + item.target.range[0]),
-									document.positionAt(offset + item.target.range[1]),
-								),
-								tags: [vscode.DiagnosticTag.Deprecated],
-							})
-						}
-					}
-					results = results.concat(ans)
-					break
-				}
-				case parser.NodeType.ShortCss: {
-					const ans = checkShortCss(item.target, document, offset, state)
-					if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
-						ans.push({
-							message: `Short css is deprecated, replace it with '[${item.target.prop.value}: ${item.target.expr.value}]'.`,
-							severity: vscode.DiagnosticSeverity.Hint,
-							range: new vscode.Range(
-								document.positionAt(offset + item.target.range[0]),
-								document.positionAt(offset + item.target.range[1]),
-							),
-							tags: [vscode.DiagnosticTag.Deprecated],
-						})
-					}
-					results = results.concat(ans)
-					break
-				}
-				case parser.NodeType.ArbitraryClassname: {
-					const keyword = item.target.prop.value.slice(0, -1)
-					const message = deprecated.get(keyword)
+	for (let i = 0; i < items.length; i++) {
+		const item = items[i]
+		let results = checkVariants(item, document, offset, state)
+		switch (item.target.type) {
+			case parser.NodeType.ClassName: {
+				const ans = checkTwinClassName(item.target, document, text, offset, state)
+				if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
+					const message = deprecated.get(item.target.value)
 					if (message) {
-						results.push({
+						ans.push({
 							message,
 							severity: vscode.DiagnosticSeverity.Hint,
 							range: new vscode.Range(
@@ -225,17 +191,42 @@ function validateTwin({
 							tags: [vscode.DiagnosticTag.Deprecated],
 						})
 					}
-					break
 				}
-				case parser.NodeType.ArbitraryProperty: {
-					results = results.concat(checkArbitraryProperty(item.target, document, offset, state))
-					break
-				}
+				results = results.concat(ans)
+				break
 			}
+			case parser.NodeType.ShortCss: {
+				const ans = checkShortCss(item.target, document, offset, diagnosticOptions.emptyChecking)
+				if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
+					ans.push({
+						message: `Short css is deprecated, replace it with '[${item.target.prop.value}: ${item.target.expr.value}]'.`,
+						severity: vscode.DiagnosticSeverity.Hint,
+						range: new vscode.Range(
+							document.positionAt(offset + item.target.range[0]),
+							document.positionAt(offset + item.target.range[1]),
+						),
+						tags: [vscode.DiagnosticTag.Deprecated],
+					})
+				}
+				results = results.concat(ans)
+				break
+			}
+			case parser.NodeType.ArbitraryClassname: {
+				results = results.concat(
+					checkArbitraryClassname(item.target, document, offset, diagnosticOptions.emptyChecking),
+				)
+				break
+			}
+			case parser.NodeType.ArbitraryProperty: {
+				results = results.concat(
+					checkArbitraryProperty(item.target, document, offset, diagnosticOptions.emptyChecking),
+				)
+				break
+			}
+		}
 
-			for (let k = 0; k < results.length; k++) {
-				if (!diagnostics.push(results[k])) return
-			}
+		for (let k = 0; k < results.length; k++) {
+			if (!diagnostics.push(results[k])) return
 		}
 	}
 
@@ -246,10 +237,7 @@ function validateTwin({
 			const prop = parts[parts.length - 1]
 			if (ranges.length > 1) {
 				for (const [a, b] of ranges) {
-					const message =
-						diagnosticOptions.conflict === "strict"
-							? `${text.slice(a, b)} is duplicated on property: ${prop}`
-							: `${text.slice(a, b)} is duplicated`
+					const message = `${text.slice(a, b)} is duplicated on property: ${prop}`
 					if (
 						!diagnostics.push({
 							source: DIAGNOSTICS_ID,
@@ -265,115 +253,111 @@ function validateTwin({
 		}
 	}
 
-	if (diagnosticOptions.conflict !== "none") {
-		const map: Record<string, parser.Range[]> = {}
+	const map: Record<string, parser.Range[]> = {}
 
-		if (kind === ExtractedTokenKind.Twin) {
-			for (let i = 0; i < items.length; i++) {
-				const item = items[i]
-				if (item.important) {
-					continue
-				}
-
-				const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-				if (item.target.type === parser.NodeType.ShortCss) {
-					// same as loose
-					const property = parser.toKebab(item.target.prop.value)
-					const key = [...variants, property].join(".")
-					const target = map[key]
-					if (target instanceof Array) {
-						target.push(item.target.range)
-					} else {
-						map[key] = [item.target.range]
-					}
-					continue
-				} else if (item.target.type === parser.NodeType.ArbitraryProperty) {
-					// same as loose
-					const i = item.target.decl.value.indexOf(":")
-					if (i < 0) continue
-					const property = item.target.decl.value.slice(0, i).trim()
-					const key = [...variants, property].join(".")
-					const target = map[key]
-					if (target instanceof Array) {
-						target.push(item.target.range)
-					} else {
-						map[key] = [item.target.range]
-					}
-					continue
-				}
-
-				const label = text.slice(item.target.range[0], item.target.range[1])
-				const { decls, scopes } = state.tw.renderDecls(label)
-				if (decls.size === 0) {
-					continue
-				}
-
-				if (diagnosticOptions.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.getName())) {
-					const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
-					const target = map[key]
-					if (target instanceof Array) {
-						target.push(item.target.range)
-					} else {
-						map[key] = [item.target.range]
-					}
-				} else if (diagnosticOptions.conflict === "strict") {
-					for (const [prop] of decls) {
-						const key = [undefined, ...variants, ...scopes, prop].join(".")
-						const target = map[key]
-						if (target instanceof Array) {
-							target.push(item.target.range)
-						} else {
-							map[key] = [item.target.range]
-						}
-					}
-				}
+	if (kind === ExtractedTokenKind.Twin) {
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i]
+			if (item.important) {
+				continue
 			}
-		} else if (kind === ExtractedTokenKind.TwinCssProperty) {
-			for (let i = 0; i < items.length; i++) {
-				const item = items[i]
 
-				if (item.target.type === parser.NodeType.ClassName) {
-					let message = `Invalid token '${item.target.value}'`
-					if (cssDataManager.getProperty(item.target.value)) {
-						message += ", missing square brackets?"
-					}
-					diagnostics.push({
-						source: DIAGNOSTICS_ID,
-						message,
-						range: new vscode.Range(
-							document.positionAt(offset + item.target.range[0]),
-							document.positionAt(offset + item.target.range[1]),
-						),
-						severity: vscode.DiagnosticSeverity.Error,
-					})
-					continue
-				}
-
-				const twinKeys = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-				let property = ""
-				if (item.target.type === parser.NodeType.ArbitraryProperty) {
-					const i = item.target.decl.value.indexOf(":")
-					if (i < 0) continue
-					property = item.target.decl.value.slice(0, i).trim()
-				} else {
-					property = parser.toKebab(item.target.prop.value)
-				}
-				const key = [...twinKeys, property].join(".")
+			const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+			if (item.target.type === parser.NodeType.ShortCss) {
+				// same as loose
+				const property = parser.toKebab(item.target.prop.value)
+				const key = [...variants, property].join(".")
 				const target = map[key]
 				if (target instanceof Array) {
 					target.push(item.target.range)
 				} else {
 					map[key] = [item.target.range]
 				}
+				continue
+			} else if (item.target.type === parser.NodeType.ArbitraryProperty) {
+				// same as loose
+				const i = item.target.decl.value.indexOf(":")
+				if (i < 0) continue
+				const property = item.target.decl.value.slice(0, i).trim()
+				const key = [...variants, property].join(".")
+				const target = map[key]
+				if (target instanceof Array) {
+					target.push(item.target.range)
+				} else {
+					map[key] = [item.target.range]
+				}
+				continue
+			}
+
+			const label = text.slice(item.target.range[0], item.target.range[1])
+			const { decls, scopes } = state.tw.renderDecls(label)
+			if (decls.size === 0) continue
+
+			if (isLoose(state, label, decls)) {
+				const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
+				const target = map[key]
+				if (target instanceof Array) {
+					target.push(item.target.range)
+				} else {
+					map[key] = [item.target.range]
+				}
+			} else {
+				for (const [prop] of decls) {
+					const key = [undefined, ...variants, ...scopes, prop].join(".")
+					const target = map[key]
+					if (target instanceof Array) {
+						target.push(item.target.range)
+					} else {
+						map[key] = [item.target.range]
+					}
+				}
 			}
 		}
+	} else if (kind === ExtractedTokenKind.TwinCssProperty) {
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i]
 
-		travel(map)
+			if (item.target.type === parser.NodeType.ClassName) {
+				let message = `Invalid token '${item.target.value}'`
+				if (cssDataManager.getProperty(item.target.value)) {
+					message += ", missing square brackets?"
+				}
+				diagnostics.push({
+					source: DIAGNOSTICS_ID,
+					message,
+					range: new vscode.Range(
+						document.positionAt(offset + item.target.range[0]),
+						document.positionAt(offset + item.target.range[1]),
+					),
+					severity: vscode.DiagnosticSeverity.Error,
+				})
+				continue
+			}
+
+			const twinKeys = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+			let property = ""
+			if (item.target.type === parser.NodeType.ArbitraryProperty) {
+				const i = item.target.decl.value.indexOf(":")
+				if (i < 0) continue
+				property = item.target.decl.value.slice(0, i).trim()
+			} else {
+				property = parser.toKebab(item.target.prop.value)
+			}
+			const key = [...twinKeys, property].join(".")
+			const target = map[key]
+			if (target instanceof Array) {
+				target.push(item.target.range)
+			} else {
+				map[key] = [item.target.range]
+			}
+		}
 	}
+
+	travel(map)
 
 	for (let i = 0; i < emptyVariants.length; i++) {
 		const item = emptyVariants[i]
-		if (diagnosticOptions.emptyClass) {
+		if (diagnosticOptions.emptyChecking) {
 			if (
 				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
@@ -392,7 +376,7 @@ function validateTwin({
 
 	for (let i = 0; i < emptyGroup.length; i++) {
 		const item = emptyGroup[i]
-		if (diagnosticOptions.emptyGroup) {
+		if (diagnosticOptions.emptyChecking) {
 			if (
 				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
@@ -445,16 +429,12 @@ function checkVariants(item: parser.SpreadDescription, document: TextDocument, o
 	return result
 }
 
-function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, state: TailwindLoader) {
+function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, emptyChecking: boolean) {
 	const result: IDiagnostic[] = []
 	const prop = item.prop
-	const {
-		value,
-		range: [start, end],
-	} = prop
-	if (value.startsWith("--")) {
-		return result
-	}
+	const { value, range } = prop
+	const [start, end] = range
+	if (value.startsWith("--")) return result
 	const ret = csspropSearcher.search(parser.toKebab(value))
 	const score = ret?.[0]?.score
 	if (score == undefined) {
@@ -473,6 +453,66 @@ function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: nu
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	}
+	if (emptyChecking && item.expr.value.trim() === "") {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `forgot something?`,
+			range: new vscode.Range(
+				document.positionAt(offset + item.expr.range[0] - 1),
+				document.positionAt(offset + item.expr.range[1] + 1),
+			),
+			severity: vscode.DiagnosticSeverity.Warning,
+		})
+	}
+	return result
+}
+
+function checkArbitraryClassname(
+	item: parser.ArbitraryClassname,
+	document: TextDocument,
+	offset: number,
+	emptyChecking: boolean,
+) {
+	const result: IDiagnostic[] = []
+	const prefix = item.prop.value
+	if (emptyChecking) {
+		if (item.expr && item.expr.value.trim() === "") {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `forgot something?`,
+				range: new vscode.Range(
+					document.positionAt(offset + item.expr.range[0] - 1),
+					document.positionAt(offset + item.expr.range[1] + 1),
+				),
+				severity: vscode.DiagnosticSeverity.Warning,
+			})
+		}
+	}
+
+	const message = deprecated.get(prefix.slice(0, -1))
+	if (!arbitraryClassnames[prefix]) {
+		const start = item.range[0]
+		const end = start + prefix.length
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `The keyword '${prefix}' is unknown.`,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			severity: vscode.DiagnosticSeverity.Error,
+		})
+	} else {
+		if (message) {
+			result.push({
+				message,
+				severity: vscode.DiagnosticSeverity.Hint,
+				range: new vscode.Range(
+					document.positionAt(offset + item.range[0]),
+					document.positionAt(offset + item.range[1]),
+				),
+				tags: [vscode.DiagnosticTag.Deprecated],
+			})
+		}
+	}
+
 	return result
 }
 
@@ -480,10 +520,24 @@ function checkArbitraryProperty(
 	item: parser.ArbitraryProperty,
 	document: TextDocument,
 	offset: number,
-	state: TailwindLoader,
+	emptyChecking: boolean,
 ) {
 	const result: IDiagnostic[] = []
 	let prop = item.decl.value.trim()
+	if (!prop) {
+		if (emptyChecking) {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `forgot something?`,
+				range: new vscode.Range(
+					document.positionAt(offset + item.range[0]),
+					document.positionAt(offset + item.range[1]),
+				),
+				severity: vscode.DiagnosticSeverity.Warning,
+			})
+		}
+		return result
+	}
 	const i = item.decl.value.indexOf(":")
 	if (i >= 0) prop = item.decl.value.slice(0, i).trim()
 	const start = item.decl.range[0] + item.decl.value.search(/\w/)
@@ -612,50 +666,24 @@ function guess(state: TailwindLoader, text: string): { kind: PredictionKind; val
 	}
 }
 
-function isIgnored(plugin: keyof Tailwind.CorePluginFeatures | undefined) {
-	if (!plugin) return false
-	switch (plugin) {
-		case "fontVariantNumeric":
-		case "inset":
-		case "margin":
-		case "padding":
-		case "borderRadius":
-		case "borderWidth":
+function isLoose(state: TailwindLoader, label: string, decls: Map<string, string[]>) {
+	const pname = state.tw.getPlugin(label)?.getName()
+	if (!pname) return true
+	switch (pname) {
 		case "lineHeight":
-		case "backgroundOpacity":
-		case "textOpacity":
-		case "ringOpacity":
-		case "borderOpacity":
-		case "divideOpacity":
-		case "placeholderOpacity":
 		case "transitionDuration":
 		case "transitionDelay":
 		case "transitionTimingFunction":
-		case "scale":
-		case "rotate":
-		case "skew":
-		case "translate":
-		case "gradientColorStops":
-		case "space":
-		case "hueRotate":
-		case "brightness":
-		case "contrast":
-		case "grayscale":
-		case "invert":
-		case "sepia":
-		case "saturate":
-		case "backdropHueRotate":
-		case "backdropBrightness":
-		case "backdropContrast":
-		case "backdropGrayscale":
-		case "backdropInvert":
-		case "backdropSepia":
-		case "backdropSaturate":
-		case "backdropOpacity":
-		case "dropShadow":
-		case "boxShadowColor":
 			return true
-		default:
-			return false
 	}
+
+	let hasCustom = false
+	for (const k of decls.keys()) {
+		if (/\b(?:top|right|bottom|left)\b/.test(k)) {
+			return true
+		}
+		if (k.startsWith("--")) hasCustom = true
+	}
+
+	return hasCustom
 }

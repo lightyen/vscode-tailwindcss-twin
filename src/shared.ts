@@ -10,10 +10,7 @@ export interface Settings {
 	fallbackDefaultConfig: boolean
 	diagnostics: {
 		enabled: boolean
-		conflict: "none" | "loose" | "strict"
-		emptyClass: boolean
-		emptyGroup: boolean
-		emptyCssProperty: boolean
+		emptyChecking: boolean
 	}
 	jsxPropImportChecking: boolean
 	rootFontSize: number

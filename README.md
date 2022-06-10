@@ -40,10 +40,7 @@ yarn && yarn build && yarn package
   "tailwindcss.references": true,
   "tailwindcss.diagnostics": {
     "enabled": true,
-    "conflict": "strict",
-    "emptyClass": true,
-    "emptyGroup": true,
-    "emptyCssProperty": true
+    "emptyChecking": true,
   },
   "tailwindcss.preferVariantWithParentheses": false,
   "tailwindcss.fallbackDefaultConfig": true,

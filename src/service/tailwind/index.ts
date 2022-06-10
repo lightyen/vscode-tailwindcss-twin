@@ -5,6 +5,7 @@ import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
 import { calcFraction } from "~/common"
 import { ICompletionItem } from "~/typings/completion"
+import { deprecated } from "./data"
 import { createTwContext, TwContext } from "./tw"
 import { ContextModule, twin } from "./twin"
 
@@ -40,17 +41,6 @@ export enum CompletionItemTag {
 	 */
 	Deprecated = 1,
 }
-
-export const deprecated = new Map<string, string>([
-	["content", "The utility 'content' is deprecated."],
-	["overflow-ellipsis", "The utility 'overflow-ellipsis' is deprecated, replace it with 'text-ellipsis'."],
-	["flex-grow", "The utility 'flex-grow' is deprecated, replace it with 'grow'."],
-	["flex-grow-0", "The utility 'flex-grow-0' is deprecated, replace it with 'grow-0'."],
-	["flex-shrink", "The utility 'flex-shrink' is deprecated, replace it with 'shrink'."],
-	["flex-shrink-0", "The utility 'flex-shrink-0' is deprecated, replace it with 'shrink-0'."],
-	["decoration-slice", "The utility 'decoration-slice' is deprecated, replace it with 'box-decoration-slice'."],
-	["decoration-clone", "The utility 'decoration-clone' is deprecated, replace it with 'box-decoration-clone'."],
-])
 
 export function createTailwindLoader(
 	configPath: URI,

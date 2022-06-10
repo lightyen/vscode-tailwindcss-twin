@@ -173,39 +173,14 @@
               "type": "boolean",
               "default": true
             },
-            "conflict": {
-              "type": "string",
-              "enum": [
-                "none",
-                "loose",
-                "strict"
-              ],
-              "default": "strict",
-              "enummarkdownDescriptions": [
-                "%ext.settings.diagnostics.conflict.none%",
-                "%ext.settings.diagnostics.conflict.loose%",
-                "%ext.settings.diagnostics.conflict.strict%"
-              ]
-            },
-            "emptyClass": {
-              "type": "boolean",
-              "default": true
-            },
-            "emptyGroup": {
-              "type": "boolean",
-              "default": true
-            },
-            "emptyCssProperty": {
+            "emptyChecking": {
               "type": "boolean",
               "default": true
             }
           },
           "default": {
             "enabled": true,
-            "conflict": "strict",
-            "emptyClass": true,
-            "emptyGroup": true,
-            "emptyCssProperty": true
+            "emptyChecking": true
           }
         },
         "tailwindcss.preferVariantWithParentheses": {
