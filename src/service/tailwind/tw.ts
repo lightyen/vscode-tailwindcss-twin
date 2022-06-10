@@ -90,7 +90,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	const variables = new Set<string>()
 	const classnames = context.getClassList()
 	// XXX: Handle tailwindcss bug: exclude the '*' classname
-	if (classnames.indexOf("*") !== -1) classnames.splice(classnames.indexOf("*"), 1)
+	const index = classnames.indexOf("*")
+	if (index !== -1) classnames.splice(index, 1)
 	const classnamesMap = new Set(classnames)
 
 	for (const classname of classnames) {
@@ -147,7 +148,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 		for (const [, fn] of meta) {
 			const container = fakeRoot.clone()
 			let wrapper: AtRule[] = []
-			let selector: string | undefined
+			let selector = ""
 
 			const returnValue = fn({
 				container,
@@ -159,7 +160,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 					selector = selectorFormat
 				},
 			})
-
+			if (selector.match(/:merge\((.*?)\)/)) selector = selector.replace(/:merge\((.*?)\)/g, "$1")
 			if (!selector && returnValue) selector = returnValue.replace(/:merge\((.*?)\)/g, "$1")
 			if (!selector && wrapper.length > 0) {
 				selector = `@${wrapper[0].name} ${wrapper[0].params}`
