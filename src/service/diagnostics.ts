@@ -7,7 +7,7 @@ import Fuse from "fuse.js"
 import vscode from "vscode"
 import { DIAGNOSTICS_ID } from "~/shared"
 import type { ServiceOptions } from "."
-import type { TailwindLoader } from "./tailwind"
+import { deprecated, TailwindLoader } from "./tailwind"
 
 export interface IDiagnostic extends vscode.Diagnostic {
 	data?: {
@@ -117,9 +117,9 @@ export function validate(
 						text: value,
 						offset: start,
 						kind,
-						diagnostics: options.diagnostics,
+						diagnosticOptions: options.diagnostics,
 						state,
-						result: diagnostics,
+						diagnostics,
 						...result,
 					})
 				}
@@ -140,24 +140,24 @@ function validateTwin({
 	offset,
 	kind,
 	state,
-	diagnostics,
+	diagnosticOptions,
 	items,
 	emptyGroup,
 	emptyVariants,
 	notClosed,
-	result,
+	diagnostics,
 }: {
 	document: TextDocument
 	text: string
 	offset: number
 	kind: ExtractedTokenKind
 	state: TailwindLoader
-	diagnostics: ServiceOptions["diagnostics"]
-	result: IDiagnostic[]
+	diagnosticOptions: ServiceOptions["diagnostics"]
+	diagnostics: IDiagnostic[]
 } & ReturnType<typeof parser.spread>): void {
 	for (const e of notClosed) {
 		if (
-			!result.push({
+			!diagnostics.push({
 				source: DIAGNOSTICS_ID,
 				message: "Bracket is not closed.",
 				range: new vscode.Range(
@@ -173,26 +173,68 @@ function validateTwin({
 
 	if (kind === ExtractedTokenKind.Twin) {
 		for (let i = 0; i < items.length; i++) {
-			const c = items[i]
-			switch (c.target.type) {
+			const item = items[i]
+			let results = checkVariants(item, document, offset, state)
+			switch (item.target.type) {
 				case parser.NodeType.ClassName: {
-					const ans = checkTwinClassName(c, document, text, offset, state)
-					for (let k = 0; k < ans.length; k++) {
-						if (!result.push(ans[k])) {
-							return
+					const ans = checkTwinClassName(item.target, document, text, offset, state)
+					if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
+						const message = deprecated.get(item.target.value)
+						if (message) {
+							ans.push({
+								message,
+								severity: vscode.DiagnosticSeverity.Hint,
+								range: new vscode.Range(
+									document.positionAt(offset + item.target.range[0]),
+									document.positionAt(offset + item.target.range[1]),
+								),
+								tags: [vscode.DiagnosticTag.Deprecated],
+							})
 						}
 					}
+					results = results.concat(ans)
 					break
 				}
 				case parser.NodeType.ShortCss: {
-					const ans = checkTwinCssProperty(c, document, offset, state)
-					for (let k = 0; k < ans.length; k++) {
-						if (!result.push(ans[k])) {
-							return
-						}
+					const ans = checkShortCss(item.target, document, offset, state)
+					if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
+						ans.push({
+							message: `Short css is deprecated, replace it with '[${item.target.prop.value}: ${item.target.expr.value}]'.`,
+							severity: vscode.DiagnosticSeverity.Hint,
+							range: new vscode.Range(
+								document.positionAt(offset + item.target.range[0]),
+								document.positionAt(offset + item.target.range[1]),
+							),
+							tags: [vscode.DiagnosticTag.Deprecated],
+						})
+					}
+					results = results.concat(ans)
+					break
+				}
+				case parser.NodeType.ArbitraryClassname: {
+					const keyword = item.target.prop.value.slice(0, -1)
+					const message = deprecated.get(keyword)
+					if (message) {
+						results.push({
+							message,
+							severity: vscode.DiagnosticSeverity.Hint,
+							range: new vscode.Range(
+								document.positionAt(offset + item.target.range[0]),
+								document.positionAt(offset + item.target.range[1]),
+							),
+							tags: [vscode.DiagnosticTag.Deprecated],
+						})
 					}
 					break
 				}
+				case parser.NodeType.ArbitraryProperty: {
+					results = results.concat(checkArbitraryProperty(item.target, document, offset, state))
+					break
+				}
+			}
+
+			for (let k = 0; k < results.length; k++) {
+				if (!diagnostics.push(results[k])) return
 			}
 		}
 	}
@@ -205,11 +247,11 @@ function validateTwin({
 			if (ranges.length > 1) {
 				for (const [a, b] of ranges) {
 					const message =
-						diagnostics.conflict === "strict"
+						diagnosticOptions.conflict === "strict"
 							? `${text.slice(a, b)} is duplicated on property: ${prop}`
 							: `${text.slice(a, b)} is duplicated`
 					if (
-						!result.push({
+						!diagnostics.push({
 							source: DIAGNOSTICS_ID,
 							message,
 							range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
@@ -223,7 +265,7 @@ function validateTwin({
 		}
 	}
 
-	if (diagnostics.conflict !== "none") {
+	if (diagnosticOptions.conflict !== "none") {
 		const map: Record<string, parser.Range[]> = {}
 
 		if (kind === ExtractedTokenKind.Twin) {
@@ -266,7 +308,7 @@ function validateTwin({
 					continue
 				}
 
-				if (diagnostics.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.getName())) {
+				if (diagnosticOptions.conflict === "loose" || isIgnored(state.tw.getPlugin(label)?.getName())) {
 					const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
 					const target = map[key]
 					if (target instanceof Array) {
@@ -274,7 +316,7 @@ function validateTwin({
 					} else {
 						map[key] = [item.target.range]
 					}
-				} else if (diagnostics.conflict === "strict") {
+				} else if (diagnosticOptions.conflict === "strict") {
 					for (const [prop] of decls) {
 						const key = [undefined, ...variants, ...scopes, prop].join(".")
 						const target = map[key]
@@ -295,7 +337,7 @@ function validateTwin({
 					if (cssDataManager.getProperty(item.target.value)) {
 						message += ", missing square brackets?"
 					}
-					result.push({
+					diagnostics.push({
 						source: DIAGNOSTICS_ID,
 						message,
 						range: new vscode.Range(
@@ -331,9 +373,9 @@ function validateTwin({
 
 	for (let i = 0; i < emptyVariants.length; i++) {
 		const item = emptyVariants[i]
-		if (diagnostics.emptyClass) {
+		if (diagnosticOptions.emptyClass) {
 			if (
-				!result.push({
+				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
 					range: new vscode.Range(
@@ -350,9 +392,9 @@ function validateTwin({
 
 	for (let i = 0; i < emptyGroup.length; i++) {
 		const item = emptyGroup[i]
-		if (diagnostics.emptyGroup) {
+		if (diagnosticOptions.emptyGroup) {
 			if (
-				!result.push({
+				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
 					message: `forgot something?`,
 					range: new vscode.Range(
@@ -368,85 +410,7 @@ function validateTwin({
 	}
 }
 
-function checkTwinCssProperty(
-	item: parser.SpreadDescription,
-	document: TextDocument,
-	offset: number,
-	state: TailwindLoader,
-) {
-	const result: IDiagnostic[] = []
-	for (const node of item.variants) {
-		if (node.type === parser.NodeType.ArbitraryVariant) {
-			continue
-		}
-		const {
-			value: variant,
-			range: [a, b],
-		} = node
-		if (state.tw.isVariant(variant)) {
-			continue
-		}
-		const ret = state.variants.search(variant)
-		const ans = ret?.[0]?.item
-		if (ans) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Can't find '${variant}', did you mean '${ans}'?`,
-				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				data: { text: variant, newText: ans },
-				severity: vscode.DiagnosticSeverity.Error,
-			})
-		} else {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Can't find '${variant}'`,
-				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				severity: vscode.DiagnosticSeverity.Error,
-			})
-		}
-	}
-
-	if (item.target.type !== parser.NodeType.ShortCss) {
-		return result
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const prop = item.target.prop
-	const {
-		value,
-		range: [start, end],
-	} = prop
-	if (value.startsWith("--")) {
-		return result
-	}
-	const ret = csspropSearcher.search(parser.toKebab(value))
-	const score = ret?.[0]?.score
-	if (score == undefined) {
-		result.push({
-			source: DIAGNOSTICS_ID,
-			message: `Can't find '${value}'`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			severity: vscode.DiagnosticSeverity.Error,
-		})
-	} else if (score > 0) {
-		result.push({
-			source: DIAGNOSTICS_ID,
-			message: `Can't find '${value}', did you mean '${ret[0].item}'?`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			data: { text: value, newText: ret[0].item },
-			severity: vscode.DiagnosticSeverity.Error,
-		})
-	}
-	return result
-}
-
-function checkTwinClassName(
-	item: parser.SpreadDescription,
-	document: TextDocument,
-	text: string,
-	offset: number,
-	state: TailwindLoader,
-) {
+function checkVariants(item: parser.SpreadDescription, document: TextDocument, offset: number, state: TailwindLoader) {
 	const result: IDiagnostic[] = []
 	for (const node of item.variants) {
 		if (node.type === parser.NodeType.ArbitraryVariant) {
@@ -478,10 +442,86 @@ function checkTwinClassName(
 			})
 		}
 	}
+	return result
+}
+
+function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, state: TailwindLoader) {
+	const result: IDiagnostic[] = []
+	const prop = item.prop
+	const {
+		value,
+		range: [start, end],
+	} = prop
+	if (value.startsWith("--")) {
+		return result
+	}
+	const ret = csspropSearcher.search(parser.toKebab(value))
+	const score = ret?.[0]?.score
+	if (score == undefined) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `The keyword '${value}' is unknown.`,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			severity: vscode.DiagnosticSeverity.Error,
+		})
+	} else if (score > 0) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `The keyword '${value}' is unknown, did you mean '${ret[0].item}'?`,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			data: { text: value, newText: ret[0].item },
+			severity: vscode.DiagnosticSeverity.Error,
+		})
+	}
+	return result
+}
+
+function checkArbitraryProperty(
+	item: parser.ArbitraryProperty,
+	document: TextDocument,
+	offset: number,
+	state: TailwindLoader,
+) {
+	const result: IDiagnostic[] = []
+	let prop = item.decl.value.trim()
+	const i = item.decl.value.indexOf(":")
+	if (i >= 0) prop = item.decl.value.slice(0, i).trim()
+	const start = item.decl.range[0] + item.decl.value.search(/\w/)
+	const end = start + prop.length
+	if (prop.startsWith("--")) return result
+	const ret = csspropSearcher.search(prop)
+	const score = ret?.[0]?.score
+	if (score == undefined) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `The keyword '${prop}' is unknown.`,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			severity: vscode.DiagnosticSeverity.Error,
+		})
+	} else if (score > 0) {
+		result.push({
+			source: DIAGNOSTICS_ID,
+			message: `The keyword '${prop}' is unknown, did you mean '${ret[0].item}'?`,
+			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			data: { text: prop, newText: ret[0].item },
+			severity: vscode.DiagnosticSeverity.Error,
+		})
+	}
+	return result
+}
+
+function checkTwinClassName(
+	item: parser.Classname,
+	document: TextDocument,
+	text: string,
+	offset: number,
+	state: TailwindLoader,
+) {
+	const result: IDiagnostic[] = []
 
 	const {
 		range: [start, end],
-	} = item.target
+	} = item
 	const value = text.slice(start, end)
 	if (state.tw.renderDecls(value).decls.size === 0) {
 		const ret = guess(state, value)

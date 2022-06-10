@@ -84,9 +84,14 @@ export default async function hover(
 				}
 
 				if (selection.target.type === parser.NodeType.ArbitraryProperty) {
-					let prop = selection.target.decl.value.trim()
-					const i = selection.target.decl.value.indexOf(":")
-					if (i >= 0) prop = selection.target.decl.value.slice(0, i).trim()
+					const rawText = selection.target.decl.value
+					let prop = rawText.trim()
+					let value = ""
+					const i = rawText.indexOf(":")
+					if (i >= 0) {
+						prop = rawText.slice(0, i).trim()
+						value = rawText.slice(i + 1).trim()
+					}
 					const header = new vscode.MarkdownString()
 					if (options.references) {
 						const entry = cssDataManager.getProperty(prop)
@@ -99,7 +104,7 @@ export default async function hover(
 					}
 
 					const code = state.tw.renderClassname({
-						classname: `[${selection.target.decl.value.trim()}]`,
+						classname: `[${prop}: ${value}]`,
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
