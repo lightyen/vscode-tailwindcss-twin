@@ -76,6 +76,9 @@
 "https://tailwindcss.com/docs/cursor":
   name: Cursor
   desc: Utilities for controlling the cursor style when hovering over an element.
+"https://tailwindcss.com/docs/caret-color":
+  name: Caret Color
+  desc: Utilities for controlling the color of the text input cursor.
 "https://tailwindcss.com/docs/display":
   name: Display
   desc: Utilities for controlling the display box type of an element.
