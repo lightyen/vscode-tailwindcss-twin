@@ -1,6 +1,6 @@
 import resolveConfig from "tailwindcss/resolveConfig"
 import { createGetPluginByName } from ".."
-const getPlugin = createGetPluginByName(resolveConfig())
+const getPlugin = createGetPluginByName(resolveConfig({}))
 
 function testName(input: string, expectValue: string | undefined) {
 	expect(getPlugin(input)?.getName()).toEqual(expectValue)
@@ -497,4 +497,31 @@ test("flexBasis", () => {
 	testName("basis-[theme('spaces.undefined')]", "flexBasis")
 	testName("basis-[var(--common)]", "flexBasis")
 	testName("basis-[url(#helloworld)]", "flexBasis")
+})
+
+test("borderSpacing", () => {
+	testName("border-spacing", undefined)
+	testName("border-spacing-1", "borderSpacing")
+	testName("border-spacing-11", "borderSpacing")
+	testName("border-spacing-21", undefined)
+	testName("border-spacing-[0]", "borderSpacing")
+	testName("border-spacing-[2px]", "borderSpacing")
+	testName("border-spacing-[]", "borderSpacing")
+	testName("border-spacing-[###]", "borderSpacing")
+	testName("border-spacing-x", undefined)
+	testName("border-spacing-x-1", "borderSpacing")
+	testName("border-spacing-x-11", "borderSpacing")
+	testName("border-spacing-x-21", undefined)
+	testName("border-spacing-x-[0]", "borderSpacing")
+	testName("border-spacing-x-[2px]", "borderSpacing")
+	testName("border-spacing-x-[]", "borderSpacing")
+	testName("border-spacing-x-[###]", "borderSpacing")
+	testName("border-spacing-y", undefined)
+	testName("border-spacing-y-1", "borderSpacing")
+	testName("border-spacing-y-11", "borderSpacing")
+	testName("border-spacing-y-21", undefined)
+	testName("border-spacing-y-[0]", "borderSpacing")
+	testName("border-spacing-y-[2px]", "borderSpacing")
+	testName("border-spacing-y-[]", "borderSpacing")
+	testName("border-spacing-y-[###]", "borderSpacing")
 })

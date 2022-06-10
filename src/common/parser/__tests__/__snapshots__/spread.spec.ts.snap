@@ -78,7 +78,7 @@ Object {
           12,
           27,
         ],
-        "type": "CssDeclaration",
+        "type": "ShortCss",
       },
       "value": "padding[ 3rem ]",
       "variants": Array [],

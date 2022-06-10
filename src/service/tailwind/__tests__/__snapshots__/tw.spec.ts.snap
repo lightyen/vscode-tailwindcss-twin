@@ -109,8 +109,11 @@ Object {
     "--tw-gradient-from" => Array [
       "#fbcfe8",
     ],
+    "--tw-gradient-to" => Array [
+      "rgb(251 207 232 / 0)",
+    ],
     "--tw-gradient-stops" => Array [
-      "var(--tw-gradient-from), var(--tw-gradient-to, rgb(251 207 232 / 0))",
+      "var(--tw-gradient-from), var(--tw-gradient-to)",
     ],
   },
   "scopes": Array [],
