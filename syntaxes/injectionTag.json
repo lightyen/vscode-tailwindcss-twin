@@ -1,0 +1,140 @@
+{
+  "name": "twin",
+  "scopeName": "source.tag.tw.twin",
+  "injectionSelector": "L:meta.tag.attributes -comment",
+  "patterns": [
+    {
+      "name": "meta.tag.tw.twin",
+      "begin": "\\s*(tw)(=)(\")",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quoted.double" }
+      },
+      "end": "(\")",
+      "endCaptures": {
+        "1": { "name": "string.quoted.double" }
+      },
+
+      "patterns": [
+        {
+          "end": "\"",
+          "patterns": [
+            { "include": "#line-comment-end-double-quote" },
+            { "include": "#block-comment-end-double-quote" },
+            { "include": "source.twin" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "meta.tag.tw.twin",
+      "begin": "\\s*(tw)(=)(')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quoted.single" }
+      },
+      "end": "(')",
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.single"
+        }
+      },
+      "patterns": [
+        {
+          "end": "'",
+          "patterns": [
+            { "include": "#line-comment-end-single-quote" },
+            { "include": "#block-comment-end-single-quote" },
+            { "include": "source.twin" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "meta.tag.tw.twin",
+      "begin": "\\s*(tw)(=){(\")",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quote.double" }
+      },
+      "end": "(\")}",
+      "endCaptures": {
+        "1": { "name": "string.quote.double" }
+      },
+      "patterns": [
+        {
+          "end": "\"}",
+          "patterns": [
+            { "include": "#line-comment-end-double-quote" },
+            { "include": "#block-comment-end-double-quote" },
+            { "include": "source.twin" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "meta.tag.tw.twin",
+      "begin": "\\s*(tw)(=){(')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name" },
+        "2": { "name": "keyword.operator.assignment" },
+        "3": { "name": "string.quote.single" }
+      },
+      "end": "(')}",
+      "endCaptures": {
+        "1": { "name": "string.quote.single" }
+      },
+      "patterns": [
+        {
+          "end": "\"}",
+          "patterns": [
+            { "include": "#line-comment-end-single-quote" },
+            { "include": "#block-comment-end-single-quote" },
+            { "include": "source.twin" }
+          ]
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "line-comment-end-double-quote": {
+      "match": "(//)[^\"]*",
+      "captures": {
+        "0": { "name": "comment.line.double-slash.twin" },
+        "1": { "name": "punctuation.definition.comment.twin" }
+      }
+    },
+    "block-comment-end-double-quote": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.comment.begin.twin" }
+      },
+      "end": "(\\*/)|\"",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.comment.end.twin" }
+      },
+      "contentName": "comment.block.twin"
+    },
+    "line-comment-end-single-quote": {
+      "match": "(//)[^']*",
+      "captures": {
+        "0": { "name": "comment.line.double-slash.twin" },
+        "1": { "name": "punctuation.definition.comment.twin" }
+      }
+    },
+    "block-comment-end-single-quote": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.comment.begin.twin" }
+      },
+      "end": "(\\*/)|'",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.comment.end.twin" }
+      },
+      "contentName": "comment.block.twin"
+    }
+  }
+}

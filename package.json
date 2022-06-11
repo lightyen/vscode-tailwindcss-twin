@@ -117,7 +117,7 @@
       {
         "language": "twin",
         "scopeName": "source.twin",
-        "path": "./syntaxes/twin.tmLanguage.json"
+        "path": "./syntaxes/twin.json"
       },
       {
         "injectTo": [
@@ -129,20 +129,28 @@
       {
         "injectTo": [
           "source.tsx",
-          "source.jsx",
+          "source.js.jsx",
           "source.ts",
           "source.js"
         ],
-        "scopeName": "source.tsx.twin",
+        "scopeName": "source.template.twin",
         "path": "./syntaxes/injection.json"
       },
       {
         "injectTo": [
           "source.tsx",
-          "source.jsx"
+          "source.js.jsx"
         ],
-        "scopeName": "source.tsx.csProp.twin",
-        "path": "./syntaxes/csProp.json"
+        "scopeName": "source.tag.tw.twin",
+        "path": "./syntaxes/injectionTag.json"
+      },
+      {
+        "injectTo": [
+          "source.tsx",
+          "source.js.jsx"
+        ],
+        "scopeName": "source.tag.cs.twin",
+        "path": "./syntaxes/injectionCs.json"
       }
     ],
     "configuration": {

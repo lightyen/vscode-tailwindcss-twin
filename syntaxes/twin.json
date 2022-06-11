@@ -1,11 +1,7 @@
 {
   "name": "twin",
   "scopeName": "source.twin",
-  "patterns": [
-    { "include": "#line-comment-end-backtick" },
-    { "include": "#block-comment-end-backtick" },
-    { "include": "#expression" }
-  ],
+  "patterns": [{ "include": "#line-comment" }, { "include": "#block-comment" }, { "include": "#expression" }],
   "repository": {
     "expression": {
       "patterns": [
@@ -19,19 +15,19 @@
         { "include": "#illegal" }
       ]
     },
-    "line-comment-end-backtick": {
-      "match": "(//)[^`]*",
+    "line-comment": {
+      "match": "(//).*",
       "captures": {
         "0": { "name": "comment.line.double-slash.twin" },
         "1": { "name": "punctuation.definition.comment.twin" }
       }
     },
-    "block-comment-end-backtick": {
+    "block-comment": {
       "begin": "(/\\*)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.comment.begin.twin" }
       },
-      "end": "(\\*/)|`",
+      "end": "(\\*/)",
       "endCaptures": {
         "1": { "name": "punctuation.definition.comment.end.twin" }
       },
@@ -45,7 +41,7 @@
     },
     "arbitrary-variant-or-property": {
       "begin": "(?<!/)(!?)\\[",
-      "end": "(?<=\\]:)|(?<=\\])(!?)",
+      "end": "(?<=\\]:)|(?<=\\])(!?)(?<!:)",
       "beginCaptures": {
         "1": { "name": "support.function.important-bang.before.twin" }
       },
@@ -55,28 +51,30 @@
       "patterns": [
         {
           "end": "\\]:",
-          "patterns": [
-            { "include": "#line-comment-end-backtick" },
-            { "include": "#block-comment-end-backtick" },
-            { "include": "source.css.scss.tw" }
-          ]
+          "patterns": [{ "include": "source.css.scss.tw" }]
         },
         {
-          "end": "\\]:",
-          "endCaptures": {
-            "0": { "name": "support.function.important-bang.after.twin" }
-          },
+          "end": "\\]!?(?<!:)",
           "patterns": [
-            { "include": "#line-comment-end-backtick" },
-            { "include": "#block-comment-end-backtick" },
-            { "include": "#css-value-content-bracket" },
-            { "include": "source.css.scss.tw#properties" }
+            {
+              "begin": "(?<![-a-z])(?=[-a-z])",
+              "end": "$|(?![-a-z])",
+              "patterns": [{ "include": "source.css#property-names" }]
+            },
+            {
+              "begin": "(:)\\s*(?!(\\s*{))",
+              "beginCaptures": {
+                "1": { "name": "punctuation.separator.key-value.scss" }
+              },
+              "end": "\\s*(?=}|\\)|\\])",
+              "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#property_values" }]
+            }
           ]
         }
       ]
     },
     "classname": {
-      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)",
+      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)(?<!/)",
       "captures": {
         "0": { "name": "support.constant.classname.twin" },
         "1": { "name": "support.function.important-bang.before.twin" },
@@ -95,10 +93,10 @@
         "3": { "name": "support.function.important-bang.after.twin" }
       },
       "patterns": [
-        { "include": "#line-comment-end-backtick" },
-        { "include": "#block-comment-end-backtick" },
-        { "include": "#css-value-content-bracket" },
-        { "include": "source.css.scss.tw#property_values" }
+        {
+          "end": "\\]!?",
+          "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#property_values" }]
+        }
       ]
     },
     "arbitrary-opacity": {
@@ -124,12 +122,7 @@
       "endCaptures": {
         "2": { "name": "support.function.important-bang.short-css.twin" }
       },
-      "patterns": [
-        { "include": "#line-comment-end-backtick" },
-        { "include": "#block-comment-end-backtick" },
-        { "include": "#css-value-content-bracket" },
-        { "include": "source.css.scss#property_values" }
-      ]
+      "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#properties" }]
     },
     "group": {
       "begin": "(!?)\\(",
@@ -143,11 +136,11 @@
       },
       "patterns": [{ "include": "$self" }, { "include": "#expression" }]
     },
-    "css-value-content-bracket": {
-      "contentName": "string.twin",
+    "track-list": {
+      "contentName": "string.property-value.css",
       "begin": "\\[",
       "end": "\\]",
-      "patterns": [{ "include": "#css-value-content-bracket" }]
+      "patterns": [{ "include": "#track-list" }]
     },
     "illegal": {
       "name": "invalid.value.twin",

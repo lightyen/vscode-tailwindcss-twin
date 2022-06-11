@@ -568,25 +568,14 @@
                 {
                   "begin": "(:)\\s*(?!(\\s*{))",
                   "beginCaptures": {
-                    "1": {
-                      "name": "punctuation.separator.key-value.scss"
-                    }
+                    "1": { "name": "punctuation.separator.key-value.scss" }
                   },
-                  "end": "\\s*(;|(?=}|\\)))",
+                  "end": "\\s*(;|(?=}|\\)|\\]))",
                   "endCaptures": {
-                    "1": {
-                      "name": "punctuation.terminator.rule.scss"
-                    }
+                    "1": { "name": "punctuation.terminator.rule.scss" }
                   },
                   "contentName": "meta.property-value.media-query.scss",
-                  "patterns": [
-                    {
-                      "include": "#general"
-                    },
-                    {
-                      "include": "#property_values"
-                    }
-                  ]
+                  "patterns": [{ "include": "#general" }, { "include": "#property_values" }]
                 }
               ]
             },

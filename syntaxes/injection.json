@@ -1,10 +1,10 @@
 {
-  "name": "source.tsx.twin",
-  "scopeName": "source.tsx.twin",
+  "name": "source.template.twin",
+  "scopeName": "source.template.twin",
   "injectionSelector": "L:source -comment",
   "patterns": [
     {
-      "begin": "(tw)(?:(?:(?:\\.[\\w$]+)*|\\(([^\\)]*)\\)))*(`)",
+      "begin": "\\s*(tw)(?:(?:(?:\\.[\\w$]+)*|\\(([A-Za-z0-9_$]*)\\)))*(`)",
       "end": "`",
       "beginCaptures": {
         "1": { "name": "entity.name.function.tagged-template" },
@@ -19,63 +19,33 @@
       "patterns": [
         {
           "end": "`",
-          "patterns": [{ "include": "source.twin" }]
-        }
-      ]
-    },
-    {
-      "name": "meta.jsxProp.twin",
-      "begin": "\\s*(tw)(=){",
-      "beginCaptures": {
-        "1": { "name": "entity.other.attribute-name" },
-        "2": { "name": "keyword.operator.assignment" }
-      },
-      "end": "}",
-      "patterns": [
-        {
-          "end": "}",
-          "patterns": [{ "include": "source.twin" }]
-        }
-      ]
-    },
-    {
-      "begin": "\\s*(tw)(=)(')",
-      "beginCaptures": {
-        "1": { "name": "entity.other.attribute-name" },
-        "2": { "name": "keyword.operator.assignment" },
-        "3": { "name": "string.quoted.single" }
-      },
-      "end": "(')",
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.single"
-        }
-      },
-      "patterns": [
-        {
-          "end": "'",
-          "patterns": [{ "include": "source.twin" }]
-        }
-      ]
-    },
-    {
-      "name": "meta.jsxProp.twin",
-      "begin": "\\s*?(tw)(=)(\")",
-      "beginCaptures": {
-        "1": { "name": "entity.other.attribute-name" },
-        "2": { "name": "keyword.operator.assignment" },
-        "3": { "name": "string.quoted.double" }
-      },
-      "end": "(\")",
-      "endCaptures": {
-        "1": { "name": "string.quoted.double" }
-      },
-      "patterns": [
-        {
-          "end": "\"",
-          "patterns": [{ "include": "source.twin" }]
+          "patterns": [
+            { "include": "#line-comment-end-backtick" },
+            { "include": "#block-comment-end-backtick" },
+            { "include": "source.twin" }
+          ]
         }
       ]
     }
-  ]
+  ],
+  "repository": {
+    "line-comment-end-backtick": {
+      "match": "(//)[^`]*",
+      "captures": {
+        "0": { "name": "comment.line.double-slash.twin" },
+        "1": { "name": "punctuation.definition.comment.twin" }
+      }
+    },
+    "block-comment-end-backtick": {
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.comment.begin.twin" }
+      },
+      "end": "(\\*/)|`",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.comment.end.twin" }
+      },
+      "contentName": "comment.block.twin"
+    }
+  }
 }
