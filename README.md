@@ -16,6 +16,12 @@ This is a VSCode Tailwind IntelliSense Extension which supports [twin.macro](htt
 
 Support ONLY `*.tsx` and `*.jsx`
 
+## Build
+
+```sh
+yarn && yarn build && yarn package
+```
+
 ## VSCode Settings
 
 ### Recommended
