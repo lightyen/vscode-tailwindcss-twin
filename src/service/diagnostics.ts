@@ -230,30 +230,16 @@ function validateTwin({
 		}
 	}
 
-	function travel(obj: Record<string, parser.Range[]>) {
-		for (const k in obj) {
-			const ranges = obj[k]
-			const parts = k.split(".")
-			const prop = parts[parts.length - 1]
-			if (ranges.length > 1) {
-				for (const [a, b] of ranges) {
-					const message = `${text.slice(a, b)} is duplicated on property: ${prop}`
-					if (
-						!diagnostics.push({
-							source: DIAGNOSTICS_ID,
-							message,
-							range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-							severity: vscode.DiagnosticSeverity.Warning,
-						})
-					) {
-						return
-					}
-				}
-			}
+	// Check duplicate items
+	const mappings: Record<string, parser.Range[]> = {}
+	function addItem(key: string, value: parser.Range) {
+		const target = mappings[key]
+		if (target instanceof Array) {
+			target.push(value)
+		} else {
+			mappings[key] = [value]
 		}
 	}
-
-	const map: Record<string, parser.Range[]> = {}
 
 	if (kind === ExtractedTokenKind.Twin) {
 		for (let i = 0; i < items.length; i++) {
@@ -263,60 +249,51 @@ function validateTwin({
 			}
 
 			const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-			if (item.target.type === parser.NodeType.ShortCss) {
-				// same as loose
-				const property = parser.toKebab(item.target.prop.value)
-				const key = [...variants, property].join(".")
-				const target = map[key]
-				if (target instanceof Array) {
-					target.push(item.target.range)
-				} else {
-					map[key] = [item.target.range]
-				}
-				continue
-			} else if (item.target.type === parser.NodeType.ArbitraryProperty) {
-				// same as loose
-				const i = item.target.decl.value.indexOf(":")
-				if (i < 0) continue
-				const property = item.target.decl.value.slice(0, i).trim()
-				const key = [...variants, property].join(".")
-				const target = map[key]
-				if (target instanceof Array) {
-					target.push(item.target.range)
-				} else {
-					map[key] = [item.target.range]
-				}
-				continue
-			}
-
-			const label = text.slice(item.target.range[0], item.target.range[1])
-			const { decls, scopes } = state.tw.renderDecls(label)
-			if (decls.size === 0) continue
-
-			if (isLoose(state, label, decls)) {
-				const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
-				const target = map[key]
-				if (target instanceof Array) {
-					target.push(item.target.range)
-				} else {
-					map[key] = [item.target.range]
-				}
-			} else {
-				for (const [prop] of decls) {
-					const key = [undefined, ...variants, ...scopes, prop].join(".")
-					const target = map[key]
-					if (target instanceof Array) {
-						target.push(item.target.range)
-					} else {
-						map[key] = [item.target.range]
+			switch (item.target.type) {
+				case parser.NodeType.ShortCss: {
+					const prop = parser.toKebab(item.target.prop.value)
+					if (isLooseProperty(prop)) {
+						const key = [...variants, prop].join(".")
+						addItem(key, item.target.range)
+						continue
 					}
+					const key = [undefined, ...variants, prop].join(".")
+					addItem(key, item.target.range)
+					continue
+				}
+				case parser.NodeType.ArbitraryProperty: {
+					const i = item.target.decl.value.indexOf(":")
+					if (i < 0) continue
+					const prop = item.target.decl.value.slice(0, i).trim()
+					if (isLooseProperty(prop)) {
+						const key = [...variants, prop].join(".")
+						addItem(key, item.target.range)
+						continue
+					}
+					const key = [undefined, ...variants, prop].join(".")
+					addItem(key, item.target.range)
+					continue
+				}
+				default: {
+					const label = text.slice(item.target.range[0], item.target.range[1])
+					const { decls, scopes } = state.tw.renderDecls(label)
+					if (decls.size === 0) continue
+					if (isLoose(state, label, decls)) {
+						const key = [...variants, ...scopes, Array.from(decls.keys()).sort().join(":")].join(".")
+						addItem(key, item.target.range)
+					} else {
+						for (const [prop] of decls) {
+							const key = [undefined, ...variants, ...scopes, prop].join(".")
+							addItem(key, item.target.range)
+						}
+					}
+					break
 				}
 			}
 		}
 	} else if (kind === ExtractedTokenKind.TwinCssProperty) {
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i]
-
 			if (item.target.type === parser.NodeType.ClassName) {
 				let message = `Invalid token '${item.target.value}'`
 				if (cssDataManager.getProperty(item.target.value)) {
@@ -334,26 +311,46 @@ function validateTwin({
 				continue
 			}
 
-			const twinKeys = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
-			let property = ""
+			const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+			let prop = ""
 			if (item.target.type === parser.NodeType.ArbitraryProperty) {
 				const i = item.target.decl.value.indexOf(":")
 				if (i < 0) continue
-				property = item.target.decl.value.slice(0, i).trim()
+				prop = item.target.decl.value.slice(0, i).trim()
 			} else {
-				property = parser.toKebab(item.target.prop.value)
+				prop = parser.toKebab(item.target.prop.value)
 			}
-			const key = [...twinKeys, property].join(".")
-			const target = map[key]
-			if (target instanceof Array) {
-				target.push(item.target.range)
-			} else {
-				map[key] = [item.target.range]
+
+			if (isLooseProperty(prop)) {
+				const key = [...variants, prop].join(".")
+				addItem(key, item.target.range)
+				continue
 			}
+			const key = [undefined, ...variants, prop].join(".")
+			addItem(key, item.target.range)
 		}
 	}
 
-	travel(map)
+	for (const payload in mappings) {
+		const items = mappings[payload]
+		if (items.length > 1) {
+			const parts = payload.split(".")
+			const prop = parts[parts.length - 1]
+			for (const [a, b] of items) {
+				const message = `${text.slice(a, b)} is duplicated on these properties: ${prop.split(":").join(", ")}`
+				if (
+					!diagnostics.push({
+						source: DIAGNOSTICS_ID,
+						message,
+						range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
+						severity: vscode.DiagnosticSeverity.Warning,
+					})
+				) {
+					return
+				}
+			}
+		}
+	}
 
 	for (let i = 0; i < emptyVariants.length; i++) {
 		const item = emptyVariants[i]
@@ -677,13 +674,14 @@ function isLoose(state: TailwindLoader, label: string, decls: Map<string, string
 			return true
 	}
 
-	let hasCustom = false
 	for (const k of decls.keys()) {
-		if (/\b(?:top|right|bottom|left)\b/.test(k)) {
-			return true
-		}
-		if (k.startsWith("--")) hasCustom = true
+		if (isLooseProperty(k)) return true
 	}
+	return false
+}
 
-	return hasCustom
+function isLooseProperty(prop: string) {
+	if (/\b(?:top|right|bottom|left)\b/.test(prop)) return true
+	if (prop.startsWith("--")) return true
+	return false
 }
