@@ -2,7 +2,6 @@ import { Extractor, TextDocument } from "@/extractors"
 import { rawExtrator } from "@/extractors/raw"
 import { typescriptExtractor } from "@/extractors/typescript"
 import { defaultLogger as console } from "@/logger"
-import { resolveModuleName } from "@/module"
 import * as parser from "@/parser"
 import type { PnpApi } from "@yarnpkg/pnp"
 import EventEmitter from "events"
@@ -33,14 +32,10 @@ export type ServiceOptions = Settings & Environment
 export type Cache = Record<string, Record<string, ReturnType<typeof parser.spread>>>
 
 export function createTailwindLanguageService(options: ServiceOptions) {
-	const defaultConfigUri = URI.file(
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		resolveModuleName("tailwindcss/defaultConfig", { paths: options.extensionUri.fsPath })!,
-	)
-	const configPath = options.configPath ?? defaultConfigUri
+	const configPath = options.configPath
 	const isDefaultConfig = options.configPath == undefined
 	const state = createTailwindLoader(configPath, options.extensionUri, isDefaultConfig, options.extensionMode)
-	const configPathString = isDefaultConfig ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
+	const configPathString = configPath == undefined ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
 	let loading = false
 	let _colorProvider: ReturnType<typeof createColorProvider> | undefined
 
@@ -74,7 +69,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 
 	return {
 		get configPath() {
-			return configPath
+			return configPath ?? URI.parse("tailwindcss/defaultConfig")
 		},
 		configPathString,
 		start,

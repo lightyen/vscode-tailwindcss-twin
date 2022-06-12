@@ -41,14 +41,14 @@
   "main": "./dist/extension",
   "scripts": {
     "test": "jest",
-    "doit": "yarn upgrade-interactive --latest",
+    "doit": "pnpm update --interactive --latest",
     "analyze": "cross-env NODE_ENV=production webpack --config webpack.analyzer.js",
     "build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
     "watch": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
-    "vscode:prepublish": "yarn build",
+    "vscode:prepublish": "npm run build",
     "format": "prettier --write \"**/*.{ts,json,yml}\"",
     "check-format": "prettier --check \"**/*.{ts,json,yml}\"",
-    "package": "vsce package --yarn"
+    "package": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@formatjs/intl": "2.3.0",
@@ -69,6 +69,7 @@
     "autoprefixer": "10.4.7",
     "chroma-js": "2.4.2",
     "clean-webpack-plugin": "4.0.0",
+    "copy-webpack-plugin": "11.0.0",
     "cross-env": "7.0.3",
     "esbuild": "0.14.43",
     "eslint": "8.17.0",
@@ -78,10 +79,13 @@
     "jest": "28.1.1",
     "js-beautify": "1.14.3",
     "js-yaml-loader": "1.2.2",
+    "postcss": "8.4.14",
+    "postcss-selector-parser": "6.0.10",
     "prettier": "2.6.2",
     "source-map-support": "0.5.21",
     "swc-loader": "0.2.3",
-    "tailwind-types": "3.1.0",
+    "tailwind-types": "3.1.2",
+    "tailwindcss": "3.1.2",
     "terser-webpack-plugin": "5.3.3",
     "ts-paths-resolve-plugin": "5.6.0",
     "typescript": "4.7.3",
@@ -90,15 +94,13 @@
     "vscode-css-languageservice": "6.0.1",
     "vscode-languageclient": "8.0.1",
     "vscode-languageserver": "8.0.1",
+    "vscode-languageserver-textdocument": "1.0.5",
+    "vscode-languageserver-types": "3.17.1",
     "vscode-uri": "3.0.3",
     "webpack": "5.73.0",
     "webpack-cli": "4.9.2",
     "webpack-merge": "5.8.0",
     "webpack-visualizer-plugin2": "1.0.0"
-  },
-  "dependencies": {
-    "postcss": "8.4.14",
-    "tailwindcss": "3.1.1"
   },
   "contributes": {
     "languages": [

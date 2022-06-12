@@ -1,6 +1,12 @@
 import { importFrom } from "@/module"
 import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
+import postcss from "postcss"
+import defaultConfig from "tailwindcss/defaultConfig"
+import { updateAllClasses } from "tailwindcss/lib/util/pluginUtils"
+import prefixSelector from "tailwindcss/lib/util/prefixSelector"
+import plugin from "tailwindcss/plugin"
+import resolveConfig from "tailwindcss/resolveConfig"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
 import { calcFraction } from "~/common"
@@ -43,23 +49,11 @@ export enum CompletionItemTag {
 }
 
 export function createTailwindLoader(
-	configPath: URI,
+	configPath: URI | undefined,
 	extensionUri: URI,
 	isDefaultConfig: boolean,
 	extensionMode: ExtensionMode,
 ) {
-	const postcss = importFrom("postcss", { base: extensionUri.fsPath })
-	const { updateAllClasses }: Tailwind.pluginUtils = importFrom("tailwindcss/lib/util/pluginUtils", {
-		base: extensionUri.fsPath,
-	})
-	const prefixSelector: Tailwind.prefixSelector = importFrom("tailwindcss/lib/util/prefixSelector", {
-		base: extensionUri.fsPath,
-	})
-	const plugin: Tailwind.createPlugin = importFrom("tailwindcss/plugin", { base: extensionUri.fsPath })
-	const resolveConfig: Tailwind.resolveConfig = importFrom("tailwindcss/resolveConfig", {
-		base: extensionUri.fsPath,
-	})
-
 	let utilitiesCompletionItems: ICompletionItem[] | undefined
 
 	const context: ContextModule = {
@@ -107,15 +101,19 @@ export function createTailwindLoader(
 	}
 
 	function readTailwindConfig(pnp?: PnpApi) {
-		const moduleName = configPath.fsPath
-		let __config = importFrom(moduleName, {
-			pnp: isDefaultConfig ? undefined : pnp,
-			cache: false,
-			header:
-				extensionMode === ExtensionMode.Development
-					? "process.env.NODE_ENV = 'development';\n"
-					: "process.env.NODE_ENV = 'production';\n",
-		}) as Tailwind.ConfigJS
+		let __config: Tailwind.ConfigJS
+		if (configPath) {
+			__config = importFrom(configPath.fsPath, {
+				pnp: isDefaultConfig ? undefined : pnp,
+				cache: false,
+				header:
+					extensionMode === ExtensionMode.Development
+						? "process.env.NODE_ENV = 'development';\n"
+						: "process.env.NODE_ENV = 'production';\n",
+			}) as Tailwind.ConfigJS
+		} else {
+			__config = defaultConfig
+		}
 
 		if (__config) {
 			__config = preprocessConfig(__config)

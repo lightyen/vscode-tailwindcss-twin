@@ -122,11 +122,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 	console.info(
 		`Tailwind ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-		packageInfo.dependencies["tailwindcss"],
+		packageInfo.devDependencies["tailwindcss"],
 	)
 	console.info(
 		`PostCSS ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
-		packageInfo.dependencies["postcss"],
+		packageInfo.devDependencies["postcss"],
 	)
 	await h.initialize(context)
 	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(h.onDidChangeWorkspaceFolders))
