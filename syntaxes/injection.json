@@ -1,18 +1,18 @@
 {
   "name": "source.template.twin",
   "scopeName": "source.template.twin",
-  "injectionSelector": "L:source -comment",
+  "injectionSelector": "L:source -comment -string",
   "patterns": [
     {
-      "begin": "\\s*(tw)(?:(?:(?:\\.[\\w$]+)*|\\(([A-Za-z0-9_$]*)\\)))*(`)",
+      "begin": "\\s*(tw)(?:(?:(?:\\.[\\w$]+)*|(\\([^\\)]*\\))))*(`)",
       "end": "`",
       "beginCaptures": {
         "1": { "name": "entity.name.function.tagged-template" },
         "2": {
           "patterns": [
-            { "include": "source.ts#expression" },
+            { "include": "source.ts#comment" },
             { "include": "source.ts#string" },
-            { "include": "source.ts#comment" }
+            { "include": "source.ts#expression" }
           ]
         }
       },

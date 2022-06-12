@@ -122,7 +122,7 @@
       "endCaptures": {
         "2": { "name": "support.function.important-bang.short-css.twin" }
       },
-      "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#properties" }]
+      "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#property_values" }]
     },
     "group": {
       "begin": "(!?)\\(",
