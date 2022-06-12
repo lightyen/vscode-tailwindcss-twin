@@ -1,11 +1,14 @@
 import { isColorFunction, isColorHexValue, isColorIdentifier, isColorTransparent, parse as parseColors } from "@/color"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
-import { importFrom } from "@/module"
 import { createGetPluginByName } from "@/plugins"
 import chroma from "chroma-js"
-import type { AtRule, Postcss, Rule } from "postcss"
-import { URI } from "vscode-uri"
+import type { AtRule, Rule } from "postcss"
+import postcss from "postcss"
+import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
+import { generateRules } from "tailwindcss/lib/lib/generateRules"
+import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
+import escapeClassName from "tailwindcss/lib/util/escapeClassName"
 import { findRightBracket } from "~/common/parser"
 import parseThemeValue from "~/common/parseThemeValue"
 import { unquote } from "~/common/unquote"
@@ -22,20 +25,7 @@ export type TwContext = ReturnType<typeof createTwContext>
 export type CssText = string
 export type ScssText = string
 
-export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri: URI) {
-	const createContext: Tailwind.createContext = importFrom("tailwindcss/lib/lib/setupContextUtils", {
-		base: extensionUri.fsPath,
-	}).createContext
-	const generateRules: Tailwind.generateRules = importFrom("tailwindcss/lib/lib/generateRules", {
-		base: extensionUri.fsPath,
-	}).generateRules
-	const expandApplyAtRules: Tailwind.expandApplyAtRules = importFrom("tailwindcss/lib/lib/expandApplyAtRules", {
-		base: extensionUri.fsPath,
-	})
-	const e: (value: string) => string = importFrom("tailwindcss/lib/util/escapeClassName", {
-		base: extensionUri.fsPath,
-	})
-	const postcss = importFrom("postcss", { base: extensionUri.fsPath }) as Postcss
+export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	const context = createContext(config) as Tailwind.Context
 	const _getPlugin = createGetPluginByName(config)
 	const screens = Object.keys(config.theme.screens).sort(screenSorter)
@@ -101,7 +91,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS, extensionUri:
 	}
 
 	function escape(className: string) {
-		return e(className)
+		return escapeClassName(className)
 	}
 
 	function renderVariant(variant: string, tabSize = 4): ScssText {

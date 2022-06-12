@@ -2,7 +2,7 @@ import { defaultLogger as console } from "@/logger"
 import { findPnpApi } from "@/pnp"
 import { deepStrictEqual } from "assert"
 import path from "path"
-import vscode, { CodeAction } from "vscode"
+import vscode from "vscode"
 import { URI, Utils } from "vscode-uri"
 import { provideColorPresentations } from "./colorPresentations"
 import { createTailwindLanguageService } from "./service"
@@ -143,7 +143,10 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 					if (d.data) {
 						range.contains(d.range)
 						const { text, newText } = d.data
-						const a = new CodeAction(`Replace '${text}' with '${newText}'`, vscode.CodeActionKind.QuickFix)
+						const a = new vscode.CodeAction(
+							`Replace '${text}' with '${newText}'`,
+							vscode.CodeActionKind.QuickFix,
+						)
 						const edit = new vscode.WorkspaceEdit()
 						edit.replace(document.uri, d.range, newText)
 						a.edit = edit

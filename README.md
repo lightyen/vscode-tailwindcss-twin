@@ -19,7 +19,7 @@ Support ONLY `*.tsx` and `*.jsx`
 ## Build
 
 ```sh
-yarn && yarn build && yarn package
+pnpm install && pnpm build && pnpm package
 ```
 
 ## VSCode Settings

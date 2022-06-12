@@ -1,4 +1,5 @@
 import { CleanWebpackPlugin } from "clean-webpack-plugin"
+import CopyPlugin from "copy-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
 import path from "path"
@@ -67,6 +68,8 @@ const configExtension: Configuration = {
 				use: "js-yaml-loader",
 			},
 		],
+		// NOTE: https://github.com/microsoft/TypeScript/issues/39436
+		noParse: [require.resolve("typescript/lib/typescript.js")],
 	},
 	resolve: {
 		extensions: [".ts", ".js", ".json"],
@@ -81,6 +84,9 @@ const configExtension: Configuration = {
 		new ExternalsVendorPlugin("vscode"),
 		new ESLintPlugin({ extensions: ["ts"] }),
 		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
+		new CopyPlugin({
+			patterns: [{ from: "node_modules/tailwindcss/lib/css", to: "css" }],
+		}),
 	],
 }
 
