@@ -485,12 +485,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		})
 
 		// NOTE: handle special selector like: `.divide-red-500 > :not([hidden]) ~ :not([hidden])`
-		// TODO: use more common method to get the scope
+		// kind: animate, space, divide, placeholder
 		const scopes: string[] = []
-		const selector = "." + escape(classname)
 		root.walkRules(rule => {
-			// const scope = rule.selector.replaceAll("." + escape(classname), "") // https://github.com/swc-project/swc/issues/2607
-			const scope = rule.selector.split(selector).join("")
+			const scope = rule.selector.replaceAll("." + escape(classname), "")
 			if (scope) scopes.push(scope)
 		})
 
