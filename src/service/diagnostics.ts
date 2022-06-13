@@ -174,7 +174,7 @@ function validateTwin({
 
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i]
-		let results = checkVariants(item, document, offset, state)
+		let results = checkVariants(item, document, offset, diagnosticOptions.emptyChecking, state)
 		switch (item.target.type) {
 			case parser.NodeType.ClassName: {
 				const ans = checkTwinClassName(item.target, document, text, offset, state)
@@ -199,7 +199,7 @@ function validateTwin({
 				const ans = checkShortCss(item.target, document, offset, diagnosticOptions.emptyChecking)
 				if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
 					ans.push({
-						message: `Short css is deprecated, replace it with '[${item.target.prop.value}: ${item.target.expr.value}]'.`,
+						message: `Short css is deprecated, replace it with '[${item.target.prefix.value}: ${item.target.expr.value}]'.`,
 						severity: vscode.DiagnosticSeverity.Hint,
 						range: new vscode.Range(
 							document.positionAt(offset + item.target.range[0]),
@@ -248,10 +248,17 @@ function validateTwin({
 				continue
 			}
 
-			const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+			const variants = item.variants
+				.map(v => {
+					if (v.type === parser.NodeType.ArbitraryVariant) {
+						return state.tw.renderArbitraryVariant(v.value, state.separator).join(", ")
+					}
+					return v.value.trim().replace(/\s{2,}/g, " ")
+				})
+				.sort()
 			switch (item.target.type) {
 				case parser.NodeType.ShortCss: {
-					const prop = parser.toKebab(item.target.prop.value)
+					const prop = parser.toKebab(item.target.prefix.value)
 					if (isLooseProperty(prop)) {
 						const key = [...variants, prop].join(".")
 						addItem(key, item.target.range)
@@ -311,14 +318,21 @@ function validateTwin({
 				continue
 			}
 
-			const variants = item.variants.map(v => v.value.trim().replace(/\s{2,}/g, " ")).sort()
+			const variants = item.variants
+				.map(v => {
+					if (v.type === parser.NodeType.ArbitraryVariant) {
+						return state.tw.renderArbitraryVariant(v.value, state.separator).join(", ")
+					}
+					return v.value.trim().replace(/\s{2,}/g, " ")
+				})
+				.sort()
 			let prop = ""
 			if (item.target.type === parser.NodeType.ArbitraryProperty) {
 				const i = item.target.decl.value.indexOf(":")
 				if (i < 0) continue
 				prop = item.target.decl.value.slice(0, i).trim()
 			} else {
-				prop = parser.toKebab(item.target.prop.value)
+				prop = parser.toKebab(item.target.prefix.value)
 			}
 
 			if (isLooseProperty(prop)) {
@@ -391,10 +405,27 @@ function validateTwin({
 	}
 }
 
-function checkVariants(item: parser.SpreadDescription, document: TextDocument, offset: number, state: TailwindLoader) {
+function checkVariants(
+	item: parser.SpreadDescription,
+	document: TextDocument,
+	offset: number,
+	emptyChecking: boolean,
+	state: TailwindLoader,
+) {
 	const result: IDiagnostic[] = []
 	for (const node of item.variants) {
-		if (node.type === parser.NodeType.ArbitraryVariant) {
+		if (node.type === parser.NodeType.ArbitrarySelector || node.type === parser.NodeType.ArbitraryVariant) {
+			if (emptyChecking && node.selector.value.trim() === "") {
+				result.push({
+					source: DIAGNOSTICS_ID,
+					message: `forgot something?`,
+					range: new vscode.Range(
+						document.positionAt(offset + node.selector.range[0] - 1),
+						document.positionAt(offset + node.selector.range[1] + 1),
+					),
+					severity: vscode.DiagnosticSeverity.Warning,
+				})
+			}
 			continue
 		}
 		const {
@@ -428,7 +459,7 @@ function checkVariants(item: parser.SpreadDescription, document: TextDocument, o
 
 function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, emptyChecking: boolean) {
 	const result: IDiagnostic[] = []
-	const prop = item.prop
+	const prop = item.prefix
 	const { value, range } = prop
 	const [start, end] = range
 	if (value.startsWith("--")) return result
@@ -471,7 +502,7 @@ function checkArbitraryClassname(
 	emptyChecking: boolean,
 ) {
 	const result: IDiagnostic[] = []
-	const prefix = item.prop.value
+	const prefix = item.prefix.value
 	if (emptyChecking) {
 		if (item.expr && item.expr.value.trim() === "") {
 			result.push({

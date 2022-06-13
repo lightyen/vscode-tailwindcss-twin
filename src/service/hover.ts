@@ -49,7 +49,7 @@ export default async function hover(
 				)
 
 				if (selection.target.type === parser.NodeType.ShortCss) {
-					const prop = parser.toKebab(selection.target.prop.value)
+					const prop = parser.toKebab(selection.target.prefix.value)
 					const value = selection.value
 					const important = selection.important
 
@@ -124,7 +124,7 @@ export default async function hover(
 
 				if (kind !== ExtractedTokenKind.Twin) return undefined
 
-				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
+				if (selection.target.type === parser.NodeType.ArbitrarySelector) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const codes = new vscode.MarkdownString()
 					let code = removeComment(selection.value)
@@ -141,6 +141,24 @@ export default async function hover(
 					code += ` {\n${" ".repeat(tabSize)}/* ... */\n}`
 					codes.appendCodeblock(code, "scss")
 
+					return {
+						range,
+						contents: [header, codes],
+					}
+				}
+
+				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
+					const header = new vscode.MarkdownString("**arbitrary variant**")
+					const scopes = state.tw.renderArbitraryVariant(value, state.separator)
+					if (scopes.length === 0) {
+						return {
+							range,
+							contents: [header],
+						}
+					}
+					const code = scopes.join(", ") + ` {\n${" ".repeat(tabSize)}/* ... */\n}`
+					const codes = new vscode.MarkdownString()
+					if (code) codes.appendCodeblock(code, "scss")
 					return {
 						range,
 						contents: [header, codes],

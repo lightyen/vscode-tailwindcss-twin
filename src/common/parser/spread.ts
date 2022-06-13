@@ -2,20 +2,16 @@ import * as nodes from "./nodes"
 import * as parser from "./parse_regexp"
 import { getVariant } from "./util"
 
-interface VariantToken extends nodes.TokenString {
-	type: nodes.NodeType.SimpleVariant | nodes.NodeType.ArbitraryVariant
-}
-
 export type SpreadDescription = {
 	target: nodes.Classname | nodes.ShortCss | nodes.ArbitraryClassname | nodes.ArbitraryProperty
 	value: string
-	variants: VariantToken[]
+	variants: ReturnType<typeof getVariant>[]
 	important: boolean
 }
 
 export function spread(text: string, { separator = ":" }: { separator?: string } = {}) {
 	interface Context {
-		variants: VariantToken[]
+		variants: ReturnType<typeof getVariant>[]
 		important: boolean
 	}
 
@@ -28,16 +24,17 @@ export function spread(text: string, { separator = ":" }: { separator?: string }
 		if (node == undefined) return
 
 		if (nodes.NodeType.VariantSpan === node.type) {
-			if (nodes.NodeType.ArbitraryVariant === node.variant.type && !node.variant.closed) {
-				notClosed.push(node.variant)
-				return
-			}
 			if (node.child == undefined) {
 				emptyVariants.push(node)
 				return
 			}
 			const variants = ctx.variants.slice()
-			variants.push({ type: node.variant.type, ...getVariant(node.variant) })
+			switch (node.variant.type) {
+				case nodes.NodeType.ArbitraryVariant:
+					variants.push(getVariant(node.variant, separator))
+					break
+			}
+			variants.push(getVariant(node.variant, separator))
 			walk(node.child, { ...ctx, variants })
 		} else if (nodes.NodeType.Group === node.type) {
 			if (!node.closed) {

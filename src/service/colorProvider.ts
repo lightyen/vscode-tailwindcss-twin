@@ -104,7 +104,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 								}
 							}
 						} else if (item.target.type === parser.NodeType.ArbitraryClassname) {
-							const i = item.target.prop.value.lastIndexOf("/")
+							const i = item.target.prefix.value.lastIndexOf("/")
 							if (i === -1) continue
 							let value = token.value.slice(...item.target.range)
 							const n = value.slice(i + 1)

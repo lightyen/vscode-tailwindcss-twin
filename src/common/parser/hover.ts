@@ -5,6 +5,7 @@ import { getVariant } from "./util"
 interface HoverResult {
 	target:
 		| nodes.SimpleVariant
+		| nodes.ArbitrarySelector
 		| nodes.ArbitraryVariant
 		| nodes.Classname
 		| nodes.ArbitraryClassname
@@ -38,13 +39,13 @@ export function hover({
 				if (inRange(node.variant)) {
 					return {
 						target: node.variant,
-						value: getVariant(node.variant).value,
+						value: getVariant(node.variant, separator).value,
 						important: false,
 						variants,
 					}
 				}
 				if (!node.child) return undefined
-				variants.push(getVariant(node.variant).value)
+				variants.push(getVariant(node.variant, separator).value)
 				return travel(node.child, { ...ctx, variants })
 			}
 

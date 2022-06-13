@@ -9,6 +9,7 @@ export interface SuggestionResult {
 		| nodes.ArbitraryClassname
 		| nodes.ArbitraryProperty
 		| nodes.SimpleVariant
+		| nodes.ArbitrarySelector
 		| nodes.ArbitraryVariant
 	value: string
 	variants: string[]
@@ -35,6 +36,7 @@ export function suggest({
 			| nodes.ArbitraryClassname
 			| nodes.ArbitraryProperty
 			| nodes.SimpleVariant
+			| nodes.ArbitrarySelector
 			| nodes.ArbitraryVariant
 	}
 
@@ -118,11 +120,11 @@ export function suggest({
 			if (nodes.NodeType.VariantSpan === node.type) {
 				const variants = ctx.variants.slice()
 				if (inRange(node.variant)) {
-					if (position === node.variant.range[1]) variants.push(getVariant(node.variant).value)
+					if (position === node.variant.range[1]) variants.push(getVariant(node.variant, separator).value)
 					return { target: node.variant, variants }
 				}
 				if (!node.child) return { variants: [] }
-				variants.push(getVariant(node.variant).value)
+				variants.push(getVariant(node.variant, separator).value)
 				return travel(node.child, { ...ctx, variants })
 			}
 

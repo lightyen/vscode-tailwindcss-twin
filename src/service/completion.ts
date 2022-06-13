@@ -108,7 +108,16 @@ function twinCompletion(
 	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const utilities = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
 	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
-	const arbitraryValue = arbitraryValueCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const arbitraryValue = arbitraryClassnameValueCompletion(
+		document,
+		text,
+		position,
+		offset,
+		kind,
+		suggestion,
+		state,
+		options,
+	)
 	const arbitraryProperty = arbitraryPropertyCompletion(
 		document,
 		text,
@@ -163,6 +172,7 @@ function variantsCompletion(
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant:
 				break
+			case parser.NodeType.ArbitrarySelector:
 			case parser.NodeType.ArbitraryVariant:
 				if (position !== b) variantEnabled = false
 				break
@@ -295,7 +305,7 @@ function utilitiesCompletion(
 	if (suggestion.target) {
 		switch (suggestion.target.type) {
 			case parser.NodeType.SimpleVariant:
-			case parser.NodeType.ArbitraryVariant: {
+			case parser.NodeType.ArbitrarySelector: {
 				if (position < b) classNameEnabled = false
 				break
 			}
@@ -479,7 +489,7 @@ function arbitraryVariantCompletion(
 ) {
 	if (!suggestion.target) return []
 	if (suggestion.inComment) return []
-	if (nodes.NodeType.ArbitraryVariant !== suggestion.target.type) return []
+	if (nodes.NodeType.ArbitrarySelector !== suggestion.target.type) return []
 	const selector = suggestion.target.selector
 	if (position < selector.range[0] || position > selector.range[1]) return []
 	return getScssSelectorCompletionList(document, position, offset, selector.range[0], selector.value)
@@ -582,7 +592,7 @@ function shortcssCompletion(
 	let cssValueItems: ICompletionItem[] = []
 	if (suggestion.target && suggestion.target.type === parser.NodeType.ShortCss) {
 		cssValueItems = getCssDeclarationCompletionList(document, position, offset, suggestion.target.expr.range[0], [
-			suggestion.target.prop.value,
+			suggestion.target.prefix.value,
 			suggestion.target.expr.value,
 		])
 	}
@@ -612,7 +622,7 @@ function arbitraryPropertyCompletion(
 	)
 }
 
-function arbitraryValueCompletion(
+function arbitraryClassnameValueCompletion(
 	document: TextDocument,
 	text: string,
 	position: number,
@@ -629,7 +639,7 @@ function arbitraryValueCompletion(
 	if (!expr) return []
 	if (position < expr.range[0] || position > expr.range[1]) return []
 	const cssValueItems = new Map<string, ICompletionItem>()
-	const prop = suggestion.target.prop.value
+	const prop = suggestion.target.prefix.value
 	const props = arbitraryClassnames[prop]
 	props.forEach(prop => {
 		getCssDeclarationCompletionList(document, position, offset, expr.range[0], [prop, expr.value]).forEach(item => {

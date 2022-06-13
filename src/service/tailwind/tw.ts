@@ -70,6 +70,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		screens,
 		isVariant,
 		renderVariant,
+		renderArbitraryVariant,
 		renderClassname,
 		renderCssProperty,
 		renderDecls,
@@ -168,6 +169,27 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			wrapper.append(rule)
 			return wrapper
 		}
+	}
+
+	function renderArbitraryVariant(variant: string, separator: string) {
+		const classname = variant + separator + "[color:red]"
+		const items = generateRules([classname], context).sort(([a], [b]) => {
+			if (a < b) {
+				return -1
+			} else if (a > b) {
+				return 1
+			} else {
+				return 0
+			}
+		})
+		if (items.length <= 0) return []
+		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		const scopes: string[] = []
+		root.walkRules(rule => {
+			const scope = rule.selector.replaceAll("." + escape(classname), "&")
+			if (scope) scopes.push(scope)
+		})
+		return scopes.sort()
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
