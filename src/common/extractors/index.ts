@@ -1,4 +1,8 @@
+import typescript from "typescript"
 import { URI } from "vscode-uri"
+import { Logger } from "../logger"
+import rawExtrator from "./raw"
+import typescriptExtractor from "./typescript"
 
 type LanguageId = "javascript" | "javascriptreact" | "typescript" | "typescriptreact" | "twin" | string
 
@@ -29,12 +33,34 @@ export interface ExtractedToken extends Token {
 }
 
 export interface Extractor {
+	acceptLanguage(languageId: string): boolean
 	find(
 		languageId: string,
 		code: string,
 		position: number,
-		hover: boolean,
 		jsxPropImportChecking: boolean,
+		context?: { console: Logger; typescript: typeof typescript; typescriptExtractor: Extractor },
 	): ExtractedToken | undefined
-	findAll(languageId: string, code: string, jsxPropImportChecking: boolean): ExtractedToken[]
+	findAll(
+		languageId: string,
+		code: string,
+		jsxPropImportChecking: boolean,
+		context?: { console: Logger; typescript: typeof typescript; typescriptExtractor: Extractor },
+	): ExtractedToken[]
 }
+
+export function isExtrator(value: unknown): value is Extractor {
+	if (value == undefined || typeof value !== "object") return false
+	if (Object.prototype.hasOwnProperty.call(value, "acceptLanguage")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	if (Object.prototype.hasOwnProperty.call(value, "find")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	if (Object.prototype.hasOwnProperty.call(value, "findAll")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	return true
+}
+
+export const defaultExtractors = [typescriptExtractor, rawExtrator]

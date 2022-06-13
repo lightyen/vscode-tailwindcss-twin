@@ -17,6 +17,7 @@ export interface Settings {
 	logLevel: "none" | "error" | "warning" | "info" | "debug" | "trace"
 	documentColors: boolean
 	hoverColorHint: "none" | "hex" | "rgb" | "hsl"
+	otherLanguages: string[]
 }
 
 export interface ColorDecoration {

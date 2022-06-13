@@ -1,6 +1,4 @@
-import { Extractor, TextDocument } from "@/extractors"
-import { rawExtrator } from "@/extractors/raw"
-import { typescriptExtractor } from "@/extractors/typescript"
+import { defaultExtractors, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import type { PnpApi } from "@yarnpkg/pnp"
@@ -17,6 +15,10 @@ import { validate } from "./diagnostics"
 import documentColors from "./documentColors"
 import hover from "./hover"
 import { createTailwindLoader, ExtensionMode } from "./tailwind"
+
+import typescriptExtractor from "@/extractors/typescript"
+import typescript from "typescript"
+const context = { console, typescriptExtractor, typescript }
 
 interface Environment {
 	configPath?: URI
@@ -149,27 +151,31 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		options = { ...options, ...setting }
 	}
 
-	/** Provide auto complete feature. */
 	async function onCompletion(document: TextDocument, position: unknown) {
-		return wait(document, undefined, extractor =>
-			completion(
-				tryRun(
-					() =>
+		return wait<vscode.ProviderResult<vscode.CompletionList<ICompletionItem>>>(undefined, defaultValue => {
+			try {
+				const token = defaultExtractors
+					.concat(state.extractors)
+					.filter(e => e.acceptLanguage(document.languageId))
+					.map(extractor =>
 						extractor.find(
 							document.languageId,
 							document.getText(),
 							document.offsetAt(position),
-							false,
 							options.jsxPropImportChecking,
+							context,
 						),
-					undefined,
-				),
-				document,
-				position,
-				state,
-				options,
-			),
-		)
+					)
+					.reduce((prev, current) => {
+						return prev ?? current
+					}, undefined)
+
+				return completion(token, document, position, state, options)
+			} catch (error) {
+				console.error(error)
+				return defaultValue
+			}
+		})
 	}
 
 	async function onCompletionResolve(item: ICompletionItem, tabSize: number) {
@@ -178,112 +184,107 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	}
 
 	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
-		return wait(document, undefined, extractor =>
-			hover(
-				tryRun(
-					() =>
+		return wait<vscode.ProviderResult<vscode.Hover>>(undefined, defaultValue => {
+			try {
+				const token = defaultExtractors
+					.concat(state.extractors)
+					.filter(e => e.acceptLanguage(document.languageId))
+					.map(extractor =>
 						extractor.find(
 							document.languageId,
 							document.getText(),
-							document.offsetAt(position),
-							true,
+							document.offsetAt(position) + 1,
 							options.jsxPropImportChecking,
+							context,
 						),
-					undefined,
-				),
-				document,
-				position,
-				state,
-				options,
-				tabSize,
-			),
-		)
+					)
+					.reduce((prev, current) => {
+						return prev ?? current
+					}, undefined)
+				return hover(token, document, position, state, options, tabSize)
+			} catch (error) {
+				console.error(error)
+				return defaultValue
+			}
+		})
 	}
 
 	async function renderColorDecoration(editor: vscode.TextEditor) {
-		return wait(editor.document, undefined, extractor =>
-			_colorProvider?.render(
-				tryRun(
-					() =>
+		return wait(void 0, () => {
+			if (!_colorProvider) return
+			const document = editor.document
+			try {
+				const tokens = defaultExtractors
+					.concat(state.extractors)
+					.filter(e => e.acceptLanguage(document.languageId))
+					.flatMap(extractor =>
 						extractor.findAll(
-							editor.document.languageId,
-							editor.document.getText(),
+							document.languageId,
+							document.getText(),
 							options.jsxPropImportChecking,
+							context,
 						),
-					[],
-				),
-				editor,
-			),
-		)
+					)
+				_colorProvider.render(tokens, editor)
+			} catch (error) {
+				console.error(error)
+			}
+		})
 	}
 
 	async function provideDiagnostics(document: TextDocument) {
-		return wait(document, [], extractor =>
-			validate(
-				tryRun(
-					() => extractor.findAll(document.languageId, document.getText(), options.jsxPropImportChecking),
-					[],
-				),
-				document,
-				state,
-				options,
-			),
-		)
+		return wait<vscode.Diagnostic[]>([], defaultValue => {
+			try {
+				const tokens = defaultExtractors
+					.concat(state.extractors)
+					.filter(e => e.acceptLanguage(document.languageId))
+					.flatMap(extractor =>
+						extractor.findAll(
+							document.languageId,
+							document.getText(),
+							options.jsxPropImportChecking,
+							context,
+						),
+					)
+				return validate(tokens, document, state, options)
+			} catch (error) {
+				console.error(error)
+				return defaultValue
+			}
+		})
 	}
 
 	async function onDocumentColors(document: TextDocument) {
-		return wait(document, undefined, extractor =>
-			documentColors(
-				tryRun(
-					() => extractor.findAll(document.languageId, document.getText(), options.jsxPropImportChecking),
-					[],
-				),
-				document,
-				state,
-				options,
-			),
-		)
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function tryRun<T extends () => any>(callback: T, defaultValue: ReturnType<T>): ReturnType<T> {
-		try {
-			return callback()
-		} catch (error) {
-			console.error(error)
-			return defaultValue
-		}
+		return wait<vscode.ProviderResult<vscode.ColorInformation[]>>(undefined, defaultValue => {
+			try {
+				const tokens = defaultExtractors
+					.concat(state.extractors)
+					.filter(e => e.acceptLanguage(document.languageId))
+					.flatMap(extractor =>
+						extractor.findAll(
+							document.languageId,
+							document.getText(),
+							options.jsxPropImportChecking,
+							context,
+						),
+					)
+				return documentColors(tokens, document, state, options)
+			} catch (error) {
+				console.error(error)
+				return defaultValue
+			}
+		})
 	}
 
 	async function wait<ReturnValue = unknown>(
-		document: TextDocument,
 		defaultValue: ReturnValue,
-		feature: (extractor: Extractor) => ReturnValue,
+		callback: (defaultValue: ReturnValue) => ReturnValue,
 	) {
 		if (!loading) {
 			if (!state.tw) start()
-			return hub<ReturnValue>(document, defaultValue, feature)
+			return callback(defaultValue)
 		}
 		await ready()
-		return hub<ReturnValue>(document, defaultValue, feature)
-	}
-
-	function hub<ReturnValue = unknown>(
-		document: TextDocument,
-		defaultValue: ReturnValue,
-		feature: (extractor: Extractor) => ReturnValue,
-	) {
-		// https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
-		switch (document.languageId) {
-			case "javascript":
-			case "javascriptreact":
-			case "typescript":
-			case "typescriptreact":
-				return feature(typescriptExtractor)
-			case "twin":
-				return feature(rawExtrator)
-			default:
-				return defaultValue
-		}
+		return callback(defaultValue)
 	}
 }

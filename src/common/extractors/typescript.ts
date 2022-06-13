@@ -382,7 +382,17 @@ export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): Ext
 	return findAllNode(source, source, features)?.map(node => transfromToken(node, source)) ?? []
 }
 
-export const typescriptExtractor: Extractor = {
+const typescriptExtractor: Extractor = {
+	acceptLanguage(languageId) {
+		switch (languageId) {
+			case "javascript":
+			case "javascriptreact":
+			case "typescript":
+			case "typescriptreact":
+				return true
+		}
+		return false
+	},
 	findAll(languageId, code, jsxPropImportChecking) {
 		let scriptKind: ts.ScriptKind | undefined
 		switch (languageId) {
@@ -411,8 +421,7 @@ export const typescriptExtractor: Extractor = {
 		}
 		return []
 	},
-	find(languageId, code, position, hover, jsxPropImportChecking) {
-		const pos = position + (hover ? 1 : 0)
+	find(languageId, code, position, jsxPropImportChecking) {
 		let scriptKind: ts.ScriptKind | undefined
 		switch (languageId) {
 			case "typescript":
@@ -432,7 +441,7 @@ export const typescriptExtractor: Extractor = {
 		}
 		if (scriptKind) {
 			const source = ts.createSourceFile("", code, ts.ScriptTarget.Latest, false, scriptKind)
-			const token = findToken(source, pos, jsxPropImportChecking)
+			const token = findToken(source, position, jsxPropImportChecking)
 			if (!token) {
 				return undefined
 			}
@@ -441,3 +450,4 @@ export const typescriptExtractor: Extractor = {
 		return undefined
 	},
 }
+export default typescriptExtractor

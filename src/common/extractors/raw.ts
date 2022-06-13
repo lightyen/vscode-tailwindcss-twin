@@ -1,6 +1,9 @@
 import { ExtractedTokenKind, Extractor } from "."
 
-export const rawExtrator: Extractor = {
+const rawExtrator: Extractor = {
+	acceptLanguage(languageId) {
+		return languageId === "twin"
+	},
 	findAll(languageId, code, jsxPropImportChecking) {
 		return [
 			{
@@ -20,3 +23,4 @@ export const rawExtrator: Extractor = {
 		}
 	},
 }
+export default rawExtrator

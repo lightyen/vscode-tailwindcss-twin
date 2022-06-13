@@ -12,11 +12,6 @@ import { ICompletionItem } from "./typings/completion"
 
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "twin"]
 
-const documentSelector = DEFAULT_SUPPORT_LANGUAGES.map<vscode.DocumentFilter[]>(language => [
-	{ scheme: "file", language },
-	{ scheme: "untitled", language },
-]).flat()
-
 const triggerCharacters = ['"', "'", "`", " ", ":", "-", "/", ".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 const priority = [".ts", ".js", ".cjs"]
@@ -42,20 +37,28 @@ function matchService(uri: URI, services: Map<string, ReturnType<typeof createTa
 	return list[0]
 }
 
+function equalLanguages(a: string[], b: string[]) {
+	const s1 = new Set(a)
+	const s2 = new Set(b)
+	if (s1.size !== s2.size) return false
+	for (const lang of s1) {
+		if (!s2.has(lang)) return false
+	}
+	return true
+}
+
 export async function workspaceClient(context: vscode.ExtensionContext, ws: vscode.WorkspaceFolder) {
-	const disposes: vscode.Disposable[] = []
+	const extensionUri = context.extensionUri
+	const extensionMode = context.extensionMode
+	const workspaceFolder = ws.uri
+	const serverSourceMapUri = Utils.joinPath(context.extensionUri, "dist", "extension.js.map")
+	const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
+	const collection = vscode.languages.createDiagnosticCollection("tw")
 	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
 	const configFolders: Map<string, URI[]> = new Map()
-	const extensionUri = context.extensionUri
-	const serverSourceMapUri = Utils.joinPath(context.extensionUri, "dist", "extension.js.map")
-	const workspaceFolder = ws.uri
-	const extensionMode = context.extensionMode
-	const tailwindConfigs = await vscode.workspace.findFiles(
-		new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
-		new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),
-	)
 	let defaultServiceRunning = false
-	const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
+	let activeTextEditor = vscode.window.activeTextEditor
+	let documentSelector: vscode.DocumentFilter[]
 	const settings = workspaceConfiguration.get<Settings>(SECTION_ID, {
 		enabled: true,
 		colorDecorators: "inherit",
@@ -71,20 +74,8 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		},
 		documentColors: false,
 		hoverColorHint: "none",
+		otherLanguages: [],
 	})
-	console.level = settings.logLevel
-
-	if (settings.colorDecorators === "inherit") {
-		settings.colorDecorators = workspaceConfiguration.get("editor.colorDecorators") ? "on" : "off"
-	}
-
-	// backward compatibility
-	if (typeof settings.rootFontSize === "boolean") {
-		settings.rootFontSize = settings.rootFontSize ? 16 : 0
-	}
-	if (typeof settings.colorDecorators === "boolean") {
-		settings.colorDecorators = settings.colorDecorators ? "on" : "off"
-	}
 
 	const pnpContext = findPnpApi(workspaceFolder.fsPath)
 	if (pnpContext) {
@@ -92,251 +83,295 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		pnpContext.setup()
 	}
 
-	for (const configPath of tailwindConfigs) {
-		addService(URI.parse(configPath.toString()), settings)
-	}
+	let instance = await init(DEFAULT_SUPPORT_LANGUAGES.concat(settings.otherLanguages))
+	return instance
 
-	addDefaultService(settings)
+	async function init(languages: string[]) {
+		const disposes: vscode.Disposable[] = []
+		const tailwindConfigs = await vscode.workspace.findFiles(
+			new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
+			new vscode.RelativePattern(ws, "**/{node_modules/,.yarn/}*"),
+		)
+		console.level = settings.logLevel
 
-	const collection = vscode.languages.createDiagnosticCollection("tw")
+		const languageSet = new Set(languages)
+		settings.otherLanguages.forEach(lang => languageSet.add(lang))
+		documentSelector = Array.from(languageSet).flatMap(language => [
+			{ scheme: "file", language },
+			{ scheme: "untitled", language },
+		])
 
-	const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> = {
-		provideCompletionItems(document, position, token, context) {
-			if (!settings.enabled) return
-			return matchService(document.uri, services)?.completionItemProvider.provideCompletionItems(
-				document,
-				position,
-				token,
-				context,
-			)
-		},
-		resolveCompletionItem(item, token) {
-			if (!settings.enabled) return item
-			if (!item.data.uri) return item
-			const srv = matchService(item.data.uri, services)
-			if (!srv) return item
-			srv.completionItemProvider.tabSize = getTabSize()
-			return srv.completionItemProvider.resolveCompletionItem?.(item, token)
-		},
-	}
+		if (settings.colorDecorators === "inherit") {
+			settings.colorDecorators = workspaceConfiguration.get("editor.colorDecorators") ? "on" : "off"
+		}
 
-	const hoverProvider: vscode.HoverProvider = {
-		provideHover(document, position, token) {
-			if (!settings.enabled) return
-			const srv = matchService(document.uri, services)
-			if (!srv) return undefined
-			srv.hoverProvider.tabSize = getTabSize()
-			return srv.hoverProvider.provideHover(document, position, token)
-		},
-	}
+		// backward compatibility
+		if (typeof settings.rootFontSize === "boolean") {
+			settings.rootFontSize = settings.rootFontSize ? 16 : 0
+		}
+		if (typeof settings.colorDecorators === "boolean") {
+			settings.colorDecorators = settings.colorDecorators ? "on" : "off"
+		}
 
-	const codeActionProvider: vscode.CodeActionProvider = {
-		provideCodeActions(document, range, context, token) {
-			if (!settings.enabled) return
-			const items = collection.get(document.uri)
-			if (!items) return
-			const actions: vscode.CodeAction[] = []
-			for (let i = 0; i < items.length; i++) {
-				const diagnostic = items[i] as IDiagnostic
-				if (range.contains(diagnostic.range) && diagnostic.data) {
-					const d = items[i] as IDiagnostic
-					if (d.data) {
-						range.contains(d.range)
-						const { text, newText } = d.data
-						const a = new vscode.CodeAction(
-							`Replace '${text}' with '${newText}'`,
-							vscode.CodeActionKind.QuickFix,
-						)
-						const edit = new vscode.WorkspaceEdit()
-						edit.replace(document.uri, d.range, newText)
-						a.edit = edit
-						actions.push(a)
-					}
-				}
-			}
-			return actions
-		},
-	}
+		for (const configPath of tailwindConfigs) {
+			addService(URI.parse(configPath.toString()), settings)
+		}
 
-	const documentColorProvider: vscode.DocumentColorProvider = {
-		provideDocumentColors(document, token) {
-			if (!settings.enabled) return
-			if (!settings.documentColors) return
-			const srv = matchService(document.uri, services)
-			if (!srv) return undefined
-			return srv.documentColorProvider.provideDocumentColors(document, token)
-		},
-		provideColorPresentations,
-	}
+		addDefaultService(settings)
 
-	let activeTextEditor = vscode.window.activeTextEditor
-
-	disposes.push(
-		vscode.languages.registerCompletionItemProvider(documentSelector, completionItemProvider, ...triggerCharacters),
-		vscode.languages.registerHoverProvider(documentSelector, hoverProvider),
-		vscode.languages.registerCodeActionsProvider(documentSelector, codeActionProvider),
-		vscode.languages.registerColorProvider(documentSelector, documentColorProvider),
-		vscode.window.onDidChangeActiveTextEditor(editor => {
-			activeTextEditor = editor
-			if (activeTextEditor?.document.uri.scheme === "output") return
-			console.trace("onDidChangeActiveTextEditor()")
-			if (editor === activeTextEditor) {
-				render()
-			}
-		}),
-		vscode.workspace.onDidChangeTextDocument(event => {
-			if (event.document.uri.scheme === "output") return
-			console.trace("onDidChangeTextDocument()")
-			if (event.document === activeTextEditor?.document) {
-				render()
-			}
-		}),
-		vscode.workspace.onDidChangeConfiguration(async event => {
-			console.trace(`onDidChangeConfiguration()`)
-			const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
-			const extSettings = workspaceConfiguration.get(SECTION_ID) as Settings
-
-			let needToUpdate = false
-			let needToRenderColors = false
-			let needToDiagnostics = false
-
-			if (settings.logLevel !== extSettings.logLevel) {
-				settings.logLevel = extSettings.logLevel
-				needToUpdate = true
-				console.info(`logLevel = ${settings.logLevel}`)
-				console.level = settings.logLevel
-			}
-
-			if (settings.enabled !== extSettings.enabled) {
-				settings.enabled = extSettings.enabled
-				needToUpdate = true
-				console.info(`enabled = ${settings.enabled}`)
-			}
-
-			if (settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
-				settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
-				needToUpdate = true
-				console.info(`preferVariantWithParentheses = ${settings.preferVariantWithParentheses}`)
-			}
-
-			if (settings.references !== extSettings.references) {
-				settings.references = extSettings.references
-				needToUpdate = true
-				console.info(`references = ${settings.references}`)
-			}
-
-			if (settings.jsxPropImportChecking !== extSettings.jsxPropImportChecking) {
-				settings.jsxPropImportChecking = extSettings.jsxPropImportChecking
-				needToUpdate = true
-				console.info(`jsxPropImportChecking = ${settings.jsxPropImportChecking}`)
-			}
-
-			// backward compatibility
-			if (typeof extSettings.rootFontSize === "boolean") {
-				extSettings.rootFontSize = extSettings.rootFontSize ? 16 : 0
-			}
-			if (settings.rootFontSize !== extSettings.rootFontSize) {
-				settings.rootFontSize = extSettings.rootFontSize
-				needToUpdate = true
-				console.info(`rootFontSize = ${settings.rootFontSize}`)
-			}
-
-			// backward compatibility
-			if (typeof extSettings.colorDecorators === "boolean") {
-				extSettings.colorDecorators = extSettings.colorDecorators ? "on" : "off"
-			}
-			if (extSettings.colorDecorators === "inherit") {
-				const editorColorDecorators = vscode.workspace
-					.getConfiguration("editor")
-					.get("colorDecorators") as boolean
-				extSettings.colorDecorators = editorColorDecorators ? "on" : "off"
-			}
-			if (settings.colorDecorators !== extSettings.colorDecorators) {
-				settings.colorDecorators = extSettings.colorDecorators
-				needToUpdate = true
-				needToRenderColors = true
-				console.info(`codeDecorators = ${settings.colorDecorators}`)
-			}
-
-			if (settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
-				settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
-				console.info(`fallbackDefaultConfig = ${settings.fallbackDefaultConfig}`)
-			}
-
-			if (settings.documentColors !== extSettings.documentColors) {
-				settings.documentColors = extSettings.documentColors
-				console.info(`documentColors = ${settings.documentColors}`)
-			}
-
-			if (settings.hoverColorHint !== extSettings.hoverColorHint) {
-				settings.hoverColorHint = extSettings.hoverColorHint
-				needToUpdate = true
-				console.info(`hoverColorHint = ${settings.hoverColorHint}`)
-			}
-
-			try {
-				deepStrictEqual(settings.diagnostics, extSettings.diagnostics)
-			} catch {
-				settings.diagnostics = extSettings.diagnostics
-				needToUpdate = true
-				needToDiagnostics = true
-				console.info(`diagnostics = ${JSON.stringify(settings.diagnostics)}`)
-			}
-
-			if (needToUpdate) {
-				for (const document of vscode.workspace.textDocuments) {
-					const service = matchService(document.uri, services)
-					if (service) {
-						service.updateSettings(settings)
-					}
-				}
-			}
-
-			if (needToRenderColors) {
-				await Promise.all(
-					vscode.workspace.textDocuments.map(document => {
-						if (!settings.colorDecorators) {
-							const srv = matchService(document.uri, services)
-							srv?.colorProvider.dispose()
-							return
-						}
-					}),
+		const completionItemProvider: vscode.CompletionItemProvider<ICompletionItem> = {
+			provideCompletionItems(document, position, token, context) {
+				if (!settings.enabled) return
+				return matchService(document.uri, services)?.completionItemProvider.provideCompletionItems(
+					document,
+					position,
+					token,
+					context,
 				)
-			}
+			},
+			resolveCompletionItem(item, token) {
+				if (!settings.enabled) return item
+				if (!item.data.uri) return item
+				const srv = matchService(item.data.uri, services)
+				if (!srv) return item
+				srv.completionItemProvider.tabSize = getTabSize()
+				return srv.completionItemProvider.resolveCompletionItem?.(item, token)
+			},
+		}
 
-			if (needToDiagnostics) {
-				first_render()
-			}
-		}),
-	)
+		const hoverProvider: vscode.HoverProvider = {
+			provideHover(document, position, token) {
+				if (!settings.enabled) return
+				const srv = matchService(document.uri, services)
+				if (!srv) return undefined
+				srv.hoverProvider.tabSize = getTabSize()
+				return srv.hoverProvider.provideHover(document, position, token)
+			},
+		}
 
-	const watcher = vscode.workspace.createFileSystemWatcher(
-		new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
-	)
-	disposes.push(
-		watcher.onDidDelete(uri => {
-			removeService(uri, settings, true)
-		}),
-		watcher.onDidCreate(uri => {
-			addService(uri, settings, true)
-		}),
-		watcher.onDidChange(async uri => {
-			reloadService(uri)
-		}),
-		watcher,
-	)
+		const codeActionProvider: vscode.CodeActionProvider = {
+			provideCodeActions(document, range, context, token) {
+				if (!settings.enabled) return
+				const items = collection.get(document.uri)
+				if (!items) return
+				const actions: vscode.CodeAction[] = []
+				for (let i = 0; i < items.length; i++) {
+					const diagnostic = items[i] as IDiagnostic
+					if (range.contains(diagnostic.range) && diagnostic.data) {
+						const d = items[i] as IDiagnostic
+						if (d.data) {
+							range.contains(d.range)
+							const { text, newText } = d.data
+							const a = new vscode.CodeAction(
+								`Replace '${text}' with '${newText}'`,
+								vscode.CodeActionKind.QuickFix,
+							)
+							const edit = new vscode.WorkspaceEdit()
+							edit.replace(document.uri, d.range, newText)
+							a.edit = edit
+							actions.push(a)
+						}
+					}
+				}
+				return actions
+			},
+		}
 
-	first_render()
+		const documentColorProvider: vscode.DocumentColorProvider = {
+			provideDocumentColors(document, token) {
+				if (!settings.enabled) return
+				if (!settings.documentColors) return
+				const srv = matchService(document.uri, services)
+				if (!srv) return undefined
+				return srv.documentColorProvider.provideDocumentColors(document, token)
+			},
+			provideColorPresentations,
+		}
 
-	const disposable = vscode.Disposable.from(...disposes)
-	return {
-		ws,
-		/**
-		 * Dispose this object.
-		 */
-		dispose() {
-			return disposable.dispose()
-		},
+		disposes.push(
+			vscode.languages.registerCompletionItemProvider(
+				documentSelector,
+				completionItemProvider,
+				...triggerCharacters,
+			),
+			vscode.languages.registerHoverProvider(documentSelector, hoverProvider),
+			vscode.languages.registerCodeActionsProvider(documentSelector, codeActionProvider),
+			vscode.languages.registerColorProvider(documentSelector, documentColorProvider),
+			vscode.window.onDidChangeActiveTextEditor(editor => {
+				activeTextEditor = editor
+				if (activeTextEditor?.document.uri.scheme === "output") return
+				console.trace("onDidChangeActiveTextEditor()")
+				if (editor === activeTextEditor) {
+					render()
+				}
+			}),
+			vscode.workspace.onDidChangeTextDocument(event => {
+				if (event.document.uri.scheme === "output") return
+				console.trace("onDidChangeTextDocument()")
+				if (event.document === activeTextEditor?.document) {
+					render()
+				}
+			}),
+			vscode.workspace.onDidChangeConfiguration(async event => {
+				console.trace(`onDidChangeConfiguration()`)
+				const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
+				const extSettings = workspaceConfiguration.get(SECTION_ID) as Settings
+
+				let needToUpdate = false
+				let needToRenderColors = false
+				let needToDiagnostics = false
+
+				if (settings.logLevel !== extSettings.logLevel) {
+					settings.logLevel = extSettings.logLevel
+					needToUpdate = true
+					console.info(`logLevel = ${settings.logLevel}`)
+					console.level = settings.logLevel
+				}
+
+				if (!equalLanguages(settings.otherLanguages, extSettings.otherLanguages)) {
+					settings.otherLanguages = extSettings.otherLanguages
+					console.info(`otherLanguages = ${settings.otherLanguages.join(", ")}`)
+					configFolders.clear()
+					collection.clear()
+					services.clear()
+					defaultServiceRunning = false
+					needToUpdate = true
+					instance.dispose()
+					instance = await init(DEFAULT_SUPPORT_LANGUAGES.concat(settings.otherLanguages))
+				}
+
+				if (settings.enabled !== extSettings.enabled) {
+					settings.enabled = extSettings.enabled
+					needToUpdate = true
+					console.info(`enabled = ${settings.enabled}`)
+				}
+
+				if (settings.preferVariantWithParentheses !== extSettings.preferVariantWithParentheses) {
+					settings.preferVariantWithParentheses = extSettings.preferVariantWithParentheses
+					needToUpdate = true
+					console.info(`preferVariantWithParentheses = ${settings.preferVariantWithParentheses}`)
+				}
+
+				if (settings.references !== extSettings.references) {
+					settings.references = extSettings.references
+					needToUpdate = true
+					console.info(`references = ${settings.references}`)
+				}
+
+				if (settings.jsxPropImportChecking !== extSettings.jsxPropImportChecking) {
+					settings.jsxPropImportChecking = extSettings.jsxPropImportChecking
+					needToUpdate = true
+					console.info(`jsxPropImportChecking = ${settings.jsxPropImportChecking}`)
+				}
+
+				// backward compatibility
+				if (typeof extSettings.rootFontSize === "boolean") {
+					extSettings.rootFontSize = extSettings.rootFontSize ? 16 : 0
+				}
+				if (settings.rootFontSize !== extSettings.rootFontSize) {
+					settings.rootFontSize = extSettings.rootFontSize
+					needToUpdate = true
+					console.info(`rootFontSize = ${settings.rootFontSize}`)
+				}
+
+				// backward compatibility
+				if (typeof extSettings.colorDecorators === "boolean") {
+					extSettings.colorDecorators = extSettings.colorDecorators ? "on" : "off"
+				}
+				if (extSettings.colorDecorators === "inherit") {
+					const editorColorDecorators = vscode.workspace
+						.getConfiguration("editor")
+						.get("colorDecorators") as boolean
+					extSettings.colorDecorators = editorColorDecorators ? "on" : "off"
+				}
+				if (settings.colorDecorators !== extSettings.colorDecorators) {
+					settings.colorDecorators = extSettings.colorDecorators
+					needToUpdate = true
+					needToRenderColors = true
+					console.info(`codeDecorators = ${settings.colorDecorators}`)
+				}
+
+				if (settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
+					settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
+					console.info(`fallbackDefaultConfig = ${settings.fallbackDefaultConfig}`)
+				}
+
+				if (settings.documentColors !== extSettings.documentColors) {
+					settings.documentColors = extSettings.documentColors
+					console.info(`documentColors = ${settings.documentColors}`)
+				}
+
+				if (settings.hoverColorHint !== extSettings.hoverColorHint) {
+					settings.hoverColorHint = extSettings.hoverColorHint
+					needToUpdate = true
+					console.info(`hoverColorHint = ${settings.hoverColorHint}`)
+				}
+
+				try {
+					deepStrictEqual(settings.diagnostics, extSettings.diagnostics)
+				} catch {
+					settings.diagnostics = extSettings.diagnostics
+					needToUpdate = true
+					needToDiagnostics = true
+					console.info(`diagnostics = ${JSON.stringify(settings.diagnostics)}`)
+				}
+
+				if (needToUpdate) {
+					for (const document of vscode.workspace.textDocuments) {
+						const service = matchService(document.uri, services)
+						if (service) {
+							service.updateSettings(settings)
+						}
+					}
+				}
+
+				if (needToRenderColors) {
+					await Promise.all(
+						vscode.workspace.textDocuments.map(document => {
+							if (!settings.colorDecorators) {
+								const srv = matchService(document.uri, services)
+								srv?.colorProvider.dispose()
+								return
+							}
+						}),
+					)
+				}
+
+				if (needToDiagnostics) {
+					first_render()
+				}
+			}),
+		)
+
+		const watcher = vscode.workspace.createFileSystemWatcher(
+			new vscode.RelativePattern(ws, "**/{tailwind,tailwind.config}.{ts,js,cjs}"),
+		)
+		disposes.push(
+			watcher.onDidDelete(uri => {
+				removeService(uri, settings, true)
+			}),
+			watcher.onDidCreate(uri => {
+				addService(uri, settings, true)
+			}),
+			watcher.onDidChange(async uri => {
+				reloadService(uri)
+			}),
+			watcher,
+		)
+
+		first_render()
+
+		const disposable = vscode.Disposable.from(...disposes)
+
+		return {
+			ws,
+			/**
+			 * Dispose this object.
+			 */
+			dispose() {
+				return disposable.dispose()
+			},
+		}
 	}
 
 	function getTabSize(defaultSize = 4): number {
@@ -370,6 +405,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 			if (editor.document !== document) return
 			collection.clear()
 			if (!settings.enabled) return
+			if (documentSelector.every(p => p.language !== document.languageId)) return
 			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
 			if (settings.diagnostics.enabled) {
 				updateDiagnostics(document, srv.provideDiagnostics(document))
@@ -388,6 +424,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 			const srv = matchService(document.uri, services)
 			if (!srv) return
 			if (!settings.enabled) return
+			if (documentSelector.every(s => s.language !== document.languageId)) return
 			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
 			if (settings.diagnostics.enabled) {
 				updateDiagnostics(document, srv.provideDiagnostics(document))

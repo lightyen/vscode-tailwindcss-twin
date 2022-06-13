@@ -14,8 +14,6 @@ This is a VSCode Tailwind IntelliSense Extension which supports [twin.macro](htt
 - document references
 - diagnostics
 
-Support ONLY `*.tsx` and `*.jsx`
-
 ## Build
 
 ```sh
@@ -48,7 +46,8 @@ pnpm install && pnpm build && pnpm package
   "tailwindcss.jsxPropImportChecking": true,
   "tailwindcss.rootFontSize": 16,
   "tailwindcss.logLevel": "info",
-  "tailwindcss.hoverColorHint": "none"
+  "tailwindcss.hoverColorHint": "none",
+  "tailwindcss.otherLanguages": []
 }
 ```
 

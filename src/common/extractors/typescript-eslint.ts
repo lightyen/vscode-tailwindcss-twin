@@ -1259,12 +1259,22 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 	}
 }
 
-export const typescriptExtractor: Extractor = {
+const typescriptExtractor: Extractor = {
+	acceptLanguage(languageId) {
+		switch (languageId) {
+			case "javascript":
+			case "javascriptreact":
+			case "typescript":
+			case "typescriptreact":
+				return true
+		}
+		return false
+	},
 	findAll(languageId, code, jsxPropImportChecking) {
 		return findAll(code, jsxPropImportChecking)
 	},
-	find(languageId, code, position, hover, jsxPropImportChecking) {
-		const pos = position + (hover ? 1 : 0)
-		return find(code, pos, jsxPropImportChecking)
+	find(languageId, code, position, jsxPropImportChecking) {
+		return find(code, position, jsxPropImportChecking)
 	},
 }
+export default typescriptExtractor

@@ -215,6 +215,13 @@
           "type": "number",
           "default": 16
         },
+        "tailwindcss.otherLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "tailwindcss.hoverColorHint": {
           "type": "string",
           "enum": [
@@ -245,6 +252,5 @@
       }
     },
     "commands": []
-  },
-  "packageManager": "yarn@3.2.0-rc.1"
+  }
 }

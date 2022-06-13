@@ -10,6 +10,7 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import { CompletionItemKind } from "vscode"
 import { URI } from "vscode-uri"
 import { calcFraction } from "~/common"
+import { Extractor, isExtrator } from "~/common/extractors"
 import { ICompletionItem } from "~/typings/completion"
 import { deprecated } from "./data"
 import { createTwContext, TwContext } from "./tw"
@@ -63,7 +64,7 @@ export function createTailwindLoader(
 		updateAllClasses,
 	}
 
-	let config: Tailwind.ResolvedConfigJS
+	let config: Tailwind.ResolvedConfigJS & { extrators?: Extractor[] }
 	let tw: TwContext
 	let variants: Fuse<string>
 	let classnames: Fuse<string>
@@ -83,6 +84,9 @@ export function createTailwindLoader(
 		},
 		get classnames() {
 			return classnames
+		},
+		get extractors(): Extractor[] {
+			return Array.isArray(config.extrators) ? config.extrators.filter(isExtrator) : []
 		},
 		readTailwindConfig,
 		createContext,
