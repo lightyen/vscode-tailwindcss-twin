@@ -91,6 +91,7 @@ export function createTailwindLoader(
 		readTailwindConfig,
 		createContext,
 		provideUtilities: createUtilitiesCompletionItemsProvider(),
+		isDeprecated,
 	}
 
 	function preprocessConfig(config: Tailwind.ConfigJS): Tailwind.ConfigJS {
@@ -149,8 +150,6 @@ export function createTailwindLoader(
 					sortText: (value.startsWith("-") ? "~~" : "~") + formatLabel(value),
 				}
 
-				if (deprecated.has(value)) item.tags = [CompletionItemTag.Deprecated]
-
 				const colorDesc = tw.getColorDesc(value)
 				if (colorDesc) {
 					item.kind = CompletionItemKind.Color
@@ -169,6 +168,10 @@ export function createTailwindLoader(
 					item.documentation = colorDesc.backgroundColor || colorDesc.color || colorDesc.borderColor
 				}
 
+				if (isDeprecated(value)) {
+					item.tags = [CompletionItemTag.Deprecated]
+				}
+
 				return item
 			})
 
@@ -185,5 +188,22 @@ export function createTailwindLoader(
 				return prefix + val.toFixed(3).padStart(7, "0")
 			}
 		}
+	}
+
+	function isDeprecated(label: string) {
+		if (deprecated.has(label)) return true
+		const name = tw.getPlugin(label)?.getName()
+		if (name) {
+			switch (name) {
+				case "backgroundOpacity":
+				case "borderOpacity":
+				case "divideOpacity":
+				case "placeholderOpacity":
+				case "ringOpacity":
+				case "textOpacity":
+					return true
+			}
+		}
+		return false
 	}
 }

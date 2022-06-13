@@ -517,7 +517,6 @@ function checkArbitraryClassname(
 		}
 	}
 
-	const message = deprecated.get(prefix.slice(0, -1))
 	if (!arbitraryClassnames[prefix]) {
 		const start = item.range[0]
 		const end = start + prefix.length
@@ -528,6 +527,7 @@ function checkArbitraryClassname(
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	} else {
+		const message = deprecated.get(prefix.slice(0, -1))
 		if (message) {
 			result.push({
 				message,
