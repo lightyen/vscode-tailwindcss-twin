@@ -25,10 +25,12 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 	return {
 		plugins: [
 			plugin(({ config, addVariant, addUtilities }) => {
-				let mode = config("darkMode", "media")
-				if (mode === false) mode = "media"
-				if (mode === "class") addVariant("light", ".light &")
-				else if (mode === "media") addVariant("light", "@media (prefers-color-scheme: light)")
+				const darkMode = config("darkMode", "media")
+				if (darkMode === "class") addVariant("light", ".light &")
+				else if (darkMode === "media") addVariant("light", "@media (prefers-color-scheme: light)")
+				else if (Array.isArray(darkMode) && darkMode[0] === "class" && typeof darkMode[1] === "string") {
+					addVariant("light", `${darkMode[1].replace(/\bdark\b/, "light")} &`)
+				}
 
 				addUtilities({
 					".content": {

@@ -100,7 +100,13 @@ export function createTailwindLoader(
 		delete cfg.purge
 		delete cfg.safelist
 		delete cfg.important
-		if (cfg.darkMode !== "media" && cfg.darkMode !== "class") cfg.darkMode = "media"
+		if (
+			cfg.darkMode !== "media" &&
+			cfg.darkMode !== "class" &&
+			!(Array.isArray(cfg.darkMode) && cfg.darkMode[0] === "class" && typeof cfg.darkMode[1] === "string")
+		) {
+			cfg.darkMode = "media"
+		}
 		cfg.separator = ":"
 		return cfg
 	}
