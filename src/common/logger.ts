@@ -68,13 +68,6 @@ export interface Logger {
 	set outputMode(mode: "debugConsole" | "outputChannel" | "all")
 }
 
-const Reset = "\x1b[0m"
-const FgRed = "\x1b[31m"
-const FgYellow = "\x1b[33m"
-const FgBlue = "\x1b[34m"
-const FgCyan = "\x1b[36m"
-const FgMagenta = "\x1b[35m"
-
 export function createLogger({
 	logLevel = LogLevel.Info,
 	colors = true,
@@ -118,30 +111,7 @@ export function createLogger({
 		}
 		if (colors && typeof args[0] === "string") {
 			args.unshift(lv)
-			switch (level) {
-				case LogLevel.Error:
-					args.unshift(FgRed)
-					args.push(Reset)
-					break
-				case LogLevel.Warning:
-					args.unshift(FgYellow)
-					args.push(Reset)
-					break
-				case LogLevel.Info:
-					args.unshift(FgBlue)
-					args.push(Reset)
-					break
-				case LogLevel.Debug:
-					args.unshift(FgCyan)
-					args.push(Reset)
-					break
-				case LogLevel.Trace:
-					args.unshift(FgMagenta)
-					args.push(Reset)
-					break
-			}
 		}
-
 		switch (level) {
 			case LogLevel.Error:
 				console.error(...args)
