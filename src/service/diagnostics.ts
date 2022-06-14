@@ -22,7 +22,7 @@ const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSens
 
 function createDiagnosticArray() {
 	const arr: vscode.Diagnostic[] = []
-	const MAXSZIE = 200
+	const MAXSZIE = 20
 	return new Proxy(arr, {
 		get(target, prop, ...rest) {
 			switch (prop) {
@@ -213,7 +213,7 @@ function validateTwin({
 			}
 			case parser.NodeType.ArbitraryClassname: {
 				results = results.concat(
-					checkArbitraryClassname(item.target, document, offset, diagnosticOptions.emptyChecking),
+					checkArbitraryClassname(item.target, document, offset, diagnosticOptions.emptyChecking, state),
 				)
 				break
 			}
@@ -500,6 +500,7 @@ function checkArbitraryClassname(
 	document: TextDocument,
 	offset: number,
 	emptyChecking: boolean,
+	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
 	const prefix = item.prefix.value
@@ -517,7 +518,7 @@ function checkArbitraryClassname(
 		}
 	}
 
-	if (!arbitraryClassnames[prefix]) {
+	if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
 		const start = item.range[0]
 		const end = start + prefix.length
 		result.push({
