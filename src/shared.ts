@@ -1,6 +1,6 @@
 export const NAME = "Tailwind Twin IntelliSense"
 export const SECTION_ID = "tailwindcss"
-export const DIAGNOSTICS_ID = "tw"
+export const DIAGNOSTICS_ID = "twin"
 
 export interface Settings {
 	enabled: boolean

@@ -182,12 +182,12 @@ export const arbitraryClassnames: Record<string, string[]> = {
 }
 
 export const deprecated = new Map<string, string>([
-	["content", "The utility 'content' is deprecated."],
-	["overflow-ellipsis", "The utility 'overflow-ellipsis' is deprecated, replace it with 'text-ellipsis'."],
-	["flex-grow", "The utility 'flex-grow' is deprecated, replace it with 'grow'."],
-	["flex-grow-0", "The utility 'flex-grow-0' is deprecated, replace it with 'grow-0'."],
-	["flex-shrink", "The utility 'flex-shrink' is deprecated, replace it with 'shrink'."],
-	["flex-shrink-0", "The utility 'flex-shrink-0' is deprecated, replace it with 'shrink-0'."],
-	["decoration-slice", "The utility 'decoration-slice' is deprecated, replace it with 'box-decoration-slice'."],
-	["decoration-clone", "The utility 'decoration-clone' is deprecated, replace it with 'box-decoration-clone'."],
+	["content", "The utility 'content' is now deprecated, remove it."],
+	["overflow-ellipsis", "The utility 'overflow-ellipsis' is now deprecated, replace it with 'text-ellipsis'."],
+	["flex-grow", "The utility 'flex-grow' is now deprecated, replace it with 'grow'."],
+	["flex-grow-0", "The utility 'flex-grow-0' is now deprecated, replace it with 'grow-0'."],
+	["flex-shrink", "The utility 'flex-shrink' is now deprecated, replace it with 'shrink'."],
+	["flex-shrink-0", "The utility 'flex-shrink-0' is now deprecated, replace it with 'shrink-0'."],
+	["decoration-slice", "The utility 'decoration-slice' is now deprecated, replace it with 'box-decoration-slice'."],
+	["decoration-clone", "The utility 'decoration-clone' is now deprecated, replace it with 'box-decoration-clone'."],
 ])

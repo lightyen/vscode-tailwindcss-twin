@@ -11,10 +11,7 @@ import { TailwindLoader } from "./tailwind"
 import { arbitraryClassnames, deprecated } from "./tailwind/data"
 
 export interface IDiagnostic extends vscode.Diagnostic {
-	data?: {
-		text: string
-		newText: string
-	}
+	codeActions?: vscode.CodeAction[]
 }
 
 const cssProperties = cssDataManager.getProperties().map(c => c.name)
@@ -23,18 +20,30 @@ const csspropSearcher = new Fuse(cssProperties, { includeScore: true, isCaseSens
 function createDiagnosticArray() {
 	const arr: vscode.Diagnostic[] = []
 	const MAXSZIE = 20
+	let errors = 0
+	let warnings = 0
+	let others = 0
 	return new Proxy(arr, {
 		get(target, prop, ...rest) {
 			switch (prop) {
 				case "push":
 					return function (item: vscode.Diagnostic) {
-						if (item.severity === vscode.DiagnosticSeverity.Warning && target.length >= 2 * MAXSZIE) {
-							return 0
+						switch (item.severity) {
+							case vscode.DiagnosticSeverity.Error:
+								if (errors >= MAXSZIE) return 0
+								errors++
+								break
+							case vscode.DiagnosticSeverity.Warning:
+								if (warnings >= MAXSZIE << 1) return 0
+								warnings++
+								break
+							default:
+								if (others >= MAXSZIE << 2) return 0
+								others++
+								break
 						}
-						if (target.length >= MAXSZIE) {
-							return 0
-						}
-						return target.push(item)
+						target.push(item)
+						return 1
 					}
 				default:
 					return Reflect.get(target, prop, ...rest)
@@ -113,16 +122,20 @@ export function validate(
 					}
 				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
 					const result = parser.spread(value, { separator: state.separator })
-					validateTwin({
-						document,
-						text: value,
-						offset: start,
-						kind,
-						diagnosticOptions: options.diagnostics,
-						state,
-						diagnostics,
-						...result,
-					})
+					if (
+						!validateTwin({
+							document,
+							text: value,
+							offset: start,
+							kind,
+							diagnosticOptions: options.diagnostics,
+							state,
+							diagnostics,
+							...result,
+						})
+					) {
+						return diagnostics
+					}
 				}
 			}
 			return diagnostics
@@ -155,7 +168,7 @@ function validateTwin({
 	state: TailwindLoader
 	diagnosticOptions: ServiceOptions["diagnostics"]
 	diagnostics: IDiagnostic[]
-} & ReturnType<typeof parser.spread>): void {
+} & ReturnType<typeof parser.spread>): boolean {
 	for (const e of notClosed) {
 		if (
 			!diagnostics.push({
@@ -168,13 +181,16 @@ function validateTwin({
 				severity: vscode.DiagnosticSeverity.Error,
 			})
 		) {
-			return
+			return false
 		}
 	}
 
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i]
-		let results = checkVariants(item, document, offset, diagnosticOptions.emptyChecking, state)
+		if (!checkVariants(diagnostics, item, document, offset, diagnosticOptions.emptyChecking, state)) {
+			return false
+		}
+
 		switch (item.target.type) {
 			case parser.NodeType.ClassName: {
 				const ans = checkTwinClassName(item.target, document, text, offset, state)
@@ -192,14 +208,16 @@ function validateTwin({
 						})
 					}
 				}
-				results = results.concat(ans)
+				for (let i = 0; i < ans.length; i++) {
+					if (!diagnostics.push(ans[i])) return false
+				}
 				break
 			}
 			case parser.NodeType.ShortCss: {
 				const ans = checkShortCss(item.target, document, offset, diagnosticOptions.emptyChecking)
 				if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
 					ans.push({
-						message: `Short css is deprecated, replace it with '[${item.target.prefix.value}: ${item.target.expr.value}]'.`,
+						message: `Short css is now deprecated, replace it with '[${item.target.prefix.value}: ${item.target.expr.value}]'.`,
 						severity: vscode.DiagnosticSeverity.Hint,
 						range: new vscode.Range(
 							document.positionAt(offset + item.target.range[0]),
@@ -208,25 +226,31 @@ function validateTwin({
 						tags: [vscode.DiagnosticTag.Deprecated],
 					})
 				}
-				results = results.concat(ans)
+				for (let i = 0; i < ans.length; i++) {
+					if (!diagnostics.push(ans[i])) return false
+				}
 				break
 			}
 			case parser.NodeType.ArbitraryClassname: {
-				results = results.concat(
-					checkArbitraryClassname(item.target, document, offset, diagnosticOptions.emptyChecking, state),
+				const ans = checkArbitraryClassname(
+					item.target,
+					document,
+					offset,
+					diagnosticOptions.emptyChecking,
+					state,
 				)
+				for (let i = 0; i < ans.length; i++) {
+					if (!diagnostics.push(ans[i])) return false
+				}
 				break
 			}
 			case parser.NodeType.ArbitraryProperty: {
-				results = results.concat(
-					checkArbitraryProperty(item.target, document, offset, diagnosticOptions.emptyChecking),
-				)
+				const ans = checkArbitraryProperty(item.target, document, offset, diagnosticOptions.emptyChecking)
+				for (let i = 0; i < ans.length; i++) {
+					if (!diagnostics.push(ans[i])) return false
+				}
 				break
 			}
-		}
-
-		for (let k = 0; k < results.length; k++) {
-			if (!diagnostics.push(results[k])) return
 		}
 	}
 
@@ -360,7 +384,7 @@ function validateTwin({
 						severity: vscode.DiagnosticSeverity.Warning,
 					})
 				) {
-					return
+					return false
 				}
 			}
 		}
@@ -372,7 +396,7 @@ function validateTwin({
 			if (
 				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
-					message: `forgot something?`,
+					message: `Empty block.`,
 					range: new vscode.Range(
 						document.positionAt(offset + item.range[1]),
 						document.positionAt(offset + item.range[1] + 1),
@@ -380,7 +404,7 @@ function validateTwin({
 					severity: vscode.DiagnosticSeverity.Warning,
 				})
 			) {
-				return
+				return false
 			}
 		}
 	}
@@ -391,7 +415,7 @@ function validateTwin({
 			if (
 				!diagnostics.push({
 					source: DIAGNOSTICS_ID,
-					message: `forgot something?`,
+					message: `Empty block statement.`,
 					range: new vscode.Range(
 						document.positionAt(offset + item.range[0]),
 						document.positionAt(offset + item.range[1]),
@@ -399,32 +423,38 @@ function validateTwin({
 					severity: vscode.DiagnosticSeverity.Warning,
 				})
 			) {
-				return
+				return false
 			}
 		}
 	}
+
+	return true
 }
 
 function checkVariants(
+	diagnostics: IDiagnostic[],
 	item: parser.SpreadDescription,
 	document: TextDocument,
 	offset: number,
 	emptyChecking: boolean,
 	state: TailwindLoader,
 ) {
-	const result: IDiagnostic[] = []
 	for (const node of item.variants) {
 		if (node.type === parser.NodeType.ArbitrarySelector || node.type === parser.NodeType.ArbitraryVariant) {
 			if (emptyChecking && node.selector.value.trim() === "") {
-				result.push({
-					source: DIAGNOSTICS_ID,
-					message: `forgot something?`,
-					range: new vscode.Range(
-						document.positionAt(offset + node.selector.range[0] - 1),
-						document.positionAt(offset + node.selector.range[1] + 1),
-					),
-					severity: vscode.DiagnosticSeverity.Warning,
-				})
+				if (
+					!diagnostics.push({
+						source: DIAGNOSTICS_ID,
+						message: `Empty block statement.`,
+						range: new vscode.Range(
+							document.positionAt(offset + node.selector.range[0] - 1),
+							document.positionAt(offset + node.selector.range[1] + 1),
+						),
+						severity: vscode.DiagnosticSeverity.Warning,
+					})
+				) {
+					return false
+				}
 			}
 			continue
 		}
@@ -437,47 +467,56 @@ function checkVariants(
 		}
 		const ret = state.variants.search(variant)
 		const ans = ret?.[0]?.item
+		const range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))
+		const diagnostic: IDiagnostic = {
+			message: "",
+			source: DIAGNOSTICS_ID,
+			range,
+			severity: vscode.DiagnosticSeverity.Error,
+		}
 		if (ans) {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Unknown variant: ${variant}, did you mean '${ans}'?`,
-				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				data: { text: variant, newText: ans },
-				severity: vscode.DiagnosticSeverity.Error,
-			})
+			const action = new vscode.CodeAction(`Replace '${variant}' with '${ans}'`, vscode.CodeActionKind.QuickFix)
+			action.edit = new vscode.WorkspaceEdit()
+			action.edit.replace(document.uri, range, ans)
+			diagnostic.message = `'${variant}' is an unknown variant, did you mean '${ans}'?`
+			diagnostic.codeActions = [action]
 		} else {
-			result.push({
-				source: DIAGNOSTICS_ID,
-				message: `Unknown variant: ${variant}`,
-				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b)),
-				severity: vscode.DiagnosticSeverity.Error,
-			})
+			diagnostic.message = `'${variant}' is an unknown variant.`
+		}
+		if (!diagnostics.push(diagnostic)) {
+			return false
 		}
 	}
-	return result
+	return true
 }
 
 function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, emptyChecking: boolean) {
 	const result: IDiagnostic[] = []
 	const prop = item.prefix
-	const { value, range } = prop
-	const [start, end] = range
+	const {
+		value,
+		range: [start, end],
+	} = prop
 	if (value.startsWith("--")) return result
+	const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
 	const ret = csspropSearcher.search(parser.toKebab(value))
 	const score = ret?.[0]?.score
 	if (score == undefined) {
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: `The keyword '${value}' is unknown.`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			message: `'${value}' is unknown.`,
+			range,
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	} else if (score > 0) {
+		const action = new vscode.CodeAction(`Replace '${value}' with '${ret[0].item}'`, vscode.CodeActionKind.QuickFix)
+		action.edit = new vscode.WorkspaceEdit()
+		action.edit.replace(document.uri, range, ret[0].item)
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: `The keyword '${value}' is unknown, did you mean '${ret[0].item}'?`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			data: { text: value, newText: ret[0].item },
+			message: `'${value}' is unknown, did you mean '${ret[0].item}'?`,
+			range,
+			codeActions: [action],
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	}
@@ -521,10 +560,11 @@ function checkArbitraryClassname(
 	if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
 		const start = item.range[0]
 		const end = start + prefix.length
+		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: `The keyword '${prefix}' is unknown.`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			message: `'${prefix}' is an unknown value.`,
+			range,
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	} else {
@@ -572,21 +612,25 @@ function checkArbitraryProperty(
 	const start = item.decl.range[0] + item.decl.value.search(/\w/)
 	const end = start + prop.length
 	if (prop.startsWith("--")) return result
+	const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
 	const ret = csspropSearcher.search(prop)
 	const score = ret?.[0]?.score
 	if (score == undefined) {
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: `The keyword '${prop}' is unknown.`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+			message: `'${prop}' is an unknown value.`,
+			range,
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	} else if (score > 0) {
+		const action = new vscode.CodeAction(`Replace '${prop}' with '${ret[0].item}'`, vscode.CodeActionKind.QuickFix)
+		action.edit = new vscode.WorkspaceEdit()
+		action.edit.replace(document.uri, range, ret[0].item)
 		result.push({
 			source: DIAGNOSTICS_ID,
-			message: `The keyword '${prop}' is unknown, did you mean '${ret[0].item}'?`,
-			range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-			data: { text: prop, newText: ret[0].item },
+			message: `'${prop}' is an unknown value, did you mean '${ret[0].item}'?`,
+			range,
+			codeActions: [action],
 			severity: vscode.DiagnosticSeverity.Error,
 		})
 	}
@@ -606,6 +650,7 @@ function checkTwinClassName(
 		range: [start, end],
 	} = item
 	const value = text.slice(start, end)
+	const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
 	if (state.tw.renderDecls(value).decls.size === 0) {
 		const ret = guess(state, value)
 		if (ret.score === 0) {
@@ -614,7 +659,7 @@ function checkTwinClassName(
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message: `Invalid token '${value}', missing square brackets?`,
-						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						range,
 						severity: vscode.DiagnosticSeverity.Error,
 					})
 					break
@@ -622,34 +667,51 @@ function checkTwinClassName(
 					result.push({
 						source: DIAGNOSTICS_ID,
 						message: `Invalid token '${value}', missing separator?`,
-						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						range,
 						severity: vscode.DiagnosticSeverity.Error,
 					})
 					break
 				default:
 					result.push({
 						source: DIAGNOSTICS_ID,
-						message: `Unknown: ${value}`,
-						range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+						message: `'${value}' is an unknown value.`,
+						range,
 						severity: vscode.DiagnosticSeverity.Error,
 					})
 			}
 		} else if (ret.value) {
+			const action = new vscode.CodeAction(
+				`Replace '${value}' with '${ret.value}'`,
+				vscode.CodeActionKind.QuickFix,
+			)
+			action.edit = new vscode.WorkspaceEdit()
+			action.edit.replace(document.uri, range, ret.value)
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `Unknown: ${value}, did you mean ${ret.value}?`,
-				range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
-				data: { text: value, newText: ret.value },
+				message: `'${value}' is an unknown value, did you mean '${ret.value}'?`,
+				range,
+				codeActions: [action],
 				severity: vscode.DiagnosticSeverity.Error,
 			})
 		} else {
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `Unknown: ${value}`,
-				range: new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end)),
+				message: `'${value}' is an unknown value.`,
+				range,
 				severity: vscode.DiagnosticSeverity.Error,
 			})
 		}
+	}
+
+	// https://tailwindcss.com/docs/text-color#changing-the-opacity
+	if (result.length === 0 && state.isDeprecated(value)) {
+		result.push({
+			message: "",
+			severity: vscode.DiagnosticSeverity.Hint,
+			relatedInformation: [],
+			range,
+			tags: [vscode.DiagnosticTag.Deprecated],
+		})
 	}
 
 	return result

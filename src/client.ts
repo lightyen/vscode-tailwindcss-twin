@@ -53,7 +53,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 	const workspaceFolder = ws.uri
 	const serverSourceMapUri = Utils.joinPath(context.extensionUri, "dist", "extension.js.map")
 	const workspaceConfiguration = vscode.workspace.getConfiguration("", ws)
-	const collection = vscode.languages.createDiagnosticCollection("tw")
+	const diagnosticCollection = vscode.languages.createDiagnosticCollection("twin")
 	const services: Map<string, ReturnType<typeof createTailwindLanguageService>> = new Map()
 	const configFolders: Map<string, URI[]> = new Map()
 	let defaultServiceRunning = false
@@ -150,29 +150,17 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		}
 
 		const codeActionProvider: vscode.CodeActionProvider = {
-			provideCodeActions(document, range, context, token) {
-				if (!settings.enabled) return
-				const items = collection.get(document.uri)
-				if (!items) return
+			async provideCodeActions(document, range, context, token) {
 				const actions: vscode.CodeAction[] = []
-				for (let i = 0; i < items.length; i++) {
-					const diagnostic = items[i] as IDiagnostic
-					if (range.contains(diagnostic.range) && diagnostic.data) {
-						const d = items[i] as IDiagnostic
-						if (d.data) {
-							range.contains(d.range)
-							const { text, newText } = d.data
-							const a = new vscode.CodeAction(
-								`Replace '${text}' with '${newText}'`,
-								vscode.CodeActionKind.QuickFix,
-							)
-							const edit = new vscode.WorkspaceEdit()
-							edit.replace(document.uri, d.range, newText)
-							a.edit = edit
-							actions.push(a)
-						}
+				if (!settings.enabled) actions
+				const diagnostics = diagnosticCollection.get(document.uri)
+				if (!diagnostics) return actions
+				diagnostics.forEach(item => {
+					const diagnostic = item as IDiagnostic
+					if (range.contains(diagnostic.range)) {
+						if (diagnostic.codeActions) actions.push(...diagnostic.codeActions)
 					}
-				}
+				})
 				return actions
 			},
 		}
@@ -197,19 +185,19 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 			vscode.languages.registerHoverProvider(documentSelector, hoverProvider),
 			vscode.languages.registerCodeActionsProvider(documentSelector, codeActionProvider),
 			vscode.languages.registerColorProvider(documentSelector, documentColorProvider),
-			vscode.window.onDidChangeActiveTextEditor(editor => {
+			vscode.window.onDidChangeActiveTextEditor(async editor => {
 				activeTextEditor = editor
 				if (activeTextEditor?.document.uri.scheme === "output") return
 				console.trace("onDidChangeActiveTextEditor()")
 				if (editor === activeTextEditor) {
-					render()
+					await render()
 				}
 			}),
-			vscode.workspace.onDidChangeTextDocument(event => {
+			vscode.workspace.onDidChangeTextDocument(async event => {
 				if (event.document.uri.scheme === "output") return
 				console.trace("onDidChangeTextDocument()")
 				if (event.document === activeTextEditor?.document) {
-					render()
+					await render()
 				}
 			}),
 			vscode.workspace.onDidChangeConfiguration(async event => {
@@ -218,7 +206,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 				const extSettings = workspaceConfiguration.get(SECTION_ID) as Settings
 
 				let needToUpdate = false
-				let needToRenderColors = false
+				let needToRerenderColors = false
 				let needToDiagnostics = false
 
 				if (settings.logLevel !== extSettings.logLevel) {
@@ -232,7 +220,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 					settings.otherLanguages = extSettings.otherLanguages
 					console.info(`otherLanguages = ${settings.otherLanguages.join(", ")}`)
 					configFolders.clear()
-					collection.clear()
+					diagnosticCollection.clear()
 					services.clear()
 					defaultServiceRunning = false
 					needToUpdate = true
@@ -287,7 +275,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 				if (settings.colorDecorators !== extSettings.colorDecorators) {
 					settings.colorDecorators = extSettings.colorDecorators
 					needToUpdate = true
-					needToRenderColors = true
+					needToRerenderColors = true
 					console.info(`codeDecorators = ${settings.colorDecorators}`)
 				}
 
@@ -325,7 +313,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 					}
 				}
 
-				if (needToRenderColors) {
+				if (needToRerenderColors) {
 					await Promise.all(
 						vscode.workspace.textDocuments.map(document => {
 							if (!settings.colorDecorators) {
@@ -387,49 +375,39 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		return tabSize
 	}
 
-	async function updateDiagnostics(
-		document: vscode.TextDocument,
-		diagnostics: Promise<vscode.Diagnostic[] | undefined>,
-	) {
-		collection.delete(document.uri)
-		const awaitedDiagnostics = await diagnostics
-		if (awaitedDiagnostics) collection.set(document.uri, awaitedDiagnostics)
-	}
-
-	function first_render() {
+	async function first_render() {
 		vscode.workspace.textDocuments.forEach(async document => {
 			const srv = matchService(document.uri, services)
 			if (!srv) return
 			const editor = vscode.window.activeTextEditor
 			if (!editor) return
 			if (editor.document !== document) return
-			collection.clear()
+			diagnosticCollection.clear()
 			if (!settings.enabled) return
 			if (documentSelector.every(p => p.language !== document.languageId)) return
 			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
+			diagnosticCollection.delete(document.uri)
 			if (settings.diagnostics.enabled) {
-				updateDiagnostics(document, srv.provideDiagnostics(document))
-			} else {
-				collection.delete(document.uri)
+				const diagnostics = await srv.provideDiagnostics(document)
+				diagnosticCollection.set(document.uri, diagnostics)
 			}
 		})
 	}
 
-	function render(editor = vscode.window.activeTextEditor) {
+	async function render(editor = vscode.window.activeTextEditor) {
 		if (!editor) return
 		const document = editor.document
-		if (document.uri.scheme === "output") return
 		if (document) {
-			collection.clear()
+			if (document.uri.scheme === "output") return
+			diagnosticCollection.clear()
 			const srv = matchService(document.uri, services)
 			if (!srv) return
 			if (!settings.enabled) return
 			if (documentSelector.every(s => s.language !== document.languageId)) return
 			if (settings.colorDecorators === "on") srv.colorProvider.render(editor)
+			diagnosticCollection.delete(document.uri)
 			if (settings.diagnostics.enabled) {
-				updateDiagnostics(document, srv.provideDiagnostics(document))
-			} else {
-				collection.delete(document.uri)
+				diagnosticCollection.set(document.uri, await srv.provideDiagnostics(document))
 			}
 		}
 	}
