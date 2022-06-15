@@ -557,7 +557,37 @@ function checkArbitraryClassname(
 		}
 	}
 
-	if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
+	if (prefix.endsWith("/")) {
+		const value = prefix.slice(0, -1)
+		const [start, end] = item.prefix.range
+		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end - 1))
+		const ret = guess(state, value)
+		if (ret.score === 0) {
+			return result
+		}
+		if (ret.value) {
+			const action = new vscode.CodeAction(
+				`Replace '${value}' with '${ret.value}'`,
+				vscode.CodeActionKind.QuickFix,
+			)
+			action.edit = new vscode.WorkspaceEdit()
+			action.edit.replace(document.uri, range, ret.value)
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `'${value}' is an unknown value, did you mean '${ret.value}'?`,
+				range,
+				codeActions: [action],
+				severity: vscode.DiagnosticSeverity.Error,
+			})
+		} else {
+			result.push({
+				source: DIAGNOSTICS_ID,
+				message: `'${value}' is an unknown value.`,
+				range,
+				severity: vscode.DiagnosticSeverity.Error,
+			})
+		}
+	} else if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
 		const start = item.range[0]
 		const end = start + prefix.length
 		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
