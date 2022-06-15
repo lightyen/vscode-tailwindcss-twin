@@ -1,23 +1,8 @@
 import type * as postcss from "postcss"
-import type parser from "postcss-selector-parser"
 
-export interface selectorParser {
-	(): parser.Processor<never>
-	<Transform>(processor: parser.AsyncProcessor<Transform>): parser.Processor<Transform, never>
-	(processor: parser.AsyncProcessor<void>): parser.Processor<never, never>
-	<Transform>(processor: parser.SyncProcessor<Transform>): parser.Processor<Transform>
-	(processor: parser.SyncProcessor<void>): parser.Processor<never>
-	<Transform>(
-		processor?: parser.SyncProcessor<Transform> | parser.AsyncProcessor<Transform>,
-	): parser.Processor<Transform>
-	attribute: typeof parser.attribute
-	pseudo: typeof parser.pseudo
-}
-
-export interface ContextModule extends Tailwind.pluginUtils {
+export interface ContextModule {
 	plugin: Tailwind.createPlugin
 	postcss: postcss.Postcss
-	prefixSelector: Tailwind.prefixSelector
 }
 
 export function twin(context: ContextModule): Tailwind.ConfigJS {

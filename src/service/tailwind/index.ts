@@ -3,8 +3,6 @@ import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
 import postcss from "postcss"
 import defaultConfig from "tailwindcss/defaultConfig"
-import { updateAllClasses } from "tailwindcss/lib/util/pluginUtils"
-import prefixSelector from "tailwindcss/lib/util/prefixSelector"
 import plugin from "tailwindcss/plugin"
 import resolveConfig from "tailwindcss/resolveConfig"
 import { CompletionItemKind } from "vscode"
@@ -60,8 +58,6 @@ export function createTailwindLoader(
 	const context: ContextModule = {
 		plugin,
 		postcss,
-		prefixSelector,
-		updateAllClasses,
 	}
 
 	let config: Tailwind.ResolvedConfigJS & { extrators?: Extractor[] }
