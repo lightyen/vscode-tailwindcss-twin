@@ -11,8 +11,7 @@
         { "include": "#arbitrary-classname" },
         { "include": "#arbitrary-opacity" },
         { "include": "#group" },
-        { "include": "#classname" },
-        { "include": "#illegal" }
+        { "include": "#classname" }
       ]
     },
     "line-comment": {
@@ -82,14 +81,15 @@
       }
     },
     "arbitrary-classname": {
-      "name": "entity.name.variable.css-value.twin",
-      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)(\\[)",
-      "end": "(\\])(\\/(?:\\d+|\\[\\s*\\d*\\.?\\d*\\s*\\]))?(!?)",
+      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)+)\\[",
+      "end": "\\](?:(\\/\\d+)|\\/\\[(\\s*\\d*\\.?\\d*\\s*)\\])?(!?)",
       "beginCaptures": {
         "1": { "name": "support.function.important-bang.before.twin" },
         "2": { "name": "support.type.arbitrary-style.prop.twin" }
       },
       "endCaptures": {
+        "1": { "name": "support.constant.classname.twin" },
+        "2": { "patterns": [{ "include": "source.css.scss.tw#property_values" }] },
         "3": { "name": "support.function.important-bang.after.twin" }
       },
       "patterns": [
@@ -125,26 +125,23 @@
       "patterns": [{ "include": "#track-list" }, { "include": "source.css.scss.tw#property_values" }]
     },
     "group": {
-      "begin": "(!?)\\(",
-      "end": "\\)(!?)",
-      "name": "meta.block.variant-group.twin",
+      "begin": "(!?)(\\()",
+      "end": "(\\))(!?)",
       "beginCaptures": {
-        "1": { "name": "support.function.important-bang.before.twin" }
+        "1": { "name": "support.function.important-bang.before.twin" },
+        "2": { "name": "punctuation.paren.open" }
       },
       "endCaptures": {
-        "1": { "name": "support.function.important-bang.after.twin" }
+        "1": { "name": "punctuation.paren.close" },
+        "2": { "name": "support.function.important-bang.after.twin" }
       },
-      "patterns": [{ "include": "$self" }, { "include": "#expression" }]
+      "patterns": [{ "include": "#expression" }]
     },
     "track-list": {
       "contentName": "string.property-value.css",
       "begin": "\\[",
       "end": "\\]",
       "patterns": [{ "include": "#track-list" }]
-    },
-    "illegal": {
-      "name": "invalid.value.twin",
-      "match": "(\\S+?)(?!(?://|\"|'|`))"
     }
   }
 }
