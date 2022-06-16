@@ -66,7 +66,7 @@ Object {
           "value": " 3rem ",
         },
         "important": true,
-        "prop": Object {
+        "prefix": Object {
           "range": Array [
             12,
             19,
@@ -147,7 +147,18 @@ Object {
             67,
             107,
           ],
-          "type": "ArbitraryVariant",
+          "selector": Object {
+            "range": Array [
+              67,
+              107,
+            ],
+            "type": "CssSelector",
+            "value": "
+			.group:hover,
+			// .group:focus]
+		",
+          },
+          "type": "ArbitrarySelector",
           "value": "
 			.group:hover,
 			// .group:focus]
@@ -205,13 +216,13 @@ Object {
         },
         "expr": undefined,
         "important": false,
-        "prop": Object {
+        "prefix": Object {
           "range": Array [
             195,
-            207,
+            206,
           ],
           "type": "Identifier",
-          "value": "bg-gray-500/",
+          "value": "bg-gray-500",
         },
         "range": Array [
           195,
@@ -236,7 +247,7 @@ Object {
           "value": "url(http://example)",
         },
         "important": false,
-        "prop": Object {
+        "prefix": Object {
           "range": Array [
             214,
             217,
@@ -282,7 +293,7 @@ Object {
           "value": "rgba(3 3 3 / .8)",
         },
         "important": false,
-        "prop": Object {
+        "prefix": Object {
           "range": Array [
             241,
             246,
