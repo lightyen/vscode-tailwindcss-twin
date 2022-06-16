@@ -324,6 +324,38 @@ function utilitiesCompletion(
 	const nextNotSpace = next !== "" && next.match(/[\s)]/) == null
 
 	if (suggestion.target) {
+		// NOTE: complete color opacities
+		if (suggestion.target.type === parser.NodeType.ClassName) {
+			// eslint-disable-next-line no-inner-declarations
+			function formatValue(label: string) {
+				const reg = /([0-9]+)/
+				const match = label.match(reg)
+				if (!match) return label
+				const val = Number(match[1])
+				if (Number.isNaN(val)) return label
+				return Number.isNaN(Number(match[1])) ? "_" : "@" + val.toFixed(0).padStart(5, "0")
+			}
+
+			const slash = value.lastIndexOf("/")
+			let classname = value
+			if (slash !== -1) classname = value.slice(0, slash)
+			const p = state.tw.getPlugin(classname)
+			if (p && /Color|fill|stroke/.test(p.getName())) {
+				const key = p.getName().replace(/Color$/, "Opacity") as ("opacity" | `${string}Opacity`) &
+					keyof Tailwind.CorePluginFeatures
+				const src1 = /Color$/.test(p.getName()) ? Object.keys(state.config.theme[key] ?? {}) : []
+				const src2 = Object.keys(state.config.theme.opacity ?? {})
+				const opacities = new Set(src1.concat(src2))
+				classNameItems = classNameItems.concat(
+					...Array.from(opacities).map<ICompletionItem>(v => ({
+						label: classname + "/" + v,
+						sortText: "~" + classname + "/" + formatValue(v),
+						data: { type: "utility" },
+					})),
+				)
+			}
+		}
+
 		if (position > a && position < b) {
 			let shrinkB = b
 			if (
@@ -361,7 +393,6 @@ function utilitiesCompletion(
 			classNameItems.length = 0
 		}
 	}
-
 	return classNameItems
 }
 
