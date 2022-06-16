@@ -41,7 +41,7 @@ export default async function hover(
 				if (!selection) return undefined
 
 				const [start, end] = selection.target.range
-				let value = selection.value
+				const value = selection.value
 
 				const range = new vscode.Range(
 					document.positionAt(token.start + start),
@@ -213,7 +213,38 @@ export default async function hover(
 					}
 				}
 
-				let code = state.tw.renderClassname({
+				if (selection.target.type === parser.NodeType.ArbitraryClassname) {
+					const { prefix, expr, e } = selection.target
+					let classname = `${prefix.value}`
+					if (expr) {
+						classname += `[${expr?.value.trim()}]`
+					}
+					if (e) {
+						if (e.type === parser.NodeType.WithOpacity) {
+							classname += `/[${e.opacity.value.trim()}]`
+						} else {
+							classname += `/${e.value}`
+						}
+					}
+					const code = state.tw.renderClassname({
+						classname,
+						important: selection.important,
+						rootFontSize: options.rootFontSize,
+						colorHint: options.hoverColorHint,
+						tabSize,
+						arbitraryProperty: false,
+					})
+					const codes = new vscode.MarkdownString()
+					if (code) codes.appendCodeblock(code, "css")
+					if (!header.value && !codes.value) return undefined
+
+					return {
+						range,
+						contents: [header, codes],
+					}
+				}
+
+				const code = state.tw.renderClassname({
 					classname: value,
 					important: selection.important,
 					rootFontSize: options.rootFontSize,
@@ -221,22 +252,6 @@ export default async function hover(
 					tabSize,
 					arbitraryProperty: false,
 				})
-
-				if (!code) {
-					const i = value.lastIndexOf("/")
-					const n = value.charCodeAt(i + 1)
-					if (i !== -1 && (n === 91 || (n >= 48 && n <= 57))) {
-						value = value.slice(0, i)
-					}
-					code = state.tw.renderClassname({
-						classname: value,
-						important: selection.important,
-						rootFontSize: options.rootFontSize,
-						colorHint: options.hoverColorHint,
-						tabSize,
-					})
-				}
-
 				const codes = new vscode.MarkdownString()
 				if (code) codes.appendCodeblock(code, "css")
 

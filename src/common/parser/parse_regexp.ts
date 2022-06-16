@@ -340,10 +340,11 @@ function parseExpression({
 				exclamationLeft = true
 			}
 
+			const prefix_start = exclamationLeft ? start + 1 : start
 			const prefix: nodes.Identifier = {
 				type: nodes.NodeType.Identifier,
-				range: [exclamationLeft ? start + 1 : start, start + prefixLeftSquareBracket.length],
-				value: text.slice(exclamationLeft ? start + 1 : start, start + prefixLeftSquareBracket.length),
+				range: [prefix_start, prefix_start + prefixLeftSquareBracket.length],
+				value: text.slice(prefix_start, prefix_start + prefixLeftSquareBracket.length),
 			}
 
 			const ar_rb = findRightBracket({ text, start: regexp.lastIndex - 1, end, brackets: [91, 93] })
@@ -368,8 +369,8 @@ function parseExpression({
 				}
 
 				if (slash) {
-					// text-sss/[
-					prefix.value.slice(0, -1)
+					// text-color/[
+					prefix.value = prefix.value.slice(0, -1)
 					prefix.range[1] = prefix.range[1] - 1
 					const node: nodes.ArbitraryClassname = {
 						type: nodes.NodeType.ArbitraryClassname,
@@ -467,7 +468,7 @@ function parseExpression({
 				if (exclamationRight) regexp.lastIndex += 1
 				const shortcss: nodes.ShortCss = {
 					type: nodes.NodeType.ShortCss,
-					prefix: prefix,
+					prefix,
 					expr,
 					important: exclamationLeft || exclamationRight,
 					range: [start, exclamationRight ? regexp.lastIndex - 1 : regexp.lastIndex],
@@ -528,14 +529,17 @@ function parseExpression({
 							}
 						}
 
+						let b = k
+						if (text.charCodeAt(k - 1) === 33) {
+							exclamationRight = true
+							b--
+						}
 						e = {
 							type: nodes.NodeType.EndOpacity,
-							range: [regexp.lastIndex, k],
-							value: text.slice(regexp.lastIndex, k),
+							range: [regexp.lastIndex, b],
+							value: text.slice(regexp.lastIndex, b),
 						}
-
-						if (text.charCodeAt(k - 1) === 33) exclamationRight = true
-						regexp.lastIndex = k + 1
+						regexp.lastIndex = k
 					}
 				} else if (text.charCodeAt(regexp.lastIndex) === 33) {
 					exclamationRight = true
@@ -566,6 +570,11 @@ function parseExpression({
 				e,
 				closed: true,
 				range: [start, exclamationRight ? regexp.lastIndex - 1 : regexp.lastIndex],
+			}
+
+			if (slash) {
+				prefix.value = prefix.value.slice(0, -1)
+				prefix.range[1] = prefix.range[1] - 1
 			}
 			return { expr: node, lastIndex: regexp.lastIndex }
 		}

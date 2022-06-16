@@ -100,7 +100,6 @@
       ]
     },
     "arbitrary-opacity": {
-      "contentName": "support.type.arbitrary-style.endOpacity.twin",
       "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
@@ -109,7 +108,8 @@
       },
       "endCaptures": {
         "2": { "name": "support.function.important-bang.after.twin" }
-      }
+      },
+      "patterns": [{ "include": "source.css.scss.tw#property_values" }]
     },
     "short-css": {
       "contentName": "entity.name.variable.css-value.twin",

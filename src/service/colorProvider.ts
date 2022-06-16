@@ -104,19 +104,15 @@ export function createColorProvider(tw: TwContext, separator: string) {
 								}
 							}
 						} else if (item.target.type === parser.NodeType.ArbitraryClassname) {
-							const i = item.target.prefix.value.lastIndexOf("/")
-							if (i === -1) continue
-							let value = token.value.slice(...item.target.range)
-							const n = value.slice(i + 1)
-							if (Number.isNaN(+n)) {
-								if (n.charCodeAt(0) !== 91) continue
-							}
-							value = value.slice(0, i)
+							const [start] = item.target.range
+							const end = start + item.target.prefix.value.length
+							const value = token.value.slice(start, end)
 							const color = tw.getColorDesc(value)
 							if (test(color)) {
-								const start = offset + item.target.range[0]
-								const end = start + value.length
-								const range = new vscode.Range(document.positionAt(start), document.positionAt(end))
+								const range = new vscode.Range(
+									document.positionAt(offset + start),
+									document.positionAt(offset + end),
+								)
 								colors.push([color, range])
 							}
 						}

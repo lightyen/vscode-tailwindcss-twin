@@ -557,24 +557,23 @@ function checkArbitraryClassname(
 		}
 	}
 
-	if (prefix.endsWith("/")) {
-		const value = prefix.slice(0, -1)
+	if (item.expr == undefined) {
 		const [start, end] = item.prefix.range
 		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end - 1))
-		const ret = guess(state, value)
+		const ret = guess(state, prefix)
 		if (ret.score === 0) {
 			return result
 		}
 		if (ret.value) {
 			const action = new vscode.CodeAction(
-				`Replace '${value}' with '${ret.value}'`,
+				`Replace '${prefix}' with '${ret.value}'`,
 				vscode.CodeActionKind.QuickFix,
 			)
 			action.edit = new vscode.WorkspaceEdit()
 			action.edit.replace(document.uri, range, ret.value)
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `'${value}' is an unknown value, did you mean '${ret.value}'?`,
+				message: `'${prefix}' is an unknown value, did you mean '${ret.value}'?`,
 				range,
 				codeActions: [action],
 				severity: vscode.DiagnosticSeverity.Error,
@@ -582,7 +581,7 @@ function checkArbitraryClassname(
 		} else {
 			result.push({
 				source: DIAGNOSTICS_ID,
-				message: `'${value}' is an unknown value.`,
+				message: `'${prefix}' is an unknown value.`,
 				range,
 				severity: vscode.DiagnosticSeverity.Error,
 			})
