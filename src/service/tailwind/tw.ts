@@ -429,7 +429,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	}
 
 	function getColorDecls(classname: string): Map<string, string[]> | undefined {
-		const { decls } = renderDecls(classname)
+		const { decls, rules } = renderDecls(classname)
+		if (rules > 1) return undefined
 		for (const [prop] of decls) {
 			if (ColorProps.has(prop)) {
 				return decls
@@ -453,6 +454,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	function renderDecls(classname: string): {
 		decls: Map<string, string[]>
 		scopes: string[]
+		rules: number
 	} {
 		const cached = declsCache.get(classname)
 		if (cached) {
@@ -479,12 +481,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		// NOTE: handle special selector like: `.divide-red-500 > :not([hidden]) ~ :not([hidden])`
 		// kind: animate, space, divide, placeholder
 		const scopes: string[] = []
+		let rules = 0
 		root.walkRules(rule => {
+			rules++
 			const scope = rule.selector.replaceAll("." + escape(classname), "")
 			if (scope) scopes.push(scope)
 		})
 
-		const ret = { decls, scopes }
+		const ret = { decls, scopes, rules }
 		addCache(classname, ret)
 		return ret
 
