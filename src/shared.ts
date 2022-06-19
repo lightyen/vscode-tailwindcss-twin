@@ -18,6 +18,7 @@ export interface Settings {
 	documentColors: boolean
 	hoverColorHint: "none" | "hex" | "rgb" | "hsl"
 	otherLanguages: string[]
+	minimumContrastRatio: number
 }
 
 export interface ColorDecoration {

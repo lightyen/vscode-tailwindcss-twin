@@ -1,8 +1,9 @@
 import * as languageFacts from "vscode-css-languageservice/lib/esm/languageFacts/facts"
 import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
 import { Parser } from "vscode-css-languageservice/lib/esm/parser/cssParser"
-import { dlv } from "../../common/get_set"
-import parseThemeValue from "../../common/parseThemeValue"
+import { findRightBracket } from "../parser"
+import { resolveTheme } from "../parser/theme"
+// import parseThemeValue from "../../common/parseThemeValue"
 import { Context } from "./_base"
 
 export function parse(value: string): nodes.Expression | null {
@@ -57,35 +58,41 @@ export function getPrefixType(value: string): string | undefined {
 }
 
 /** @param value form: `color`, `[color]`, `[color]/opacity`, `color/[opacity]`, `[color]/[opacity]` */
+export function split(value: string): [color: string, opacity: string] {
+	const index = value.indexOf("[")
+	if (index === -1) {
+		const i = value.indexOf("/")
+		if (i === -1) return [value, ""]
+		return [value.slice(0, i), value.slice(i + 1)]
+	}
+	if (index !== 0) {
+		return [value.slice(0, index - 1), value.slice(index)]
+	}
+	const rb = findRightBracket({ text: value, start: index, brackets: [91, 93] })
+	if (rb == undefined) return [value, ""]
+	return [value.slice(index, rb + 1), value.slice(rb + 2)]
+}
+
+/** @param value form: `color`, `[color]`, `[color]/opacity`, `color/[opacity]`, `[color]/[opacity]` */
 export function isMatchColor(
 	value: string,
 	colors: Set<string>,
 	opacities: Set<string> | null,
 	arbitraryValue: (value: string) => boolean,
 ) {
-	const index = value.lastIndexOf("/")
-	const n = value.charCodeAt(index + 1)
-	if (index === -1 || Number.isNaN(n) || (n !== 91 && (n < 48 || n > 57))) {
-		return isColor(value)
-	}
-
-	if (value.indexOf("/") !== index) return false
-	const color = value.slice(0, index)
-	const opacity = value.slice(index + 1)
+	const [color, opacity] = split(value)
 	return isColor(color) && isOpacity(opacity)
 
 	function isColor(value: string) {
 		if (isArbitraryValue(value)) {
 			const val = value.slice(1, -1).trim()
-			const typ = getPrefixType(val)
-			if (typ === "color") return true
-			if (typ != undefined) return false
 			return arbitraryValue(val)
 		}
 		return colors.has(value)
 	}
 
 	function isOpacity(value: string) {
+		if (!value) return true
 		if (opacities == null) return false
 		if (isArbitraryValue(value)) return true
 		return opacities.has(value)
@@ -163,10 +170,6 @@ const cssDataTypeMap = {
 	fontFamily: mustFontFamily,
 }
 
-interface GetTheme {
-	(value: string): unknown
-}
-
 export function Is(context: Context, value: string, ...types: (keyof typeof cssDataTypeMap)[]) {
 	const regex = /^([\w-]+):/
 	const match = regex.exec(value)
@@ -175,20 +178,17 @@ export function Is(context: Context, value: string, ...types: (keyof typeof cssD
 		value = value.slice(regex.lastIndex)
 		prefix = match[1]
 	}
+	value = resolveTheme(context.config, value)
 	const expr = parse(value)
-	const getTheme = (value: string) => {
-		const result = parseThemeValue(unquote(value))
-		return dlv(context.config.theme, result.keys())
-	}
 	for (const t of types) {
-		if (cssDataTypeMap[t](expr, prefix, getTheme)) return true
+		if (cssDataTypeMap[t](expr, prefix)) return true
 	}
 	return false
 }
 
-function is(getTheme: GetTheme, expr: nodes.Node | null, ...types: (keyof typeof cssDataTypeMap)[]) {
+function is(expr: nodes.Node | null, ...types: (keyof typeof cssDataTypeMap)[]) {
 	for (const t of types) {
-		if (cssDataTypeMap[t](expr, "", getTheme)) return true
+		if (cssDataTypeMap[t](expr, "")) return true
 	}
 	return false
 }
@@ -231,15 +231,7 @@ function getFirstOneIdentifier(expr: nodes.Node | null) {
 	return null
 }
 
-function unquote(value: string) {
-	if (value.length < 2) return value
-	const quote = value[0]
-	if (quote !== value[value.length - 1]) return value
-	if (quote != '"' && quote != "'") return value
-	return value.slice(1, -1)
-}
-
-function isColor(node: nodes.Node, getTheme: GetTheme): boolean {
+function isColor(node: nodes.Node): boolean {
 	if (isIdentifier(node)) {
 		const color = node.getText().toLowerCase()
 		if (color in languageFacts.colors) return true
@@ -266,11 +258,6 @@ function isColor(node: nodes.Node, getTheme: GetTheme): boolean {
 				}
 				if (args.length < 3) return true
 				return true
-			} else if (fnName === "theme") {
-				const firstArg = node.getArguments().getChild(0)
-				if (!firstArg) return false
-				const value = `${getTheme(firstArg.getText())}`
-				return mustColor(parse(value), "", getTheme)
 			}
 		}
 		return false
@@ -278,11 +265,11 @@ function isColor(node: nodes.Node, getTheme: GetTheme): boolean {
 	return false
 }
 
-export function mustEmpty(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustEmpty(expr: nodes.Node | null, prefix: string) {
 	return expr == null
 }
 
-export function mustBackgroundImage(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustBackgroundImage(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "url" || prefix === "image") return true
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
@@ -291,7 +278,7 @@ export function mustBackgroundImage(expr: nodes.Node | null, prefix: string, get
 	return false
 }
 
-export function mustBackgroundPosition(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustBackgroundPosition(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "position") return true
 	if (prefix || expr == null) return false
 	let hasKeyword = false
@@ -316,7 +303,7 @@ export function mustBackgroundPosition(expr: nodes.Node | null, prefix: string, 
 	return valid && hasKeyword
 }
 
-export function mustBackgroundSize(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustBackgroundSize(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "length") return true // bad design
 	if (prefix || expr == null) return false
 	let hasKeyword = false
@@ -341,36 +328,22 @@ export function mustBackgroundSize(expr: nodes.Node | null, prefix: string, getT
 	return valid && hasKeyword
 }
 
-export function mustColor(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustColor(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "color") return true
 	if (prefix || expr == null) return false
 	if (expr.getChildren().length !== 1) return false
 	const first = getDeepFirstChild(expr)
-	return isColor(first, getTheme)
+	return isColor(first)
 }
 
-export function mustShadow(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustShadow(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "shadow") return true
 	if (prefix || expr == null) return false
 	if (expr.getChildren().length > 1) return true
-	const node = getDeepFirstChild(expr)
-	if (isFunction(node)) {
-		const fnName: string = node.getName()
-		if (fnName) {
-			if (fnName === "theme") {
-				const firstArg = node.getArguments().getChild(0)
-				if (!firstArg) return false
-				const themeValue = getTheme(firstArg.getText())
-				if (!themeValue) return false
-				if (typeof themeValue === "string") return !mustColor(parse(themeValue), "", getTheme)
-				return false
-			}
-		}
-	}
 	return false
 }
 
-export function mustFontFamily(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustFontFamily(expr: nodes.Node | null, prefix: string) {
 	if (prefix || expr == null) return false
 	return expr.getChildren().every(node => {
 		node = getDeepFirstChild(node)
@@ -378,13 +351,13 @@ export function mustFontFamily(expr: nodes.Node | null, prefix: string, getTheme
 	})
 }
 
-export function mustUrl(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustUrl(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "url") return true
 	if (prefix || expr == null) return false
 	return getFirstOne(expr, nodes.NodeType.URILiteral) != null
 }
 
-export function mustVar(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustVar(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "any") return true
 	if (prefix || expr == null) return false
 	const node = getFirstOne(expr, nodes.NodeType.Function)
@@ -393,7 +366,7 @@ export function mustVar(expr: nodes.Node | null, prefix: string, getTheme: GetTh
 	return false
 }
 
-export function mustRelativeSize(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustRelativeSize(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "relative-size") return true
 	if (prefix || expr == null) return false
 	const node = getFirstOneIdentifier(expr)
@@ -401,7 +374,7 @@ export function mustRelativeSize(expr: nodes.Node | null, prefix: string, getThe
 	return relativeSizeKeywords.has(node.getText())
 }
 
-export function mustAbsoluteSize(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustAbsoluteSize(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "absolute-size") return true
 	if (prefix || expr == null) return false
 	const node = getFirstOneIdentifier(expr)
@@ -409,27 +382,27 @@ export function mustAbsoluteSize(expr: nodes.Node | null, prefix: string, getThe
 	return absoluteSizeKeywords.has(node.getText())
 }
 
-export function mustLineWidth(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustLineWidth(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "line-width") return true
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
 	return lineWidth.has(node.getText())
 }
 
-export function mustNone(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustNone(expr: nodes.Node | null, prefix: string) {
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
 	return "none" === node.getText()
 }
 
-export function mustSize(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustSize(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "size") return true
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
 	return sizeKeywords.has(node.getText())
 }
 
-export function mustLength(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustLength(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "length") return true
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
@@ -439,7 +412,7 @@ export function mustLength(expr: nodes.Node | null, prefix: string, getTheme: Ge
 	return lengthUnits.has(unit)
 }
 
-export function mustPercentage(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustPercentage(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "percentage") return true
 	if (prefix || expr == null) return false
 	const node = getDeepFirstChild(expr)
@@ -449,7 +422,7 @@ export function mustPercentage(expr: nodes.Node | null, prefix: string, getTheme
 	return percentageUnits.has(unit)
 }
 
-export function mustNumber(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustNumber(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "number") return true
 	if (prefix || expr == null) return false
 	const node = getFirstOneNumericValue(expr)
@@ -467,34 +440,30 @@ export function IsFlex(context: Context, value: string) {
 		prefix = match[1]
 	}
 	const expr = parse(value)
-	const getTheme = (value: string) => {
-		const result = parseThemeValue(unquote(value))
-		return dlv(context.config.theme, result.keys())
-	}
-	return mustFlex(expr, prefix, getTheme)
+	return mustFlex(expr, prefix)
 }
 
-export function mustFlex(expr: nodes.Node | null, prefix: string, getTheme: GetTheme) {
+export function mustFlex(expr: nodes.Node | null, prefix: string) {
 	if (prefix === "flex") return true
 	if (prefix || expr == null) return false
 	const len = expr.getChildren().length
 	if (len === 1) {
 		// flex-basis | flex-grow
-		if (!is(getTheme, expr.getChild(0), "length", "percentage", "size", "number")) return false
+		if (!is(expr.getChild(0), "length", "percentage", "size", "number")) return false
 		return true
 	} else if (len === 2) {
 		// flex-grow
-		if (!is(getTheme, expr.getChild(0), "number")) return false
+		if (!is(expr.getChild(0), "number")) return false
 		// flex-basis | flex-shrink
-		if (!is(getTheme, expr.getChild(1), "length", "percentage", "size", "number")) return false
+		if (!is(expr.getChild(1), "length", "percentage", "size", "number")) return false
 		return true
 	} else if (len === 3) {
 		// flex-grow
-		if (!is(getTheme, expr.getChild(0), "number")) return false
+		if (!is(expr.getChild(0), "number")) return false
 		// flex-shrink
-		if (!is(getTheme, expr.getChild(1), "number")) return false
+		if (!is(expr.getChild(1), "number")) return false
 		// flex-basis
-		if (!is(getTheme, expr.getChild(2), "length", "percentage", "size")) return false
+		if (!is(expr.getChild(2), "length", "percentage", "size")) return false
 		return true
 	}
 	return false

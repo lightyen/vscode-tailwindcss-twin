@@ -1,7 +1,6 @@
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
-import parseThemeValue from "@/parseThemeValue"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import vscode from "vscode"
@@ -76,7 +75,12 @@ export function validate(
 			for (const token of tokens) {
 				const { kind, start, end, value } = token
 				if (kind === ExtractedTokenKind.TwinTheme) {
-					const result = parseThemeValue(value)
+					let path = value
+					try {
+						const result = parser.splitAlpha(value)
+						path = result[0]
+					} catch {}
+					const result = parser.parseThemeValue(path)
 					for (const err of result.errors) {
 						if (
 							!diagnostics.push({

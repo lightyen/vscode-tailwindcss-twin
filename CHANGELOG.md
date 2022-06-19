@@ -6,8 +6,9 @@
 - Support all the syntaxes of **arbitrary values**, like: `name-[*]`, `name-[*]/[opacity]`, `name-[*]:`, `[name: *]`, `[&.foo]:`
 - Deprecate **short css** feature
 - Deprecate all of the **opacity** corePlugins, prefer to use the opacity modifier, see: https://tailwindcss.com/docs/text-color#changing-the-opacity
-- Change vscode setting for diagnostics
 - Show other color value types when hovering
+- Change vscode setting for diagnostics
+- Change color decoration design
 - Support vscode multi-root workspaces, see: https://code.visualstudio.com/docs/editor/workspaces
 - Support custom language extractor, see: https://github.com/lightyen/twin.examples/tree/main/extractors
 - Switch from yarn to pnpm

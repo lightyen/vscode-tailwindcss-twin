@@ -225,7 +225,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 							context,
 						),
 					)
-				_colorProvider.render(tokens, editor)
+				_colorProvider.render(tokens, editor, options)
 			} catch (error) {
 				console.error(error)
 			}

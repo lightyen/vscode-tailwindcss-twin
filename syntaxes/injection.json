@@ -27,6 +27,14 @@
           ]
         }
       ]
+    },
+    {
+      "begin": "\\s*(theme)(`)",
+      "end": "`",
+      "contentName": "meta.embedded.twin",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.tagged-template" }
+      }
     }
   ],
   "repository": {

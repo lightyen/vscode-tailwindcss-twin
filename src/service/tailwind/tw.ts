@@ -1,17 +1,15 @@
 import { isColorFunction, isColorHexValue, isColorIdentifier, isColorTransparent, parse as parseColors } from "@/color"
 import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
+import * as parser from "@/parser"
 import { createGetPluginByName } from "@/plugins"
-import chroma from "chroma-js"
+import * as culori from "culori"
 import type { AtRule, Rule } from "postcss"
 import postcss from "postcss"
 import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
 import { generateRules } from "tailwindcss/lib/lib/generateRules"
 import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
 import escapeClassName from "tailwindcss/lib/util/escapeClassName"
-import { findRightBracket } from "~/common/parser"
-import parseThemeValue from "~/common/parseThemeValue"
-import { unquote } from "~/common/unquote"
 import { ColorProps, ColorProps_Background, ColorProps_Border, ColorProps_Foreground } from "./data"
 
 export type ColorDesc = {
@@ -220,26 +218,22 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			try {
 				if (isColorFunction(c)) {
 					if (!c.fnName.startsWith(colorHint)) {
-						if (c.fnName === "rgb") {
-							colorVal = getValue(chroma(c.args.slice(0, 3).map(Number)))
-						} else if (c.fnName === "rgba") {
-							const args = c.args.map(Number)
-							if (args[3] >= 0 && args[3] <= 1) colorVal = getValue(chroma(args))
-							else colorVal = getValue(chroma(args.slice(0, 3)))
-						} else if (c.fnName === "hsl") {
-							colorVal = getValue(chroma(`hsl(${c.args.slice(0, 3).join()})`))
-						} else if (c.fnName === "hsla") {
-							if (c.args.length > 3 && !Number.isNaN(Number(c.args[3][0]))) {
-								colorVal = getValue(chroma(`hsla(${c.args.join()})`))
-							} else {
-								colorVal = getValue(chroma(`hsl(${c.args.slice(0, 3).join()})`))
-							}
+						if (c.fnName.startsWith("rgb")) {
+							colorVal = getValue({
+								mode: "rgb",
+								r: +c.args[0] / 255,
+								g: +c.args[1] / 255,
+								b: +c.args[2] / 255,
+								alpha: 1,
+							})
+						} else if (c.fnName.startsWith("hsl")) {
+							colorVal = getValue(culori.parse(`hsl(${c.args.slice(0, 3).join(" ")})`))
 						}
 					}
 				} else if (isColorHexValue(c) && colorHint !== "hex") {
-					colorVal = getValue(chroma(val))
+					colorVal = getValue(culori.parse(val))
 				} else if (isColorIdentifier(c)) {
-					colorVal = getValue(chroma(val))
+					colorVal = getValue(culori.parse(val))
 				}
 			} catch {}
 			ret += cssValue.slice(start, b)
@@ -252,22 +246,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 
 		return ret
 
-		function getValue(color: chroma.Color) {
+		function getValue(color: culori.Color) {
 			switch (colorHint) {
 				case "hex":
-					return color.hex()
-				case "rgb": {
-					const r = color.get("rgb.r")
-					const g = color.get("rgb.g")
-					const b = color.get("rgb.b")
-					return color.alpha() < 1 ? `rgba(${r} ${g} ${b} / ${color.alpha()})` : `rgb(${r} ${g} ${b})`
-				}
-				case "hsl": {
-					const h = Math.round(color.get("hsl.h"))
-					const s = Math.round(color.get("hsl.s") * 100)
-					const l = Math.round(color.get("hsl.l") * 100)
-					return color.alpha() < 1 ? `hsla(${h} ${s}% ${l}% / ${color.alpha()})` : `hsl(${h} ${s}% ${l}%)`
-				}
+					return culori.formatHex(color)
+				case "rgb":
+					return culori.formatRgb(color)
+				case "hsl":
+					return culori.formatHsl(color)
 			}
 		}
 	}
@@ -319,23 +305,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
-				const regex = /theme\(/gs
-				let buffer = ""
-				let start = 0
-				for (let match = regex.exec(decl.value); match != null; match = regex.exec(decl.value)) {
-					const r = findRightBracket({ text: decl.value, start: regex.lastIndex - 1, end: decl.value.length })
-					if (r != undefined) {
-						const key = decl.value.slice(match.index + 6, r)
-						const ans = parseThemeValue(unquote(key))
-						const themeValue = getTheme(ans.keys(), true)
-						regex.lastIndex = r + 1
-						buffer += decl.value.slice(start, match.index) + `${themeValue}`
-					}
-					start = regex.lastIndex
-				}
-				if (start < decl.value.length) buffer += decl.value.slice(start, decl.value.length)
-				decl.value = buffer
-
+				decl.value = parser.resolveTheme(config, decl.value)
 				decl.important = important
 				if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 				decl.value = toPixelUnit(decl.value, rootFontSize)
@@ -431,27 +401,27 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 
 				const firstColor = colors[0]
 
-				let color: chroma.Color | undefined
+				let color = ""
 
 				if (isColorTransparent(firstColor)) {
 					return "transparent"
 				} else if (isColorIdentifier(firstColor) || isColorHexValue(firstColor)) {
 					try {
-						color = chroma(value.slice(firstColor.range[0], firstColor.range[1])).alpha(1.0)
+						color = culori.formatHex(value.slice(firstColor.range[0], firstColor.range[1]))
 					} catch {}
 				} else {
 					try {
 						if (firstColor.fnName.startsWith("rgb")) {
-							color = chroma(+firstColor.args[0], +firstColor.args[1], +firstColor.args[2])
+							color = culori.formatHex(`rgb(${firstColor.args.slice(0, 3).join(" ")})`)
 						} else {
-							color = chroma(`hsl(${firstColor.args.slice(0, 3).join()})`)
+							color = culori.formatHex(`hsl(${firstColor.args.slice(0, 3).join(" ")})`)
 						}
 					} catch {}
 				}
 
 				if (!color) continue
 
-				return color.hex()
+				return color
 			}
 
 			return ""

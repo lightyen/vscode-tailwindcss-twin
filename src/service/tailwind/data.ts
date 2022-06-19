@@ -1,6 +1,8 @@
-export const ColorProps_Foreground = new Set<string>(["color"])
+// https://github.com/Microsoft/vscode/issues/32813
+export const ColorProps_Foreground = new Set<string>([])
 export const ColorProps_Border = new Set<string>([])
 export const ColorProps_Background = new Set<string>([
+	"color",
 	"outline-color",
 	"border-color",
 	"border-top-color",

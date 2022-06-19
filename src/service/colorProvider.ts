@@ -1,14 +1,18 @@
 import { md5 } from "@"
+import { ensureContrastRatio } from "@/culori"
 import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
-import parseThemeValue from "@/parseThemeValue"
-import chroma from "chroma-js"
+import * as culori from "culori"
 import vscode from "vscode"
+import type { ServiceOptions } from "."
 import { ColorDesc, createTwContext, TwContext } from "./tailwind/tw"
 
 export function createColorProvider(tw: TwContext, separator: string) {
 	const colors = new Map<string, vscode.TextEditorDecorationType>()
+	const rgb = culori.converter("rgb")
+	const hsl = culori.converter("hsl")
+	const transparent = rgb("rgba(0, 0, 0, 0)")
 	return {
 		dispose() {
 			for (const decorationType of colors.values()) {
@@ -16,7 +20,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 			}
 			colors.clear()
 		},
-		render(tokens: ExtractedToken[], editor: vscode.TextEditor) {
+		render(tokens: ExtractedToken[], editor: vscode.TextEditor, options: ServiceOptions) {
 			const a = process.hrtime.bigint()
 			_render()
 			const b = process.hrtime.bigint()
@@ -36,7 +40,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 				}
 				for (const [key, desc] of new_keys) {
 					if (!colors.has(key)) {
-						colors.set(key, createTextEditorDecorationType(desc))
+						colors.set(key, createTextEditorDecorationType(desc, options))
 					}
 				}
 
@@ -136,24 +140,26 @@ export function createColorProvider(tw: TwContext, separator: string) {
 		return md5("a" + (desc.color ?? "") + "b" + (desc.backgroundColor ?? "") + "c" + (desc.borderColor ?? ""))
 	}
 
-	function createTextEditorDecorationType(desc: ColorDesc) {
-		const transparent = "rgba(0, 0, 0, 0.0)"
+	function createTextEditorDecorationType(desc: ColorDesc, opts: ServiceOptions) {
 		const options: vscode.DecorationRenderOptions = { light: {}, dark: {} }
 		if (desc.backgroundColor) {
-			const backgroundColor = chroma(desc.backgroundColor === "transparent" ? transparent : desc.backgroundColor)
-			options.backgroundColor = backgroundColor.css()
+			const backgroundColor = desc.backgroundColor === "transparent" ? transparent : rgb(desc.backgroundColor)
+			options.backgroundColor = culori.formatRgb(backgroundColor)
 			if (desc.backgroundColor === "transparent") {
 				setTransparent(options)
 			} else {
-				options.color =
-					backgroundColor.luminance() < 0.3 ? "rgba(255, 255, 255, 0.93)" : "rgba(28, 28, 28, 0.93)"
+				const color = hsl(backgroundColor)
+				color.s = 0
+				const out = ensureContrastRatio(rgb(color), backgroundColor, opts.minimumContrastRatio)
+				if (out) options.color = culori.formatRgb(out)
+				else options.color = culori.formatRgb(color)
 			}
 		}
 
 		options.borderRadius = "3px"
 		if (desc.borderColor) {
-			const borderColor = chroma(desc.borderColor === "transparent" ? transparent : desc.borderColor)
-			options.borderColor = borderColor.css()
+			const borderColor = desc.borderColor === "transparent" ? transparent : rgb(desc.borderColor)
+			options.borderColor = culori.formatRgb(borderColor)
 			options.borderWidth = "2px"
 			options.borderStyle = "solid"
 			if (desc.borderColor === "transparent") {
@@ -161,19 +167,15 @@ export function createColorProvider(tw: TwContext, separator: string) {
 			}
 		}
 		if (desc.color) {
-			const color = chroma(desc.color === "transparent" ? transparent : desc.color)
+			const color = desc.color === "transparent" ? transparent : rgb(desc.color)
 			if (desc.color !== "transparent") {
-				options.color = color.css()
+				options.color = culori.formatRgb(color)
 				if (!options.backgroundColor) {
-					if (color.luminance() < 0.1) {
-						if (options.dark) {
-							options.dark.backgroundColor = "rgba(255, 255, 255, 0.93)"
-						}
-					} else if (color.luminance() > 0.6) {
-						if (options.light) {
-							options.light.backgroundColor = "rgba(28, 28, 28, 0.93)"
-						}
-					}
+					const backgroundColor = hsl(color)
+					backgroundColor.s = 0
+					const out = ensureContrastRatio(rgb(backgroundColor), color, opts.minimumContrastRatio)
+					if (out) options.backgroundColor = culori.formatRgb(out)
+					else options.backgroundColor = culori.formatRgb(backgroundColor)
 				}
 			} else {
 				setTransparent(options)
@@ -191,29 +193,21 @@ export function createColorProvider(tw: TwContext, separator: string) {
 			if (options.dark) {
 				options.dark.borderWidth = "medium"
 				options.dark.borderStyle = "dashed"
-				options.dark.color = "rgba(255, 255, 255, 0.93)"
+				options.dark.color = "rgba(227, 227, 227, 0.93)"
 				options.dark.borderColor = "rgba(227, 227, 227, 0.1)"
 			}
 		}
 	}
 
 	function getThemeDecoration(text: string, tw: ReturnType<typeof createTwContext>): string | undefined {
-		const result = parseThemeValue(text)
-		if (result.errors.length > 0) {
+		const value = parser.theme(tw.context.tailwindConfig, text, true)
+		if (value === "transparent") return value
+		try {
+			const color = culori.parse(value)
+			color.alpha = 1
+			return culori.formatRgb(color)
+		} catch {
 			return undefined
 		}
-		const value = tw.getTheme(result.keys(), true)
-		if (typeof value === "string") {
-			if (value === "transparent") {
-				return value
-			}
-			try {
-				const c = chroma(value)
-				return c.css()
-			} catch {
-				return undefined
-			}
-		}
-		return undefined
 	}
 }

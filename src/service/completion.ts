@@ -2,9 +2,8 @@ import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extra
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as nodes from "@/parser/nodes"
-import { findThemeValueKeys } from "@/parseThemeValue"
 import { cssDataManager } from "@/vscode-css-languageservice"
-import chroma from "chroma-js"
+import * as culori from "culori"
 import vscode from "vscode"
 import { getCSSLanguageService } from "vscode-css-languageservice"
 import { TextDocument as LspTextDocument } from "vscode-languageserver-textdocument"
@@ -34,6 +33,7 @@ export default function completion(
 		try {
 			const index = document.offsetAt(position)
 			const { kind, ...token } = result
+
 			if (kind === ExtractedTokenKind.TwinTheme) {
 				const list = twinThemeCompletion(document, index, token, state)
 				for (let i = 0; i < list.items.length; i++) {
@@ -689,9 +689,9 @@ function twinThemeCompletion(
 	const offset = token.start
 	const text = token.value
 	const position = index - offset
-	const { keys, hit } = findThemeValueKeys(text, position)
-
+	const { keys, hit } = parser.findThemeValueKeys(text, position)
 	if (!hit && keys.length > 0) {
+		console.log("complete nothing")
 		return { isIncomplete: false, items: [] }
 	}
 
@@ -745,7 +745,7 @@ function twinThemeCompletion(
 							item.data.type = "theme"
 							return item
 						}
-						chroma(value)
+						culori.parse(value)
 						item.kind = vscode.CompletionItemKind.Color
 						item.documentation = value
 						item.data.type = "theme"
@@ -831,7 +831,7 @@ function twinScreenCompletion(
 							item.data = { type: "color" }
 							return item
 						}
-						chroma(value)
+						culori.parse(value)
 						item.kind = vscode.CompletionItemKind.Color
 						item.documentation = value
 						item.data = { type: "color" }

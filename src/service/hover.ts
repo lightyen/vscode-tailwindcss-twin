@@ -2,7 +2,6 @@ import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extra
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import { removeComment } from "@/parser"
-import parseThemeValue from "@/parseThemeValue"
 import { cssDataManager } from "@/vscode-css-languageservice"
 import { css_beautify } from "js-beautify"
 import vscode from "vscode"
@@ -290,23 +289,9 @@ function resolveThemeValue({
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
-	const result = parseThemeValue(token.value)
-	if (result.errors.length > 0) {
-		return undefined
-	}
-
-	const value = state.tw.getTheme(result.keys(), true)
-
+	const value = parser.theme(state.config, token.value, true)
 	const markdown = new vscode.MarkdownString()
-
-	if (typeof value === "string") {
-		markdown.value = `\`\`\`txt\n${value}\n\`\`\``
-	} else if (value instanceof Array) {
-		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
-	} else if (value) {
-		markdown.value = `\`\`\`js\n${value.toString?.() ?? typeof value}\n\`\`\``
-	}
-
+	markdown.value = `\`\`\`txt\n${value}\n\`\`\``
 	return {
 		range,
 		contents: [markdown],

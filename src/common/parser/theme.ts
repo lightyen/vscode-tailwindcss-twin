@@ -1,4 +1,6 @@
-import * as parser from "./parser"
+import { dlv } from "../get_set"
+import * as nodes from "./nodes"
+import { findRightBracket } from "./parse_regexp"
 
 export enum TwThemeElementKind {
 	Unknown,
@@ -10,27 +12,27 @@ export enum TwThemeElementKind {
 
 interface TwThemeUnknownElement {
 	kind: TwThemeElementKind.Unknown
-	token: parser.TokenString
+	token: nodes.TokenString
 }
 
 interface TwThemeIdentifierElement {
 	kind: TwThemeElementKind.Identifier
-	token: parser.TokenString
+	token: nodes.TokenString
 }
 
 interface TwThemeBracketIdentifierElement {
 	kind: TwThemeElementKind.BracketIdentifier
-	token: parser.TokenString
+	token: nodes.TokenString
 }
 
 interface TwThemeDotElement {
 	kind: TwThemeElementKind.Dot
-	token: parser.TokenString
+	token: nodes.TokenString
 }
 
 interface TwThemeBracketElement {
 	kind: TwThemeElementKind.Bracket
-	token: parser.TokenString
+	token: nodes.TokenString
 }
 
 export interface Error {
@@ -53,7 +55,7 @@ interface Result {
 	hit(index: number): Block | undefined
 }
 
-export default function parseThemeValue(input: string): Result {
+export function parseThemeValue(input: string): Result {
 	let init = false
 
 	const blocks: Block[] = []
@@ -145,7 +147,7 @@ export default function parseThemeValue(input: string): Result {
 				token: { range: [match.index, match.index + 1], value: input.slice(match.index, match.index + 1) },
 			})
 
-			const closedBracket = parser.findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
 			if (typeof closedBracket !== "number") {
 				errors.push({
 					message: "except to find a ']' to match the '['",
@@ -218,10 +220,10 @@ export function findThemeValueKeys(
 	position: number,
 ): {
 	keys: string[]
-	hit: parser.TokenString | undefined
+	hit: nodes.TokenString | undefined
 } {
 	const keys: string[] = []
-	let hit: parser.TokenString | undefined
+	let hit: nodes.TokenString | undefined
 
 	let init = false
 	const reg = /(\.[\w-/]*)|(\[[\w-./]*)|([\w-/]+)/g
@@ -275,7 +277,7 @@ export function findThemeValueKeys(
 				break
 			}
 		} else if (bracId) {
-			const closedBracket = parser.findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
+			const closedBracket = findRightBracket({ text: input, start: match.index, end, brackets: [91, 93] })
 			if (typeof closedBracket !== "number") {
 				if (position === match.index + 1) {
 					hit = { range: [match.index, match.index + 1], value: input.slice(match.index, match.index + 1) }
@@ -302,4 +304,132 @@ export function findThemeValueKeys(
 	}
 
 	return { keys, hit }
+}
+
+export function resolveTheme(config: Tailwind.ResolvedConfigJS, value: string, resolve = false): string {
+	const regex = /\btheme\(/gs
+	const match = regex.exec(value)
+	if (match == null) {
+		if (resolve) return theme(config, value)
+		return value
+	}
+	let end = value.length
+	const rb = findRightBracket({
+		text: value,
+		start: regex.lastIndex - 1,
+		end: value.length,
+	})
+	let b = end
+	if (rb != undefined) {
+		end = rb + 1
+		b = rb
+	}
+	return (
+		value.slice(0, match.index) +
+		resolveTheme(config, value.slice(regex.lastIndex, b), rb != undefined) +
+		value.slice(end)
+	)
+}
+
+export function theme(config: Tailwind.ResolvedConfigJS, value: string, useDefault = false): string {
+	try {
+		const [path, alpha] = splitAlpha(value)
+		return applyOpacity(resolveConfig(config, path, useDefault), alpha)
+	} catch (err) {
+		return ""
+	}
+}
+
+function resolveConfig(config: Tailwind.ResolvedConfigJS, path: string, useDefault = false) {
+	const result = parseThemeValue(path)
+	if (result.errors.length > 0) {
+		throw Error("invalid path")
+	}
+
+	return getTheme(result.keys())
+
+	function getTheme(keys: string[]) {
+		let value = dlv(config.theme, keys)
+		if (useDefault && value?.["DEFAULT"] != undefined) {
+			value = value["DEFAULT"]
+		}
+		return value
+	}
+}
+
+export function splitAlpha(value: string): [path: string, alpha?: string] {
+	value = value.trim()
+	const index = value.lastIndexOf("/")
+	if (index === -1) return [value]
+	const num = value.slice(index + 1).trim()
+	if (!num || Number.isNaN(Number(num.replace(/%$/, "0")))) {
+		throw Error("invalid alpha")
+	}
+	return [value.slice(0, index).trim(), num]
+}
+
+function applyOpacity(value: unknown, opacityValue = "1") {
+	if (value == null) return ""
+	if (typeof value === "object") {
+		if (Array.isArray(value)) return `Array(${value.join(", ")})`
+		return (
+			`Object{\n` +
+			Object.keys(value)
+				.map(k => `\t"${k}": _,\n`)
+				.join("") +
+			"}\n"
+		)
+	}
+	if (typeof value === "function") {
+		value = String(value({ opacityValue }))
+	}
+	if (typeof value === "string") {
+		let replaced = false
+		const result = value.replace("<alpha-value>", match => {
+			replaced = true
+			return opacityValue
+		})
+		if (replaced) return result
+		else {
+			const match =
+				/(\w+)\(\s*([\d.]+(?:%|deg|rad|grad|turn)?\s*,?\s*)([\d.]+(?:%|deg|rad|grad|turn)?\s*,?\s*)([\d.]+(?:%|deg|rad|grad|turn)?)/.exec(
+					value,
+				)
+			if (match == null) {
+				const rgb = parseHexColor(value)
+				if (rgb == null) return value
+				const r = (rgb >> 16) & 0xff
+				const g = (rgb >> 8) & 0xff
+				const b = rgb & 0xff
+				return `rgb(${r} ${g} ${b} / ${opacityValue})`
+			}
+			const [, fn, a, b, c] = match
+			return `${fn}(${a.replaceAll(" ", "")} ${b.replaceAll(" ", "")} ${c.replaceAll(" ", "")}${
+				(a.indexOf(",") === -1 ? " / " : ", ") + opacityValue
+			})`
+		}
+	}
+	return String(value)
+}
+
+function parseHexColor(value: string): number | null {
+	const result = /(?:^#?([A-Fa-f0-9]{6})(?:[A-Fa-f0-9]{2})?$)|(?:^#?([A-Fa-f0-9]{3})[A-Fa-f0-9]?$)/.exec(value)
+	if (result !== null) {
+		if (result[1]) {
+			const v = parseInt(result[1], 16)
+			return Number.isNaN(v) ? null : v
+		} else if (result[2]) {
+			const v = parseInt(result[2], 16)
+			if (!Number.isNaN(v)) {
+				let r = v & 0xf00
+				let g = v & 0xf0
+				let b = v & 0xf
+				r = (r << 12) | (r << 8)
+				g = (g << 8) | (g << 4)
+				b = (b << 4) | b
+				return r | g | b
+			}
+		}
+	}
+	return null
 }

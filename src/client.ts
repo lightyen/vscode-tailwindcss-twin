@@ -59,7 +59,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 	let defaultServiceRunning = false
 	let activeTextEditor = vscode.window.activeTextEditor
 	let documentSelector: vscode.DocumentFilter[]
-	const settings = workspaceConfiguration.get<Settings>(SECTION_ID, {
+	const settings = workspaceConfiguration.get(SECTION_ID, {
 		enabled: true,
 		colorDecorators: "inherit",
 		fallbackDefaultConfig: true,
@@ -75,7 +75,8 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		documentColors: false,
 		hoverColorHint: "none",
 		otherLanguages: [],
-	})
+		minimumContrastRatio: 0,
+	}) as Settings
 
 	const pnpContext = findPnpApi(workspaceFolder.fsPath)
 	if (pnpContext) {
@@ -103,6 +104,11 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 
 		if (settings.colorDecorators === "inherit") {
 			settings.colorDecorators = workspaceConfiguration.get("editor.colorDecorators") ? "on" : "off"
+		}
+
+		if (!settings.minimumContrastRatio) {
+			settings.minimumContrastRatio =
+				workspaceConfiguration.get("terminal.integrated.minimumContrastRatio") ?? 4.5
 		}
 
 		// backward compatibility
@@ -279,6 +285,20 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 					console.info(`codeDecorators = ${settings.colorDecorators}`)
 				}
 
+				if (!extSettings.minimumContrastRatio) {
+					const minimumContrastRatio =
+						(vscode.workspace
+							.getConfiguration("terminal")
+							.get("integrated.minimumContrastRatio") as number) ?? 4.5
+					extSettings.minimumContrastRatio = minimumContrastRatio
+				}
+				if (settings.minimumContrastRatio !== extSettings.minimumContrastRatio) {
+					settings.minimumContrastRatio = extSettings.minimumContrastRatio
+					needToUpdate = true
+					needToRerenderColors = true
+					console.info(`minimumContrastRatio = ${settings.minimumContrastRatio}`)
+				}
+
 				if (settings.fallbackDefaultConfig !== extSettings.fallbackDefaultConfig) {
 					settings.fallbackDefaultConfig = extSettings.fallbackDefaultConfig
 					console.info(`fallbackDefaultConfig = ${settings.fallbackDefaultConfig}`)
@@ -316,11 +336,9 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 				if (needToRerenderColors) {
 					await Promise.all(
 						vscode.workspace.textDocuments.map(document => {
-							if (!settings.colorDecorators) {
-								const srv = matchService(document.uri, services)
-								srv?.colorProvider.dispose()
-								return
-							}
+							const srv = matchService(document.uri, services)
+							srv?.colorProvider.dispose()
+							return
 						}),
 					)
 				}
