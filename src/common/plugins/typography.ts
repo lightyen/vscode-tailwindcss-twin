@@ -123,8 +123,7 @@ export function letterSpacing(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.letterSpacing, val)
 		},
 	}
@@ -299,7 +298,7 @@ export function textUnderlineOffset(context: Context): MatchPlugin | null {
 			return "textUnderlineOffset"
 		},
 		isMatch(value) {
-			const match = /^underline-offset(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?underline-offset(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
@@ -350,8 +349,7 @@ export function textIndent(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.textIndent, val)
 		},
 	}
@@ -364,7 +362,7 @@ export function verticalAlign(context: Context): MatchPlugin | null {
 			return "verticalAlign"
 		},
 		isMatch(value) {
-			const match = /^align-(.*)/s.exec(value)
+			const match = /^-?align-(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (isArbitraryValue(val)) return true

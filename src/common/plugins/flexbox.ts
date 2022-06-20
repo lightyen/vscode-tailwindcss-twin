@@ -112,8 +112,7 @@ export function order(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.order, val)
 		},
 	}
@@ -163,7 +162,7 @@ export function gridColumnStart(context: Context): MatchPlugin | null {
 			return "gridColumnStart"
 		},
 		isMatch(value) {
-			const match = /^col-start(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?col-start(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
@@ -181,7 +180,7 @@ export function gridColumnEnd(context: Context): MatchPlugin | null {
 			return "gridColumnEnd"
 		},
 		isMatch(value) {
-			const match = /^col-end(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?col-end(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
@@ -235,7 +234,7 @@ export function gridRowStart(context: Context): MatchPlugin | null {
 			return "gridRowStart"
 		},
 		isMatch(value) {
-			const match = /^row-start(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?row-start(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
@@ -253,7 +252,7 @@ export function gridRowEnd(context: Context): MatchPlugin | null {
 			return "gridRowEnd"
 		},
 		isMatch(value) {
-			const match = /^row-end(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?row-end(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault

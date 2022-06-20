@@ -84,7 +84,7 @@ export function backgroundPosition(context: Context): MatchPlugin | null {
 			return "backgroundPosition"
 		},
 		isMatch(value) {
-			const match = /^bg-(.*)/s.exec(value)
+			const match = /^-?bg-(.*)/s.exec(value)
 			if (!match) return false
 			let val = match[1]
 			if (isArbitraryValue(val)) {

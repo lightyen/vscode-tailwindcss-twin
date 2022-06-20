@@ -670,8 +670,10 @@ function arbitraryClassnameValueCompletion(
 	if (!expr) return []
 	if (position < expr.range[0] || position > expr.range[1]) return []
 	const cssValueItems = new Map<string, ICompletionItem>()
-	const prop = suggestion.target.prefix.value
-	const props = arbitraryClassnames[prop]
+	let key = suggestion.target.prefix.value
+	if (key[0] === "-") key = key.slice(1)
+	const props = arbitraryClassnames[key]
+	if (!props) return []
 	props.forEach(prop => {
 		getCssDeclarationCompletionList(document, position, offset, expr.range[0], [prop, expr.value]).forEach(item => {
 			cssValueItems.set(item.label, item)

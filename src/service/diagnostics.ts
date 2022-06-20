@@ -546,7 +546,6 @@ function checkArbitraryClassname(
 	state: TailwindLoader,
 ) {
 	const result: IDiagnostic[] = []
-	const prefix = item.prefix.value
 	if (emptyChecking) {
 		if (item.expr && item.expr.value.trim() === "") {
 			result.push({
@@ -561,6 +560,7 @@ function checkArbitraryClassname(
 		}
 	}
 
+	let prefix = item.prefix.value
 	if (item.expr == undefined) {
 		const [start, end] = item.prefix.range
 		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end - 1))
@@ -590,7 +590,11 @@ function checkArbitraryClassname(
 				severity: vscode.DiagnosticSeverity.Error,
 			})
 		}
-	} else if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
+		return result
+	}
+
+	if (prefix[0] === "-") prefix = prefix.slice(1)
+	if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
 		const start = item.range[0]
 		const end = start + prefix.length
 		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))

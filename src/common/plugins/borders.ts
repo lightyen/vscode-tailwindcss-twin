@@ -238,7 +238,7 @@ export function outlineOffset(context: Context): MatchPlugin | null {
 			return "outlineOffset"
 		},
 		isMatch(value) {
-			const match = /^outline-offset(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?outline-offset(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			let val = match[1]
 			if (val === "") return _hasDefault

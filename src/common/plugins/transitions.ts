@@ -65,7 +65,7 @@ export function transitionProperty(context: Context): MatchPlugin | null {
 			return "transitionProperty"
 		},
 		isMatch(value) {
-			const match = /^transition(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?transition(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault

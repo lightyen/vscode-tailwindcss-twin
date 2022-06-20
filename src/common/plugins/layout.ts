@@ -237,7 +237,7 @@ export function objectPosition(context: Context): MatchPlugin | null {
 			return "objectPosition"
 		},
 		isMatch(value) {
-			const match = /^object(?:-|\b)(.*)/s.exec(value)
+			const match = /^-?object(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
@@ -333,8 +333,7 @@ export function inset(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.inset, val)
 		},
 	}
@@ -364,8 +363,7 @@ export function zIndex(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.zIndex, val)
 		},
 	}

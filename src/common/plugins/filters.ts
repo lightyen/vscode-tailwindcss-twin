@@ -127,8 +127,7 @@ export function hueRotate(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.hueRotate, val)
 		},
 	}
@@ -288,8 +287,7 @@ export function backdropHueRotate(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.backdropHueRotate, val)
 		},
 	}

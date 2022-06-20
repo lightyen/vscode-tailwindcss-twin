@@ -31,8 +31,7 @@ export function margin(context: Context): MatchPlugin | null {
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.margin, val)
 		},
 	}
@@ -51,8 +50,7 @@ export function space(context: Context): MatchPlugin | null {
 			const val = match[1]
 			if (val === "") return _hasDefault
 			if (val === "reverse") return true
-			const isNegative = match[0].charCodeAt(0) === 45
-			if (isArbitraryValue(val)) return !isNegative
+			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.space, val)
 		},
 	}
