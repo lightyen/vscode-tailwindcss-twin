@@ -367,6 +367,7 @@ export function verticalAlign(context: Context): MatchPlugin | null {
 			const match = /^align-(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
+			if (isArbitraryValue(val)) return true
 			return (
 				val === "baseline" ||
 				val === "top" ||

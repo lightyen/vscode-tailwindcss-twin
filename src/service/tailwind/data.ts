@@ -43,6 +43,7 @@ export const arbitraryClassnames: Record<string, string[]> = {
 	"col-": ["grid-column"],
 	"row-": ["grid-row"],
 	"columns-": ["columns"],
+	"align-": ["vertical-align"],
 	"m-": ["margin"],
 	"mt-": ["margin-top"],
 	"mr-": ["margin-right"],
