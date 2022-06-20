@@ -23,6 +23,41 @@ export type TwContext = ReturnType<typeof createTwContext>
 export type CssText = string
 export type ScssText = string
 
+function isArbitraryRule([context, payload]: Tailwind.CandidateRule) {
+	return typeof payload === "function"
+}
+
+function guessValue(typ: Tailwind.ValueType) {
+	switch (typ) {
+		case "number":
+			return "1"
+		case "percentage":
+			return "1%"
+		case "position":
+			return "top"
+		case "length":
+			return "1px"
+		case "color":
+			return "red"
+		case "line-width":
+			return "thin"
+		case "shadow":
+			return "2px 0px 5px 6px red"
+		case "url":
+			return "url()"
+		case "image":
+			return "image()"
+		case "absolute-size":
+			return "small"
+		case "relative-size":
+			return "larger"
+		case "generic-name":
+			return "serif"
+		default:
+			return "var()"
+	}
+}
+
 export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	const context = createContext(config) as Tailwind.Context
 	const _getPlugin = createGetPluginByName(config)
@@ -56,8 +91,28 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	if (index !== -1) classnames.splice(index, 1)
 	const classnamesMap = new Set(classnames)
 
-	for (const classname of classnames) {
-		getColorDesc(classname)
+	const arbitrary: Record<string, string[]> = {}
+	for (const value of Array.from(context.candidateRuleMap)) {
+		const [key, rules] = value
+		const prefix = trimPrefix(key + "-")
+		if (rules.some(rule => isArbitraryRule(rule))) {
+			if (!arbitrary[prefix]) {
+				const props = new Set<string>()
+				for (const typ of new Set(rules.flatMap(a => a[0].options?.type ?? []))) {
+					const { decls } = renderDecls(`${config.prefix}${key}-[${guessValue(typ)}]`)
+					for (const key of decls.keys()) {
+						props.add(key)
+					}
+				}
+				if (props.size === 0) {
+					const { decls } = renderDecls(`${config.prefix}${prefix}[]`)
+					for (const key of decls.keys()) {
+						props.add(key)
+					}
+				}
+				arbitrary[prefix] = Array.from(props)
+			}
+		}
 	}
 
 	return {
@@ -79,7 +134,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		getColorDesc,
 		getConfig,
 		getTheme,
+		prefix: config.prefix,
 		trimPrefix,
+		arbitrary,
 	}
 
 	function trimPrefix(classname: string): string {

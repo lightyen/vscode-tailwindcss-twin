@@ -12,7 +12,6 @@ import { calcFraction } from "~/common"
 import type { ICompletionItem } from "~/typings/completion"
 import type { ServiceOptions } from "."
 import type { TailwindLoader } from "./tailwind"
-import { arbitraryClassnames } from "./tailwind/data"
 
 export default function completion(
 	result: ExtractedToken | undefined,
@@ -670,9 +669,10 @@ function arbitraryClassnameValueCompletion(
 	if (!expr) return []
 	if (position < expr.range[0] || position > expr.range[1]) return []
 	const cssValueItems = new Map<string, ICompletionItem>()
-	let key = suggestion.target.prefix.value
-	if (key[0] === "-") key = key.slice(1)
-	const props = arbitraryClassnames[key]
+	let prefix = suggestion.target.prefix.value
+	if (prefix[0] === "-") prefix = prefix.slice(1)
+	if (prefix.startsWith(state.tw.prefix)) prefix = prefix.slice(state.tw.prefix.length)
+	const props = state.tw.arbitrary[prefix]
 	if (!props) return []
 	props.forEach(prop => {
 		getCssDeclarationCompletionList(document, position, offset, expr.range[0], [prop, expr.value]).forEach(item => {

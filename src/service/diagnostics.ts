@@ -7,7 +7,7 @@ import vscode from "vscode"
 import { DIAGNOSTICS_ID } from "~/shared"
 import type { ServiceOptions } from "."
 import { TailwindLoader } from "./tailwind"
-import { arbitraryClassnames, deprecated } from "./tailwind/data"
+import { deprecated } from "./tailwind/data"
 
 export interface IDiagnostic extends vscode.Diagnostic {
 	codeActions?: vscode.CodeAction[]
@@ -594,7 +594,8 @@ function checkArbitraryClassname(
 	}
 
 	if (prefix[0] === "-") prefix = prefix.slice(1)
-	if (!arbitraryClassnames[state.tw.trimPrefix(prefix)]) {
+	if (prefix.startsWith(state.tw.prefix)) prefix = prefix.slice(state.tw.prefix.length)
+	if (!state.tw.arbitrary[prefix]) {
 		const start = item.range[0]
 		const end = start + prefix.length
 		const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
