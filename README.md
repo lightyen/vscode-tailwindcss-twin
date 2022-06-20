@@ -14,10 +14,10 @@ This is a VSCode Tailwind IntelliSense Extension which supports [twin.macro](htt
 - document references
 - diagnostics
 
-## Build
+## Pack
 
 ```sh
-pnpm install && pnpm build && pnpm package
+pnpm install && pnpm package
 ```
 
 ## VSCode Settings
