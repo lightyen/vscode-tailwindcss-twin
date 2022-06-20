@@ -1,4 +1,5 @@
 import { dlv } from "../get_set"
+import { unquote } from "../unquote"
 import * as nodes from "./nodes"
 import { findRightBracket } from "./parse_regexp"
 
@@ -333,6 +334,7 @@ export function resolveTheme(config: Tailwind.ResolvedConfigJS, value: string, r
 
 export function theme(config: Tailwind.ResolvedConfigJS, value: string, useDefault = false): string {
 	try {
+		value = unquote(value.trim())
 		const [path, alpha] = splitAlpha(value)
 		return applyOpacity(resolveConfig(config, path, useDefault), alpha)
 	} catch (err) {
