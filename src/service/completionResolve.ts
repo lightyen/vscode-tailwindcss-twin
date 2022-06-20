@@ -68,7 +68,7 @@ function resolve(
 			if (type === "screen") {
 				item.detail = getName("screens")
 			} else if (type === "color") {
-				item.detail = getName("colors")
+				item.detail = "Color"
 			}
 		}
 	}
