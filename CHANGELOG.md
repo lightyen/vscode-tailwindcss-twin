@@ -2,7 +2,7 @@
 
 ## 3.0.0-rc
 
-- Base on tailwindcss v3.1.2
+- Base on tailwindcss v3.1.3
 - Support all the syntaxes of **arbitrary values**, like: `name-[*]`, `name-[*]/[opacity]`, `name-[*]:`, `[name: *]`, `[&.foo]:`
 - Deprecate **short css** feature
 - Deprecate all of the **opacity** corePlugins, prefer to use the opacity modifier, see: https://tailwindcss.com/docs/text-color#changing-the-opacity
