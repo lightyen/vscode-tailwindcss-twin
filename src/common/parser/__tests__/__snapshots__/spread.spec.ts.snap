@@ -1,5 +1,46 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`parser arbitrary variant 1`] = `
+Object {
+  "emptyGroup": Array [],
+  "emptyVariants": Array [],
+  "items": Array [
+    Object {
+      "important": false,
+      "target": Object {
+        "important": false,
+        "range": Array [
+          7,
+          12,
+        ],
+        "type": "ClassName",
+        "value": "black",
+      },
+      "value": "black",
+      "variants": Array [
+        Object {
+          "range": Array [
+            0,
+            6,
+          ],
+          "selector": Object {
+            "range": Array [
+              5,
+              5,
+            ],
+            "type": "CssSelector",
+            "value": "",
+          },
+          "type": "ArbitraryVariant",
+          "value": "tab-[]",
+        },
+      ],
+    },
+  ],
+  "notClosed": Array [],
+}
+`;
+
 exports[`parser util spread 1`] = `
 Object {
   "emptyGroup": Array [

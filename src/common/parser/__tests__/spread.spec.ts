@@ -225,3 +225,8 @@ it("spread all types", () => {
 		true,
 	])
 })
+
+it("parser arbitrary variant", () => {
+	const result = spread(`tab-[]:black`)
+	expect(result).toMatchSnapshot()
+})

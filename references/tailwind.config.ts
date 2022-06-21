@@ -8,8 +8,9 @@ export default {
 			},
 		},
 	},
+	experimental: { matchVariant: true },
 	plugins: [
-		function ({ matchUtilities, matchComponents, theme }) {
+		function ({ matchUtilities, matchComponents, matchVariant, theme }) {
 			matchUtilities({
 				tab(value) {
 					return {
@@ -29,6 +30,12 @@ export default {
 				},
 				{ values: theme("colors.cyan") },
 			)
+			matchVariant({
+				tab(value) {
+					if (value == undefined) return `& > *`
+					return `&.${value ?? ""} > *`
+				},
+			})
 		},
 	],
 } as Tailwind.ConfigJS

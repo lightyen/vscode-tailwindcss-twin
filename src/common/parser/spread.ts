@@ -29,11 +29,6 @@ export function spread(text: string, { separator = ":" }: { separator?: string }
 				return
 			}
 			const variants = ctx.variants.slice()
-			switch (node.variant.type) {
-				case nodes.NodeType.ArbitraryVariant:
-					variants.push(getVariant(node.variant, separator))
-					break
-			}
 			variants.push(getVariant(node.variant, separator))
 			walk(node.child, { ...ctx, variants })
 		} else if (nodes.NodeType.Group === node.type) {
