@@ -566,7 +566,7 @@ function shortcssCompletion(
 			label: entry.name,
 			sortText: "~~~~" + entry.name,
 			kind: vscode.CompletionItemKind.Field,
-			insertText: new vscode.SnippetString(entry.name + "[$0]"),
+			insertText: new vscode.SnippetString(`[${entry.name}: $0]`),
 			command: {
 				title: "Suggest",
 				command: "editor.action.triggerSuggest",
@@ -584,7 +584,7 @@ function shortcssCompletion(
 					data: { type: "cssProp" },
 					sortText: "~~~~~" + label,
 					kind: vscode.CompletionItemKind.Field,
-					insertText: new vscode.SnippetString(label + "[$0]"),
+					insertText: new vscode.SnippetString(`[${label}: $0]`),
 					command: {
 						title: "Suggest",
 						command: "editor.action.triggerSuggest",
@@ -598,23 +598,31 @@ function shortcssCompletion(
 
 	if (suggestion.target) {
 		if (suggestion.target.type === parser.NodeType.ShortCss) {
+			const data = suggestion.target.expr.value
 			const [start, end] = suggestion.target.range
 			if (position > start && position <= end) {
-				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(item.label + "[$0]"))
+				doReplace(
+					cssPropItems,
+					document,
+					offset,
+					a,
+					b,
+					item => new vscode.SnippetString(`[${item.label}: ${data}$0]`),
+				)
 			} else if (position === start) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(item.label + "[$0] "))
+				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		} else if (suggestion.target.type === parser.NodeType.SimpleVariant) {
 			if (position > a && position < b) {
-				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(item.label + "[$0]"))
+				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
 			} else if (position === a) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(item.label + "[$0] "))
+				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		} else {
 			if (position > a && position <= b) {
-				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(item.label + "[$0]"))
+				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
 			} else if (position === a) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(item.label + "[$0] "))
+				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		}
 	}
