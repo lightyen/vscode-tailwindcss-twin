@@ -142,3 +142,4 @@ align-[4px]
 col-start-[1]
 tab-[10px]
 test-[red]
+tab-[0]:bg-black

@@ -165,6 +165,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 
 		const rules: Array<AtRule | Rule> = []
 
+		let noop = true
 		for (const [, fn] of meta) {
 			const container = fakeRoot.clone()
 			let wrapper: AtRule[] = []
@@ -175,9 +176,11 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				separator: config.separator,
 				wrap(node) {
 					wrapper.push(node)
+					noop = false
 				},
 				format(selectorFormat) {
 					selector = selectorFormat
+					noop = false
 				},
 			})
 			if (selector.match(/:merge\((.*?)\)/)) selector = selector.replace(/:merge\((.*?)\)/g, "$1")
@@ -187,6 +190,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				wrapper = wrapper.slice(1)
 			}
 			if (!selector) {
+				if (noop) return ""
 				const re = new RegExp(
 					("." + escape(variant + config.separator + "☕")).replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
 					"g",

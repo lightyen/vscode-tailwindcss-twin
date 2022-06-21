@@ -10,7 +10,7 @@ export default {
 	},
 	experimental: { matchVariant: true },
 	plugins: [
-		function ({ matchUtilities, matchComponents, matchVariant, theme }) {
+		function ({ matchUtilities, matchComponents, matchVariant, theme, e }) {
 			matchUtilities({
 				tab(value) {
 					return {
@@ -32,8 +32,8 @@ export default {
 			)
 			matchVariant({
 				tab(value) {
-					if (value == undefined) return `& > *`
-					return `&.${value ?? ""} > *`
+					if (value == null) return "& > *"
+					return `&.${e(value ?? "")} > *`
 				},
 			})
 		},
