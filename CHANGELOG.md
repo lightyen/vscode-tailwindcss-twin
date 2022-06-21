@@ -9,6 +9,8 @@
 - Show other color value types when hovering
 - Change vscode setting for diagnostics
 - Change color decoration design
+- Preview all utilites or variants from tailwind config
+- Support `matchUtilities` and `matchComponents` features in tailwind plugin
 - Support vscode multi-root workspaces, see: https://code.visualstudio.com/docs/editor/workspaces
 - Support custom language extractor, see: https://github.com/lightyen/twin.examples/tree/main/extractors
 - Switch from yarn to pnpm
