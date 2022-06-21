@@ -28,7 +28,6 @@ export const ColorProps_Background = new Set<string>([
 export const ColorProps = new Set([...ColorProps_Foreground, ...ColorProps_Border, ...ColorProps_Background])
 
 export const deprecated = new Map<string, string>([
-	["content", "The utility 'content' is now deprecated, remove it."],
 	["overflow-ellipsis", "The utility 'overflow-ellipsis' is now deprecated, replace it with 'text-ellipsis'."],
 	["flex-grow", "The utility 'flex-grow' is now deprecated, replace it with 'grow'."],
 	["flex-grow-0", "The utility 'flex-grow-0' is now deprecated, replace it with 'grow-0'."],

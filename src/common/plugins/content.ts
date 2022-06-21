@@ -9,7 +9,7 @@ export function content(context: Context): MatchPlugin | null {
 			return "content"
 		},
 		isMatch(value: string) {
-			const match = /^content(?:-|\b)(.*)/s.exec(value)
+			const match = /^content-(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
 			if (val === "") return _hasDefault

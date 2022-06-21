@@ -17,12 +17,6 @@ export function twin(context: ContextModule): Tailwind.ConfigJS {
 					addVariant("light", `${darkMode[1].replace(/\bdark\b/, "light")} &`)
 				}
 
-				addUtilities({
-					".content": {
-						content: '""',
-					},
-				})
-
 				addVariant("screen", "@media screen")
 				addVariant("any-pointer-none", "@media (any-pointer: none)")
 				addVariant("any-pointer-fine", "@media (any-pointer: fine)")
