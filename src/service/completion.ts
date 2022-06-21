@@ -701,7 +701,6 @@ function twinThemeCompletion(
 	const position = index - offset
 	const { keys, hit } = parser.findThemeValueKeys(text, position)
 	if (!hit && keys.length > 0) {
-		console.log("complete nothing")
 		return { isIncomplete: false, items: [] }
 	}
 
