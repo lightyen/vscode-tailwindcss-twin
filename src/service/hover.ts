@@ -6,7 +6,7 @@ import { cssDataManager } from "@/vscode-css-languageservice"
 import { css_beautify } from "js-beautify"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
-import type { ServiceOptions } from "."
+import type { ServiceOptions } from "~/shared"
 import { getDescription, getReferenceLinks } from "./referenceLink"
 import type { TailwindLoader } from "./tailwind"
 

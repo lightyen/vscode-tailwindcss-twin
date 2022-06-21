@@ -28,7 +28,8 @@ function matchService(uri: URI, services: Map<string, ReturnType<typeof createTa
 	const list = Array.from(services)
 		.filter(([configDir]) => {
 			if (uri.scheme === "untitled") return true
-			const rel = path.relative(configDir, uriString)
+			const target = uri.scheme === "tailwind" ? uri.path : uriString
+			const rel = path.relative(configDir, target)
 			return !rel.startsWith("..")
 		})
 		.sort((a, b) => b[0].localeCompare(a[0]))
@@ -100,6 +101,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		documentSelector = Array.from(languageSet).flatMap(language => [
 			{ scheme: "file", language },
 			{ scheme: "untitled", language },
+			{ scheme: "tailwind", language },
 		])
 
 		if (settings.colorDecorators === "inherit") {
@@ -371,10 +373,15 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 
 		return {
 			ws,
+			services,
+			configFolders,
 			/**
 			 * Dispose this object.
 			 */
 			dispose() {
+				for (const [, srv] of services) {
+					srv.activatedEvent.dispose()
+				}
 				return disposable.dispose()
 			},
 		}

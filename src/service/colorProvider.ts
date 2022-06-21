@@ -5,7 +5,7 @@ import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as culori from "culori"
 import vscode from "vscode"
-import type { ServiceOptions } from "."
+import type { ServiceOptions } from "~/shared"
 import { ColorDesc, createTwContext, TwContext } from "./tailwind/tw"
 
 export function createColorProvider(tw: TwContext, separator: string) {

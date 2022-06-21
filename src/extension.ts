@@ -2,9 +2,11 @@ import { defaultLogger as console } from "@/logger"
 import { install } from "source-map-support"
 import vscode from "vscode"
 import { LanguageClient } from "vscode-languageclient/node"
+import { URI, Utils } from "vscode-uri"
 import packageInfo from "../package.json"
 import { workspaceClient } from "./client"
 import { intl } from "./locale"
+import { createTailwindLanguageService } from "./service"
 import { NAME } from "./shared"
 
 install()
@@ -114,6 +116,81 @@ export async function deactivate() {
 	await h.dispose()
 }
 
+function createTextDocumentContentProvider(h: ReturnType<typeof createWorkspacesHandler>) {
+	let previewType: string | undefined
+	let srv: ReturnType<typeof createTailwindLanguageService> | undefined = undefined
+
+	const emitter = new vscode.EventEmitter<URI>()
+
+	const myTextDocumentContentProvider: vscode.TextDocumentContentProvider = {
+		onDidChange: emitter.event,
+		provideTextDocumentContent(uri, token) {
+			const state = srv?.getState()
+			if (state == null) {
+				return ""
+			}
+			if (previewType === "variants") {
+				return state.tw.variants
+					.flat()
+					.map(v => v + ":relative")
+					.join("\n")
+			}
+			return state.tw.classnames.join("\n")
+		},
+	}
+
+	return vscode.Disposable.from(
+		vscode.workspace.registerTextDocumentContentProvider("tailwind", myTextDocumentContentProvider),
+		vscode.commands.registerCommand("twin.preview", pickType),
+	)
+
+	async function pickType() {
+		const type = await vscode.window.showQuickPick(["utilities", "variants"])
+		if (!type) return
+
+		srv = undefined
+		const twInstances = new Map<string, { srv: ReturnType<typeof createTailwindLanguageService> }>()
+		for (const c of h.clients.values()) {
+			for (const srv of c.services.values()) {
+				const configPath = srv.getConfigPath()
+				if (configPath) {
+					twInstances.set(configPath.path, {
+						srv,
+					})
+				} else {
+					twInstances.set("default", {
+						srv,
+					})
+				}
+			}
+		}
+		const target = await vscode.window.showQuickPick(Array.from(twInstances.keys()))
+		if (!target) return
+		const ctx = twInstances.get(target)
+		if (!ctx) return
+
+		previewType = type
+		srv = ctx.srv
+
+		const configPath = srv.getConfigPath()
+		const uri = URI.parse(
+			"tailwind:" + Utils.joinPath(configPath ? Utils.dirname(configPath) : srv.workspaceFolder, `${type}.twin`),
+		)
+
+		srv.activatedEvent.dispose()
+		srv.activatedEvent.event(() => {
+			emitter.fire(uri)
+		})
+
+		if (ctx.srv.getState()?.tw == null) {
+			ctx.srv.start()
+		}
+
+		const doc = await vscode.workspace.openTextDocument(uri)
+		await vscode.window.showTextDocument(doc, { preview: false })
+	}
+}
+
 export async function activate(context: vscode.ExtensionContext) {
 	console.outputMode = context.extensionMode === vscode.ExtensionMode.Development ? "all" : "outputChannel"
 	console.info(
@@ -129,7 +206,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		packageInfo.devDependencies["postcss"],
 	)
 	await h.initialize(context)
+
 	context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(h.onDidChangeWorkspaceFolders))
+	context.subscriptions.push(createTextDocumentContentProvider(h))
 }
 
 // package.json

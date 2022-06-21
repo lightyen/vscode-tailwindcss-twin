@@ -9,8 +9,8 @@ import { getCSSLanguageService } from "vscode-css-languageservice"
 import { TextDocument as LspTextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver-types"
 import { calcFraction } from "~/common"
+import type { ServiceOptions } from "~/shared"
 import type { ICompletionItem } from "~/typings/completion"
-import type { ServiceOptions } from "."
 import type { TailwindLoader } from "./tailwind"
 
 export default function completion(

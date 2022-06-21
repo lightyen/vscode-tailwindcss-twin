@@ -253,6 +253,11 @@
         }
       }
     },
-    "commands": []
+    "commands": [
+      {
+        "command": "twin.preview",
+        "title": "Twin: Preview"
+      }
+    ]
   }
 }

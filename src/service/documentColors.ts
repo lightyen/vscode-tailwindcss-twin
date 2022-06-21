@@ -13,7 +13,7 @@ import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as vscode from "vscode"
-import { ServiceOptions } from "."
+import type { ServiceOptions } from "~/shared"
 import { TailwindLoader } from "./tailwind"
 
 export default function documentColors(

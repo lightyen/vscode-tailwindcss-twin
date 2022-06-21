@@ -86,8 +86,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	]
 	const variables = new Set<string>()
 	const classnames = context.getClassList()
-	// XXX: Handle tailwindcss bug: exclude the '*' classname
-	const index = classnames.indexOf("*")
+	// Exclude the '*' classname
+	const index = classnames.findIndex(v => v.match(/^\*$/))
 	if (index !== -1) classnames.splice(index, 1)
 	const classnamesMap = new Set(classnames)
 

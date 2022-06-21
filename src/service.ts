@@ -1,35 +1,24 @@
 import { defaultExtractors, TextDocument } from "@/extractors"
+import typescriptExtractor from "@/extractors/typescript"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
-import type { PnpApi } from "@yarnpkg/pnp"
 import EventEmitter from "events"
 import path from "path"
+import typescript from "typescript"
 import vscode from "vscode"
 import { URI } from "vscode-uri"
+import type { ServiceOptions } from "~/shared"
 import { Settings } from "~/shared"
 import { ICompletionItem } from "~/typings/completion"
-import { createColorProvider } from "./colorProvider"
-import completion from "./completion"
-import completionResolve from "./completionResolve"
-import { validate } from "./diagnostics"
-import documentColors from "./documentColors"
-import hover from "./hover"
-import { createTailwindLoader, ExtensionMode } from "./tailwind"
+import { createColorProvider } from "./service/colorProvider"
+import completion from "./service/completion"
+import completionResolve from "./service/completionResolve"
+import { validate } from "./service/diagnostics"
+import documentColors from "./service/documentColors"
+import hover from "./service/hover"
+import { createTailwindLoader } from "./service/tailwind"
 
-import typescriptExtractor from "@/extractors/typescript"
-import typescript from "typescript"
 const context = { console, typescriptExtractor, typescript }
-
-interface Environment {
-	configPath?: URI
-	workspaceFolder: URI
-	extensionUri: URI
-	serverSourceMapUri: URI
-	extensionMode: ExtensionMode
-	pnpContext: PnpApi | undefined
-}
-
-export type ServiceOptions = Settings & Environment
 
 export type Cache = Record<string, Record<string, ReturnType<typeof parser.spread>>>
 
@@ -37,7 +26,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	const configPath = options.configPath
 	const isDefaultConfig = options.configPath == undefined
 	const state = createTailwindLoader(configPath, options.extensionUri, isDefaultConfig, options.extensionMode)
-	const configPathString = configPath == undefined ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
+	const configPathMessage = configPath == undefined ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
 	let loading = false
 	let _colorProvider: ReturnType<typeof createColorProvider> | undefined
 
@@ -68,12 +57,21 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 	}
 
 	const activated = new EventEmitter()
+	const activatedEvent = new vscode.EventEmitter<void>()
 
 	return {
 		get configPath() {
 			return configPath ?? URI.parse("tailwindcss/defaultConfig")
 		},
-		configPathString,
+		get workspaceFolder() {
+			return options.workspaceFolder
+		},
+		getConfigPath() {
+			return configPath
+		},
+		getState() {
+			return state
+		},
 		start,
 		reload,
 		updateSettings,
@@ -90,6 +88,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			render: renderColorDecoration,
 		},
 		documentColorProvider,
+		activatedEvent,
 	}
 
 	function ready() {
@@ -109,17 +108,18 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		if (state.tw) return
 		try {
 			loading = true
-			console.info("loading:", configPathString)
+			console.info("loading:", configPathMessage)
 			const start = process.hrtime.bigint()
 			state.readTailwindConfig(options.pnpContext)
 			state.createContext()
 			_colorProvider = createColorProvider(state.tw, state.separator)
 			const end = process.hrtime.bigint()
 			activated.emit("signal")
-			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			console.info(`activated: ${configPathMessage} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			activatedEvent.fire()
 		} catch (error) {
 			console.error(error)
-			console.error("load failed: " + configPathString + "\n")
+			console.error("load failed: " + configPathMessage + "\n")
 		} finally {
 			loading = false
 		}
@@ -129,7 +129,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		if (!options.enabled || loading) return
 		try {
 			loading = true
-			console.info("reloading:", configPathString)
+			console.info("reloading:", configPathMessage)
 			const start = process.hrtime.bigint()
 			state.readTailwindConfig(options.pnpContext)
 			state.createContext()
@@ -137,10 +137,11 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			_colorProvider = createColorProvider(state.tw, state.separator)
 			const end = process.hrtime.bigint()
 			activated.emit("signal")
-			console.info(`activated: ${configPathString} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			console.info(`activated: ${configPathMessage} (${Number((end - start) / 10n ** 6n) / 10 ** 3}s)\n`)
+			activatedEvent.fire()
 		} catch (error) {
 			console.error(error)
-			console.error("reload failed: " + configPathString + "\n")
+			console.error("reload failed: " + configPathMessage + "\n")
 		} finally {
 			loading = false
 		}
