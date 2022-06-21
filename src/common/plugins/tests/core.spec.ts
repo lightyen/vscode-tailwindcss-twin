@@ -305,7 +305,7 @@ test("boxShadow (ambiguous)", () => {
 	testName("shadow-[0px 4px 5px #666, 2px 6px 10px #999]", "boxShadow")
 	testName("shadow-[current]", undefined)
 	testName("shadow-[theme('any.any.any')]", undefined)
-	testName("shadow-[theme(\"colors.red.500')]", "boxShadowColor")
+	testName("shadow-[theme(\"colors.red.500')]", undefined)
 })
 
 test("boxShadowColor (ambiguous)", () => {
@@ -455,7 +455,7 @@ test("fill)", () => {
 	testName("fill-sand-800", undefined)
 	testName("fill-[]", "fill")
 	testName("fill-[#1A3D94]", "fill")
-	testName("fill-[theme('colors.undefined')]", undefined)
+	testName("fill-[theme('colors.undefined')]", "fill")
 	testName("fill-[var(--common)]", "fill")
 	testName("fill-[url(#helloworld)]", "fill")
 })
