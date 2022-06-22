@@ -24,7 +24,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 			const a = process.hrtime.bigint()
 			_render()
 			const b = process.hrtime.bigint()
-			console.trace(`colors (${Number((b - a) / 10n ** 6n)}ms)`)
+			console.trace(`colors decoration (${Number((b - a) / 10n ** 6n)}ms)`)
 
 			return
 

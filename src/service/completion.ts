@@ -25,7 +25,7 @@ export default function completion(
 	const start = process.hrtime.bigint()
 	const list = doComplete(result)
 	const end = process.hrtime.bigint()
-	console.trace(`provide completion (${Number((end - start) / 10n ** 6n)}ms)`)
+	console.trace(`completion (${Number((end - start) / 10n ** 6n)}ms)`)
 	return list
 
 	function doComplete(result: ExtractedToken) {

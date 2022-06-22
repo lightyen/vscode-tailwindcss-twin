@@ -67,7 +67,7 @@ export function validate(
 	const start = process.hrtime.bigint()
 	const answer = doValidate()
 	const end = process.hrtime.bigint()
-	console.trace(`validate (${Number((end - start) / 10n ** 6n)}ms)`)
+	console.trace(`diagnostic (${Number((end - start) / 10n ** 6n)}ms)`)
 	return answer
 
 	function doValidate() {
