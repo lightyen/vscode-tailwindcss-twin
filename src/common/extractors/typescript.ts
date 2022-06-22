@@ -73,6 +73,7 @@ function findNode(
 	node: ts.Node,
 	position: number,
 	features: Features,
+	includeEnd: boolean,
 ): { token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: ExtractedTokenKind } | undefined {
 	if (position < node.getStart(source) || position >= node.getEnd()) {
 		return undefined
@@ -119,7 +120,7 @@ function findNode(
 		if (features.twTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
-				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
 				return { token, kind: ExtractedTokenKind.Twin }
@@ -129,7 +130,7 @@ function findNode(
 		} else if (features.themeTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
-				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
 				return { token, kind: ExtractedTokenKind.TwinTheme }
@@ -139,7 +140,7 @@ function findNode(
 		} else if (features.screenTemplate.has(id)) {
 			const token = getLiteral(node)
 			if (token) {
-				if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
+				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
 				return { token, kind: ExtractedTokenKind.TwinScreen }
@@ -153,7 +154,7 @@ function findNode(
 			}
 		}
 	} else if (ts.isCallExpression(node)) {
-		if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
+		if (position < node.getStart(source) + 1 || greaterThenEnd(node)) {
 			return undefined
 		}
 
@@ -169,7 +170,7 @@ function findNode(
 				if (!token) {
 					return undefined
 				}
-				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
+				if (position < node.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
 				return { token, kind: ExtractedTokenKind.TwinTheme }
@@ -192,7 +193,11 @@ function findNode(
 			}
 		}
 	}
-	return ts.forEachChild(node, child => findNode(source, child, position, features))
+	return ts.forEachChild(node, child => findNode(source, child, position, features, includeEnd))
+
+	function greaterThenEnd(node: ts.Node): boolean {
+		return includeEnd ? position >= node.getEnd() : position >= node.getEnd() - 1
+	}
 }
 
 function notEmpty<T>(value: T | null | undefined): value is T {
@@ -368,9 +373,14 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 	return { jsxProp, twTemplate, themeTemplate, screenTemplate }
 }
 
-export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): ExtractedToken | undefined {
+export function findToken(
+	source: ts.SourceFile,
+	position: number,
+	includeEnd: boolean,
+	jsxPropChecking = true,
+): ExtractedToken | undefined {
 	const features = checkImportTwin(source, jsxPropChecking)
-	const node = findNode(source, source, position, features)
+	const node = findNode(source, source, position, features, includeEnd)
 	if (node == undefined) {
 		return undefined
 	}
@@ -421,7 +431,7 @@ const typescriptExtractor: Extractor = {
 		}
 		return []
 	},
-	find(languageId, code, position, jsxPropImportChecking) {
+	find(languageId, code, position, includeEnd, jsxPropImportChecking) {
 		let scriptKind: ts.ScriptKind | undefined
 		switch (languageId) {
 			case "typescript":
@@ -441,7 +451,7 @@ const typescriptExtractor: Extractor = {
 		}
 		if (scriptKind) {
 			const source = ts.createSourceFile("", code, ts.ScriptTarget.Latest, false, scriptKind)
-			const token = findToken(source, position, jsxPropImportChecking)
+			const token = findToken(source, position, includeEnd, jsxPropImportChecking)
 			if (!token) {
 				return undefined
 			}

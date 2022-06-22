@@ -163,6 +163,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 							document.languageId,
 							document.getText(),
 							document.offsetAt(position),
+							true,
 							options.jsxPropImportChecking,
 							context,
 						),
@@ -194,7 +195,8 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 						extractor.find(
 							document.languageId,
 							document.getText(),
-							document.offsetAt(position) + 1,
+							document.offsetAt(position),
+							false,
 							options.jsxPropImportChecking,
 							context,
 						),

@@ -622,7 +622,7 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 	}
 }
 
-export function find(code: string, position: number, jsxPropImportChecking: boolean) {
+export function find(code: string, position: number, includeEnd: boolean, jsxPropImportChecking: boolean) {
 	let token: ExtractedToken | undefined
 	let program: ast.Program
 	try {
@@ -671,7 +671,9 @@ export function find(code: string, position: number, jsxPropImportChecking: bool
 	}
 
 	function inRange(node: ast.Node): boolean {
-		return !(position < node.range[0] + 1 || position >= node.range[1])
+		return !(
+			position < node.range[0] + 1 || (includeEnd ? position >= node.range[1] : position >= node.range[1] - 1)
+		)
 	}
 
 	function parseTaggedTemplateExpression(node: ast.TaggedTemplateExpression) {
@@ -1273,8 +1275,8 @@ const typescriptExtractor: Extractor = {
 	findAll(languageId, code, jsxPropImportChecking) {
 		return findAll(code, jsxPropImportChecking)
 	},
-	find(languageId, code, position, jsxPropImportChecking) {
-		return find(code, position, jsxPropImportChecking)
+	find(languageId, code, position, includeEnd, jsxPropImportChecking) {
+		return find(code, position, includeEnd, jsxPropImportChecking)
 	},
 }
 export default typescriptExtractor

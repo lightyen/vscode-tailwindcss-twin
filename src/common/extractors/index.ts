@@ -38,6 +38,7 @@ export interface Extractor {
 		languageId: string,
 		code: string,
 		position: number,
+		includeEnd: boolean,
 		jsxPropImportChecking: boolean,
 		context?: { console: Logger; typescript: typeof typescript; typescriptExtractor: Extractor },
 	): ExtractedToken | undefined
