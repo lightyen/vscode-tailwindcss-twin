@@ -6,10 +6,10 @@
 - Support all the syntaxes of **arbitrary values**, like: `name-[*]`, `name-[*]/[opacity]`, `name-[*]:`, `[name: *]`, `[&.foo]:`
 - Deprecate **short css** feature
 - Deprecate all of the **opacity** corePlugins, prefer to use the opacity modifier, see: https://tailwindcss.com/docs/text-color#changing-the-opacity
-- Show other color value types when hovering
-- Change vscode setting for diagnostics
+- Change diagnostic settings
 - Change color decoration design
 - Preview all utilites or variants from tailwind config
+- Support `theme()` function
 - Support `matchUtilities` and `matchComponents` features in tailwind plugin
 - Support vscode multi-root workspaces, see: https://code.visualstudio.com/docs/editor/workspaces
 - Support custom language extractor, see: https://github.com/lightyen/twin.examples/tree/main/extractors
