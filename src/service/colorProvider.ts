@@ -78,7 +78,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 			)
 		}
 		for (const token of tokens) {
-			const { start: offset, end, kind } = token
+			const { start: offset, kind } = token
 			switch (kind) {
 				case ExtractedTokenKind.Twin: {
 					const result = parser.spread(token.value, { separator })
@@ -124,9 +124,13 @@ export function createColorProvider(tw: TwContext, separator: string) {
 					break
 				}
 				case ExtractedTokenKind.TwinTheme: {
-					const color = getThemeDecoration(token.value, tw)
+					const val = parser.parse_theme_val({ text: token.value })
+					const color = getThemeDecoration(val, tw)
 					if (color) {
-						const range = new vscode.Range(document.positionAt(offset), document.positionAt(end))
+						const range = new vscode.Range(
+							document.positionAt(offset + val.range[0]),
+							document.positionAt(offset + val.range[1]),
+						)
 						colors.push([{ backgroundColor: color }, range])
 					}
 					break
@@ -199,15 +203,19 @@ export function createColorProvider(tw: TwContext, separator: string) {
 		}
 	}
 
-	function getThemeDecoration(text: string, tw: ReturnType<typeof createTwContext>): string | undefined {
-		const value = parser.theme(tw.context.tailwindConfig, text, true)
-		if (value === "transparent") return value
-		try {
-			const color = culori.parse(value)
-			color.alpha = 1
-			return culori.formatRgb(color)
-		} catch {
-			return undefined
-		}
+	function getThemeDecoration(
+		value: parser.ThemeValueNode,
+		tw: ReturnType<typeof createTwContext>,
+	): string | undefined {
+		if (value.others) return undefined
+		const out = parser.resolveThemeConfig(
+			tw.context.tailwindConfig,
+			value.path.map(p => p.value),
+		)
+		if (out === "transparent") return out
+		const color = culori.parse(parser.resolveThemeString(out, value.suffix?.value))
+		if (!color) return undefined
+		color.alpha = 1
+		return culori.formatRgb(color)
 	}
 }

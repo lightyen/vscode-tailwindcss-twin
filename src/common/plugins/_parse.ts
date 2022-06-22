@@ -1,9 +1,8 @@
 import * as languageFacts from "vscode-css-languageservice/lib/esm/languageFacts/facts"
 import * as nodes from "vscode-css-languageservice/lib/esm/parser/cssNodes"
 import { Parser } from "vscode-css-languageservice/lib/esm/parser/cssParser"
-import { findRightBracket } from "../parser"
-import { resolveTheme } from "../parser/theme"
-// import parseThemeValue from "../../common/parseThemeValue"
+import { resolveThemeFunc } from "../parser/theme"
+import { findRightBracket } from "../parser/util"
 import { Context } from "./_base"
 
 export function parse(value: string): nodes.Expression | null {
@@ -178,7 +177,7 @@ export function Is(context: Context, value: string, ...types: (keyof typeof cssD
 		value = value.slice(regex.lastIndex)
 		prefix = match[1]
 	}
-	value = resolveTheme(context.config, value)
+	value = resolveThemeFunc(context.config, value)
 	const expr = parse(value)
 	for (const t of types) {
 		if (cssDataTypeMap[t](expr, prefix)) return true

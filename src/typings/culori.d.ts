@@ -28,7 +28,7 @@ declare module "culori" {
 	export function converter(mode: "hsl"): (value: string | Color) => HslSpace
 	export function converter(mode: "lab"): (value: string | Color) => LabSpace
 
-	export function parse(value: string): Color
+	export function parse(value: string): Color | undefined
 
 	export function serializeHex(color: RgbSpace): string
 	export function serializeHex8(color: RgbSpace): string

@@ -5,7 +5,7 @@ import postcss from "postcss"
 import defaultConfig from "tailwindcss/defaultConfig"
 import plugin from "tailwindcss/plugin"
 import resolveConfig from "tailwindcss/resolveConfig"
-import { CompletionItemKind } from "vscode"
+import * as vscode from "vscode"
 import { URI } from "vscode-uri"
 import { calcFraction } from "~/common"
 import { Extractor, isExtrator } from "~/common/extractors"
@@ -148,13 +148,13 @@ export function createTailwindLoader(
 				const item: ICompletionItem = {
 					label: value,
 					data: { type: "utility" },
-					kind: CompletionItemKind.Constant,
+					kind: vscode.CompletionItemKind.Constant,
 					sortText: (value.startsWith("-") ? "~~" : "~") + formatLabel(value),
 				}
 
 				const colorDesc = tw.getColorDesc(value)
 				if (colorDesc) {
-					item.kind = CompletionItemKind.Color
+					item.kind = vscode.CompletionItemKind.Color
 					item.data = { type: "color" }
 
 					if (value.endsWith("-transparent")) {

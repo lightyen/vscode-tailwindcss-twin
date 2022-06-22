@@ -75,42 +75,22 @@ export function validate(
 			for (const token of tokens) {
 				const { kind, start, end, value } = token
 				if (kind === ExtractedTokenKind.TwinTheme) {
-					let path = value
-					try {
-						const result = parser.splitAlpha(value)
-						path = result[0]
-					} catch {}
-					const result = parser.parseThemeValue(path)
-					for (const err of result.errors) {
-						if (
-							!diagnostics.push({
-								range: new vscode.Range(
-									document.positionAt(start + err.start),
-									document.positionAt(start + err.end),
-								),
-								source: DIAGNOSTICS_ID,
-								message: err.message,
-								severity: vscode.DiagnosticSeverity.Error,
-							})
-						) {
-							return diagnostics
-						}
-					}
-					if (!state.tw.getTheme(result.keys(), true)) {
-						if (
-							!diagnostics.push({
-								range: new vscode.Range(document.positionAt(start), document.positionAt(end)),
-								source: DIAGNOSTICS_ID,
-								message: "value is undefined",
-								severity: vscode.DiagnosticSeverity.Error,
-							})
-						) {
-							return diagnostics
-						}
+					if (
+						!validateTwinTheme({
+							document,
+							text: value,
+							offset: start,
+							kind,
+							diagnosticOptions: options.diagnostics,
+							state,
+							diagnostics,
+						})
+					) {
+						return diagnostics
 					}
 				} else if (kind === ExtractedTokenKind.TwinScreen) {
 					if (value) {
-						const result = state.tw.getTheme(["screens", value])
+						const result = parser.resolveThemeConfig(state.config, ["screens", value])
 						if (result == undefined) {
 							if (
 								!diagnostics.push({
@@ -816,4 +796,68 @@ function isLooseProperty(prop: string) {
 	if (/\b(?:top|right|bottom|left)\b/.test(prop)) return true
 	if (prop.startsWith("--")) return true
 	return false
+}
+
+function validateTwinTheme({
+	document,
+	text,
+	offset,
+	kind,
+	state,
+	diagnosticOptions,
+	diagnostics,
+}: {
+	document: TextDocument
+	text: string
+	offset: number
+	kind: ExtractedTokenKind
+	state: TailwindLoader
+	diagnosticOptions: ServiceOptions["diagnostics"]
+	diagnostics: IDiagnostic[]
+}): boolean {
+	let diagnostic: IDiagnostic | undefined
+	const { path, others, range } = parser.parse_theme_val({ text })
+	if (others) {
+		diagnostic = {
+			range: new vscode.Range(
+				document.positionAt(offset + others.range[0]),
+				document.positionAt(offset + others.range[1]),
+			),
+			source: DIAGNOSTICS_ID,
+			message: "Syntax Error",
+			severity: vscode.DiagnosticSeverity.Error,
+		}
+	} else {
+		for (const { closed, range } of path) {
+			if (!closed) {
+				const [a] = range
+				diagnostic = {
+					range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + a)),
+					source: DIAGNOSTICS_ID,
+					message: "Syntax Error",
+					severity: vscode.DiagnosticSeverity.Error,
+				}
+				break
+			}
+		}
+	}
+	if (!diagnostic) {
+		if (
+			parser.resolveThemeConfig(
+				state.config,
+				path.map(p => p.value),
+			) === undefined
+		) {
+			diagnostic = {
+				range: new vscode.Range(document.positionAt(offset + range[0]), document.positionAt(offset + range[1])),
+				source: DIAGNOSTICS_ID,
+				message: "value is undefined",
+				severity: vscode.DiagnosticSeverity.Error,
+			}
+		}
+	}
+	if (diagnostic) {
+		return diagnostics.push(diagnostic) > 0
+	}
+	return true
 }

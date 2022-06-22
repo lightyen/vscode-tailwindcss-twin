@@ -1,4 +1,5 @@
 import * as nodes from "./nodes"
+import { findRightBracket, isSpace } from "./util"
 
 // "-" 45
 // "[" 91
@@ -12,86 +13,6 @@ import * as nodes from "./nodes"
 // '"' 34
 // "'" 39
 
-/** Try to find right bracket from left bracket, return `undefind` if not found. */
-export function findRightBracket({
-	text,
-	start = 0,
-	end = text.length,
-	brackets = [40, 41],
-}: {
-	text: string
-	start?: number
-	end?: number
-	brackets?: [number, number]
-}): number | undefined {
-	let stack = 0
-	const [lbrac, rbrac] = brackets
-	let comment = 0
-	let string = 0
-	let url = 0
-
-	for (let i = start; i < end; i++) {
-		const char = text.charCodeAt(i)
-		if (char === lbrac) {
-			if (string === 0 && comment === 0) {
-				stack++
-			}
-		} else if (char === rbrac) {
-			if (string === 0 && comment === 0) {
-				if (stack === 1) {
-					return i
-				}
-				if (stack < 1) {
-					return undefined
-				}
-				stack--
-			}
-		}
-
-		if (string === 0 && comment === 0) {
-			if (url === 0 && char === 117 && /\W/.test(text[i - 1] || " ")) {
-				url = 1
-			} else if (url === 1 && char === 114) {
-				url = 2
-			} else if (url === 2 && char === 108) {
-				url = 3
-			} else if (url < 3 || (url === 3 && char === 41)) {
-				url = 0
-			}
-		}
-
-		if (url < 3 && comment === 0) {
-			if (string === 0) {
-				if (char === 47 && text.charCodeAt(i + 1) === 47) {
-					comment = 1
-				} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
-					comment = 2
-				}
-			}
-		} else if (comment === 1 && char === 10) {
-			comment = 0
-		} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
-			comment = 0
-			i += 1
-		}
-
-		if (string === 0) {
-			if (comment === 0) {
-				if (char === 34) {
-					string = 1
-				} else if (char === 39) {
-					string = 2
-				}
-			}
-		} else if (string === 1 && char === 34) {
-			string = 0
-		} else if (string === 2 && char === 39) {
-			string = 0
-		}
-	}
-	return undefined
-}
-
 function findRightBlockComment(text: string, start = 0, end = text.length): number | undefined {
 	for (let i = start + 2; i < end; i++) {
 		if (text.charCodeAt(i) === 42 && text.charCodeAt(i + 1) === 47) {
@@ -99,21 +20,6 @@ function findRightBlockComment(text: string, start = 0, end = text.length): numb
 		}
 	}
 	return undefined
-}
-
-function isSpace(char: number) {
-	if (Number.isNaN(char)) return true
-	switch (char) {
-		case 32:
-		case 12:
-		case 10:
-		case 13:
-		case 9:
-		case 11:
-			return true
-		default:
-			return false
-	}
 }
 
 export function parse(text: string, { breac = Infinity }: { breac?: number } = {}): nodes.Program {

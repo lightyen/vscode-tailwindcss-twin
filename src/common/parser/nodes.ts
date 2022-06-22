@@ -25,6 +25,9 @@ export enum NodeType {
 	CssExpression = "CssExpression",
 	WithOpacity = "WithOpacity",
 	EndOpacity = "EndOpacity",
+	ThemeFunction = "ThemeFunction",
+	ThemeValue = "ThemeValue",
+	ThemePath = "ThemePath",
 }
 
 export type Range = [number, number]
@@ -40,7 +43,6 @@ export interface NodeData {
 export type TokenString = NodeToken & NodeData
 
 export interface BaseNode extends NodeToken {
-	// parent?: BaseNode
 	type: NodeType
 }
 
@@ -154,3 +156,20 @@ export type BracketNode =
 	| ArbitraryProperty
 	| ShortCss
 	| WithOpacity
+
+export interface ThemeFunctionNode extends BaseNode, Closed {
+	type: NodeType.ThemeFunction
+	value: ThemeValueNode
+	innerRange: Range
+}
+
+export interface ThemeValueNode extends BaseNode {
+	type: NodeType.ThemeValue
+	path: ThemePathNode[]
+	suffix?: TokenString
+	others?: TokenString
+}
+
+export interface ThemePathNode extends BaseNode, NodeData, Closed {
+	type: NodeType.ThemePath
+}

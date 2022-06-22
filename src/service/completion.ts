@@ -1,4 +1,4 @@
-import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extractors"
+import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as nodes from "@/parser/nodes"
@@ -32,21 +32,23 @@ export default function completion(
 		try {
 			const index = document.offsetAt(position)
 			const { kind, ...token } = result
-
+			const text = token.value
+			const offset = token.start
+			const pos = index - token.start
 			if (kind === ExtractedTokenKind.TwinTheme) {
-				const list = twinThemeCompletion(document, index, token, state)
+				const list = twinThemeCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
 				return list
 			} else if (kind === ExtractedTokenKind.TwinScreen) {
-				const list = twinScreenCompletion(document, index, token, state)
+				const list = twinScreenCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
 				return list
 			} else {
-				const list = twinCompletion(document, index, token, kind, state, options)
+				const list = twinCompletion(document, offset, text, pos, kind, state, options)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
@@ -92,51 +94,30 @@ function doInsert(
 
 function twinCompletion(
 	document: TextDocument,
-	index: number,
-	match: Token,
+	offset: number,
+	text: string,
+	position: number,
 	kind: ExtractedTokenKind,
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): vscode.CompletionList<ICompletionItem> {
-	const offset = match.start
-	const text = match.value
-	const position = index - offset
 	const suggestion = parser.suggest({ text, position, separator: state.separator })
 
 	const isIncomplete = false
-	const variants = variantsCompletion(document, text, position, offset, kind, suggestion, state, options)
-	const utilities = utilitiesCompletion(document, text, position, offset, kind, suggestion, state, options)
-	const shortcss = shortcssCompletion(document, text, position, offset, kind, suggestion, state, options)
+	const variants = variantsCompletion(document, offset, text, position, suggestion, state, options)
+	const utilities = utilitiesCompletion(document, offset, text, position, kind, suggestion, state, options)
+	const shortcss = shortcssCompletion(document, offset, text, position, suggestion, state, options)
 	const arbitraryValue = arbitraryClassnameValueCompletion(
 		document,
+		offset,
 		text,
 		position,
-		offset,
-		kind,
 		suggestion,
 		state,
 		options,
 	)
-	const arbitraryProperty = arbitraryPropertyCompletion(
-		document,
-		text,
-		position,
-		offset,
-		kind,
-		suggestion,
-		state,
-		options,
-	)
-	const arbitraryVariant = arbitraryVariantCompletion(
-		document,
-		text,
-		position,
-		offset,
-		kind,
-		suggestion,
-		state,
-		options,
-	)
+	const arbitraryProperty = arbitraryPropertyCompletion(document, offset, text, position, suggestion, state, options)
+	const arbitraryVariant = arbitraryVariantCompletion(document, offset, text, position, suggestion, state, options)
 	const completionList = new vscode.CompletionList<ICompletionItem>([], isIncomplete)
 	completionList.items = completionList.items
 		.concat(variants)
@@ -150,10 +131,9 @@ function twinCompletion(
 
 function variantsCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
-	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	{ preferVariantWithParentheses }: ServiceOptions,
@@ -279,9 +259,9 @@ function variantsCompletion(
 
 function utilitiesCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
 	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
@@ -403,11 +383,19 @@ function isTextEdit(te: lsp.TextEdit | lsp.InsertReplaceEdit | undefined): te is
 const cssLanguageSrv = getCSSLanguageService()
 function getCssDeclarationCompletionList(
 	document: TextDocument,
-	position: number,
 	offset: number,
-	start: number,
+	text: string,
+	position: number,
+	exprRange: [start: number, end: number],
 	css: string | [prop: string, value: string],
+	state: TailwindLoader,
 ): ICompletionItem[] {
+	for (const t of parser.parse_theme({ text, start: exprRange[0], end: exprRange[1] })) {
+		if (position >= t.innerRange[0] && position <= t.innerRange[1]) {
+			return twinThemeCompletion(document, offset, text, position, state, t.innerRange).items
+		}
+	}
+
 	const code = Array.isArray(css) ? `.generated {${css[0]}: ${css[1]}}` : `.generated {${css}}`
 	let delta = 12
 	if (Array.isArray(css)) {
@@ -415,9 +403,9 @@ function getCssDeclarationCompletionList(
 	}
 	const doc = LspTextDocument.create("generated", "css", 0, code)
 	const sheet = cssLanguageSrv.parseStylesheet(doc)
-	const list = cssLanguageSrv.doComplete(doc, doc.positionAt(delta + position - start), sheet)
-	offset += start
-	return list.items.map<ICompletionItem>(item => {
+	const list = cssLanguageSrv.doComplete(doc, doc.positionAt(delta + position - exprRange[0]), sheet)
+	const bias = offset + exprRange[0]
+	const items = list.items.map<ICompletionItem>(item => {
 		const c: ICompletionItem = {
 			data: { type: "css" },
 			label: item.label,
@@ -431,7 +419,7 @@ function getCssDeclarationCompletionList(
 		if (isTextEdit(item.textEdit)) {
 			const start = doc.offsetAt(item.textEdit.range.start) - delta
 			const end = doc.offsetAt(item.textEdit.range.end) - delta
-			const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
+			const range = new vscode.Range(document.positionAt(bias + start), document.positionAt(bias + end))
 			c.insertText = item.textEdit.newText
 			if (c.insertText.endsWith(";")) {
 				c.insertText = c.insertText.slice(0, -1)
@@ -454,6 +442,21 @@ function getCssDeclarationCompletionList(
 		}
 		return c
 	})
+
+	if (code.indexOf(":") > 0) {
+		if (items.length > 0) {
+			items.push({
+				data: { type: "css" },
+				label: "theme()",
+				documentation: "Evaluates the value from tailwind theme configuration.",
+				insertText: new vscode.SnippetString("theme($1)"),
+				command: { title: "Suggest", command: "editor.action.triggerSuggest" },
+				range: items[0].range,
+				kind: vscode.CompletionItemKind.Function,
+			})
+		}
+	}
+	return items
 }
 
 const scssLanguageSrv = getCSSLanguageService()
@@ -509,10 +512,9 @@ function getScssSelectorCompletionList(
 
 function arbitraryVariantCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
-	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
@@ -527,14 +529,15 @@ function arbitraryVariantCompletion(
 
 function shortcssCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
-	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
+	if (!suggestion.target) return []
+	if (suggestion.inComment) return []
 	const a = suggestion.target?.range[0] ?? 0
 	let b = suggestion.target?.range[1] ?? 0
 	const value = suggestion.value
@@ -628,21 +631,25 @@ function shortcssCompletion(
 	}
 
 	let cssValueItems: ICompletionItem[] = []
-	if (suggestion.target && suggestion.target.type === parser.NodeType.ShortCss) {
-		cssValueItems = getCssDeclarationCompletionList(document, position, offset, suggestion.target.expr.range[0], [
-			suggestion.target.prefix.value,
-			suggestion.target.expr.value,
-		])
+	if (suggestion.target && suggestion.target.type === parser.NodeType.ShortCss && position < b) {
+		cssValueItems = getCssDeclarationCompletionList(
+			document,
+			offset,
+			text,
+			position,
+			suggestion.target.expr.range,
+			[suggestion.target.prefix.value, suggestion.target.expr.value],
+			state,
+		)
 	}
 	return cssPropItems.concat(cssValueItems)
 }
 
 function arbitraryPropertyCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
-	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
@@ -653,19 +660,20 @@ function arbitraryPropertyCompletion(
 	if (position <= suggestion.target.range[0] || position >= suggestion.target.range[1]) return []
 	return getCssDeclarationCompletionList(
 		document,
-		position,
 		offset,
-		suggestion.target.range[0] + 1,
+		text,
+		position,
+		[suggestion.target.range[0] + 1, suggestion.target.range[1] - 1],
 		suggestion.target.decl.value,
+		state,
 	)
 }
 
 function arbitraryClassnameValueCompletion(
 	document: TextDocument,
+	offset: number,
 	text: string,
 	position: number,
-	offset: number,
-	kind: ExtractedTokenKind,
 	suggestion: ReturnType<typeof parser.suggest>,
 	state: TailwindLoader,
 	_: ServiceOptions,
@@ -682,8 +690,17 @@ function arbitraryClassnameValueCompletion(
 	if (prefix.startsWith(state.tw.prefix)) prefix = prefix.slice(state.tw.prefix.length)
 	const props = state.tw.arbitrary[prefix]
 	if (!props) return []
+
 	props.forEach(prop => {
-		getCssDeclarationCompletionList(document, position, offset, expr.range[0], [prop, expr.value]).forEach(item => {
+		getCssDeclarationCompletionList(
+			document,
+			offset,
+			text,
+			position,
+			expr.range,
+			[prop, expr.value],
+			state,
+		).forEach(item => {
 			cssValueItems.set(item.label, item)
 		})
 	})
@@ -692,24 +709,83 @@ function arbitraryClassnameValueCompletion(
 
 function twinThemeCompletion(
 	document: TextDocument,
-	index: number,
-	token: Token,
+	offset: number,
+	text: string,
+	position: number,
 	state: TailwindLoader,
+	[start, end]: [start: number, end: number] = [0, text.length],
 ): vscode.CompletionList<ICompletionItem> {
-	const offset = token.start
-	const text = token.value
-	const position = index - offset
-	const { keys, hit } = parser.findThemeValueKeys(text, position)
-	if (!hit && keys.length > 0) {
-		return { isIncomplete: false, items: [] }
-	}
+	const { suffix, others, path } = parser.parse_theme_val({ text, start, end })
+	if (others && position > others.range[0]) return { items: [] }
+	if (suffix && position > suffix.range[0]) return { items: [] }
+	if (path[0] && path[0].value.length !== path[0].range[1] - path[0].range[0]) return { items: [] }
+	const i = path.findIndex(p => position >= p.range[0] && position <= p.range[1])
+	if (i === -1 && path.length !== 0) return { items: [] }
+	const keys = path.slice(0, i).map(p => p.value)
+	const obj = parser.resolveThemeConfig(state.config, keys)
+	if (typeof obj !== "object") return { items: [] }
 
-	const value = state.tw.getTheme(keys)
-	if (typeof value !== "object") {
-		return { isIncomplete: false, items: [] }
-	}
+	const hit = path[i]
+	const candidates = Object.keys(obj)
+	const isScreen = path[0] && path[0].value === "screen"
 
-	const candidates = Object.keys(value)
+	const items = candidates.map<ICompletionItem>(label => {
+		const value = parser.resolveThemeConfig(state.config, [...keys, label])
+		const item: ICompletionItem = {
+			label,
+			sortText: isScreen ? state.tw.screens.indexOf(label).toString().padStart(5, " ") : formatCandidates(label),
+			data: { type: "theme" },
+		}
+
+		if (typeof value === "object") {
+			item.kind = vscode.CompletionItemKind.Module
+			item.documentation = new vscode.MarkdownString(
+				`\`\`\`text\n${parser.resolveThemeString(value, suffix?.value)}\n\`\`\``,
+			)
+			item.detail = label
+		} else if (typeof value === "function") {
+			item.kind = vscode.CompletionItemKind.Function
+			item.documentation = new vscode.MarkdownString(
+				`\`\`\`text\n${parser.resolveThemeString(value, suffix?.value)}\n\`\`\``,
+			)
+			item.detail = label
+		} else {
+			if (typeof value === "string") {
+				const color = culori.parse(parser.resolveThemeString(value, suffix?.value))
+				if (value === "transparent") {
+					item.kind = vscode.CompletionItemKind.Color
+					item.documentation = "rgba(0, 0, 0, 0.0)"
+					return item
+				}
+				if (color) {
+					item.kind = vscode.CompletionItemKind.Color
+					item.documentation = culori.formatHex(color)
+				} else {
+					item.kind = vscode.CompletionItemKind.Constant
+					item.documentation = new vscode.MarkdownString(`\`\`\`txt\n${value}\n\`\`\``)
+					item.detail = label
+				}
+			}
+		}
+
+		if (hit) {
+			const [a, b] = hit.range
+			if (label.match(/[-./]/)) {
+				item.insertText = `[${label}]`
+				item.filterText = item.insertText
+				if (text.charCodeAt(a) === 46) item.filterText = "." + item.insertText
+			} else {
+				item.insertText = keys.length > 0 ? "." + label : label
+				item.filterText = item.insertText
+				if (text.charCodeAt(a) === 91) item.filterText = `[${label}]`
+			}
+			item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))
+		}
+
+		return item
+	})
+
+	return { items }
 
 	function formatCandidates(value: string) {
 		const reg = /^[-0-9/.]+$/
@@ -723,145 +799,64 @@ function twinThemeCompletion(
 		if (Number.isNaN(val)) return value
 		return (isNegtive ? "" : "+") + (Number.isNaN(Number(value)) ? "_" : "@") + val.toFixed(3).padStart(7, "0")
 	}
-
-	const isScreen = text.startsWith("screen")
-
-	return {
-		isIncomplete: false,
-		items: candidates.map(label => {
-			const item: ICompletionItem = {
-				label,
-				sortText: isScreen
-					? state.tw.screens.indexOf(label).toString().padStart(5, " ")
-					: formatCandidates(label),
-				data: { type: "theme" },
-			}
-			const value = state.tw.getTheme([...keys, label])
-			if (typeof value === "object") {
-				item.kind = vscode.CompletionItemKind.Module
-				item.documentation = new vscode.MarkdownString(`\`\`\`text\nobject\n\`\`\``)
-				item.detail = label
-			} else if (typeof value === "function") {
-				item.kind = vscode.CompletionItemKind.Function
-				item.documentation = new vscode.MarkdownString(`\`\`\`text\nfunction\n\`\`\``)
-				item.detail = label
-			} else {
-				if (typeof value === "string") {
-					try {
-						if (value === "transparent") {
-							item.kind = vscode.CompletionItemKind.Color
-							item.documentation = "rgba(0, 0, 0, 0.0)"
-							item.data.type = "theme"
-							return item
-						}
-						culori.parse(value)
-						item.kind = vscode.CompletionItemKind.Color
-						item.documentation = value
-						item.data.type = "theme"
-					} catch {
-						item.kind = vscode.CompletionItemKind.Constant
-						item.documentation = new vscode.MarkdownString(`\`\`\`txt\n${value}\n\`\`\``)
-						item.detail = label
-					}
-				}
-			}
-
-			let newText = label
-			if (label.match(/[-./]/)) {
-				newText = `[${label}]`
-			} else if (keys.length > 0) {
-				newText = `.${label}`
-			}
-
-			item.filterText = newText
-			if (keys.length > 0) {
-				item.filterText = hit?.value.slice(0, 1) + item.filterText
-			}
-
-			if (hit) {
-				const [a, b] = hit.range
-				item.insertText = newText
-				item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))
-				// item.textEdit = lsp.TextEdit.replace(
-				// 	{
-				// 		start: document.positionAt(offset + a),
-				// 		end: document.positionAt(offset + b),
-				// 	},
-				// 	newText,
-				// )
-			} else {
-				item.insertText = newText
-				item.range = new vscode.Range(document.positionAt(index), document.positionAt(index))
-				// item.textEdit = lsp.TextEdit.insert(document.positionAt(index), newText)
-			}
-
-			return item
-		}),
-	}
 }
 
 function twinScreenCompletion(
 	document: TextDocument,
-	index: number,
-	token: Token,
+	offset: number,
+	text: string,
+	position: number,
 	state: TailwindLoader,
 ): vscode.CompletionList<ICompletionItem> {
-	const value = state.tw.getTheme(["screens"])
+	const value = parser.resolveThemeConfig(state.config, ["screens"])
 	if (typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
 
 	const candidates = Object.keys(value)
-
-	return {
-		isIncomplete: false,
-		items: candidates.map(label => {
-			const index = state.tw.screens.indexOf(label)
-			const item: ICompletionItem = {
-				label,
-				sortText: index.toString().padStart(5, " "),
-				data: { type: "theme" },
-			}
-			const value = state.tw.getTheme(["screens", label])
-			if (typeof value === "object") {
-				item.kind = vscode.CompletionItemKind.Module
-				item.documentation = new vscode.MarkdownString(`\`\`\`text\nobject\n\`\`\``)
-				item.detail = label
-			} else if (typeof value === "function") {
-				item.kind = vscode.CompletionItemKind.Function
-				item.documentation = new vscode.MarkdownString(`\`\`\`text\nfunction\n\`\`\``)
-				item.detail = label
-			} else {
-				if (typeof value === "string") {
-					try {
-						if (value === "transparent") {
-							item.kind = vscode.CompletionItemKind.Color
-							item.documentation = "rgba(0, 0, 0, 0.0)"
-							item.data = { type: "color" }
-							return item
-						}
-						culori.parse(value)
-						item.kind = vscode.CompletionItemKind.Color
-						item.documentation = value
-						item.data = { type: "color" }
-					} catch {
-						item.kind = vscode.CompletionItemKind.Constant
-						item.documentation = new vscode.MarkdownString(`\`\`\`txt\n${value}\n\`\`\``)
-						item.detail = label
-					}
+	const items = candidates.map<ICompletionItem>(label => {
+		const index = state.tw.screens.indexOf(label)
+		const item: ICompletionItem = {
+			label,
+			sortText: index.toString().padStart(5, " "),
+			data: { type: "theme" },
+		}
+		const value = parser.resolveThemeConfig(state.config, ["screens", label])
+		if (typeof value === "object") {
+			item.kind = vscode.CompletionItemKind.Module
+			item.documentation = new vscode.MarkdownString(`\`\`\`text\nobject\n\`\`\``)
+			item.detail = label
+		} else if (typeof value === "function") {
+			item.kind = vscode.CompletionItemKind.Function
+			item.documentation = new vscode.MarkdownString(`\`\`\`text\nfunction\n\`\`\``)
+			item.detail = label
+		} else {
+			if (typeof value === "string") {
+				if (value === "transparent") {
+					item.kind = vscode.CompletionItemKind.Color
+					item.documentation = "rgba(0, 0, 0, 0.0)"
+					item.data = { type: "color" }
+					return item
+				}
+				const color = culori.parse(value)
+				if (color) {
+					item.kind = vscode.CompletionItemKind.Color
+					item.documentation = value
+				} else {
+					item.kind = vscode.CompletionItemKind.Constant
+					item.documentation = new vscode.MarkdownString(`\`\`\`txt\n${value}\n\`\`\``)
+					item.detail = label
 				}
 			}
+		}
 
-			const w = token.value.trim()
-			if (w !== "") {
-				item.insertText = label
-				item.range = new vscode.Range(
-					document.positionAt(token.start),
-					document.positionAt(token.start + w.length),
-				)
-			}
+		text = text.trim()
+		if (text) {
+			item.insertText = label
+			item.range = new vscode.Range(document.positionAt(offset), document.positionAt(offset + text.length))
+		}
 
-			return item
-		}),
-	}
+		return item
+	})
+	return { items }
 }

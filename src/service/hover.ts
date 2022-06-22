@@ -26,8 +26,12 @@ export default async function hover(
 		try {
 			const { kind, ...token } = result
 			if (kind === ExtractedTokenKind.TwinTheme) {
-				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
-				return resolveThemeValue({ kind, range, token, state, options })
+				const value = parser.parse_theme_val({ text: token.value })
+				const range = new vscode.Range(
+					document.positionAt(token.start + value.range[0]),
+					document.positionAt(token.start + value.range[1]),
+				)
+				return resolveThemeValue({ kind, range, value, state, options })
 			} else if (kind === ExtractedTokenKind.TwinScreen) {
 				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveScreenValue({ kind, range, token, state, options })
@@ -216,7 +220,7 @@ export default async function hover(
 					const { prefix, expr, e } = selection.target
 					let classname = `${prefix.value}`
 					if (expr) {
-						classname += `[${expr?.value.trim()}]`
+						classname += `[${expr.value.trim()}]`
 					}
 					if (e) {
 						if (e.type === parser.NodeType.WithOpacity) {
@@ -280,18 +284,25 @@ export default async function hover(
 
 function resolveThemeValue({
 	range,
-	token,
+	value,
 	state,
 }: {
 	kind: ExtractedTokenKind
 	range: vscode.Range
-	token: Token
+	value: parser.ThemeValueNode
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
-	const value = parser.theme(state.config, token.value, true)
+	const ret = parser.resolveThemeConfig(
+		state.config,
+		value.path.map(p => {
+			return p.value
+		}),
+	)
+	if (ret === undefined) return
+	const output = parser.resolveThemeString(ret, value.suffix?.value)
 	const markdown = new vscode.MarkdownString()
-	markdown.value = `\`\`\`txt\n${value}\n\`\`\``
+	markdown.value = `\`\`\`txt\n${output}\n\`\`\``
 	return {
 		range,
 		contents: [markdown],
@@ -309,13 +320,10 @@ function resolveScreenValue({
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
-	const value = state.tw.getTheme(["screens", token.value])
-	if (value == undefined) {
-		return
-	}
+	const value = parser.resolveThemeConfig(state.config, ["screens", token.value])
+	if (value === undefined) return
 
 	const markdown = new vscode.MarkdownString()
-
 	if (typeof value === "string") {
 		markdown.value = `\`\`\`css\n@media (min-width: ${value})\n\`\`\``
 	} else if (value instanceof Array) {

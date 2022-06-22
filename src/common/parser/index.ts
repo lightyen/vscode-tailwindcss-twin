@@ -1,6 +1,7 @@
 export * from "./hover"
 export * from "./nodes"
 export * from "./parse_regexp"
+export * from "./parse_theme"
 export * from "./spread"
 export * from "./suggest"
 export * from "./theme"

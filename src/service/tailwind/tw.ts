@@ -1,5 +1,4 @@
 import { isColorFunction, isColorHexValue, isColorIdentifier, isColorTransparent, parse as parseColors } from "@/color"
-import { dlv } from "@/get_set"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import { createGetPluginByName } from "@/plugins"
@@ -132,8 +131,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			return _getPlugin(classname, trimPrefix)
 		},
 		getColorDesc,
-		getConfig,
-		getTheme,
 		prefix: config.prefix,
 		trimPrefix,
 		arbitrary,
@@ -275,28 +272,26 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		for (const c of parseColors(cssValue)) {
 			const [a, b] = c.range
 			const val = cssValue.slice(a, b)
-			let colorVal = ""
-			try {
-				if (isColorFunction(c)) {
-					if (!c.fnName.startsWith(colorHint)) {
-						if (c.fnName.startsWith("rgb")) {
-							colorVal = getValue({
-								mode: "rgb",
-								r: +c.args[0] / 255,
-								g: +c.args[1] / 255,
-								b: +c.args[2] / 255,
-								alpha: 1,
-							})
-						} else if (c.fnName.startsWith("hsl")) {
-							colorVal = getValue(culori.parse(`hsl(${c.args.slice(0, 3).join(" ")})`))
-						}
+			let colorVal: string | undefined
+			if (isColorFunction(c)) {
+				if (!c.fnName.startsWith(colorHint)) {
+					if (c.fnName.startsWith("rgb")) {
+						colorVal = getValue({
+							mode: "rgb",
+							r: +c.args[0] / 255,
+							g: +c.args[1] / 255,
+							b: +c.args[2] / 255,
+							alpha: 1,
+						})
+					} else if (c.fnName.startsWith("hsl")) {
+						colorVal = getValue(culori.parse(`hsl(${c.args.slice(0, 3).join(" ")})`))
 					}
-				} else if (isColorHexValue(c) && colorHint !== "hex") {
-					colorVal = getValue(culori.parse(val))
-				} else if (isColorIdentifier(c)) {
-					colorVal = getValue(culori.parse(val))
 				}
-			} catch {}
+			} else if (isColorHexValue(c) && colorHint !== "hex") {
+				colorVal = getValue(culori.parse(val))
+			} else if (isColorIdentifier(c)) {
+				colorVal = getValue(culori.parse(val))
+			}
 			ret += cssValue.slice(start, b)
 			if (colorVal) ret += `/** ${colorVal} */`
 			start = b
@@ -307,7 +302,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 
 		return ret
 
-		function getValue(color: culori.Color) {
+		function getValue(color: culori.Color | undefined) {
+			if (!color) return undefined
 			switch (colorHint) {
 				case "hex":
 					return culori.formatHex(color)
@@ -366,7 +362,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
-				decl.value = parser.resolveTheme(config, decl.value)
+				decl.value = parser.resolveThemeFunc(config, decl.value)
 				decl.important = important
 				if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
 				decl.value = toPixelUnit(decl.value, rootFontSize)
@@ -564,30 +560,5 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 
 	function isVariant(value: string) {
 		return context.variantMap.has(value)
-	}
-
-	/**
-	 * get theme value.
-	 *
-	 * example: ```getTheme(["colors", "blue", "500"])```
-	 * @param keys
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function getTheme(keys: string[], useDefault = false): any {
-		if (!config) {
-			return undefined
-		}
-		let value = dlv(config.theme, keys)
-		if (useDefault && value?.["DEFAULT"] != undefined) {
-			value = value["DEFAULT"]
-		}
-		return value
-	}
-
-	function getConfig(keys: string[]) {
-		if (!config) {
-			return undefined
-		}
-		return dlv(config, keys)
 	}
 }
