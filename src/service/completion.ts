@@ -542,7 +542,6 @@ function shortcssCompletion(
 	let b = suggestion.target?.range[1] ?? 0
 	const value = suggestion.value
 
-	let cssPropItems: ICompletionItem[] = []
 	let cssPropEnabled = true
 
 	if (suggestion.inComment) {
@@ -564,12 +563,18 @@ function shortcssCompletion(
 		}
 	}
 
+	let items: ICompletionItem[] = []
 	if (cssPropEnabled) {
-		cssPropItems = cssDataManager.getProperties().map(entry => ({
+		let data = ""
+		if (suggestion.target.type === parser.NodeType.ShortCss) {
+			data = suggestion.target.expr.value
+		}
+
+		items = cssDataManager.getProperties().map(entry => ({
 			label: entry.name,
 			sortText: "~~~~" + entry.name,
 			kind: vscode.CompletionItemKind.Field,
-			insertText: new vscode.SnippetString(`[${entry.name}: $0]`),
+			insertText: new vscode.SnippetString(`[${entry.name}: ${data}$0]`),
 			command: {
 				title: "Suggest",
 				command: "editor.action.triggerSuggest",
@@ -580,14 +585,14 @@ function shortcssCompletion(
 			},
 		}))
 
-		cssPropItems = cssPropItems.concat(
+		items = items.concat(
 			Array.from(state.tw.variables).map(label => {
 				const item: ICompletionItem = {
 					label,
 					data: { type: "cssProp" },
 					sortText: "~~~~~" + label,
 					kind: vscode.CompletionItemKind.Field,
-					insertText: new vscode.SnippetString(`[${label}: $0]`),
+					insertText: new vscode.SnippetString(`[${label}: ${data}$0]`),
 					command: {
 						title: "Suggest",
 						command: "editor.action.triggerSuggest",
@@ -601,48 +606,47 @@ function shortcssCompletion(
 
 	if (suggestion.target) {
 		if (suggestion.target.type === parser.NodeType.ShortCss) {
-			const data = suggestion.target.expr.value
-			const [start, end] = suggestion.target.range
-			if (position > start && position <= end) {
-				doReplace(
-					cssPropItems,
-					document,
-					offset,
-					a,
-					b,
-					item => new vscode.SnippetString(`[${item.label}: ${data}$0]`),
-				)
-			} else if (position === start) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
+			if (position > a && position <= b) {
+				for (const item of items) {
+					item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))
+				}
+			} else if (position === a) {
+				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		} else if (suggestion.target.type === parser.NodeType.SimpleVariant) {
 			if (position > a && position < b) {
-				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
+				doReplace(items, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
 			} else if (position === a) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
+				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		} else {
 			if (position > a && position <= b) {
-				doReplace(cssPropItems, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
+				doReplace(items, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
 			} else if (position === a) {
-				doInsert(cssPropItems, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
+				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
+		}
+
+		if (
+			suggestion.target.type === parser.NodeType.ShortCss &&
+			position >= suggestion.target.expr.range[0] &&
+			position <= suggestion.target.expr.range[1]
+		) {
+			items = items.concat(
+				getCssDeclarationCompletionList(
+					document,
+					offset,
+					text,
+					position,
+					suggestion.target.expr.range,
+					[suggestion.target.prefix.value, suggestion.target.expr.value],
+					state,
+				),
+			)
 		}
 	}
 
-	let cssValueItems: ICompletionItem[] = []
-	if (suggestion.target && suggestion.target.type === parser.NodeType.ShortCss && position < b) {
-		cssValueItems = getCssDeclarationCompletionList(
-			document,
-			offset,
-			text,
-			position,
-			suggestion.target.expr.range,
-			[suggestion.target.prefix.value, suggestion.target.expr.value],
-			state,
-		)
-	}
-	return cssPropItems.concat(cssValueItems)
+	return items
 }
 
 function arbitraryPropertyCompletion(
