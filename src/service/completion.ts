@@ -539,8 +539,7 @@ function shortcssCompletion(
 	if (!suggestion.target) return []
 	if (suggestion.inComment) return []
 	const a = suggestion.target?.range[0] ?? 0
-	let b = suggestion.target?.range[1] ?? 0
-	const value = suggestion.value
+	const b = suggestion.target?.range[1] ?? 0
 
 	let cssPropEnabled = true
 
@@ -549,13 +548,7 @@ function shortcssCompletion(
 	}
 
 	if (suggestion.target) {
-		if (suggestion.target.type === parser.NodeType.SimpleVariant) {
-			b = b + state.separator.length
-			const isVariantWord = state.tw.isVariant(value)
-			if (position === b && !isVariantWord) {
-				cssPropEnabled = false
-			}
-		} else if (suggestion.target.type === parser.NodeType.ShortCss) {
+		if (suggestion.target.type === parser.NodeType.ShortCss) {
 			const [a, b] = suggestion.target.expr.range
 			if (position >= a && position <= b) {
 				cssPropEnabled = false
@@ -618,6 +611,8 @@ function shortcssCompletion(
 				doReplace(items, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
 			} else if (position === a) {
 				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
+			} else {
+				doInsert(items, document, offset, b, item => new vscode.SnippetString(`[${item.label}: $0] `))
 			}
 		} else {
 			if (position > a && position <= b) {
@@ -658,19 +653,58 @@ function arbitraryPropertyCompletion(
 	state: TailwindLoader,
 	_: ServiceOptions,
 ) {
-	if (!suggestion.target) return []
 	if (suggestion.inComment) return []
-	if (nodes.NodeType.ArbitraryProperty !== suggestion.target.type) return []
-	if (position <= suggestion.target.range[0] || position >= suggestion.target.range[1]) return []
-	return getCssDeclarationCompletionList(
-		document,
-		offset,
-		text,
-		position,
-		[suggestion.target.range[0] + 1, suggestion.target.range[1] - 1],
-		suggestion.target.decl.value,
-		state,
+
+	if (suggestion.target && suggestion.target.type === nodes.NodeType.ArbitraryProperty) {
+		if (position > suggestion.target.range[0] && position < suggestion.target.range[1]) {
+			return getCssDeclarationCompletionList(
+				document,
+				offset,
+				text,
+				position,
+				[suggestion.target.range[0] + 1, suggestion.target.range[1] - 1],
+				suggestion.target.decl.value,
+				state,
+			)
+		}
+	}
+
+	if (suggestion.target) return []
+
+	let items: ICompletionItem[] = cssDataManager.getProperties().map(entry => ({
+		label: entry.name,
+		sortText: "~~~~" + entry.name,
+		kind: vscode.CompletionItemKind.Field,
+		insertText: new vscode.SnippetString(`[${entry.name}: $0]`),
+		command: {
+			title: "Suggest",
+			command: "editor.action.triggerSuggest",
+		},
+		data: {
+			type: "cssProp",
+			entry,
+		},
+	}))
+
+	items = items.concat(
+		Array.from(state.tw.variables).map(label => {
+			const item: ICompletionItem = {
+				label,
+				data: { type: "cssProp" },
+				sortText: "~~~~~" + label,
+				kind: vscode.CompletionItemKind.Field,
+				insertText: new vscode.SnippetString(`[${label}: $0]`),
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+				detail: "variable",
+			}
+			return item
+		}),
 	)
+
+	return items
 }
 
 function arbitraryClassnameValueCompletion(
