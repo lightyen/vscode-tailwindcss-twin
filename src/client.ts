@@ -12,7 +12,7 @@ import { ICompletionItem } from "./typings/completion"
 
 const DEFAULT_SUPPORT_LANGUAGES = ["javascript", "javascriptreact", "typescript", "typescriptreact", "twin"]
 
-const triggerCharacters = ['"', "'", "`", " ", ":", "-", "/", ".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+const triggerCharacters = ['"', "'", "`", ":", "-", "/", ".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 const priority = [".ts", ".js", ".cjs"]
 
