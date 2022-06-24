@@ -425,21 +425,22 @@ function checkVariants(
 ) {
 	for (const node of item.variants) {
 		if (node.type === parser.NodeType.ArbitrarySelector || node.type === parser.NodeType.ArbitraryVariant) {
-			if (emptyChecking && node.selector.value.trim() === "") {
-				if (
-					!diagnostics.push({
-						source: DIAGNOSTICS_ID,
-						message: `Empty block statement.`,
-						range: new vscode.Range(
-							document.positionAt(offset + node.selector.range[0] - 1),
-							document.positionAt(offset + node.selector.range[1] + 1),
-						),
-						severity: vscode.DiagnosticSeverity.Warning,
-					})
-				) {
-					return false
-				}
-			}
+			// FIXME: duplicate checking
+			// if (emptyChecking && node.selector.value.trim() === "") {
+			// 	if (
+			// 		!diagnostics.push({
+			// 			source: DIAGNOSTICS_ID,
+			// 			message: `Empty block statement.`,
+			// 			range: new vscode.Range(
+			// 				document.positionAt(offset + node.selector.range[0] - 1),
+			// 				document.positionAt(offset + node.selector.range[1] + 1),
+			// 			),
+			// 			severity: vscode.DiagnosticSeverity.Warning,
+			// 		})
+			// 	) {
+			// 		return false
+			// 	}
+			// }
 			continue
 		}
 		const {

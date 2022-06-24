@@ -2,7 +2,6 @@ import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
 import { defaultLogger as console } from "@/logger"
 import * as parser from "@/parser"
 import * as nodes from "@/parser/nodes"
-import { cssDataManager } from "@/vscode-css-languageservice"
 import * as culori from "culori"
 import vscode from "vscode"
 import { getCSSLanguageService } from "vscode-css-languageservice"
@@ -36,13 +35,13 @@ export default function completion(
 			const offset = token.start
 			const pos = index - token.start
 			if (kind === ExtractedTokenKind.TwinTheme) {
-				const list = twinThemeCompletion(document, offset, text, pos, state)
+				const list = themeCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
 				return list
 			} else if (kind === ExtractedTokenKind.TwinScreen) {
-				const list = twinScreenCompletion(document, offset, text, pos, state)
+				const list = screenCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
@@ -62,33 +61,50 @@ export default function completion(
 	}
 }
 
-function doReplace(
-	list: ICompletionItem[],
-	document: TextDocument,
-	offset: number,
-	start: number,
-	end: number,
-	handler: (item: ICompletionItem) => ICompletionItem["insertText"],
-) {
-	for (let i = 0; i < list.length; i++) {
-		const item = list[i]
-		item.insertText = handler(item)
-		item.range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
+interface CompletionFeature {
+	(
+		document: TextDocument,
+		kind: ExtractedTokenKind,
+		offset: number,
+		text: string,
+		position: number,
+		suggestion: ReturnType<typeof parser.suggest>,
+		state: TailwindLoader,
+		options: ServiceOptions,
+	): ICompletionItem[] | null | undefined
+}
+
+function appendSpace() {
+	return (item: ICompletionItem) => {
+		if (item.insertText) {
+			if (typeof item.insertText !== "string") {
+				item.insertText = new vscode.SnippetString(item.insertText.value + " ")
+			} else {
+				item.insertText = item.insertText + " "
+			}
+		} else {
+			item.insertText = item.label + " "
+		}
 	}
 }
 
-function doInsert(
-	list: ICompletionItem[],
-	document: TextDocument,
-	offset: number,
-	start: number,
-	handler: (item: ICompletionItem) => ICompletionItem["insertText"],
-) {
-	for (let i = 0; i < list.length; i++) {
-		const item = list[i]
-		item.insertText = handler(item)
-		const position = document.positionAt(offset + start)
-		item.range = new vscode.Range(position, position)
+function prependSpace() {
+	return (item: ICompletionItem) => {
+		if (item.insertText) {
+			if (typeof item.insertText !== "string") {
+				item.insertText = new vscode.SnippetString(" " + item.insertText.value)
+			} else {
+				item.insertText = " " + item.insertText
+			}
+		} else {
+			item.insertText = " " + item.label
+		}
+	}
+}
+
+function replace(range: vscode.Range) {
+	return (item: ICompletionItem) => {
+		item.range = range
 	}
 }
 
@@ -102,277 +118,253 @@ function twinCompletion(
 	options: ServiceOptions,
 ): vscode.CompletionList<ICompletionItem> {
 	const suggestion = parser.suggest({ text, position, separator: state.separator })
-
-	const isIncomplete = false
-	const variants = variantsCompletion(document, offset, text, position, suggestion, state, options)
-	const utilities = utilitiesCompletion(document, offset, text, position, kind, suggestion, state, options)
-	const shortcss = shortcssCompletion(document, offset, text, position, suggestion, state, options)
-	const arbitraryValue = arbitraryClassnameValueCompletion(
-		document,
-		offset,
-		text,
-		position,
-		suggestion,
-		state,
-		options,
-	)
-	const arbitraryProperty = arbitraryPropertyCompletion(document, offset, text, position, suggestion, state, options)
-	const arbitraryVariant = arbitraryVariantCompletion(document, offset, text, position, suggestion, state, options)
-	const completionList = new vscode.CompletionList<ICompletionItem>([], isIncomplete)
-	completionList.items = completionList.items
-		.concat(variants)
-		.concat(utilities)
-		.concat(shortcss)
-		.concat(arbitraryValue)
-		.concat(arbitraryProperty)
-		.concat(arbitraryVariant)
-	return completionList
+	if (suggestion.inComment) return new vscode.CompletionList<ICompletionItem>(undefined)
+	let items: ICompletionItem[] = []
+	applyFeatures(variantCompletion, classnameCompletion, arbitraryPropertyCompletion, arbitraryVariantValueCompletion)
+	return new vscode.CompletionList<ICompletionItem>(items)
+	function applyFeatures(...features: CompletionFeature[]) {
+		for (const fn of features) {
+			const ret = fn(document, kind, offset, text, position, suggestion, state, options)
+			if (ret == undefined) continue
+			items = items.concat(ret)
+		}
+	}
 }
 
-function variantsCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	{ preferVariantWithParentheses }: ServiceOptions,
-) {
-	const a = suggestion.target?.range[0] ?? 0
-	const b = suggestion.target?.range[1] ?? 0
-	const nextCharacter = text.charCodeAt(position)
-	const userVariants = new Set(suggestion.variants)
+const classnameCompletion: CompletionFeature = (document, kind, offset, text, position, { target, value }, state) => {
+	if (kind === ExtractedTokenKind.TwinCssProperty) return
+	if (!target) return state.provideClassCompletionList()
 
-	let variantItems: ICompletionItem[] = []
-	let variantEnabled = true
-
-	if (suggestion.inComment) variantEnabled = false
-	if (suggestion.target) {
-		switch (suggestion.target.type) {
-			case parser.NodeType.SimpleVariant:
-				break
-			case parser.NodeType.ArbitrarySelector:
-			case parser.NodeType.ArbitraryVariant:
-				if (position !== b) variantEnabled = false
-				break
-			case parser.NodeType.ShortCss:
-			case parser.NodeType.ArbitraryClassname:
-			case parser.NodeType.ArbitraryProperty:
-				variantEnabled = false
-				break
+	const [a, b] = target.range
+	switch (target.type) {
+		case parser.NodeType.ArbitrarySelector:
+		case parser.NodeType.SimpleVariant:
+		case parser.NodeType.ArbitraryVariant: {
+			if (position > a && position < b) return
+			break
+		}
+		case parser.NodeType.ArbitraryProperty: {
+			if (position > a && position <= b) return
+			break
+		}
+		case parser.NodeType.ShortCss: {
+			if (position !== a) return
+			break
+		}
+		case parser.NodeType.ArbitraryClassname: {
+			if (position === b) return
+			const [, pb] = target.prefix.range
+			if (position > pb) return
+			break
 		}
 	}
 
-	if (variantEnabled) {
-		const [screens, darkmode, placeholder, restVariants] = state.tw.variants
-		variantItems = variantItems
-			.concat(
-				screens.map((value, index) => ({
-					label: value + state.separator,
-					sortText: index.toString().padStart(5, " "),
-					kind: vscode.CompletionItemKind.Module,
-					data: { type: "screen" },
-					command: {
-						title: "Suggest",
-						command: "editor.action.triggerSuggest",
-					},
-				})),
-			)
-			.concat(
-				darkmode.map(value => ({
-					label: value + state.separator,
-					sortText: "*" + value,
-					kind: vscode.CompletionItemKind.Color,
-					data: { type: "variant" },
-					command: {
-						title: "Suggest",
-						command: "editor.action.triggerSuggest",
-					},
-				})),
-			)
-			.concat(
-				placeholder.map(value => ({
-					label: value + state.separator,
-					sortText: "*" + value,
-					kind: vscode.CompletionItemKind.Method,
-					data: { type: "variant" },
-					command: {
-						title: "Suggest",
-						command: "editor.action.triggerSuggest",
-					},
-				})),
-			)
-			.concat(
-				restVariants.map(value => ({
-					label: value + state.separator,
-					sortText: "~~~" + value,
-					kind: vscode.CompletionItemKind.Method,
-					data: { type: "variant" },
-					command: {
-						title: "Suggest",
-						command: "editor.action.triggerSuggest",
-					},
-				})),
-			)
+	let items = state.provideClassCompletionList()
 
-		variantItems = variantItems.filter(item => !userVariants.has(item.label.slice(0, -state.separator.length)))
+	const endChar = text.slice(b, b + 1)
+	const insertSpace = text.slice(a, b) !== "!" && endChar !== "" && endChar.match(/[\s)]/) == null
+	const transfrom = (callback: (item: ICompletionItem) => void) => {
+		for (const item of items) callback(item)
+	}
+
+	switch (target.type) {
+		case parser.NodeType.ArbitrarySelector:
+		case parser.NodeType.SimpleVariant:
+		case parser.NodeType.ArbitraryVariant: {
+			if (insertSpace) transfrom(appendSpace())
+			return items
+		}
+		case parser.NodeType.ShortCss: {
+			transfrom(appendSpace())
+			return items
+		}
+		case parser.NodeType.ArbitraryClassname: {
+			if (target.expr) {
+				if (position === a) {
+					if (insertSpace) transfrom(appendSpace())
+					return items
+				}
+				transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
+				return items
+			}
+			break
+		}
+		case parser.NodeType.ArbitraryProperty: {
+			transfrom(appendSpace())
+			return items
+		}
+	}
+
+	// NOTE: complete color opacities
+	if (target.type === parser.NodeType.ClassName) {
+		// eslint-disable-next-line no-inner-declarations
+		function formatValue(label: string) {
+			const reg = /([0-9]+)/
+			const match = label.match(reg)
+			if (!match) return label
+			const val = Number(match[1])
+			if (Number.isNaN(val)) return label
+			return Number.isNaN(Number(match[1])) ? "_" : "@" + val.toFixed(0).padStart(5, "0")
+		}
+
+		const slash = value.lastIndexOf("/")
+		let classname = value
+		if (slash !== -1) classname = value.slice(0, slash)
+		const p = state.tw.getPlugin(classname)
+		if (p && /Color|fill|stroke/.test(p.getName())) {
+			const key = p.getName().replace(/Color$/, "Opacity") as ("opacity" | `${string}Opacity`) &
+				keyof Tailwind.CorePluginFeatures
+			const src1 = /Color$/.test(p.getName()) ? Object.keys(state.config.theme[key] ?? {}) : []
+			const src2 = Object.keys(state.config.theme.opacity ?? {})
+			const opacities = new Set(src1.concat(src2))
+			items = items.concat(
+				...Array.from(opacities).map<ICompletionItem>(v => ({
+					label: classname + "/" + v,
+					sortText: "~{" + classname + "/" + formatValue(v),
+					data: { type: "utility" },
+				})),
+			)
+		}
+	}
+
+	if (insertSpace || position === a) {
+		transfrom(appendSpace())
+	} else if (position === b) {
+		transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
+	} else {
+		// NOTE: for `bg-black/50`, `bg-black/[0.5]`
+		let shrinkB = b
+		if (target.type === parser.NodeType.ClassName || target.type === parser.NodeType.ArbitraryClassname) {
+			const p = state.tw.getPlugin(value)
+			if (p && /Color|fill|stroke/.test(p.getName())) {
+				const slash = value.lastIndexOf("/")
+				if (slash !== -1) shrinkB += slash - value.length
+			}
+		}
+
+		transfrom(item => {
+			const end = item.kind === vscode.CompletionItemKind.Color && item.documentation ? shrinkB : b
+			item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + end))
+		})
+	}
+	return items
+}
+
+const variantCompletion: CompletionFeature = (
+	document,
+	kind,
+	offset,
+	text,
+	position,
+	{ target, variants },
+	state,
+	{ preferVariantWithParentheses },
+) => {
+	if (target) {
+		const [a, b] = target.range
+		switch (target.type) {
+			case parser.NodeType.ArbitrarySelector: {
+				if (position !== a && position !== b) return
+				break
+			}
+			case parser.NodeType.ArbitraryVariant: {
+				const [, pb] = target.prefix.range
+				if (position > pb && position < b) return
+				break
+			}
+			case parser.NodeType.ArbitraryClassname:
+			case parser.NodeType.ShortCss:
+			case parser.NodeType.ArbitraryProperty: {
+				if (position !== a) return
+				break
+			}
+			case parser.NodeType.ClassName: {
+				if (position !== a && position !== b) return
+				break
+			}
+		}
+	}
+
+	let items: ICompletionItem[] = []
+	const [screens, darkmode, placeholder, restVariants] = state.tw.variants
+	items = items
+		.concat(
+			screens.map((value, index) => ({
+				label: value + state.separator,
+				sortText: index.toString().padStart(5, " "),
+				kind: vscode.CompletionItemKind.Module,
+				data: { type: "screen" },
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+			})),
+		)
+		.concat(
+			darkmode.map(value => ({
+				label: value + state.separator,
+				sortText: "*" + value,
+				kind: vscode.CompletionItemKind.Color,
+				data: { type: "variant" },
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+			})),
+		)
+		.concat(
+			placeholder.map(value => ({
+				label: value + state.separator,
+				sortText: "*" + value,
+				kind: vscode.CompletionItemKind.Method,
+				data: { type: "variant" },
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+			})),
+		)
+		.concat(
+			restVariants.map(value => ({
+				label: value + state.separator,
+				sortText: "~~~" + value,
+				kind: vscode.CompletionItemKind.Method,
+				data: { type: "variant" },
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+			})),
+		)
+
+	if (!target) return items
+
+	const [a, b] = target.range
+	const nextCharacter = text.charCodeAt(position)
+	const userVariants = new Set(variants)
+	items = items.filter(item => !userVariants.has(item.label.slice(0, -state.separator.length)))
+	const transfrom = (callback: (item: ICompletionItem) => void) => {
+		for (const item of items) callback(item)
 	}
 
 	const next = text.slice(b, b + 1)
-	const nextNotSpace = next != "" && suggestion.target != undefined && next.match(/[\s)]/) == null
+	const insertSpace = next != "" && next.match(/[\s)]/) == null
 
 	if (preferVariantWithParentheses) {
 		if (nextCharacter !== 40) {
-			for (let i = 0; i < variantItems.length; i++) {
-				const item = variantItems[i]
-				item.insertText = new vscode.SnippetString(item.label + "($0)" + (nextNotSpace ? " " : ""))
-			}
+			transfrom(item => {
+				item.insertText = new vscode.SnippetString(item.label + "($0)" + (insertSpace ? " " : ""))
+			})
 		}
 	}
 
-	if (suggestion.target) {
-		if (suggestion.target.type === parser.NodeType.SimpleVariant) {
-			if (position > a && position < b) {
-				doReplace(variantItems, document, offset, a, b, item => item.label)
-			} else if (preferVariantWithParentheses && position === a) {
-				doInsert(variantItems, document, offset, a, item => item.label)
-			} else if (position === b) {
-				doInsert(variantItems, document, offset, b, item => item.label)
-			}
-		} else if (
-			suggestion.target.type === parser.NodeType.ClassName ||
-			suggestion.target.type === parser.NodeType.ShortCss ||
-			suggestion.target.type === parser.NodeType.ArbitraryClassname
-		) {
-			if (position > a) {
-				if (preferVariantWithParentheses) {
-					doReplace(variantItems, document, offset, a, b, item => item.insertText)
-				} else {
-					doReplace(variantItems, document, offset, a, b, item => item.label)
-				}
-			}
-		}
-	}
-
-	return variantItems
-}
-
-function utilitiesCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	kind: ExtractedTokenKind,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	_: ServiceOptions,
-) {
-	const a = suggestion.target?.range[0] ?? 0
-	const b = suggestion.target?.range[1] ?? 0
-	const value = suggestion.value
-	let classNameItems: ICompletionItem[] = []
-	let classNameEnabled = true
-
-	if (kind === ExtractedTokenKind.TwinCssProperty) {
-		classNameEnabled = false
-	}
-
-	if (suggestion.inComment) {
-		classNameEnabled = false
-	}
-
-	if (suggestion.target) {
-		switch (suggestion.target.type) {
-			case parser.NodeType.SimpleVariant:
-			case parser.NodeType.ArbitrarySelector: {
-				if (position < b) classNameEnabled = false
-				break
-			}
-			case parser.NodeType.ShortCss:
-			case parser.NodeType.ArbitraryProperty:
-				classNameEnabled = false
-				break
-		}
-	}
-
-	if (classNameEnabled) {
-		classNameItems = state.provideUtilities()
-	}
-
-	const next = text.slice(b, b + 1)
-	const nextNotSpace = next !== "" && next.match(/[\s)]/) == null
-
-	if (suggestion.target) {
-		// NOTE: complete color opacities
-		if (suggestion.target.type === parser.NodeType.ClassName) {
-			// eslint-disable-next-line no-inner-declarations
-			function formatValue(label: string) {
-				const reg = /([0-9]+)/
-				const match = label.match(reg)
-				if (!match) return label
-				const val = Number(match[1])
-				if (Number.isNaN(val)) return label
-				return Number.isNaN(Number(match[1])) ? "_" : "@" + val.toFixed(0).padStart(5, "0")
-			}
-
-			const slash = value.lastIndexOf("/")
-			let classname = value
-			if (slash !== -1) classname = value.slice(0, slash)
-			const p = state.tw.getPlugin(classname)
-			if (p && /Color|fill|stroke/.test(p.getName())) {
-				const key = p.getName().replace(/Color$/, "Opacity") as ("opacity" | `${string}Opacity`) &
-					keyof Tailwind.CorePluginFeatures
-				const src1 = /Color$/.test(p.getName()) ? Object.keys(state.config.theme[key] ?? {}) : []
-				const src2 = Object.keys(state.config.theme.opacity ?? {})
-				const opacities = new Set(src1.concat(src2))
-				classNameItems = classNameItems.concat(
-					...Array.from(opacities).map<ICompletionItem>(v => ({
-						label: classname + "/" + v,
-						sortText: "~" + classname + "/" + formatValue(v),
-						data: { type: "utility" },
-					})),
-				)
-			}
-		}
-
+	if (target.type === parser.NodeType.SimpleVariant || target.type === parser.NodeType.ArbitraryVariant) {
 		if (position > a && position < b) {
-			let shrinkB = b
-			if (
-				suggestion.target.type === parser.NodeType.ClassName ||
-				suggestion.target.type === parser.NodeType.ArbitraryClassname
-			) {
-				const p = state.tw.getPlugin(value)
-				if (p && /Color|fill|stroke/.test(p.getName())) {
-					const slash = value.lastIndexOf("/")
-					if (slash !== -1) shrinkB += slash - value.length
-				}
-			}
-
-			for (let i = 0; i < classNameItems.length; i++) {
-				const item = classNameItems[i]
-				item.insertText = item.label + (nextNotSpace ? " " : "")
-				const y = item.kind === vscode.CompletionItemKind.Color && item.documentation ? shrinkB : b
-				item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + y))
-			}
-		} else if (position === a) {
-			doInsert(classNameItems, document, offset, a, item => item.label + " ")
-		} else if (position === b) {
-			if (
-				suggestion.target.type === parser.NodeType.ClassName ||
-				suggestion.target.type === parser.NodeType.ArbitraryClassname ||
-				value === state.separator
-			) {
-				doReplace(classNameItems, document, offset, a, b, item => {
-					return item.label + (nextNotSpace ? " " : "")
-				})
-			} else if (suggestion.target.type === parser.NodeType.SimpleVariant) {
-				doInsert(classNameItems, document, offset, b, item => item.label + (nextNotSpace ? " " : ""))
-			}
-		} else {
-			classNameItems.length = 0
+			transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
 		}
 	}
-	return classNameItems
+
+	return items
 }
 
 function isTextEdit(te: lsp.TextEdit | lsp.InsertReplaceEdit | undefined): te is lsp.TextEdit {
@@ -392,7 +384,7 @@ function getCssDeclarationCompletionList(
 ): ICompletionItem[] {
 	for (const t of parser.parse_theme({ text, start: exprRange[0], end: exprRange[1] })) {
 		if (position >= t.innerRange[0] && position <= t.innerRange[1]) {
-			return twinThemeCompletion(document, offset, text, position, state, t.innerRange).items
+			return themeCompletion(document, offset, text, position, state, t.innerRange).items
 		}
 	}
 
@@ -510,242 +502,138 @@ function getScssSelectorCompletionList(
 	})
 }
 
-function arbitraryVariantCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	_: ServiceOptions,
-) {
-	if (!suggestion.target) return []
-	if (suggestion.inComment) return []
-	if (nodes.NodeType.ArbitrarySelector !== suggestion.target.type) return []
-	const selector = suggestion.target.selector
-	if (position < selector.range[0] || position > selector.range[1]) return []
-	return getScssSelectorCompletionList(document, position, offset, selector.range[0], selector.value)
+const arbitraryVariantValueCompletion: CompletionFeature = (document, kind, offset, text, position, { target }) => {
+	if (!target) return
+	if (target.type !== nodes.NodeType.ArbitrarySelector) return
+	const { range, value } = target.selector
+	const [a, b] = range
+	if (position < a || position > b) return
+	return getScssSelectorCompletionList(document, position, offset, a, value)
 }
 
-function shortcssCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	_: ServiceOptions,
-) {
-	if (!suggestion.target) return []
-	if (suggestion.inComment) return []
-	const a = suggestion.target?.range[0] ?? 0
-	const b = suggestion.target?.range[1] ?? 0
+const arbitraryPropertyCompletion: CompletionFeature = (document, kind, offset, text, position, { target }, state) => {
+	if (target) {
+		const [a, b] = target.range
+		switch (target.type) {
+			case parser.NodeType.ArbitrarySelector:
+			case parser.NodeType.ArbitraryVariant:
+			case parser.NodeType.SimpleVariant: {
+				if (position > a && position < b) return
+				break
+			}
+			case parser.NodeType.ShortCss:
+			case parser.NodeType.ArbitraryProperty: {
+				if (position === b) return
+				break
+			}
 
-	let cssPropEnabled = true
+			case parser.NodeType.ArbitraryClassname: {
+				if (position === b) return
+				if (position === a) break
+				const expr = target.expr
+				if (!expr) return
+				const [pa, pb] = expr.range
+				if (position < pa || position > pb) return
+				const cssValueItems = new Map<string, ICompletionItem>()
+				let prefix = target.prefix.value
+				if (prefix[0] === "-") prefix = prefix.slice(1)
+				if (prefix.startsWith(state.tw.prefix)) prefix = prefix.slice(state.tw.prefix.length)
+				const props = state.tw.arbitrary[prefix]
+				if (!props) return
+				props.forEach(prop => {
+					getCssDeclarationCompletionList(
+						document,
+						offset,
+						text,
+						position,
+						expr.range,
+						[prop, expr.value],
+						state,
+					).forEach(item => {
+						cssValueItems.set(item.label, item)
+					})
+				})
+				return Array.from(cssValueItems.values())
+			}
+		}
 
-	if (suggestion.inComment) {
-		cssPropEnabled = false
-	}
-
-	if (suggestion.target) {
-		if (suggestion.target.type === parser.NodeType.ShortCss) {
-			const [a, b] = suggestion.target.expr.range
+		if (target.type === parser.NodeType.ShortCss) {
+			const [a, b] = target.expr.range
 			if (position >= a && position <= b) {
-				cssPropEnabled = false
-			}
-		}
-	}
-
-	let items: ICompletionItem[] = []
-	if (cssPropEnabled) {
-		let data = ""
-		if (suggestion.target.type === parser.NodeType.ShortCss) {
-			data = suggestion.target.expr.value
-		}
-
-		items = cssDataManager.getProperties().map(entry => ({
-			label: entry.name,
-			sortText: "~~~~" + entry.name,
-			kind: vscode.CompletionItemKind.Field,
-			insertText: new vscode.SnippetString(`[${entry.name}: ${data}$0]`),
-			command: {
-				title: "Suggest",
-				command: "editor.action.triggerSuggest",
-			},
-			data: {
-				type: "cssProp",
-				entry,
-			},
-		}))
-
-		items = items.concat(
-			Array.from(state.tw.variables).map(label => {
-				const item: ICompletionItem = {
-					label,
-					data: { type: "cssProp" },
-					sortText: "~~~~~" + label,
-					kind: vscode.CompletionItemKind.Field,
-					insertText: new vscode.SnippetString(`[${label}: ${data}$0]`),
-					command: {
-						title: "Suggest",
-						command: "editor.action.triggerSuggest",
-					},
-					detail: "variable",
-				}
-				return item
-			}),
-		)
-	}
-
-	if (suggestion.target) {
-		if (suggestion.target.type === parser.NodeType.ShortCss) {
-			if (position > a && position <= b) {
-				for (const item of items) {
-					item.range = new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))
-				}
-			} else if (position === a) {
-				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
-			}
-		} else if (suggestion.target.type === parser.NodeType.SimpleVariant) {
-			if (position > a && position < b) {
-				doReplace(items, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
-			} else if (position === a) {
-				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
-			} else {
-				doInsert(items, document, offset, b, item => new vscode.SnippetString(`[${item.label}: $0] `))
-			}
-		} else {
-			if (position > a && position <= b) {
-				doReplace(items, document, offset, a, b, item => new vscode.SnippetString(`[${item.label}: $0]`))
-			} else if (position === a) {
-				doInsert(items, document, offset, a, item => new vscode.SnippetString(`[${item.label}: $0] `))
-			}
-		}
-
-		if (
-			suggestion.target.type === parser.NodeType.ShortCss &&
-			position >= suggestion.target.expr.range[0] &&
-			position <= suggestion.target.expr.range[1]
-		) {
-			items = items.concat(
-				getCssDeclarationCompletionList(
+				return getCssDeclarationCompletionList(
 					document,
 					offset,
 					text,
 					position,
-					suggestion.target.expr.range,
-					[suggestion.target.prefix.value, suggestion.target.expr.value],
+					target.expr.range,
+					[target.prefix.value, target.expr.value],
 					state,
-				),
-			)
-		}
-	}
-
-	return items
-}
-
-function arbitraryPropertyCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	_: ServiceOptions,
-) {
-	if (suggestion.inComment) return []
-
-	if (suggestion.target && suggestion.target.type === nodes.NodeType.ArbitraryProperty) {
-		if (position > suggestion.target.range[0] && position < suggestion.target.range[1]) {
-			return getCssDeclarationCompletionList(
-				document,
-				offset,
-				text,
-				position,
-				[suggestion.target.range[0] + 1, suggestion.target.range[1] - 1],
-				suggestion.target.decl.value,
-				state,
-			)
-		}
-	}
-
-	if (suggestion.target) return []
-
-	let items: ICompletionItem[] = cssDataManager.getProperties().map(entry => ({
-		label: entry.name,
-		sortText: "~~~~" + entry.name,
-		kind: vscode.CompletionItemKind.Field,
-		insertText: new vscode.SnippetString(`[${entry.name}: $0]`),
-		command: {
-			title: "Suggest",
-			command: "editor.action.triggerSuggest",
-		},
-		data: {
-			type: "cssProp",
-			entry,
-		},
-	}))
-
-	items = items.concat(
-		Array.from(state.tw.variables).map(label => {
-			const item: ICompletionItem = {
-				label,
-				data: { type: "cssProp" },
-				sortText: "~~~~~" + label,
-				kind: vscode.CompletionItemKind.Field,
-				insertText: new vscode.SnippetString(`[${label}: $0]`),
-				command: {
-					title: "Suggest",
-					command: "editor.action.triggerSuggest",
-				},
-				detail: "variable",
+				)
 			}
-			return item
-		}),
-	)
+		}
 
+		if (target.type === nodes.NodeType.ArbitraryProperty) {
+			const [a, b] = target.range
+			if (position > a && position < b) {
+				return getCssDeclarationCompletionList(
+					document,
+					offset,
+					text,
+					position,
+					[target.range[0] + 1, target.range[1] - 1],
+					target.decl.value,
+					state,
+				)
+			}
+		}
+	}
+
+	const items = state.provideCssPropsCompletionList()
+
+	if (!target) return items
+
+	const [a, b] = target.range
+	const endChar = text.slice(b, b + 1)
+	const insertSpace = text.slice(a, b) !== "!" && endChar !== "" && endChar.match(/[\s)]/) == null
+	const transfrom = (callback: (item: ICompletionItem) => void) => {
+		for (const item of items) callback(item)
+	}
+
+	const oldValue = target.type === parser.NodeType.ShortCss ? target.expr.value : ""
+	transfrom(item => (item.insertText = new vscode.SnippetString(`[${item.label}: ${oldValue}$0]`)))
+
+	switch (target.type) {
+		case parser.NodeType.ArbitrarySelector:
+		case parser.NodeType.ArbitraryVariant:
+		case parser.NodeType.SimpleVariant: {
+			if (position === a) transfrom(prependSpace())
+			if (insertSpace) transfrom(appendSpace())
+			return items
+		}
+		case parser.NodeType.ShortCss: {
+			const [pa, pb] = target.prefix.range
+			if (position > pa && position <= pb) {
+				transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
+				return items
+			}
+			transfrom(appendSpace())
+			return items
+		}
+		case parser.NodeType.ArbitraryProperty:
+		case parser.NodeType.ArbitraryClassname: {
+			transfrom(appendSpace())
+			return items
+		}
+	}
+	if (position > a && position <= b) {
+		transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
+	} else if (position === a) {
+		transfrom(appendSpace())
+	}
 	return items
 }
 
-function arbitraryClassnameValueCompletion(
-	document: TextDocument,
-	offset: number,
-	text: string,
-	position: number,
-	suggestion: ReturnType<typeof parser.suggest>,
-	state: TailwindLoader,
-	_: ServiceOptions,
-) {
-	if (!suggestion.target) return []
-	if (suggestion.inComment) return []
-	if (nodes.NodeType.ArbitraryClassname !== suggestion.target.type) return []
-	const expr = suggestion.target.expr
-	if (!expr) return []
-	if (position < expr.range[0] || position > expr.range[1]) return []
-	const cssValueItems = new Map<string, ICompletionItem>()
-	let prefix = suggestion.target.prefix.value
-	if (prefix[0] === "-") prefix = prefix.slice(1)
-	if (prefix.startsWith(state.tw.prefix)) prefix = prefix.slice(state.tw.prefix.length)
-	const props = state.tw.arbitrary[prefix]
-	if (!props) return []
-
-	props.forEach(prop => {
-		getCssDeclarationCompletionList(
-			document,
-			offset,
-			text,
-			position,
-			expr.range,
-			[prop, expr.value],
-			state,
-		).forEach(item => {
-			cssValueItems.set(item.label, item)
-		})
-	})
-	return Array.from(cssValueItems.values())
-}
-
-function twinThemeCompletion(
+function themeCompletion(
 	document: TextDocument,
 	offset: number,
 	text: string,
@@ -839,7 +727,7 @@ function twinThemeCompletion(
 	}
 }
 
-function twinScreenCompletion(
+function screenCompletion(
 	document: TextDocument,
 	offset: number,
 	text: string,

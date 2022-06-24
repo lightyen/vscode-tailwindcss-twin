@@ -1,4 +1,5 @@
 import { importFrom } from "@/module"
+import { cssDataManager } from "@/vscode-css-languageservice"
 import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
 import postcss from "postcss"
@@ -53,7 +54,8 @@ export function createTailwindLoader(
 	isDefaultConfig: boolean,
 	extensionMode: ExtensionMode,
 ) {
-	let utilitiesCompletionItems: ICompletionItem[] | undefined
+	let classCompletionList: ICompletionItem[] | undefined
+	let cssPropsCompletionList: ICompletionItem[] | undefined
 
 	const context: ContextModule = {
 		plugin,
@@ -86,7 +88,8 @@ export function createTailwindLoader(
 		},
 		readTailwindConfig,
 		createContext,
-		provideUtilities: createUtilitiesCompletionItemsProvider(),
+		provideClassCompletionList,
+		provideCssPropsCompletionList,
 		isDeprecated,
 	}
 
@@ -130,66 +133,107 @@ export function createTailwindLoader(
 
 	function createContext() {
 		tw = createTwContext(config)
-		utilitiesCompletionItems = undefined
+		classCompletionList = undefined
 		variants = new Fuse(tw.variants.flat(), { includeScore: true })
 		classnames = new Fuse(tw.classnames, { includeScore: true })
 	}
 
-	function createUtilitiesCompletionItemsProvider() {
-		return (): ICompletionItem[] => {
-			if (utilitiesCompletionItems != undefined) {
-				for (let i = 0; i < utilitiesCompletionItems.length; i++) {
-					utilitiesCompletionItems[i].range = undefined
-				}
-				return utilitiesCompletionItems
+	function formatLabel(label: string) {
+		const reg = /([a-zA-Z-]+)([0-9/.]+)/
+		const match = label.match(reg)
+		if (!match) return label
+		let val = Number(match[2])
+		if (Number.isNaN(val)) val = calcFraction(match[2])
+		if (Number.isNaN(val)) return label
+		const prefix = match[1] + (Number.isNaN(Number(match[2])) ? "_" : "@")
+		return prefix + val.toFixed(3).padStart(7, "0")
+	}
+
+	function provideClassCompletionList() {
+		if (classCompletionList != undefined) {
+			for (const item of classCompletionList) {
+				item.range = undefined
+				item.insertText = undefined
 			}
-
-			utilitiesCompletionItems = tw.classnames.map(value => {
-				const item: ICompletionItem = {
-					label: value,
-					data: { type: "utility" },
-					kind: vscode.CompletionItemKind.Constant,
-					sortText: (value.startsWith("-") ? "~~" : "~") + formatLabel(value),
-				}
-
-				const colorDesc = tw.getColorDesc(value)
-				if (colorDesc) {
-					item.kind = vscode.CompletionItemKind.Color
-					item.data = { type: "color" }
-
-					if (value.endsWith("-transparent")) {
-						item.documentation = "rgba(0, 0, 0, 0.0)"
-						return item
-					}
-					if (value.endsWith("-current")) {
-						return item
-					}
-					if (value.endsWith("-inherit")) {
-						return item
-					}
-					item.documentation = colorDesc.backgroundColor || colorDesc.color || colorDesc.borderColor
-				}
-
-				if (isDeprecated(value)) {
-					item.tags = [CompletionItemTag.Deprecated]
-				}
-
-				return item
-			})
-
-			return utilitiesCompletionItems
-
-			function formatLabel(label: string) {
-				const reg = /([a-zA-Z-]+)([0-9/.]+)/
-				const match = label.match(reg)
-				if (!match) return label
-				let val = Number(match[2])
-				if (Number.isNaN(val)) val = calcFraction(match[2])
-				if (Number.isNaN(val)) return label
-				const prefix = match[1] + (Number.isNaN(Number(match[2])) ? "_" : "@")
-				return prefix + val.toFixed(3).padStart(7, "0")
-			}
+			return classCompletionList
 		}
+
+		classCompletionList = tw.classnames.map(value => {
+			const item: ICompletionItem = {
+				label: value,
+				data: { type: "utility" },
+				kind: vscode.CompletionItemKind.Constant,
+				sortText: (value.startsWith("-") ? "~~" : "~") + formatLabel(value),
+			}
+
+			const colorDesc = tw.getColorDesc(value)
+			if (colorDesc) {
+				item.kind = vscode.CompletionItemKind.Color
+				item.data = { type: "color" }
+
+				if (value.endsWith("-transparent")) {
+					item.documentation = "rgba(0, 0, 0, 0.0)"
+					return item
+				}
+				if (value.endsWith("-current")) {
+					return item
+				}
+				if (value.endsWith("-inherit")) {
+					return item
+				}
+				item.documentation = colorDesc.backgroundColor || colorDesc.color || colorDesc.borderColor
+			}
+
+			if (isDeprecated(value)) {
+				item.tags = [CompletionItemTag.Deprecated]
+			}
+			return item
+		})
+		return classCompletionList
+	}
+
+	function provideCssPropsCompletionList() {
+		if (cssPropsCompletionList != undefined) {
+			for (const item of cssPropsCompletionList) {
+				item.range = undefined
+				item.insertText = undefined
+			}
+			return cssPropsCompletionList
+		}
+
+		cssPropsCompletionList = cssDataManager
+			.getProperties()
+			.map<ICompletionItem>(entry => ({
+				label: entry.name,
+				sortText: "~~~~" + entry.name,
+				kind: vscode.CompletionItemKind.Field,
+				command: {
+					title: "Suggest",
+					command: "editor.action.triggerSuggest",
+				},
+				data: {
+					type: "cssProp",
+					entry,
+				},
+			}))
+			.concat(
+				Array.from(tw.variables).map(label => {
+					const item: ICompletionItem = {
+						label,
+						data: { type: "cssProp" },
+						sortText: "~~~~~" + label,
+						kind: vscode.CompletionItemKind.Field,
+						command: {
+							title: "Suggest",
+							command: "editor.action.triggerSuggest",
+						},
+						detail: "variable",
+					}
+					return item
+				}),
+			)
+
+		return cssPropsCompletionList
 	}
 
 	function isDeprecated(label: string) {
