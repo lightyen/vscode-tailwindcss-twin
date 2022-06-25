@@ -2,17 +2,26 @@
 
 ## 3.0.0-rc
 
+### Main Features
+
 - Base on tailwindcss v3.1.4
-- Support all the syntaxes of **arbitrary values**, like: `name-[*]`, `name-[*]/[opacity]`, `name-[*]:`, `[name: *]`, `[&.foo]:`
-- Deprecate **short css** feature
+- Support all the syntaxes of **arbitrary values**, ex: `name-[*]`, `name-[*]/[opacity]`, `name-value/[opacity]`, `name-[*]:`, `[name: *]`, `[*]:`
+- Deprecate the **short css** feature
 - Deprecate all of the **opacity** corePlugins, prefer to use the opacity modifier, see: https://tailwindcss.com/docs/text-color#changing-the-opacity
+- Support `theme()` function
+- Support `matchUtilities` and `matchComponents` functions in tailwind plugin
+
+### Breaking Changes
+
 - Change diagnostic settings
 - Change color decoration design
-- Preview all utilites or variants from tailwind config
-- Support `theme()` function
-- Support `matchUtilities` and `matchComponents` features in tailwind plugin
+- Remove `space` character from triggerCharacters
+
+### Others
+
 - Support vscode multi-root workspaces, see: https://code.visualstudio.com/docs/editor/workspaces
 - Support custom language extractor, see: https://github.com/lightyen/twin.examples/tree/main/extractors
+- Preview all utilites or variants from tailwind config
 - Switch from yarn to pnpm
 
 ## 0.12.3
