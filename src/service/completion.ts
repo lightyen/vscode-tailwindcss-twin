@@ -280,6 +280,7 @@ const variantCompletion: CompletionFeature = (
 			}
 			case parser.NodeType.ClassName: {
 				if (position !== a && position !== b) return
+				if (text.charCodeAt(b - 1) === 47) return
 				break
 			}
 		}
