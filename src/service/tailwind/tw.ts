@@ -181,7 +181,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				},
 			})
 			if (selector.match(/:merge\((.*?)\)/)) selector = selector.replace(/:merge\((.*?)\)/g, "$1")
-			if (!selector && returnValue) selector = returnValue.replace(/:merge\((.*?)\)/g, "$1")
+			if (!selector && returnValue) {
+				if (typeof returnValue === "string") selector = returnValue.replace(/:merge\((.*?)\)/g, "$1")
+				else selector = returnValue.map(ret => ret.replace(/:merge\((.*?)\)/g, "$1")).join(", ")
+			}
 			if (!selector && wrapper.length > 0) {
 				selector = `@${wrapper[0].name} ${wrapper[0].params}`
 				wrapper = wrapper.slice(1)
