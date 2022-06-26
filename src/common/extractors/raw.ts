@@ -1,4 +1,4 @@
-import { ExtractedTokenKind, Extractor } from "."
+import type { Extractor } from "./types"
 
 const rawExtrator: Extractor = {
 	acceptLanguage(languageId) {
@@ -10,7 +10,7 @@ const rawExtrator: Extractor = {
 				start: 0,
 				end: code.length,
 				value: code,
-				kind: ExtractedTokenKind.Twin,
+				kind: "tw",
 			},
 		]
 	},
@@ -19,7 +19,7 @@ const rawExtrator: Extractor = {
 			start: 0,
 			end: code.length,
 			value: code,
-			kind: ExtractedTokenKind.Twin,
+			kind: "tw",
 		}
 	},
 }

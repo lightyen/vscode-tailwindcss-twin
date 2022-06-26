@@ -1,5 +1,5 @@
 import ts from "typescript"
-import { ExtractedToken, ExtractedTokenKind, Extractor } from "."
+import type { ExtractedToken, ExtractedTokenKind, Extractor } from "./types"
 
 const twinLabel = "twin.macro"
 
@@ -84,7 +84,7 @@ function findNode(
 			return undefined
 		}
 		const id = first.getText(source)
-		if (features.jsxProp && id === ExtractedTokenKind.Twin) {
+		if (features.jsxProp && id === "tw") {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
@@ -92,8 +92,8 @@ function findNode(
 			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 				return undefined
 			}
-			return { token, kind: ExtractedTokenKind.Twin }
-		} else if (features.jsxProp && id === ExtractedTokenKind.TwinCssProperty) {
+			return { token, kind: "tw" }
+		} else if (features.jsxProp && id === "cs") {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
@@ -101,7 +101,7 @@ function findNode(
 			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
 				return undefined
 			}
-			return { token, kind: ExtractedTokenKind.TwinCssProperty }
+			return { token, kind: "cs" }
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {
@@ -123,7 +123,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
-				return { token, kind: ExtractedTokenKind.Twin }
+				return { token, kind: "tw" }
 			} else {
 				return undefined
 			}
@@ -133,7 +133,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
-				return { token, kind: ExtractedTokenKind.TwinTheme }
+				return { token, kind: "theme" }
 			} else {
 				return undefined
 			}
@@ -143,7 +143,7 @@ function findNode(
 				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
-				return { token, kind: ExtractedTokenKind.TwinScreen }
+				return { token, kind: "screen" }
 			} else {
 				return undefined
 			}
@@ -173,7 +173,7 @@ function findNode(
 				if (position < node.getStart(source) + 1 || greaterThenEnd(node)) {
 					return undefined
 				}
-				return { token, kind: ExtractedTokenKind.TwinTheme }
+				return { token, kind: "theme" }
 			}
 
 			if (features.screenTemplate.has(first.getText(source))) {
@@ -189,7 +189,7 @@ function findNode(
 				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
 					return undefined
 				}
-				return { token, kind: ExtractedTokenKind.TwinScreen }
+				return { token, kind: "screen" }
 			}
 		}
 	}
@@ -216,18 +216,18 @@ function findAllNode(
 		}
 
 		const id = first.getText(source)
-		if (features.jsxProp && id === ExtractedTokenKind.Twin) {
+		if (features.jsxProp && id === "tw") {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
-			return [{ token, kind: ExtractedTokenKind.Twin }]
-		} else if (features.jsxProp && id === ExtractedTokenKind.TwinCssProperty) {
+			return [{ token, kind: "tw" }]
+		} else if (features.jsxProp && id === "cs") {
 			const token = getJsxPropFirstStringLiteral(node, source)
 			if (!token) {
 				return undefined
 			}
-			return [{ token, kind: ExtractedTokenKind.TwinCssProperty }]
+			return [{ token, kind: "cs" }]
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
 		const getLiteral = (node: ts.Node) => {
@@ -247,21 +247,21 @@ function findAllNode(
 		if (features.twTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: ExtractedTokenKind.Twin }]
+				return [{ token: literal, kind: "tw" }]
 			} else {
 				return undefined
 			}
 		} else if (features.themeTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: ExtractedTokenKind.TwinTheme }]
+				return [{ token: literal, kind: "theme" }]
 			} else {
 				return undefined
 			}
 		} else if (features.screenTemplate.has(id)) {
 			const literal = getLiteral(node)
 			if (literal) {
-				return [{ token: literal, kind: ExtractedTokenKind.TwinScreen }]
+				return [{ token: literal, kind: "screen" }]
 			} else {
 				return undefined
 			}
@@ -284,7 +284,7 @@ function findAllNode(
 				if (!token) {
 					return undefined
 				}
-				return [{ token, kind: ExtractedTokenKind.TwinTheme }]
+				return [{ token, kind: "theme" }]
 			}
 
 			if (features.screenTemplate.has(first.getText(source))) {
@@ -297,7 +297,7 @@ function findAllNode(
 				if (!token) {
 					return undefined
 				}
-				return [{ token, kind: ExtractedTokenKind.TwinScreen }]
+				return [{ token, kind: "screen" }]
 			}
 		}
 	}
@@ -334,7 +334,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 					if (namedImports) {
 						namedImports.forEachChild(node => {
 							if (ts.isImportSpecifier(node)) {
-								if (node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinTheme) {
+								if (node.getFirstToken(source)?.getText(source) === "theme") {
 									const count = node.getChildCount(source)
 									if (count === 1) {
 										const identifier = node.getFirstToken(source)?.getText(source)
@@ -347,9 +347,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 											themeTemplate.add(identifier)
 										}
 									}
-								} else if (
-									node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinScreen
-								) {
+								} else if (node.getFirstToken(source)?.getText(source) === "screen") {
 									const count = node.getChildCount(source)
 									if (count === 1) {
 										const identifier = node.getFirstToken(source)?.getText(source)

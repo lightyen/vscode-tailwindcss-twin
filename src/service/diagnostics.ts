@@ -1,9 +1,9 @@
-import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
-import { cssDataManager } from "@/vscode-css-languageservice"
 import Fuse from "fuse.js"
 import vscode from "vscode"
+import type { ExtractedToken, ExtractedTokenKind, TextDocument } from "~/common/extractors/types"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
+import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { ServiceOptions } from "~/shared"
 import { DIAGNOSTICS_ID } from "~/shared"
 import { TailwindLoader } from "./tailwind"
@@ -74,7 +74,7 @@ export function validate(
 		try {
 			for (const token of tokens) {
 				const { kind, start, end, value } = token
-				if (kind === ExtractedTokenKind.TwinTheme) {
+				if (kind === "theme") {
 					if (
 						!validateTwinTheme({
 							document,
@@ -88,7 +88,7 @@ export function validate(
 					) {
 						return diagnostics
 					}
-				} else if (kind === ExtractedTokenKind.TwinScreen) {
+				} else if (kind === "screen") {
 					if (value) {
 						const result = parser.resolveThemeConfig(state.config, ["screens", value])
 						if (result == undefined) {
@@ -104,7 +104,7 @@ export function validate(
 							}
 						}
 					}
-				} else if (kind === ExtractedTokenKind.Twin || ExtractedTokenKind.TwinCssProperty) {
+				} else if (kind === "tw" || kind === "cs") {
 					const result = parser.spread(value, { separator: state.separator })
 					if (
 						!validateTwin({
@@ -249,7 +249,7 @@ function validateTwin({
 		}
 	}
 
-	if (kind === ExtractedTokenKind.Twin) {
+	if (kind === "tw") {
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i]
 			if (item.important) {
@@ -306,7 +306,7 @@ function validateTwin({
 				}
 			}
 		}
-	} else if (kind === ExtractedTokenKind.TwinCssProperty) {
+	} else if (kind === "cs") {
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i]
 			if (item.target.type === parser.NodeType.ClassName) {

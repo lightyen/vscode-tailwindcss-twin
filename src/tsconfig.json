@@ -8,9 +8,7 @@
     "types": ["node", "vscode", "webpack-env", "tailwind-types", "@types/node", "@types/jest"],
     "rootDir": "..",
     "paths": {
-      "~/*": ["./*"],
-      "@": ["./common/index.ts"],
-      "@/*": ["./common/*"]
+      "~/*": ["./*"]
     }
   },
   "include": ["**/*.ts", "**/*.json", "../package.json", "../package.nls*.json"]

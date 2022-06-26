@@ -1,13 +1,13 @@
-import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
-import * as nodes from "@/parser/nodes"
 import * as culori from "culori"
 import vscode from "vscode"
 import { getCSSLanguageService } from "vscode-css-languageservice"
 import { TextDocument as LspTextDocument } from "vscode-languageserver-textdocument"
 import * as lsp from "vscode-languageserver-types"
 import { calcFraction } from "~/common"
+import type { ExtractedToken, ExtractedTokenKind, TextDocument } from "~/common/extractors/types"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
+import * as nodes from "~/common/parser/nodes"
 import type { ServiceOptions } from "~/shared"
 import type { ICompletionItem } from "~/typings/completion"
 import type { TailwindLoader } from "./tailwind"
@@ -15,7 +15,7 @@ import type { TailwindLoader } from "./tailwind"
 export default function completion(
 	result: ExtractedToken | undefined,
 	document: TextDocument,
-	position: unknown,
+	position: vscode.Position,
 	state: TailwindLoader,
 	options: ServiceOptions,
 ): vscode.CompletionList<ICompletionItem> | undefined {
@@ -34,13 +34,13 @@ export default function completion(
 			const text = token.value
 			const offset = token.start
 			const pos = index - token.start
-			if (kind === ExtractedTokenKind.TwinTheme) {
+			if (kind === "theme") {
 				const list = themeCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
 				}
 				return list
-			} else if (kind === ExtractedTokenKind.TwinScreen) {
+			} else if (kind === "screen") {
 				const list = screenCompletion(document, offset, text, pos, state)
 				for (let i = 0; i < list.items.length; i++) {
 					list.items[i].data.uri = document.uri
@@ -132,7 +132,7 @@ function twinCompletion(
 }
 
 const classnameCompletion: CompletionFeature = (document, kind, offset, text, position, { target, value }, state) => {
-	if (kind === ExtractedTokenKind.TwinCssProperty) return
+	if (kind === "cs") return
 	if (!target) return state.provideClassCompletionList()
 
 	const [a, b] = target.range

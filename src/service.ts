@@ -1,12 +1,13 @@
-import { defaultExtractors, TextDocument } from "@/extractors"
-import typescriptExtractor from "@/extractors/typescript"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
 import EventEmitter from "events"
 import path from "path"
 import typescript from "typescript"
 import vscode from "vscode"
 import { URI } from "vscode-uri"
+import { defaultExtractors } from "~/common/extractors/default"
+import type { TextDocument } from "~/common/extractors/types"
+import typescriptExtractor from "~/common/extractors/typescript"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
 import type { ServiceOptions } from "~/shared"
 import { Settings } from "~/shared"
 import { ICompletionItem } from "~/typings/completion"
@@ -152,7 +153,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		options = { ...options, ...setting }
 	}
 
-	async function onCompletion(document: TextDocument, position: unknown) {
+	async function onCompletion(document: TextDocument, position: vscode.Position) {
 		return wait<vscode.ProviderResult<vscode.CompletionList<ICompletionItem>>>(undefined, defaultValue => {
 			try {
 				const token = defaultExtractors
@@ -185,7 +186,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		return completionResolve(item, state, tabSize, options)
 	}
 
-	async function onHover(document: TextDocument, position: unknown, tabSize: number) {
+	async function onHover(document: TextDocument, position: vscode.Position, tabSize: number) {
 		return wait<vscode.ProviderResult<vscode.Hover>>(undefined, defaultValue => {
 			try {
 				const token = defaultExtractors

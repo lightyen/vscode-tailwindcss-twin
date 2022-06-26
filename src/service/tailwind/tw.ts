@@ -1,7 +1,3 @@
-import { isColorFunction, isColorHexValue, isColorIdentifier, isColorTransparent, parse as parseColors } from "@/color"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
-import { createGetPluginByName } from "@/plugins"
 import * as culori from "culori"
 import type { AtRule, Rule } from "postcss"
 import postcss from "postcss"
@@ -9,6 +5,16 @@ import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
 import { generateRules } from "tailwindcss/lib/lib/generateRules"
 import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
 import escapeClassName from "tailwindcss/lib/util/escapeClassName"
+import {
+	isColorFunction,
+	isColorHexValue,
+	isColorIdentifier,
+	isColorTransparent,
+	parse as parseColors,
+} from "~/common/color"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
+import { createGetPluginByName } from "~/common/plugins"
 import { ColorProps, ColorProps_Background, ColorProps_Border, ColorProps_Foreground } from "./data"
 
 export type ColorDesc = {

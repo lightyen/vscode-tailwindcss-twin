@@ -1,3 +1,4 @@
+import * as vscode from "vscode"
 import {
 	colorFromFunction,
 	colorFromHex,
@@ -8,11 +9,10 @@ import {
 	isColorIdentifier,
 	isColorTransparent,
 	parse as parseColors,
-} from "@/color"
-import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
-import * as vscode from "vscode"
+} from "~/common/color"
+import type { ExtractedToken, TextDocument } from "~/common/extractors/types"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
 import type { ServiceOptions } from "~/shared"
 import { TailwindLoader } from "./tailwind"
 
@@ -34,7 +34,7 @@ export default function documentColors(
 		try {
 			for (const token of tokens) {
 				const { kind, start: offset } = token
-				if (kind === ExtractedTokenKind.TwinTheme || kind === ExtractedTokenKind.TwinScreen) continue
+				if (kind === "theme" || kind === "screen") continue
 				const { items } = parser.spread(token.value, { separator: state.separator })
 				for (const { target } of items) {
 					if (

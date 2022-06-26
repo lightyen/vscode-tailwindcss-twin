@@ -455,7 +455,7 @@ test("fill)", () => {
 	testName("fill-sand-800", undefined)
 	testName("fill-[]", "fill")
 	testName("fill-[#1A3D94]", "fill")
-	testName("fill-[theme('colors.undefined')]", "fill")
+	testName("fill-[theme('colors.red.500')]", "fill")
 	testName("fill-[var(--common)]", "fill")
 	testName("fill-[url(#helloworld)]", "fill")
 })

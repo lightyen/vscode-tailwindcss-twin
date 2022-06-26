@@ -1,5 +1,3 @@
-import { importFrom } from "@/module"
-import { cssDataManager } from "@/vscode-css-languageservice"
 import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
 import postcss from "postcss"
@@ -9,7 +7,9 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import * as vscode from "vscode"
 import { URI } from "vscode-uri"
 import { calcFraction } from "~/common"
-import { Extractor, isExtrator } from "~/common/extractors"
+import type { Extractor } from "~/common/extractors/types"
+import { importFrom } from "~/common/module"
+import { cssDataManager } from "~/common/vscode-css-languageservice"
 import { ICompletionItem } from "~/typings/completion"
 import { deprecated } from "./data"
 import { createTwContext, TwContext } from "./tw"
@@ -46,6 +46,20 @@ export enum CompletionItemTag {
 	 * Render a completion as obsolete, usually using a strike-out.
 	 */
 	Deprecated = 1,
+}
+
+function isExtrator(value: unknown): value is Extractor {
+	if (value == undefined || typeof value !== "object") return false
+	if (Object.prototype.hasOwnProperty.call(value, "acceptLanguage")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	if (Object.prototype.hasOwnProperty.call(value, "find")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	if (Object.prototype.hasOwnProperty.call(value, "findAll")) {
+		if (typeof (value as Extractor).acceptLanguage !== "function") return false
+	} else return false
+	return true
 }
 
 export function createTailwindLoader(

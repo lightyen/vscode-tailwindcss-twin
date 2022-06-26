@@ -1,6 +1,6 @@
 import * as ast from "@typescript-eslint/types/dist/generated/ast-spec"
 import { AST_NODE_TYPES, parse } from "@typescript-eslint/typescript-estree"
-import { ExtractedToken, ExtractedTokenKind, Extractor } from "."
+import type { ExtractedToken, ExtractedTokenKind, Extractor } from "./types"
 
 const twinLabel = "twin.macro"
 
@@ -36,9 +36,9 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 								case AST_NODE_TYPES.ImportSpecifier:
 									if (clause.imported.name === "default") {
 										twTemplate.add(clause.local.name)
-									} else if (clause.imported.name === ExtractedTokenKind.TwinTheme) {
+									} else if (clause.imported.name === "theme") {
 										themeTemplate.add(clause.local.name)
-									} else if (clause.imported.name === ExtractedTokenKind.TwinScreen) {
+									} else if (clause.imported.name === "screen") {
 										screenTemplate.add(clause.local.name)
 									}
 									break
@@ -60,7 +60,7 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 			if (node.quasi.quasis.length === 1) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
-					kind: ExtractedTokenKind.Twin,
+					kind: "tw",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -70,7 +70,7 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 			if (node.quasi.quasis.length === 1) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
-					kind: ExtractedTokenKind.TwinTheme,
+					kind: "theme",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -80,7 +80,7 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 			if (node.quasi.quasis.length === 1) {
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				tokens.push({
-					kind: ExtractedTokenKind.TwinScreen,
+					kind: "screen",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -106,10 +106,10 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 
 	function parseJSXAttribute(node: ast.JSXAttribute) {
 		if (node.name.type === AST_NODE_TYPES.JSXIdentifier) {
-			if (ctx.jsxProp && node.name.name === ExtractedTokenKind.Twin) {
-				if (node.value) getToken(node.value, ExtractedTokenKind.Twin)
-			} else if (ctx.jsxProp && node.name.name === ExtractedTokenKind.TwinCssProperty) {
-				if (node.value) getToken(node.value, ExtractedTokenKind.TwinCssProperty)
+			if (ctx.jsxProp && node.name.name === "tw") {
+				if (node.value) getToken(node.value, "tw")
+			} else if (ctx.jsxProp && node.name.name === "cs") {
+				if (node.value) getToken(node.value, "cs")
 			} else if (node.value && node.value.type !== AST_NODE_TYPES.Literal) {
 				parseJSXExpression(node.value)
 			}
@@ -654,9 +654,9 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 								case AST_NODE_TYPES.ImportSpecifier:
 									if (clause.imported.name === "default") {
 										twTemplate.add(clause.local.name)
-									} else if (clause.imported.name === ExtractedTokenKind.TwinTheme) {
+									} else if (clause.imported.name === "theme") {
 										themeTemplate.add(clause.local.name)
-									} else if (clause.imported.name === ExtractedTokenKind.TwinScreen) {
+									} else if (clause.imported.name === "screen") {
 										screenTemplate.add(clause.local.name)
 									}
 									break
@@ -685,7 +685,7 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				if (!inRange(n)) return
 				token = {
-					kind: ExtractedTokenKind.Twin,
+					kind: "tw",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -697,7 +697,7 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				if (!inRange(n)) return
 				token = {
-					kind: ExtractedTokenKind.TwinTheme,
+					kind: "theme",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -709,7 +709,7 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 				const n: ast.TemplateElement = node.quasi.quasis[0]
 				if (!inRange(n)) return
 				token = {
-					kind: ExtractedTokenKind.TwinScreen,
+					kind: "screen",
 					start: n.range[0] + 1,
 					end: n.range[1] - 1,
 					value: n.value.cooked,
@@ -736,10 +736,10 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 
 	function parseJSXAttribute(node: ast.JSXAttribute) {
 		if (node.name.type === AST_NODE_TYPES.JSXIdentifier) {
-			if (ctx.jsxProp && node.name.name === ExtractedTokenKind.Twin) {
-				if (node.value) getToken(node.value, ExtractedTokenKind.Twin)
-			} else if (ctx.jsxProp && node.name.name === ExtractedTokenKind.TwinCssProperty) {
-				if (node.value) getToken(node.value, ExtractedTokenKind.TwinCssProperty)
+			if (ctx.jsxProp && node.name.name === "tw") {
+				if (node.value) getToken(node.value, "tw")
+			} else if (ctx.jsxProp && node.name.name === "cs") {
+				if (node.value) getToken(node.value, "cs")
 			} else if (node.value && node.value.type !== AST_NODE_TYPES.Literal) {
 				parseJSXExpression(node.value)
 			}

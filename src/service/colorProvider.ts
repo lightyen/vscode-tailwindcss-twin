@@ -1,10 +1,10 @@
-import { md5 } from "@"
-import { ensureContrastRatio } from "@/culori"
-import { ExtractedToken, ExtractedTokenKind, TextDocument } from "@/extractors"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
 import * as culori from "culori"
 import vscode from "vscode"
+import { md5 } from "~/common"
+import { ensureContrastRatio } from "~/common/culori"
+import type { ExtractedToken, TextDocument } from "~/common/extractors/types"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
 import type { ServiceOptions } from "~/shared"
 import { ColorDesc, createTwContext, TwContext } from "./tailwind/tw"
 
@@ -80,7 +80,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 		for (const token of tokens) {
 			const { start: offset, kind } = token
 			switch (kind) {
-				case ExtractedTokenKind.Twin: {
+				case "tw": {
 					const result = parser.spread(token.value, { separator })
 					for (const item of result.items) {
 						if (item.target.type === parser.NodeType.ClassName) {
@@ -123,7 +123,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 					}
 					break
 				}
-				case ExtractedTokenKind.TwinTheme: {
+				case "theme": {
 					const val = parser.parse_theme_val({ text: token.value })
 					const color = getThemeDecoration(val, tw)
 					if (color) {

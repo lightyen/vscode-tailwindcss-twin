@@ -1,11 +1,11 @@
-import { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "@/extractors"
-import { defaultLogger as console } from "@/logger"
-import * as parser from "@/parser"
-import { removeComment } from "@/parser"
-import { cssDataManager } from "@/vscode-css-languageservice"
 import { css_beautify } from "js-beautify"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
+import type { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "~/common/extractors/types"
+import { defaultLogger as console } from "~/common/logger"
+import * as parser from "~/common/parser"
+import { removeComment } from "~/common/parser"
+import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { ServiceOptions } from "~/shared"
 import { getDescription, getReferenceLinks } from "./referenceLink"
 import type { TailwindLoader } from "./tailwind"
@@ -13,7 +13,7 @@ import type { TailwindLoader } from "./tailwind"
 export default async function hover(
 	result: ExtractedToken | undefined,
 	document: TextDocument,
-	position: unknown,
+	position: vscode.Position,
 	state: TailwindLoader,
 	options: ServiceOptions,
 	tabSize: number,
@@ -25,14 +25,14 @@ export default async function hover(
 	function doHover(result: ExtractedToken) {
 		try {
 			const { kind, ...token } = result
-			if (kind === ExtractedTokenKind.TwinTheme) {
+			if (kind === "theme") {
 				const value = parser.parse_theme_val({ text: token.value })
 				const range = new vscode.Range(
 					document.positionAt(token.start + value.range[0]),
 					document.positionAt(token.start + value.range[1]),
 				)
 				return resolveThemeValue({ kind, range, value, state, options })
-			} else if (kind === ExtractedTokenKind.TwinScreen) {
+			} else if (kind === "screen") {
 				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveScreenValue({ kind, range, token, state, options })
 			} else {
@@ -125,7 +125,7 @@ export default async function hover(
 					}
 				}
 
-				if (kind !== ExtractedTokenKind.Twin) return undefined
+				if (kind !== "tw") return undefined
 
 				if (selection.target.type === parser.NodeType.ArbitrarySelector) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
