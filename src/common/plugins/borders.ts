@@ -293,14 +293,16 @@ export function ringColor(context: Context): MatchPlugin | null {
 
 export function ringOpacity(context: Context): MatchPlugin | null {
 	if (!isCorePluginEnable(context, "ringOpacity")) return null
+	const _hasDefault = hasDefault(context.config.theme.ringOpacity)
 	return {
 		getName() {
 			return "ringOpacity"
 		},
 		isMatch(value) {
-			const match = /^ring-opacity-(.*)/s.exec(value)
+			const match = /^ring-opacity(?:-|\b)(.*)/s.exec(value)
 			if (!match) return false
 			const val = match[1]
+			if (val === "") return _hasDefault
 			if (isArbitraryValue(val)) return true
 			return isField(context.config.theme.ringOpacity, val)
 		},
