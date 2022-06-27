@@ -250,9 +250,17 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		if (items.length <= 0) return []
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
 		const scopes: string[] = []
-		root.walkRules(rule => {
-			const scope = rule.selector.replaceAll("." + escape(classname), "&")
-			if (scope) scopes.push(scope)
+
+		root.walk(node => {
+			switch (node.type) {
+				case "atrule":
+					scopes.push(`@${node.name} ${node.params}`)
+					return false
+				case "rule": {
+					const scope = node.selector.replaceAll("." + escape(classname), "&")
+					if (scope) scopes.push(scope)
+				}
+			}
 		})
 		return scopes.sort()
 	}

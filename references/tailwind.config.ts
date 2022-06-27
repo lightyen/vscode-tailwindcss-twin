@@ -36,6 +36,11 @@ export default {
 					return `&.${e(value ?? "")} > *`
 				},
 			})
+			matchVariant({
+				screen(value) {
+					return `@media (min-width: ${value ?? "0px"})`
+				},
+			})
 		},
 	],
 } as Tailwind.ConfigJS
