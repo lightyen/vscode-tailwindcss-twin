@@ -256,7 +256,7 @@ const variantCompletion: CompletionFeature = (
 	offset,
 	text,
 	position,
-	{ target, variants },
+	{ target, variants, value },
 	state,
 	{ preferVariantWithParentheses },
 ) => {
@@ -363,6 +363,8 @@ const variantCompletion: CompletionFeature = (
 		if (position > a && position < b) {
 			transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
 		}
+	} else if (target.type === parser.NodeType.ClassName) {
+		transfrom(replace(new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + b))))
 	}
 
 	return items
