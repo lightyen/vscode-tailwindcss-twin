@@ -200,15 +200,14 @@ export default async function hover(
 				const header = new vscode.MarkdownString()
 				if (options.references) {
 					const plugin = state.tw.getPlugin(value)
-					let name = state.tw.trimPrefix(value)
-					if (plugin) name = plugin.getName()
-					if (name) {
-						const desc = getDescription(name)
+					const pluginName = plugin?.getName()
+					if (pluginName) {
+						const desc = getDescription(pluginName)
 						if (typeof desc === "string") {
 							header.appendMarkdown(desc ? desc + "\n" : "twin.marco" + "\n")
 						}
 
-						const links = getReferenceLinks(name)
+						const links = getReferenceLinks(pluginName)
 						if (links.length > 0) {
 							header.appendMarkdown("\n")
 							header.appendMarkdown(links.map(ref => `[Reference](${ref.url}) `).join("\n"))
