@@ -1,3 +1,4 @@
+import { execSync } from "child_process"
 import { CleanWebpackPlugin } from "clean-webpack-plugin"
 import CopyPlugin from "copy-webpack-plugin"
 import ESLintPlugin from "eslint-webpack-plugin"
@@ -6,7 +7,7 @@ import path from "path"
 import TerserPlugin from "terser-webpack-plugin"
 import { TsPathsResolvePlugin } from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
-import { ExternalsPlugin } from "webpack"
+import { DefinePlugin, ExternalsPlugin } from "webpack"
 
 class ExternalsVendorPlugin {
 	externals: Record<string, string>
@@ -86,6 +87,9 @@ const configExtension: Configuration = {
 		new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: ["extension*"] }),
 		new CopyPlugin({
 			patterns: [{ from: "node_modules/tailwindcss/lib/css", to: "css" }],
+		}),
+		new DefinePlugin({
+			__COMMIT_HASH__: JSON.stringify(execSync("git rev-parse HEAD").toString().trim()),
 		}),
 	],
 }

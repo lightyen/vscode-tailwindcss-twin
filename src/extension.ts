@@ -193,6 +193,7 @@ function createTextDocumentContentProvider(h: ReturnType<typeof createWorkspaces
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.outputMode = context.extensionMode === vscode.ExtensionMode.Development ? "all" : "outputChannel"
+	console.info(`commit hash: ${__COMMIT_HASH__}`)
 	console.info(
 		`TypeScript ${intl.formatMessage({ id: "ext.debug-outout.version" })}:`,
 		packageInfo.devDependencies["typescript"],
