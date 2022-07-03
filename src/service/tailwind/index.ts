@@ -1,8 +1,6 @@
 import type { PnpApi } from "@yarnpkg/pnp"
 import Fuse from "fuse.js"
-import postcss from "postcss"
 import defaultConfig from "tailwindcss/defaultConfig"
-import plugin from "tailwindcss/plugin"
 import resolveConfig from "tailwindcss/resolveConfig"
 import * as vscode from "vscode"
 import { URI } from "vscode-uri"
@@ -13,7 +11,7 @@ import { cssDataManager } from "~/common/vscode-css-languageservice"
 import { ICompletionItem } from "~/typings/completion"
 import { deprecated } from "./data"
 import { createTwContext, TwContext } from "./tw"
-import { ContextModule, twin } from "./twin"
+import { twinConfig } from "./twin"
 
 export type TailwindLoader = ReturnType<typeof createTailwindLoader>
 
@@ -70,11 +68,6 @@ export function createTailwindLoader(
 ) {
 	let classCompletionList: ICompletionItem[] | undefined
 	let cssPropsCompletionList: ICompletionItem[] | undefined
-
-	const context: ContextModule = {
-		plugin,
-		postcss,
-	}
 
 	let config: Tailwind.ResolvedConfigJS & { extrators?: Extractor[] }
 	let tw: TwContext
@@ -141,7 +134,7 @@ export function createTailwindLoader(
 
 		if (__config) {
 			__config = preprocessConfig(__config)
-			config = resolveConfig(__config, twin(context))
+			config = resolveConfig(__config, twinConfig)
 		}
 	}
 
