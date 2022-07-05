@@ -59,9 +59,11 @@ function escapeRegexp(value: string) {
 	return value.replace(/[/\\^$+?.()|[\]{}]/g, "\\$&")
 }
 
+const validChars = /[^\s:()[\]{}<>!?+*=]/
+
 function compileRegexp(sep: string) {
 	return new RegExp(
-		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${sep})|(!?\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})[\\w-/])+)\\[|(!?(?:(?!\\/\\/|\\/\\*)[\\w-./])+)!?|(!?\\()|(\\S+)`,
+		`(\\/\\/[^\\n]*\\n?)|(\\/\\*)|([\\w-]+${sep})|(!?\\[)|!?((?!\\/)(?:(?!\\/\\/{1,2})${validChars.source})+)\\[|(!?(?:(?!\\/\\/|\\/\\*)${validChars.source})+)!?|(!?\\()|(\\S+)`,
 		"gs",
 	)
 }

@@ -46,6 +46,7 @@ it("spread all types", () => {
 		class-value/[opacity]
 		[prop: value]
 		prop[value]
+		x
 
 		// important prefix
 		!class-value
@@ -105,6 +106,7 @@ it("spread all types", () => {
 		NodeType.ClassName,
 		NodeType.ClassName,
 		NodeType.ClassName,
+		NodeType.ClassName,
 		NodeType.ArbitraryClassname,
 		NodeType.ClassName,
 		NodeType.ArbitraryClassname,
@@ -130,6 +132,7 @@ it("spread all types", () => {
 	])
 
 	expect(spread(text).items.map(i => i.important)).toEqual([
+		false,
 		false,
 		false,
 		false,
@@ -178,6 +181,7 @@ it("spread all types", () => {
 	])
 
 	expect(spread(text).items.map(i => i.target.important)).toEqual([
+		false,
 		false,
 		false,
 		false,

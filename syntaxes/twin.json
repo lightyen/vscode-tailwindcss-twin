@@ -73,7 +73,7 @@
       ]
     },
     "classname": {
-      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[a-zA-Z\\-])+[\\w\\-\\./]+(!?)(?<!/)",
+      "match": "(!?)(?:(?!\\/\\/|\\/\\*)[^\\s:\\(\\)\\[\\]\\{\\}<>!?+*=/])*[\\w\\-\\./]+(!?)(?<!/)",
       "captures": {
         "0": { "name": "support.constant.classname.twin" },
         "1": { "name": "support.function.important-bang.before.twin" },
@@ -81,7 +81,7 @@
       }
     },
     "arbitrary-classname": {
-      "begin": "(!?)((?:(?:(?!\\/\\/)-?[\\w\\/])+-)+)\\[",
+      "begin": "(!?)((?:(?:(?!\\/\\/)-?[^\\s:\\(\\)\\[\\]\\{\\}<>!?+*=/-])+-)+)\\[",
       "end": "\\](?:(\\/\\d+)|\\/\\[(\\s*\\d*\\.?\\d*\\s*)\\])?(!?)",
       "beginCaptures": {
         "1": { "name": "support.function.important-bang.before.twin" },
@@ -100,7 +100,7 @@
       ]
     },
     "arbitrary-opacity": {
-      "begin": "(!?)((?:(?:(?!\\/\\/)[\\w\\/])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
+      "begin": "(!?)((?:(?:(?!\\/\\/)-?[^\\s:\\(\\)\\[\\]\\{\\}<>!?+*=/-])+-)*(?:(?!\\/\\/)[\\w\\/])+)(/\\[)",
       "end": "(\\])(!?)",
       "beginCaptures": {
         "1": { "name": "support.function.important-bang.before.twin" },
