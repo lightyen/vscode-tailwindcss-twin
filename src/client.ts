@@ -361,9 +361,6 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 			watcher.onDidCreate(uri => {
 				addService(uri, settings, true)
 			}),
-			watcher.onDidChange(async uri => {
-				reloadService(uri)
-			}),
 			watcher,
 		)
 
@@ -380,7 +377,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 			 */
 			dispose() {
 				for (const [, srv] of services) {
-					srv.activatedEvent.dispose()
+					srv.dispose()
 				}
 				return disposable.dispose()
 			},
@@ -504,12 +501,13 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 					extensionMode,
 					pnpContext,
 				})
-				console.info("remove:", path.relative(workspaceFolder.path, srv.configPath.path))
+				console.info("remove:", srv.configPath.path)
+				srv.dispose()
 				services.delete(key)
 				services.set(key, s)
 				if (startNow) s.start()
 			} else {
-				console.info("abort:", path.relative(workspaceFolder.path, configPath.path))
+				console.info("abort:", configPath.path)
 			}
 		}
 	}
@@ -518,7 +516,8 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 		const folder = Utils.dirname(configPath).toString()
 		const srv = services.get(folder)
 		if (srv && srv.configPath.toString() === configPath.toString()) {
-			console.info("remove:", path.relative(workspaceFolder.path, srv.configPath.path))
+			console.info("remove:", srv.configPath.path)
+			srv.dispose()
 			services.delete(folder)
 			const set = configFolders.get(folder)
 			if (set) {
@@ -546,14 +545,6 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 
 		if (services.size === 0) {
 			addDefaultService(settings, true)
-		}
-	}
-
-	function reloadService(configPath: URI) {
-		const key = Utils.dirname(configPath).toString()
-		const srv = services.get(key)
-		if (srv && srv.configPath.toString() === configPath.toString()) {
-			srv.reload()
 		}
 	}
 }

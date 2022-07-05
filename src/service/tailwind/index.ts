@@ -1,4 +1,5 @@
 import type { PnpApi } from "@yarnpkg/pnp"
+import chokidar from "chokidar"
 import Fuse from "fuse.js"
 import defaultConfig from "tailwindcss/defaultConfig"
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -46,6 +47,13 @@ export enum CompletionItemTag {
 	Deprecated = 1,
 }
 
+interface CreateTailwindLoaderOptions {
+	configPath?: URI | undefined
+	pnp?: PnpApi | undefined
+	mode: ExtensionMode
+	onChange(): void
+}
+
 function isExtrator(value: unknown): value is Extractor {
 	if (value == undefined || typeof value !== "object") return false
 	if (Object.prototype.hasOwnProperty.call(value, "acceptLanguage")) {
@@ -60,12 +68,7 @@ function isExtrator(value: unknown): value is Extractor {
 	return true
 }
 
-export function createTailwindLoader(
-	configPath: URI | undefined,
-	extensionUri: URI,
-	isDefaultConfig: boolean,
-	extensionMode: ExtensionMode,
-) {
+export function createTailwindLoader() {
 	let classCompletionList: ICompletionItem[] | undefined
 	let cssPropsCompletionList: ICompletionItem[] | undefined
 
@@ -73,6 +76,7 @@ export function createTailwindLoader(
 	let tw: TwContext
 	let variants: Fuse<string>
 	let classnames: Fuse<string>
+	let watcher: chokidar.FSWatcher
 
 	return {
 		get separator() {
@@ -91,13 +95,17 @@ export function createTailwindLoader(
 			return classnames
 		},
 		get extractors(): Extractor[] {
-			return Array.isArray(config.extrators) ? config.extrators.filter(isExtrator) : []
+			return config && Array.isArray(config.extrators) ? config.extrators.filter(isExtrator) : []
 		},
-		readTailwindConfig,
-		createContext,
+		dispose,
+		readTailwind,
 		provideClassCompletionList,
 		provideCssPropsCompletionList,
 		isDeprecated,
+	}
+
+	function dispose() {
+		if (watcher) watcher.close()
 	}
 
 	function preprocessConfig(config: Tailwind.ConfigJS): Tailwind.ConfigJS {
@@ -117,17 +125,27 @@ export function createTailwindLoader(
 		return cfg
 	}
 
-	function readTailwindConfig(pnp?: PnpApi) {
+	function readTailwind({ configPath, pnp, mode, onChange }: CreateTailwindLoaderOptions) {
+		dispose()
 		let __config: Tailwind.ConfigJS
+		const deps: string[] = []
 		if (configPath) {
-			__config = importFrom(configPath.fsPath, {
-				pnp: isDefaultConfig ? undefined : pnp,
-				cache: false,
-				header:
-					extensionMode === ExtensionMode.Development
-						? "process.env.NODE_ENV = 'development';\n"
-						: "process.env.NODE_ENV = 'production';\n",
-			}) as Tailwind.ConfigJS
+			try {
+				__config = importFrom(configPath.fsPath, {
+					pnp,
+					cache: false,
+					deps,
+					header:
+						mode === ExtensionMode.Development
+							? "process.env.NODE_ENV = 'development';\n"
+							: "process.env.NODE_ENV = 'production';\n",
+				})
+			} finally {
+				watcher = chokidar.watch(deps, { ignoreInitial: true })
+				watcher.on("change", onChange)
+				watcher.on("unlink", onChange)
+				watcher.on("add", onChange)
+			}
 		} else {
 			__config = defaultConfig
 		}
@@ -136,6 +154,8 @@ export function createTailwindLoader(
 			__config = preprocessConfig(__config)
 			config = resolveConfig(__config, twinConfig)
 		}
+
+		createContext()
 	}
 
 	function createContext() {

@@ -182,7 +182,7 @@ function createTextDocumentContentProvider(h: ReturnType<typeof createWorkspaces
 			emitter.fire(uri)
 		})
 
-		if (ctx.srv.getState()?.tw == null) {
+		if (ctx.srv.getState().tw == null) {
 			ctx.srv.start()
 		}
 

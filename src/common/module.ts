@@ -122,10 +122,12 @@ function requireModuleFromCode(
 	code: string,
 	filename: string,
 	host: ts.ModuleResolutionHost,
+	deps: string[],
 	pnp?: PnpApi | undefined,
 	mappings?: Mappings | undefined,
 	base = path.dirname(filename),
 ) {
+	deps.push(filename)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const interopExport = (obj: any) => (obj && obj.default ? obj.default : obj)
 	const __module = new Module(filename)
@@ -161,6 +163,7 @@ function requireModuleFromCode(
 							transpile(compilerOptions, moduleName),
 							moduleName,
 							host,
+							deps,
 							pnp,
 							mappings,
 						),
@@ -175,6 +178,7 @@ function requireModuleFromCode(
 							transpile(compilerOptions, moduleName),
 							moduleName,
 							host,
+							deps,
 							pnp,
 							mappings,
 						),
@@ -183,6 +187,7 @@ function requireModuleFromCode(
 			}
 		}
 
+		deps.push(filename)
 		return requireModule(moduleName, { filename, cache: false, paths: __module.paths, pnp })
 	} as NodeJS.Require
 	// @ts-ignore TS/7016
@@ -205,6 +210,7 @@ interface importFromOptions {
 	cache?: boolean | undefined
 	header?: string | undefined
 	pnp?: PnpApi | undefined
+	deps?: string[] | undefined
 }
 
 const logger = tp.createLogger({ logLevel: tp.LogLevel.Error })
@@ -219,6 +225,8 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 	let header = ""
 	let cache = true
 	let pnp: PnpApi | undefined
+	let deps: string[] = []
+
 	if (typeof options === "string") {
 		base = options
 	} else if (options && typeof options === "object") {
@@ -226,6 +234,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 		base = options.base || ""
 		cache = options.cache || true
 		pnp = options.pnp
+		if (options.deps) deps = options.deps
 	}
 
 	const compilerOptions: ts.CompilerOptions = {
@@ -290,6 +299,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
 						host,
+						deps,
 						pnp,
 						mappings,
 					),
@@ -306,6 +316,7 @@ export function importFrom(moduleName: string, options: string | importFromOptio
 						insertHeader(header, transpile(compilerOptions, moduleName)),
 						moduleName,
 						host,
+						deps,
 						pnp,
 						mappings,
 					),

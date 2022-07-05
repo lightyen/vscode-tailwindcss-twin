@@ -1,5 +1,4 @@
 import EventEmitter from "events"
-import path from "path"
 import typescript from "typescript"
 import vscode from "vscode"
 import { URI } from "vscode-uri"
@@ -26,8 +25,8 @@ export type Cache = Record<string, Record<string, ReturnType<typeof parser.sprea
 export function createTailwindLanguageService(options: ServiceOptions) {
 	const configPath = options.configPath
 	const isDefaultConfig = options.configPath == undefined
-	const state = createTailwindLoader(configPath, options.extensionUri, isDefaultConfig, options.extensionMode)
-	const configPathMessage = configPath == undefined ? "tailwindcss/defaultConfig" : relativeWorkspace(configPath)
+	const state = createTailwindLoader()
+	const configPathMessage = configPath == undefined ? "tailwindcss/defaultConfig" : configPath.path
 	let loading = false
 	let _colorProvider: ReturnType<typeof createColorProvider> | undefined
 
@@ -73,8 +72,11 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		getState() {
 			return state
 		},
+		dispose() {
+			activatedEvent.dispose()
+			state.dispose()
+		},
 		start,
-		reload,
 		updateSettings,
 		onCompletion,
 		onCompletionResolve,
@@ -100,10 +102,6 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		})
 	}
 
-	function relativeWorkspace(uri: URI) {
-		return path.relative(options.workspaceFolder.path, uri.path)
-	}
-
 	function start() {
 		if (!options.enabled || loading) return
 		if (state.tw) return
@@ -111,8 +109,12 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			loading = true
 			console.info("loading:", configPathMessage)
 			const start = process.hrtime.bigint()
-			state.readTailwindConfig(options.pnpContext)
-			state.createContext()
+			state.readTailwind({
+				configPath,
+				mode: options.extensionMode,
+				pnp: isDefaultConfig ? undefined : options.pnpContext,
+				onChange: reload,
+			})
 			_colorProvider = createColorProvider(state.tw, state.separator)
 			const end = process.hrtime.bigint()
 			activated.emit("signal")
@@ -132,9 +134,13 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 			loading = true
 			console.info("reloading:", configPathMessage)
 			const start = process.hrtime.bigint()
-			state.readTailwindConfig(options.pnpContext)
-			state.createContext()
-			_colorProvider?.dispose()
+			state.readTailwind({
+				configPath,
+				mode: options.extensionMode,
+				pnp: isDefaultConfig ? undefined : options.pnpContext,
+				onChange: reload,
+			})
+			if (_colorProvider) _colorProvider.dispose()
 			_colorProvider = createColorProvider(state.tw, state.separator)
 			const end = process.hrtime.bigint()
 			activated.emit("signal")

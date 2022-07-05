@@ -68,6 +68,10 @@ const configExtension: Configuration = {
 				test: /\.ya?ml$/,
 				use: "js-yaml-loader",
 			},
+			{
+				test: /.node$/,
+				loader: "node-loader",
+			},
 		],
 		// NOTE: https://github.com/microsoft/TypeScript/issues/39436
 		noParse: [require.resolve("typescript/lib/typescript.js")],
