@@ -41,12 +41,15 @@ export function parseExpressions({
 	end?: number
 	breac?: number
 }) {
-	const expressions: nodes.TwExpression[] = []
+	let expressions: nodes.TwExpression[] = []
 	while (start < end) {
 		const { expr, lastIndex } = parseExpression({ text, breac, start, end })
 		if (expr) {
-			if (expr instanceof Array) expressions.push(...expr)
-			else expressions.push(expr)
+			if (expr instanceof Array) {
+				expressions = [...expressions, ...expr]
+			} else {
+				expressions.push(expr)
+			}
 		}
 		if (lastIndex > breac) break
 		start = lastIndex
