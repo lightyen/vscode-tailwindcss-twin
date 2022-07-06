@@ -421,14 +421,17 @@
 
 ###
 
-"https://tailwindcss.com/docs/hover-focus-and-other-states#group-hover":
-  name: Group-hover
-  desc: "If you need to style a child element when hovering over a specific parent element, add the group class to the parent element and add the `group-hover:` prefix to the utility on the child element."
-"https://tailwindcss.com/docs/hover-focus-and-other-states#group-focus":
-  name: Group-focus
-  desc: "The `group-focus` variant works just like `group-hover` except for focus."
-? "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion"
-: name: prefers-reduced-motion
+"https://tailwindcss.com/docs/hover-focus-and-other-states":
+  name: Handling Hover, Focus, and Other States
+  desc: "Using utilities to style elements on hover, focus, and more."
+"https://tailwindcss.com/docs/hover-focus-and-other-states#styling-based-on-parent-state?group":
+  name: Group Variant
+  desc: "Styling based on parent state `group-{modifier}`"
+"https://tailwindcss.com/docs/hover-focus-and-other-states#styling-based-on-parent-state?peer":
+  name: Peer Variant
+  desc: "Styling based on parent state `peer-{modifier}`"
+"https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion":
+  name: prefers-reduced-motion
   desc: "The **prefers-reduced-motion** CSS media feature is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses."
 "https://tailwindcss.com/docs/hover-focus-and-other-states#disabled":
   name: Disabled
@@ -523,14 +526,14 @@
 "https://developer.mozilla.org/en-US/docs/Web/CSS/content":
   name: Content
   desc: "The **content** CSS property replaces an element with a generated value. Objects inserted using the `content` property are **anonymous** replaced elements*.*"
-? "https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js"
-: name: twin.macro
+"https://github.com/ben-rogerson/twin.macro/blob/master/src/config/variantConfig.js":
+  name: twin.macro
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/group.md":
   name: twin.macro
   desc: ""
-? "https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles"
-: name: twin.macro
+"https://github.com/ben-rogerson/twin.examples/tree/master/react-styled-components#add-the-global-styles":
+  name: twin.macro
   desc: ""
 "https://github.com/ben-rogerson/twin.macro/blob/master/docs/container.md":
   name: twin.macro
