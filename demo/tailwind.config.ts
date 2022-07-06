@@ -1,5 +1,3 @@
-import "tailwind-types"
-
 export default {
 	theme: {
 		extend: {
