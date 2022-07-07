@@ -129,6 +129,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		isVariant,
 		renderVariant,
 		renderArbitraryVariant,
+		renderArbitraryVariantScopes,
 		renderClassname,
 		renderCssProperty,
 		renderDecls,
@@ -158,85 +159,78 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		if (!meta) {
 			return ""
 		}
-		const fakeRoot = postcss.root({
-			nodes: [
-				postcss.rule({
-					selector: ".☕",
-				}),
-			],
-		})
 
+		const re = new RegExp(
+			("." + escape(variant + config.separator) + "☕").replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
+			"g",
+		)
+
+		const container = postcss.root().append(postcss.rule({ selector: ".☕" }))
 		const rules: Array<AtRule | Rule> = []
 
-		let noop = true
 		for (const [, fn] of meta) {
-			const container = fakeRoot.clone()
-			let wrapper: AtRule[] = []
-			let selector = ""
-
-			const returnValue = fn({
+			let node: AtRule | Rule | undefined
+			fn({
 				container,
 				separator: config.separator,
-				wrap(node) {
-					wrapper.push(node)
-					noop = false
+				wrap(atrule) {
+					if (!node) node = postcss.rule({ selector: "&" })
+					const at = atrule.clone()
+					at.append(node)
+					node = at
 				},
-				format(selectorFormat) {
-					selector = selectorFormat
-					noop = false
+				format(selector) {
+					if (selector.match(/:merge\((.*?)\)/)) selector = selector.replace(/:merge\((.*?)\)/g, "$1")
+					node = postcss.rule({ selector })
 				},
 			})
-			if (selector.match(/:merge\((.*?)\)/)) selector = selector.replace(/:merge\((.*?)\)/g, "$1")
-			if (!selector && returnValue) {
-				if (typeof returnValue === "string") selector = returnValue.replace(/:merge\((.*?)\)/g, "$1")
-				else selector = returnValue.map(ret => ret.replace(/:merge\((.*?)\)/g, "$1")).join(", ")
+			if (node) {
+				replaceSelector(tabSize, node, s => s.replace(re, "&"))
+				rules.push(node)
 			}
-			if (!selector && wrapper.length > 0) {
-				selector = `@${wrapper[0].name} ${wrapper[0].params}`
-				wrapper = wrapper.slice(1)
-			}
-			if (!selector) {
-				if (noop) return ""
-				const re = new RegExp(
-					("." + escape(variant + config.separator + "☕")).replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
-					"g",
-				)
-				container.walk(node => {
-					switch (node.type) {
-						case "atrule":
-							wrapper.push(node)
-							return false
-						case "rule":
-							selector = node.selector.replace(re, "&")
-							return false
-					}
-					return
-				})
-				if (!selector && wrapper.length > 0) {
-					selector = `@${wrapper[0].name} ${wrapper[0].params}`
-					wrapper = wrapper.slice(1)
-				}
-			}
-			if (!selector) continue
+		}
 
-			const rule: AtRule | Rule = postcss.rule({ selector, nodes: [postcss.comment({ text: "..." })] })
-			const raws = rule.raws as { indent: string }
-			raws.indent = "".padStart(tabSize)
-			const result = wrapper.reduce<AtRule | Rule>((rule, wrapper) => renderWrapper(wrapper, rule), rule)
-			rules.push(result)
+		if (rules.length === 0) {
+			container.each(node => {
+				switch (node.type) {
+					case "atrule":
+					case "rule":
+						replaceSelector(tabSize, node, s => s.replace(re, "&"))
+						rules.push(node)
+						break
+				}
+			})
 		}
 
 		return rules.map(r => r.toString()).join("\n")
-
-		function renderWrapper(wrapper: AtRule, rule: AtRule | Rule) {
-			const raws = wrapper.raws as { indent: string }
-			raws.indent = "".padStart(tabSize)
-			wrapper.append(rule)
-			return wrapper
-		}
 	}
 
-	function renderArbitraryVariant(variant: string, separator: string) {
+	function comment(tabSize: number, node: Rule) {
+		const raws = node.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
+		node.nodes = []
+		node.append(postcss.comment({ text: "..." }))
+	}
+
+	function replaceSelector(tabSize: number, node: AtRule | Rule, replace: (str: string) => string): void {
+		if (node.type === "rule") {
+			node.selector = replace(node.selector)
+			comment(tabSize, node)
+			return
+		}
+		node.each(node => {
+			switch (node.type) {
+				case "atrule":
+					replaceSelector(tabSize, node, replace)
+					break
+				case "rule":
+					replaceSelector(tabSize, node, replace)
+					break
+			}
+		})
+	}
+
+	function renderArbitraryVariant(variant: string, separator: string, tabSize: number): ScssText {
 		const classname = variant + separator + "[color:red]"
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
@@ -247,22 +241,71 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				return 0
 			}
 		})
-		if (items.length <= 0) return []
+		if (items.length <= 0) return ""
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		const scopes: string[] = []
+		const rules: Array<AtRule | Rule> = []
+		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
 
-		root.walk(node => {
+		root.each(node => {
 			switch (node.type) {
 				case "atrule":
-					scopes.push(`@${node.name} ${node.params}`)
-					return false
+				case "rule":
+					replaceSelector(tabSize, node, replace)
+					rules.push(node)
+					break
+			}
+		})
+
+		return rules.map(r => r.toString()).join("\n")
+	}
+
+	function renderArbitraryVariantScopes(variant: string, separator: string): string {
+		const classname = variant + separator + "[color:red]"
+		const items = generateRules([classname], context).sort(([a], [b]) => {
+			if (a < b) {
+				return -1
+			} else if (a > b) {
+				return 1
+			} else {
+				return 0
+			}
+		})
+		if (items.length <= 0) return ""
+		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
+		const scopes: string[] = []
+		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		root.each(node => {
+			switch (node.type) {
+				case "atrule":
 				case "rule": {
-					const scope = node.selector.replaceAll("." + escape(classname), "&")
+					const scope = getScope(node, replace)
 					if (scope) scopes.push(scope)
+					break
 				}
 			}
 		})
-		return scopes.sort()
+		return scopes.join(",")
+
+		function getScope(node: AtRule | Rule, replace: (str: string) => string): string {
+			if (node.type === "rule") {
+				return replace(node.selector)
+			}
+			let n = node
+			let s = ""
+			while (n.type === "atrule") {
+				s += `@${node.name} ${node.params},`
+				const next = n.nodes[0]
+				if (next?.type !== "atrule") {
+					break
+				}
+				n = next
+			}
+			const next = n.nodes[0]
+			if (next?.type === "rule") {
+				return s + replace(next.selector)
+			}
+			return s.slice(-1)
+		}
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {

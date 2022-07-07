@@ -259,7 +259,7 @@ function validateTwin({
 			const variants = item.variants
 				.map(v => {
 					if (v.type === parser.NodeType.ArbitraryVariant) {
-						return state.tw.renderArbitraryVariant(v.value, state.separator).join(", ")
+						return state.tw.renderArbitraryVariantScopes(v.value, state.separator)
 					}
 					return v.value.trim().replace(/\s{2,}/g, " ")
 				})
@@ -329,7 +329,7 @@ function validateTwin({
 			const variants = item.variants
 				.map(v => {
 					if (v.type === parser.NodeType.ArbitraryVariant) {
-						return state.tw.renderArbitraryVariant(v.value, state.separator).join(", ")
+						return state.tw.renderArbitraryVariantScopes(v.value, state.separator)
 					}
 					return v.value.trim().replace(/\s{2,}/g, " ")
 				})

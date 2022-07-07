@@ -152,16 +152,11 @@ export default async function hover(
 
 				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
-					const scopes = state.tw.renderArbitraryVariant(value, state.separator)
-					if (scopes.length === 0) {
-						return {
-							range,
-							contents: [header],
-						}
-					}
-					const code = scopes.join(", ") + ` {\n${" ".repeat(tabSize)}/* ... */\n}`
+					const code = state.tw.renderArbitraryVariant(value, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
+
+					if (!header.value && !codes.value) return undefined
 					return {
 						range,
 						contents: [header, codes],
