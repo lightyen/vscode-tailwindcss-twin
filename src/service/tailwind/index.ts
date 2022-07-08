@@ -102,7 +102,7 @@ export function createTailwindLoader() {
 		provideClassCompletionList,
 		provideCssPropsCompletionList,
 		isDeprecated,
-	}
+	} as const
 
 	function dispose() {
 		if (watcher) watcher.close()

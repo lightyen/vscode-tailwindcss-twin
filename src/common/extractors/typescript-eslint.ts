@@ -49,7 +49,7 @@ export function findAll(code: string, jsxPropImportChecking: boolean) {
 			}
 		}
 
-		return { jsxProp, twTemplate, themeTemplate, screenTemplate }
+		return { jsxProp, twTemplate, themeTemplate, screenTemplate } as const
 	}
 
 	function parseTaggedTemplateExpression(node: ast.TaggedTemplateExpression) {
@@ -667,7 +667,7 @@ export function find(code: string, position: number, includeEnd: boolean, jsxPro
 			}
 		}
 
-		return { jsxProp, twTemplate, themeTemplate, screenTemplate }
+		return { jsxProp, twTemplate, themeTemplate, screenTemplate } as const
 	}
 
 	function inRange(node: ast.Node): boolean {

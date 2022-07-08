@@ -25,7 +25,7 @@ function createWorkspacesHandler() {
 		initialize,
 		dispose,
 		onDidChangeWorkspaceFolders,
-	}
+	} as const
 
 	async function initialize(ctx: vscode.ExtensionContext) {
 		context = ctx

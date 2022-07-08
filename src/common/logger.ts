@@ -97,7 +97,7 @@ export function createLogger({
 		get level() {
 			return level2LevelString(logLevel)
 		},
-	}
+	} as const
 
 	function log(level: LogLevel, args: unknown[]) {
 		if (logLevel < level) {

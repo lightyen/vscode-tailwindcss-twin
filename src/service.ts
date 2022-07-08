@@ -92,7 +92,7 @@ export function createTailwindLanguageService(options: ServiceOptions) {
 		},
 		documentColorProvider,
 		activatedEvent,
-	}
+	} as const
 
 	function ready() {
 		return new Promise<void>(resolve => {

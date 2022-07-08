@@ -368,7 +368,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 			}
 		}
 	})
-	return { jsxProp, twTemplate, themeTemplate, screenTemplate }
+	return { jsxProp, twTemplate, themeTemplate, screenTemplate } as const
 }
 
 export function findToken(

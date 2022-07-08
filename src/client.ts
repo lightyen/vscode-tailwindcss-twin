@@ -383,7 +383,7 @@ export async function workspaceClient(context: vscode.ExtensionContext, ws: vsco
 				}
 				return disposable.dispose()
 			},
-		}
+		} as const
 	}
 
 	function getTabSize(defaultSize = 4): number {

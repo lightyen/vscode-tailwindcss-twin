@@ -62,7 +62,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 				}
 			}
 		},
-	}
+	} as const
 
 	function getColorRanges(tokens: ExtractedToken[], document: TextDocument) {
 		const colors: Array<[ColorDesc, vscode.Range]> = []

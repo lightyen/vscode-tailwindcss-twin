@@ -98,5 +98,5 @@ export function spread(text: string, { separator = ":" }: { separator?: string }
 	const program = parser.parse(text)
 	program.expressions.forEach(expr => walk(expr, { variants: [], important: false }))
 
-	return { items, emptyGroup, emptyVariants, notClosed }
+	return { items, emptyGroup, emptyVariants, notClosed } as const
 }

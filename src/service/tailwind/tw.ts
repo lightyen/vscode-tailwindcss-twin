@@ -141,7 +141,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		prefix: config.prefix,
 		trimPrefix,
 		arbitrary,
-	}
+	} as const
 
 	function trimPrefix(classname: string): string {
 		if (typeof config.prefix === "function") {
