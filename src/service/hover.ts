@@ -54,7 +54,6 @@ export default async function hover(
 				if (selection.target.type === parser.NodeType.ShortCss) {
 					const prop = parser.toKebab(selection.target.prefix.value)
 					const value = selection.value
-					const important = selection.important
 
 					const header = new vscode.MarkdownString()
 					if (options.references) {
@@ -67,10 +66,9 @@ export default async function hover(
 						}
 					}
 
-					const code = state.tw.renderCssProperty({
-						prop,
-						value,
-						important,
+					const code = state.tw.renderClassname({
+						classname: `[${prop}: ${value}]`.replace(/ /g, "_"),
+						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
@@ -107,12 +105,11 @@ export default async function hover(
 					}
 
 					const code = state.tw.renderClassname({
-						classname: `[${prop}: ${value}]`,
+						classname: `[${prop}: ${value}]`.replace(/ /g, "_"),
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
-						arbitraryProperty: true,
 					})
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
@@ -180,7 +177,7 @@ export default async function hover(
 						}
 					}
 
-					const code = state.tw.renderVariant(value, tabSize)
+					const code = state.tw.renderSimpleVariant(value, tabSize)
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -229,10 +226,9 @@ export default async function hover(
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
-						arbitraryProperty: false,
 					})
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(code, "css")
+					if (code) codes.appendCodeblock(code, "scss")
 					if (!header.value && !codes.value) return undefined
 
 					return {
@@ -247,10 +243,9 @@ export default async function hover(
 					rootFontSize: options.rootFontSize,
 					colorHint: options.hoverColorHint,
 					tabSize,
-					arbitraryProperty: false,
 				})
 				const codes = new vscode.MarkdownString()
-				if (code) codes.appendCodeblock(code, "css")
+				if (code) codes.appendCodeblock(code, "scss")
 
 				if (!header.value && !codes.value) return undefined
 

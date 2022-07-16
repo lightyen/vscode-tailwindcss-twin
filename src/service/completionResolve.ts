@@ -75,7 +75,7 @@ function resolve(
 
 	if (type === "variant" || type === "screen") {
 		const key = item.label.replace(new RegExp(`${state.separator}$`), "")
-		const code = state.tw.renderVariant(key, tabSize)
+		const code = state.tw.renderSimpleVariant(key, tabSize)
 		if (!code) return item
 
 		const fencedCodeBlock = createFencedCodeBlock(code, CodeKind.SCSS)
@@ -103,7 +103,7 @@ function resolve(
 	const code = state.tw.renderClassname({ classname: item.label, rootFontSize: options.rootFontSize, tabSize })
 	if (!code) return item
 
-	const fencedCodeBlock = createFencedCodeBlock(code, CodeKind.CSS)
+	const fencedCodeBlock = createFencedCodeBlock(code, CodeKind.SCSS)
 	if (type === "utility") {
 		const markdown = new vscode.MarkdownString()
 		markdown.appendMarkdown(fencedCodeBlock)

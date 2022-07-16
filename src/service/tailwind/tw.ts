@@ -127,11 +127,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		context,
 		screens,
 		isVariant,
-		renderVariant,
+		renderSimpleVariant,
 		renderArbitraryVariant,
 		renderArbitraryVariantScopes,
 		renderClassname,
-		renderCssProperty,
 		renderDecls,
 		escape,
 		getPlugin(classname: string) {
@@ -154,7 +153,32 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		return escapeClassName(className)
 	}
 
-	function renderVariant(variant: string, tabSize = 4): ScssText {
+	function comment(tabSize: number, node: Rule) {
+		const raws = node.raws as { indent: string }
+		raws.indent = "".padStart(tabSize)
+		node.nodes = []
+		node.append(postcss.comment({ text: "..." }))
+	}
+
+	function replaceSelectorAndComment(tabSize: number, node: AtRule | Rule, replace: (str: string) => string): void {
+		if (node.type === "rule") {
+			node.selector = replace(node.selector)
+			comment(tabSize, node)
+			return
+		}
+		node.each(node => {
+			switch (node.type) {
+				case "atrule":
+					replaceSelectorAndComment(tabSize, node, replace)
+					break
+				case "rule":
+					replaceSelectorAndComment(tabSize, node, replace)
+					break
+			}
+		})
+	}
+
+	function renderSimpleVariant(variant: string, tabSize = 4): ScssText {
 		const meta = context.variantMap.get(variant)
 		if (!meta) {
 			return ""
@@ -164,7 +188,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			("." + escape(variant + config.separator) + "☕").replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
 			"g",
 		)
-
+		const replace = (str: string) => str.replace(re, "&")
 		const container = postcss.root().append(postcss.rule({ selector: ".☕" }))
 		const rules: Array<AtRule | Rule> = []
 
@@ -185,7 +209,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				},
 			})
 			if (node) {
-				replaceSelector(tabSize, node, s => s.replace(re, "&"))
+				replaceSelectorAndComment(tabSize, node, replace)
 				rules.push(node)
 			}
 		}
@@ -195,7 +219,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				switch (node.type) {
 					case "atrule":
 					case "rule":
-						replaceSelector(tabSize, node, s => s.replace(re, "&"))
+						replaceSelectorAndComment(tabSize, node, replace)
 						rules.push(node)
 						break
 				}
@@ -203,31 +227,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		}
 
 		return rules.map(r => r.toString()).join("\n")
-	}
-
-	function comment(tabSize: number, node: Rule) {
-		const raws = node.raws as { indent: string }
-		raws.indent = "".padStart(tabSize)
-		node.nodes = []
-		node.append(postcss.comment({ text: "..." }))
-	}
-
-	function replaceSelector(tabSize: number, node: AtRule | Rule, replace: (str: string) => string): void {
-		if (node.type === "rule") {
-			node.selector = replace(node.selector)
-			comment(tabSize, node)
-			return
-		}
-		node.each(node => {
-			switch (node.type) {
-				case "atrule":
-					replaceSelector(tabSize, node, replace)
-					break
-				case "rule":
-					replaceSelector(tabSize, node, replace)
-					break
-			}
-		})
 	}
 
 	function renderArbitraryVariant(variant: string, separator: string, tabSize: number): ScssText {
@@ -250,13 +249,34 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			switch (node.type) {
 				case "atrule":
 				case "rule":
-					replaceSelector(tabSize, node, replace)
+					replaceSelectorAndComment(tabSize, node, replace)
 					rules.push(node)
 					break
 			}
 		})
 
 		return rules.map(r => r.toString()).join("\n")
+	}
+
+	function getScope(node: AtRule | Rule, replace: (str: string) => string): string {
+		if (node.type === "rule") {
+			return replace(node.selector)
+		}
+		let n = node
+		let s = ""
+		while (n.type === "atrule") {
+			s += `@${node.name} ${node.params},`
+			const next = n.nodes[0]
+			if (next?.type !== "atrule") {
+				break
+			}
+			n = next
+		}
+		const next = n.nodes[0]
+		if (next?.type === "rule") {
+			return s + replace(next.selector)
+		}
+		return s.slice(-1)
 	}
 
 	function renderArbitraryVariantScopes(variant: string, separator: string): string {
@@ -272,8 +292,8 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		})
 		if (items.length <= 0) return ""
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		const scopes: string[] = []
 		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		const scopes: string[] = []
 		root.each(node => {
 			switch (node.type) {
 				case "atrule":
@@ -285,27 +305,6 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			}
 		})
 		return scopes.join(",")
-
-		function getScope(node: AtRule | Rule, replace: (str: string) => string): string {
-			if (node.type === "rule") {
-				return replace(node.selector)
-			}
-			let n = node
-			let s = ""
-			while (n.type === "atrule") {
-				s += `@${node.name} ${node.params},`
-				const next = n.nodes[0]
-				if (next?.type !== "atrule") {
-					break
-				}
-				n = next
-			}
-			const next = n.nodes[0]
-			if (next?.type === "rule") {
-				return s + replace(next.selector)
-			}
-			return s.slice(-1)
-		}
 	}
 
 	function toPixelUnit(cssValue: string, rootFontSize: number) {
@@ -407,18 +406,13 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		rootFontSize = 0,
 		tabSize = 4,
 		colorHint = "none",
-		arbitraryProperty = false,
 	}: {
 		classname: string
 		important?: boolean
 		rootFontSize?: number
 		tabSize?: number
 		colorHint?: "none" | "hex" | "rgb" | "hsl"
-		arbitraryProperty?: boolean
-	}): CssText {
-		if (arbitraryProperty) {
-			classname = classname.replace(/ /g, "_")
-		}
+	}): ScssText {
 		const root = render(classname, tabSize)
 		if (important || rootFontSize) {
 			root.walkDecls(decl => {
@@ -428,36 +422,11 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
-		if (arbitraryProperty) {
-			root.walkRules(rule => {
-				rule.selector = "&"
-			})
-		}
+		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		root.walkRules(rule => {
+			rule.selector = replace(rule.selector)
+		})
 		return root.toString()
-	}
-
-	function renderCssProperty({
-		prop,
-		value,
-		important,
-		rootFontSize,
-		tabSize = 4,
-		colorHint = "none",
-	}: {
-		prop: string
-		value: string
-		important?: boolean
-		rootFontSize?: number
-		tabSize?: number
-		colorHint?: "none" | "hex" | "rgb" | "hsl"
-	}): ScssText {
-		const decl = postcss.decl({ prop, value, important })
-		if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
-		if (rootFontSize) decl.value = toPixelUnit(decl.value, rootFontSize)
-		const rule = postcss.rule({ selector: "&", nodes: [decl], raws: { semicolon: true } })
-		const raws = rule.raws as { indent: string }
-		raws.indent = "".padStart(tabSize)
-		return rule.toString()
 	}
 
 	function getColorDesc(classname: string): ColorDesc | undefined {
@@ -565,7 +534,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			}
 			return 0
 		}
-		return getWidth(renderVariant(a)) - getWidth(renderVariant(b))
+		return getWidth(renderSimpleVariant(a)) - getWidth(renderSimpleVariant(b))
 	}
 
 	function renderDecls(classname: string): {
@@ -595,14 +564,22 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			}
 		})
 
-		// NOTE: handle special selector like: `.divide-red-500 > :not([hidden]) ~ :not([hidden])`
-		// kind: animate, space, divide, placeholder
+		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
 		const scopes: string[] = []
+		root.each(node => {
+			switch (node.type) {
+				case "atrule":
+				case "rule": {
+					const scope = getScope(node, replace)
+					if (scope) scopes.push(scope)
+					break
+				}
+			}
+		})
+
 		let rules = 0
-		root.walkRules(rule => {
+		root.walkRules(_ => {
 			rules++
-			const scope = rule.selector.replaceAll("." + escape(classname), "")
-			if (scope) scopes.push(scope)
 		})
 
 		const ret = { decls, scopes, rules }
