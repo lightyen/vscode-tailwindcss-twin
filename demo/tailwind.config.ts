@@ -4,6 +4,15 @@ export default {
 			tabSize: {
 				px: "1px",
 			},
+			colors: {
+				"bar": "rgb(var(--color) / <alpha-value>)",
+				"foo-5": "#056660",
+				"foo-5/10": "#051060",
+				"foo-5/10/10%": "#651025",
+				space: {
+					"1/1": "#051025",
+				},
+			},
 		},
 	},
 	experimental: { matchVariant: true },

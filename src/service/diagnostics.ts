@@ -90,7 +90,7 @@ export function validate(
 					}
 				} else if (kind === "screen") {
 					if (value) {
-						const result = parser.resolveThemeConfig(state.config, ["screens", value])
+						const result = parser.resolvePath(state.config.theme, ["screens", value])
 						if (result == undefined) {
 							if (
 								!diagnostics.push({
@@ -817,38 +817,22 @@ function validateTwinTheme({
 	diagnostics: IDiagnostic[]
 }): boolean {
 	let diagnostic: IDiagnostic | undefined
-	const { path, others, range } = parser.parse_theme_val({ text })
-	if (others) {
-		diagnostic = {
-			range: new vscode.Range(
-				document.positionAt(offset + others.range[0]),
-				document.positionAt(offset + others.range[1]),
-			),
-			source: DIAGNOSTICS_ID,
-			message: "Syntax Error",
-			severity: vscode.DiagnosticSeverity.Error,
-		}
-	} else {
-		for (const { closed, range } of path) {
-			if (!closed) {
-				const [a] = range
-				diagnostic = {
-					range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + a)),
-					source: DIAGNOSTICS_ID,
-					message: "Syntax Error",
-					severity: vscode.DiagnosticSeverity.Error,
-				}
-				break
+	const { path, range } = parser.parse_theme_val({ text })
+	for (const { closed, range } of path) {
+		if (!closed) {
+			const [a] = range
+			diagnostic = {
+				range: new vscode.Range(document.positionAt(offset + a), document.positionAt(offset + a)),
+				source: DIAGNOSTICS_ID,
+				message: "Syntax Error",
+				severity: vscode.DiagnosticSeverity.Error,
 			}
+			break
 		}
 	}
 	if (!diagnostic) {
-		if (
-			parser.resolveThemeConfig(
-				state.config,
-				path.map(p => p.value),
-			) === undefined
-		) {
+		const { value } = parser.theme(state.config, path)
+		if (value === undefined) {
 			diagnostic = {
 				range: new vscode.Range(document.positionAt(offset + range[0]), document.positionAt(offset + range[1])),
 				source: DIAGNOSTICS_ID,

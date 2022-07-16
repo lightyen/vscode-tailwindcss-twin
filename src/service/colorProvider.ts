@@ -204,16 +204,12 @@ export function createColorProvider(tw: TwContext, separator: string) {
 	}
 
 	function getThemeDecoration(
-		value: parser.ThemeValueNode,
+		node: parser.ThemeValueNode,
 		tw: ReturnType<typeof createTwContext>,
 	): string | undefined {
-		if (value.others) return undefined
-		const out = parser.resolveThemeConfig(
-			tw.context.tailwindConfig,
-			value.path.map(p => p.value),
-		)
+		const out = parser.renderThemePath(tw.context.tailwindConfig, node.path)
 		if (out === "transparent") return out
-		const color = culori.parse(parser.resolveThemeString(out, value.suffix?.value))
+		const color = culori.parse(out)
 		if (!color) return undefined
 		color.alpha = 1
 		return culori.formatRgb(color)

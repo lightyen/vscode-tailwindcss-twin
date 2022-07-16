@@ -144,4 +144,4 @@ col-start-[1]
 test-[red]
 screen-[333px]:
 sm:marker:peer-hover:tab-[ab]:foo:mdx:col-span-3
-
+accent-[theme( colors.foo-5/10 )]

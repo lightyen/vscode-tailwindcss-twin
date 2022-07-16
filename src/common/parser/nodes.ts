@@ -160,16 +160,17 @@ export type BracketNode =
 export interface ThemeFunctionNode extends BaseNode, Closed {
 	type: NodeType.ThemeFunction
 	value: ThemeValueNode
-	innerRange: Range
+	valueRange: Range
+	toString(): string
 }
 
 export interface ThemeValueNode extends BaseNode {
 	type: NodeType.ThemeValue
 	path: ThemePathNode[]
-	suffix?: TokenString
-	others?: TokenString
+	toString(): string
 }
 
 export interface ThemePathNode extends BaseNode, NodeData, Closed {
 	type: NodeType.ThemePath
+	toString(): string
 }

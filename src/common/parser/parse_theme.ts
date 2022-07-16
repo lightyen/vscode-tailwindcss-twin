@@ -32,26 +32,31 @@ function parse_theme_fn({ text, start = 0, end = text.length }: { text: string; 
 			type: nodes.NodeType.ThemeFunction,
 			closed: false,
 			range: [match.index, end],
-			innerRange: [regexThemeFn.lastIndex, end],
+			valueRange: [regexThemeFn.lastIndex, end],
 			value: parse_theme_val({ text, start: regexThemeFn.lastIndex, end }),
+			toString() {
+				return text.slice(this.range[0], this.range[1])
+			},
 		}
 		return { expr: node, lastIndex: end }
 	}
 
 	start = regexThemeFn.lastIndex
 	end = rb
-	const value = parse_theme_val({ text, start, end })
 	const node: nodes.ThemeFunctionNode = {
 		type: nodes.NodeType.ThemeFunction,
 		closed: true,
 		range: [match.index, end + 1],
-		innerRange: [start, end],
-		value,
+		valueRange: [start, end],
+		value: parse_theme_val({ text, start, end }),
+		toString() {
+			return text.slice(this.range[0], this.range[1])
+		},
 	}
 	return { expr: node, lastIndex: rb + 1 }
 }
 
-const regexThemePath = /(\[)|(\.\w*)|(\w+)|\/\s*((?:\+|-)?[\d.]+%?)|(\S+)/gs
+const regexThemePath = /(\[)|(\.[^.\s[]*)|([^.\s[]+)/gs
 
 export function parse_theme_val({
 	text,
@@ -79,13 +84,17 @@ export function parse_theme_val({
 		type: nodes.NodeType.ThemeValue,
 		range: [start, end],
 		path: [],
+		toString() {
+			return text.slice(this.range[0], this.range[1])
+		},
 	}
 
+	text = text.slice(0, end)
 	while (start < end) {
 		regexThemePath.lastIndex = start
 		const match = regexThemePath.exec(text)
 		if (match == null) break
-		const [, leftSquareBracket, dotKey, firstKey, suffix] = match
+		const [, leftSquareBracket, dotKey, firstKey] = match
 		if (leftSquareBracket) {
 			const rb = findRightBracket({
 				text,
@@ -94,61 +103,71 @@ export function parse_theme_val({
 				brackets: [91, 93],
 			})
 			if (rb == undefined) {
-				node.path = node.path.concat({
+				const a = match.index
+				const b = end
+				const n: nodes.ThemePathNode = {
 					type: nodes.NodeType.ThemePath,
-					range: [match.index, end],
-					value: text.slice(match.index + 1, end),
+					range: [a, b],
+					value: text.slice(a + 1, b),
 					closed: false,
-				})
+					toString() {
+						return text.slice(this.range[0], this.range[1])
+					},
+				}
+				node.path = node.path.concat(n)
 				start = end
 				continue
 			}
-			node.path = node.path.concat({
+
+			const a = match.index
+			const b = rb + 1
+			const n: nodes.ThemePathNode = {
 				type: nodes.NodeType.ThemePath,
-				range: [match.index, rb + 1],
-				value: text.slice(match.index + 1, rb),
+				range: [a, b],
+				value: text.slice(a + 1, b - 1),
 				closed: true,
-			})
+				toString() {
+					return text.slice(this.range[0], this.range[1])
+				},
+			}
+			node.path = node.path.concat(n)
 			start = rb + 1
 			continue
 		}
 
 		if (dotKey) {
-			node.path = node.path.concat({
+			const a = match.index
+			const b = regexThemePath.lastIndex
+			const n: nodes.ThemePathNode = {
 				type: nodes.NodeType.ThemePath,
-				range: [match.index, regexThemePath.lastIndex],
-				value: text.slice(match.index + 1, regexThemePath.lastIndex),
+				range: [a, b],
+				value: text.slice(a + 1, b),
 				closed: true,
-			})
-			start = regexThemePath.lastIndex
-			continue
-		}
-
-		if (suffix) {
-			node.suffix = {
-				range: [match.index, regexThemePath.lastIndex],
-				value: suffix,
+				toString() {
+					return text.slice(this.range[0], this.range[1])
+				},
 			}
+			node.path = node.path.concat(n)
 			start = regexThemePath.lastIndex
 			continue
 		}
 
 		if (firstKey) {
-			node.path = node.path.concat({
+			const a = match.index
+			const b = regexThemePath.lastIndex
+			const n: nodes.ThemePathNode = {
 				type: nodes.NodeType.ThemePath,
-				range: [match.index, regexThemePath.lastIndex],
-				value: text.slice(match.index, regexThemePath.lastIndex),
+				range: [a, b],
+				value: text.slice(a, b),
 				closed: true,
-			})
+				toString() {
+					return text.slice(this.range[0], this.range[1])
+				},
+			}
+			node.path = node.path.concat(n)
 			start = regexThemePath.lastIndex
 			continue
 		}
-
-		node.others = {
-			range: [match.index, regexThemePath.lastIndex],
-			value: text.slice(match.index, regexThemePath.lastIndex),
-		}
-		break
 	}
 
 	return node

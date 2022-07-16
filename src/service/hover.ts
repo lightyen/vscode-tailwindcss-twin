@@ -26,12 +26,12 @@ export default async function hover(
 		try {
 			const { kind, ...token } = result
 			if (kind === "theme") {
-				const value = parser.parse_theme_val({ text: token.value })
+				const node = parser.parse_theme_val({ text: token.value })
 				const range = new vscode.Range(
-					document.positionAt(token.start + value.range[0]),
-					document.positionAt(token.start + value.range[1]),
+					document.positionAt(token.start + node.range[0]),
+					document.positionAt(token.start + node.range[1]),
 				)
-				return resolveThemeValue({ kind, range, value, state, options })
+				return resolveThemeValue({ kind, range, node, state, options })
 			} else if (kind === "screen") {
 				const range = new vscode.Range(document.positionAt(token.start), document.positionAt(token.end))
 				return resolveScreenValue({ kind, range, token, state, options })
@@ -278,25 +278,19 @@ export default async function hover(
 
 function resolveThemeValue({
 	range,
-	value,
+	node,
 	state,
 }: {
 	kind: ExtractedTokenKind
 	range: vscode.Range
-	value: parser.ThemeValueNode
+	node: parser.ThemeValueNode
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
-	const ret = parser.resolveThemeConfig(
-		state.config,
-		value.path.map(p => {
-			return p.value
-		}),
-	)
-	if (ret === undefined) return
-	const output = parser.resolveThemeString(ret, value.suffix?.value)
+	const text = parser.renderThemePath(state.config, node.path)
+	if (text === "[undefined]") return
 	const markdown = new vscode.MarkdownString()
-	markdown.value = `\`\`\`txt\n${output}\n\`\`\``
+	markdown.value = `\`\`\`txt\n${text}\n\`\`\``
 	return {
 		range,
 		contents: [markdown],
@@ -314,7 +308,7 @@ function resolveScreenValue({
 	state: TailwindLoader
 	options: ServiceOptions
 }): vscode.Hover | undefined {
-	const value = parser.resolveThemeConfig(state.config, ["screens", token.value])
+	const value = parser.resolvePath(state.config.theme, ["screens", token.value])
 	if (value === undefined) return
 
 	const markdown = new vscode.MarkdownString()
@@ -322,8 +316,10 @@ function resolveScreenValue({
 		markdown.value = `\`\`\`css\n@media (min-width: ${value})\n\`\`\``
 	} else if (value instanceof Array) {
 		markdown.value = `\`\`\`txt\n${value.join(", ")}\n\`\`\``
-	} else if (value) {
-		markdown.value = `\`\`\`js\n${value.toString?.() ?? typeof value}\n\`\`\``
+	} else if (value instanceof String) {
+		markdown.value = `\`\`\`js\n${value.toString()}\n\`\`\``
+	} else {
+		markdown.value = `\`\`\`js\n${typeof value}\n\`\`\``
 	}
 
 	return {

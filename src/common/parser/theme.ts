@@ -1,48 +1,136 @@
 import { dlv } from "../get_set"
-import * as nodes from "./nodes"
-import { parse_theme } from "./parse_theme"
+import { NodeType, ThemePathNode } from "./nodes"
+import { parse_theme, parse_theme_val } from "./parse_theme"
 
 export function resolveThemeFunc(config: Tailwind.ResolvedConfigJS, value: string): string {
 	let start = 0
 	let ret = ""
+
 	for (const node of parse_theme({ text: value })) {
-		const ans = node.value.others ? "" : theme(config, node)
-		ret += value.slice(start, node.range[0]) + ans
+		const result = theme(config, node.value.path)
+		const val = result.value !== undefined ? renderThemeValue(result) : ""
+		ret += value.slice(start, node.range[0]) + val
 		start = node.range[1]
 	}
+
 	if (start < value.length) {
 		ret += value.slice(start)
 	}
 	return ret.trim()
-
-	function theme(
-		config: Tailwind.ResolvedConfigJS,
-		node: nodes.ThemeFunctionNode | nodes.ThemeValueNode,
-		useDefault = false,
-	): string {
-		if (node.type === nodes.NodeType.ThemeFunction) node = node.value
-		return resolveThemeString(
-			resolveThemeConfig(
-				config,
-				node.path.map(p => {
-					return p.value
-				}),
-				useDefault,
-			),
-			node.suffix?.value,
-		)
-	}
 }
 
-export function resolveThemeConfig(config: Tailwind.ResolvedConfigJS, path: string[], useDefault = false) {
-	let value = dlv(config.theme, path)
+export function parseThemeValue({
+	config,
+	useDefault,
+	text,
+	start = 0,
+	end = text.length,
+}: {
+	config: Tailwind.ResolvedConfigJS
+	useDefault?: boolean
+	text: string
+	start?: number
+	end?: number
+}) {
+	const node = parse_theme_val({ text, start, end })
+	const value = resolvePath(config.theme, node.path, useDefault)
+	if (value === undefined) {
+		const ret = tryOpacityValue(node.path)
+		if (ret.opacityValue) {
+			node.path = ret.path
+		}
+	}
+	return { path: node.path, range: node.range }
+}
+
+export function theme(config: Tailwind.ResolvedConfigJS, path: ThemePathNode[], useDefault = false) {
+	let opacityValue: string | undefined
+	let value = resolvePath(config.theme, path, useDefault)
+	if (value === undefined) {
+		const ret = tryOpacityValue(path)
+		if (ret.opacityValue) {
+			value = resolvePath(config.theme, ret.path, useDefault)
+			opacityValue = ret.opacityValue
+			path = ret.path
+		}
+	}
+	return { value, opacityValue }
+}
+
+function tryOpacityValue(path: ThemePathNode[]) {
+	let opacityValue: string | undefined
+	let arr = path.slice().reverse()
+	let end: number | undefined
+	for (let i = 0; i < arr.length; i++) {
+		const n = arr[i]
+		const x = n.value.lastIndexOf("/")
+		if (x === -1) {
+			if (end != undefined && end !== n.range[1]) {
+				return { path }
+			}
+			end = n.range[0]
+			opacityValue = n.toString() + (opacityValue ?? "")
+			continue
+		}
+
+		opacityValue = n.value.slice(x + 1) + (opacityValue ?? "")
+
+		const raw = n.toString()
+		const k = raw.lastIndexOf("/")
+		const rest = raw.slice(0, k)
+
+		if (end != undefined && rest !== "" && end !== n.range[1]) {
+			return { path }
+		}
+
+		if (rest === "") {
+			arr = arr.slice(i + 1)
+			break
+		}
+
+		const t: ThemePathNode = { ...n, range: [n.range[0], n.range[1]] }
+		t.value = n.value.slice(0, n.value.lastIndexOf("/"))
+		t.range[1] = t.range[0] + k
+		arr[i] = t
+		arr = arr.slice(i)
+
+		break
+	}
+
+	arr = arr.reverse()
+	return { path: arr, opacityValue }
+}
+
+export function renderThemePath(
+	config: Tailwind.ResolvedConfigJS,
+	path: Array<string | ThemePathNode>,
+	useDefault = false,
+): string {
+	const keys = path.map<ThemePathNode>(value => {
+		if (typeof value !== "string") return value
+		return {
+			type: NodeType.ThemePath,
+			closed: true,
+			value,
+			range: [0, value.length],
+			toString() {
+				return "." + value
+			},
+		}
+	})
+	return renderThemeValue(theme(config, keys, useDefault))
+}
+
+export function resolvePath(obj: unknown, path: Array<string | ThemePathNode>, useDefault = false): unknown {
+	const keys = path.map<string>(p => (typeof p === "string" ? p : p.value))
+	let value = dlv(obj, keys)
 	if (useDefault && value?.["DEFAULT"] != undefined) {
 		value = value["DEFAULT"]
 	}
 	return value
 }
 
-export function resolveThemeString(value: unknown, opacityValue = "1") {
+export function renderThemeValue({ value, opacityValue }: { value?: unknown; opacityValue?: string } = {}) {
 	if (value == null) return `[${value}]`
 	if (typeof value === "object") {
 		if (Array.isArray(value)) return `Array[${value.join(", ")}]`
@@ -55,11 +143,11 @@ export function resolveThemeString(value: unknown, opacityValue = "1") {
 		)
 	}
 	if (typeof value === "function") {
-		value = String(value({ opacityValue }))
+		value = String(value({ opacityValue: opacityValue ?? "1" }))
 	}
-	if (typeof value === "string") {
+	if (opacityValue && typeof value === "string") {
 		let replaced = false
-		const result = value.replace("<alpha-value>", match => {
+		const result = value.replace("<alpha-value>", _ => {
 			replaced = true
 			return opacityValue
 		})

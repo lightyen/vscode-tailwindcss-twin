@@ -386,8 +386,8 @@ function getCssDeclarationCompletionList(
 	state: TailwindLoader,
 ): ICompletionItem[] {
 	for (const t of parser.parse_theme({ text, start: exprRange[0], end: exprRange[1] })) {
-		if (position >= t.innerRange[0] && position <= t.innerRange[1]) {
-			return themeCompletion(document, offset, text, position, state, t.innerRange).items
+		if (position >= t.valueRange[0] && position <= t.valueRange[1]) {
+			return themeCompletion(document, offset, text, position, state, t.valueRange).items
 		}
 	}
 
@@ -644,22 +644,26 @@ function themeCompletion(
 	state: TailwindLoader,
 	[start, end]: [start: number, end: number] = [0, text.length],
 ): vscode.CompletionList<ICompletionItem> {
-	const { suffix, others, path } = parser.parse_theme_val({ text, start, end })
-	if (others && position > others.range[0]) return { items: [] }
-	if (suffix && position > suffix.range[0]) return { items: [] }
-	if (path[0] && path[0].value.length !== path[0].range[1] - path[0].range[0]) return { items: [] }
-	const i = path.findIndex(p => position >= p.range[0] && position <= p.range[1])
-	if (i === -1 && path.length !== 0) return { items: [] }
-	const keys = path.slice(0, i).map(p => p.value)
-	const obj = parser.resolveThemeConfig(state.config, keys)
-	if (typeof obj !== "object") return { items: [] }
+	const node = parser.parseThemeValue({ config: state.config, text, start, end })
 
-	const hit = path[i]
+	const i = node.path.findIndex(p => position >= p.range[0] && position <= p.range[1])
+	if (i === -1 && node.path.length !== 0) {
+		return { items: [] }
+	}
+
+	const keys = node.path.slice(0, i)
+	const obj = parser.resolvePath(state.config.theme, keys)
+	if (!obj || typeof obj !== "object") {
+		return { items: [] }
+	}
+
+	const hit = node.path[i]
 	const candidates = Object.keys(obj)
-	const isScreen = path[0] && path[0].value === "screen"
+	const isScreen = node.path[0] && node.path[0].value === "screen"
 
 	const items = candidates.map<ICompletionItem>(label => {
-		const value = parser.resolveThemeConfig(state.config, [...keys, label])
+		const valueString = parser.renderThemePath(state.config, [...keys, label])
+		const value = parser.resolvePath(state.config.theme, [...keys, label])
 		const item: ICompletionItem = {
 			label,
 			sortText: isScreen ? state.tw.screens.indexOf(label).toString().padStart(5, " ") : formatCandidates(label),
@@ -668,24 +672,20 @@ function themeCompletion(
 
 		if (typeof value === "object") {
 			item.kind = vscode.CompletionItemKind.Module
-			item.documentation = new vscode.MarkdownString(
-				`\`\`\`text\n${parser.resolveThemeString(value, suffix?.value)}\n\`\`\``,
-			)
+			item.documentation = new vscode.MarkdownString(`\`\`\`text\n${valueString}\n\`\`\``)
 			item.detail = label
 		} else if (typeof value === "function") {
 			item.kind = vscode.CompletionItemKind.Function
-			item.documentation = new vscode.MarkdownString(
-				`\`\`\`text\n${parser.resolveThemeString(value, suffix?.value)}\n\`\`\``,
-			)
+			item.documentation = new vscode.MarkdownString(`\`\`\`text\n${valueString}\n\`\`\``)
 			item.detail = label
 		} else {
 			if (typeof value === "string") {
-				const color = culori.parse(parser.resolveThemeString(value, suffix?.value))
 				if (value === "transparent") {
 					item.kind = vscode.CompletionItemKind.Color
 					item.documentation = "rgba(0, 0, 0, 0.0)"
 					return item
 				}
+				const color = culori.parse(valueString)
 				if (color) {
 					item.kind = vscode.CompletionItemKind.Color
 					item.documentation = culori.formatHex(color)
@@ -699,7 +699,7 @@ function themeCompletion(
 
 		if (hit) {
 			const [a, b] = hit.range
-			if (label.match(/[-./]/)) {
+			if (label.match(/[.]/)) {
 				item.insertText = `[${label}]`
 				item.filterText = item.insertText
 				if (text.charCodeAt(a) === 46) item.filterText = "." + item.insertText
@@ -737,8 +737,8 @@ function screenCompletion(
 	position: number,
 	state: TailwindLoader,
 ): vscode.CompletionList<ICompletionItem> {
-	const value = parser.resolveThemeConfig(state.config, ["screens"])
-	if (typeof value !== "object") {
+	const value = parser.resolvePath(state.config.theme, ["screens"])
+	if (!value || typeof value !== "object") {
 		return { isIncomplete: false, items: [] }
 	}
 
@@ -750,7 +750,7 @@ function screenCompletion(
 			sortText: index.toString().padStart(5, " "),
 			data: { type: "theme" },
 		}
-		const value = parser.resolveThemeConfig(state.config, ["screens", label])
+		const value = parser.resolvePath(state.config.theme, ["screens", label])
 		if (typeof value === "object") {
 			item.kind = vscode.CompletionItemKind.Module
 			item.documentation = new vscode.MarkdownString(`\`\`\`text\nobject\n\`\`\``)
