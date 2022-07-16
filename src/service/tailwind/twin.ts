@@ -2,11 +2,13 @@ export const twinConfig: Tailwind.ConfigJS = {
 	plugins: [
 		// light mode
 		function ({ config, addVariant }) {
-			const darkMode = config("darkMode", "media")
-			if (darkMode === "class") addVariant("light", ".light &")
-			else if (darkMode === "media") addVariant("light", "@media (prefers-color-scheme: light)")
-			else if (Array.isArray(darkMode) && darkMode[0] === "class" && typeof darkMode[1] === "string") {
-				addVariant("light", `${darkMode[1].replace(/\bdark\b/, "light")} &`)
+			const mode = config("lightMode", "media")
+			if (mode === "media") {
+				addVariant("light", "@media (prefers-color-scheme: light)")
+			} else if (mode === "class") {
+				addVariant("light", ".light &")
+			} else if (Array.isArray(mode) && mode[0] === "class" && typeof mode[1] === "string") {
+				addVariant("light", `${mode[1]} &`)
 			}
 		},
 		// media query

@@ -1,11 +1,12 @@
 export default {
+	lightMode: "media",
 	theme: {
 		extend: {
 			tabSize: {
 				px: "1px",
 			},
 			colors: {
-				"bar": "rgb(var(--color) / <alpha-value>)",
+				bar: "rgb(var(--color) / <alpha-value>)",
 				"foo-5": "#056660",
 				"foo-5/10": "#051060",
 				"foo-5/10/10%": "#651025",
