@@ -628,9 +628,9 @@ function checkArbitraryProperty(
 	}
 	const i = item.decl.value.indexOf(":")
 	if (i >= 0) prop = item.decl.value.slice(0, i).trim()
-	const start = item.decl.range[0] + item.decl.value.search(/\w/)
+	const start = item.decl.range[0] + item.decl.value.search(/[\w-]/)
 	const end = start + prop.length
-	if (prop.startsWith("--")) return result
+	if (prop.startsWith("-")) return result
 	const range = new vscode.Range(document.positionAt(offset + start), document.positionAt(offset + end))
 	const ret = csspropSearcher.search(prop)
 	const score = ret?.[0]?.score
