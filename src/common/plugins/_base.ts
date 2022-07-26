@@ -8,6 +8,7 @@ export interface MatchPlugin {
 }
 
 export function hasDefault(obj: unknown): boolean {
+	if (obj == undefined) return false
 	return Object.prototype.hasOwnProperty.call(obj, "DEFAULT")
 }
 
