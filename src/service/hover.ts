@@ -105,7 +105,7 @@ export default async function hover(
 					}
 
 					const code = state.tw.renderClassname({
-						classname: `[${prop}: ${value}]`.replace(/ /g, "_"),
+						classname: `[${prop}: ${value}]`.replace(/_/g, "\\_").replace(/ /g, "_"),
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
@@ -211,7 +211,7 @@ export default async function hover(
 					const { prefix, expr, e } = selection.target
 					let classname = `${prefix.value}`
 					if (expr) {
-						classname += `[${expr.value.trim()}]`
+						classname += `[${expr.value.trim().replace(/_/g, "\\_").replace(/ /g, "_")}]`
 					}
 					if (e) {
 						if (e.type === parser.NodeType.WithOpacity) {
