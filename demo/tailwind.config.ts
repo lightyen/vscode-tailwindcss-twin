@@ -1,3 +1,7 @@
+import daisyui from "daisyui"
+import { bar, qoo } from "./colors"
+import utopia, { fontSize } from "./utopia"
+
 export default {
 	lightMode: "media",
 	theme: {
@@ -6,7 +10,8 @@ export default {
 				px: "1px",
 			},
 			colors: {
-				bar: "rgb(var(--color) / <alpha-value>)",
+				bar,
+				qoo,
 				"foo-5": "#056660",
 				"foo-5/10": "#051060",
 				"foo-5/10/10%": "#651025",
@@ -18,6 +23,7 @@ export default {
 	},
 	experimental: { matchVariant: true },
 	plugins: [
+		utopia(fontSize()),
 		function ({ addVariant }) {
 			addVariant("foo", ({ container }) => {
 				container.walkRules(rule => {
@@ -86,5 +92,6 @@ export default {
 				},
 			})
 		},
+		daisyui,
 	],
 } as Tailwind.ConfigJS

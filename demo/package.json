@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "name": "demo",
+  "devDependencies": {
+    "@types/node": "*",
+    "daisyui": "*",
+    "postcss": "*",
+    "autoprefixer": "*"
+  }
+}
