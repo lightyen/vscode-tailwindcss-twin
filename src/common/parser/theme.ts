@@ -19,6 +19,7 @@ export function resolveThemeFunc(config: Tailwind.ResolvedConfigJS, value: strin
 	return ret.trim()
 }
 
+// for completions
 export function parseThemeValue({
 	config,
 	useDefault,
@@ -57,7 +58,7 @@ export function theme(config: Tailwind.ResolvedConfigJS, path: ThemePathNode[], 
 	return { value, opacityValue }
 }
 
-function tryOpacityValue(path: ThemePathNode[]) {
+export function tryOpacityValue(path: ThemePathNode[]) {
 	let opacityValue: string | undefined
 	let arr = path.slice().reverse()
 	let end: number | undefined
@@ -79,8 +80,10 @@ function tryOpacityValue(path: ThemePathNode[]) {
 		const k = raw.lastIndexOf("/")
 		const rest = raw.slice(0, k)
 
-		if (end != undefined && rest !== "" && end !== n.range[1]) {
-			return { path }
+		if (end != undefined && end !== n.range[1]) {
+			if (k > 0 && k < raw.length - 1) {
+				return { path }
+			}
 		}
 
 		if (rest === "") {
