@@ -169,12 +169,12 @@ function validateTwin({
 		}
 	}
 
+	if (!checkVariants(diagnostics, items, document, offset, diagnosticOptions.emptyChecking, state)) {
+		return false
+	}
+
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i]
-		if (!checkVariants(diagnostics, item, document, offset, diagnosticOptions.emptyChecking, state)) {
-			return false
-		}
-
 		switch (item.target.type) {
 			case parser.NodeType.ClassName: {
 				const ans = checkTwinClassName(item.target, document, text, offset, state)
@@ -417,30 +417,29 @@ function validateTwin({
 
 function checkVariants(
 	diagnostics: IDiagnostic[],
-	item: parser.SpreadDescription,
+	items: parser.SpreadDescription[],
 	document: TextDocument,
 	offset: number,
 	emptyChecking: boolean,
 	state: TailwindLoader,
 ) {
-	for (const node of item.variants) {
+	for (const node of getVariantMap(items).values()) {
 		if (node.type === parser.NodeType.ArbitrarySelector || node.type === parser.NodeType.ArbitraryVariant) {
-			// FIXME: duplicate checking
-			// if (emptyChecking && node.selector.value.trim() === "") {
-			// 	if (
-			// 		!diagnostics.push({
-			// 			source: DIAGNOSTICS_ID,
-			// 			message: `Empty block statement.`,
-			// 			range: new vscode.Range(
-			// 				document.positionAt(offset + node.selector.range[0] - 1),
-			// 				document.positionAt(offset + node.selector.range[1] + 1),
-			// 			),
-			// 			severity: vscode.DiagnosticSeverity.Warning,
-			// 		})
-			// 	) {
-			// 		return false
-			// 	}
-			// }
+			if (emptyChecking && node.selector.value.trim() === "") {
+				if (
+					!diagnostics.push({
+						source: DIAGNOSTICS_ID,
+						message: `Empty block statement.`,
+						range: new vscode.Range(
+							document.positionAt(offset + node.selector.range[0] - 1),
+							document.positionAt(offset + node.selector.range[1] + 1),
+						),
+						severity: vscode.DiagnosticSeverity.Warning,
+					})
+				) {
+					return false
+				}
+			}
 			continue
 		}
 		const {
@@ -473,6 +472,19 @@ function checkVariants(
 		}
 	}
 	return true
+
+	function getVariantMap(items: parser.SpreadDescription[]) {
+		const s = new Map<string, parser.SpreadDescription["variants"][0]>()
+		for (const item of items) {
+			for (const node of item.variants) {
+				const [a, b] = node.range
+				const key = `${a}+${b}`
+				if (s.has(key)) continue
+				s.set(key, node)
+			}
+		}
+		return s
+	}
 }
 
 function checkShortCss(item: parser.ShortCss, document: TextDocument, offset: number, emptyChecking: boolean) {
