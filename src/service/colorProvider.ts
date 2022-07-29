@@ -67,15 +67,7 @@ export function createColorProvider(tw: TwContext, separator: string) {
 	function getColorRanges(tokens: ExtractedToken[], document: TextDocument) {
 		const colors: Array<[ColorDesc, vscode.Range]> = []
 		const test = (desc: ColorDesc | undefined): desc is ColorDesc => {
-			if (!desc) return false
-			return !(
-				desc.color === "currentColor" ||
-				desc.color === "inherit" ||
-				desc.backgroundColor === "currentColor" ||
-				desc.backgroundColor === "inherit" ||
-				desc.borderColor === "currentColor" ||
-				desc.borderColor === "inherit"
-			)
+			return desc?.canRender === true
 		}
 		for (const token of tokens) {
 			const { start: offset, kind } = token

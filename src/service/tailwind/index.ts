@@ -197,17 +197,6 @@ export function createTailwindLoader() {
 			if (colorDesc) {
 				item.kind = vscode.CompletionItemKind.Color
 				item.data = { type: "color" }
-
-				if (value.endsWith("-transparent")) {
-					item.documentation = "rgba(0, 0, 0, 0.0)"
-					return item
-				}
-				if (value.endsWith("-current")) {
-					return item
-				}
-				if (value.endsWith("-inherit")) {
-					return item
-				}
 				item.documentation = colorDesc.backgroundColor || colorDesc.color || colorDesc.borderColor
 			}
 

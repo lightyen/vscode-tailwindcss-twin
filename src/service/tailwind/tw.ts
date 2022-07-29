@@ -10,6 +10,7 @@ import {
 	isColorHexValue,
 	isColorIdentifier,
 	isColorTransparent,
+	isColorUnknown,
 	parse as parseColors,
 } from "~/common/color"
 import { defaultLogger as console } from "~/common/logger"
@@ -18,6 +19,7 @@ import { createGetPluginByName } from "~/common/plugins"
 import { ColorProps, ColorProps_Background, ColorProps_Border, ColorProps_Foreground } from "./data"
 
 export type ColorDesc = {
+	canRender?: boolean
 	color?: string
 	backgroundColor?: string
 	borderColor?: string
@@ -451,33 +453,46 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		const decls = getColorDecls(classname)
 		if (!decls) return undefined
 
-		const desc = buildDesc(classname, decls)
+		const desc = buildColorDesc(classname, decls)
 		addCache(classname, desc)
 		return desc
 
-		function buildDesc(classname: string, decls: Map<string, string[]>): ColorDesc {
+		function buildColorDesc(classname: string, decls: Map<string, string[]>): ColorDesc {
+			const colorDecls = Array.from(decls).filter(([prop]) => {
+				return ColorProps_Foreground.has(prop) || ColorProps_Border.has(prop) || ColorProps_Background.has(prop)
+			})
 			const desc: ColorDesc = {}
-			for (const [prop, values] of decls) {
+			for (const [prop, values] of colorDecls) {
 				if (!desc.color && ColorProps_Foreground.has(prop)) {
-					const val = getColorValue(classname, values)
-					if (val) desc.color = val
+					const { canRender, value } = getColorValue(classname, values)
+					if (value) {
+						desc.color = value
+						desc.canRender = canRender
+					}
 				}
 				if (!desc.borderColor && ColorProps_Border.has(prop)) {
-					const val = getColorValue(classname, values)
-					if (val) desc.borderColor = val
+					const { canRender, value } = getColorValue(classname, values)
+					if (value) {
+						desc.borderColor = value
+						desc.canRender = canRender
+					}
 				}
 				if (!desc.backgroundColor && ColorProps_Background.has(prop)) {
-					const val = getColorValue(classname, values)
-					if (val) desc.backgroundColor = val
+					const { canRender, value } = getColorValue(classname, values)
+					if (value) {
+						desc.backgroundColor = value
+						desc.canRender = canRender
+					}
 				}
 			}
 			return desc
 		}
 
-		function getColorValue(classname: string, values: string[]) {
-			if (classname.endsWith("-current")) return "currentColor"
-			else if (classname.endsWith("-inherit")) return "inherit"
-			else if (classname.endsWith("-transparent")) return "transparent"
+		function getColorValue(classname: string, values: string[]): { canRender: boolean; value: string } {
+			if (classname.endsWith("-current")) return { canRender: false, value: "currentColor" }
+			else if (classname.endsWith("-inherit")) return { canRender: false, value: "inherit" }
+			else if (classname.endsWith("-auto")) return { canRender: false, value: "auto" }
+			else if (classname.endsWith("-transparent")) return { canRender: true, value: "transparent" }
 
 			for (const value of values) {
 				const colors = parseColors(value)
@@ -488,9 +503,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				const firstColor = colors[0]
 
 				let color = ""
-
-				if (isColorTransparent(firstColor)) {
-					return "transparent"
+				if (isColorUnknown(firstColor)) {
+					return { canRender: false, value }
+				} else if (isColorTransparent(firstColor)) {
+					return { canRender: true, value: "transparent" }
 				} else if (isColorIdentifier(firstColor) || isColorHexValue(firstColor)) {
 					try {
 						color = culori.formatHex(value.slice(firstColor.range[0], firstColor.range[1]))
@@ -505,12 +521,14 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 					} catch {}
 				}
 
-				if (!color) continue
+				if (!color) {
+					return { canRender: false, value }
+				}
 
-				return color
+				return { canRender: true, value: color }
 			}
 
-			return ""
+			return { canRender: false, value: "" }
 		}
 	}
 

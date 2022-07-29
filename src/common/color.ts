@@ -7,10 +7,15 @@ import { NodeToken } from "./parser"
 export const parser = new Parser()
 
 export enum ColorTokenKind {
+	Unknown,
 	Identifier,
 	HexValue,
 	Function,
 	Transparent,
+}
+
+interface ColorUnknown extends NodeToken {
+	kind: ColorTokenKind.Unknown
 }
 
 interface ColorIdentifier extends NodeToken {
@@ -31,7 +36,11 @@ interface ColorFunction extends NodeToken {
 	args: string[]
 }
 
-export type ColorToken = ColorIdentifier | ColorTransparent | ColorHexValue | ColorFunction
+export type ColorToken = ColorUnknown | ColorIdentifier | ColorTransparent | ColorHexValue | ColorFunction
+
+export function isColorUnknown(c: ColorToken): c is ColorUnknown {
+	return c.kind === ColorTokenKind.Unknown
+}
 
 export function isColorIdentifier(c: ColorToken): c is ColorIdentifier {
 	return c.kind === ColorTokenKind.Identifier
@@ -94,13 +103,19 @@ export function parse(cssValue: string): ColorToken[] {
 				let args: string[] = node
 					.getArguments()
 					.getChildren()
-					.map(token => cssValue.substr(token.offset, token.length))
+					.map(token => cssValue.slice(token.offset, token.offset + token.length))
 
 				if (args.length === 1) {
 					args = args[0].split(/\s+/).filter(t => t && t !== "/")
 				}
 
-				if (args.length < 3) return true
+				if (args.length < 3) {
+					colors.push({
+						kind: ColorTokenKind.Unknown,
+						range: [node.offset, node.offset + node.length],
+					})
+					return true
+				}
 
 				colors.push({
 					kind: ColorTokenKind.Function,
