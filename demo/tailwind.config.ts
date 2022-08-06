@@ -1,4 +1,3 @@
-import daisyui from "daisyui"
 import { bar, qoo } from "./colors"
 import utopia, { fontSize } from "./utopia"
 
@@ -92,6 +91,5 @@ export default {
 				},
 			})
 		},
-		daisyui,
 	],
 } as Tailwind.ConfigJS
