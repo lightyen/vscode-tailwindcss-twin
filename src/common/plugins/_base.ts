@@ -29,37 +29,26 @@ export function getPalette(
 ): string[] | null {
 	if (!isCorePluginEnable(context, key)) return null
 	const palette = context.config.theme[key]
-	const names: string[] = []
-	for (const prop in palette) {
-		const c = palette[prop]
-		if (typeof c === "object") {
-			for (const k in c) {
-				if (k === "DEFAULT") {
-					names.push(prop)
-					continue
+	const colorNames = Object.keys(flattenColorPalette(palette))
+	return colorNames
+}
+
+export function flattenColorPalette(colors: Tailwind.Palette | null | undefined): {
+	[color: string]: Tailwind.Value | Tailwind.ColorValueFunc | undefined
+} {
+	return Object.assign(
+		{},
+		...Object.entries(colors ?? {}).flatMap(([color, values]) => {
+			if (typeof values !== "object") {
+				return [{ [`${color}`]: values }]
+			}
+			return Object.entries(flattenColorPalette(values)).map(([keyword, colorValue]) => {
+				return {
+					[color + (keyword === "DEFAULT" ? "" : `-${keyword}`)]: colorValue,
 				}
-				names.push(`${prop}-${k}`)
-			}
-		} else if (typeof c === "string" || typeof c === "number") {
-			if (prop !== "DEFAULT") {
-				names.push(`${prop}`)
-			}
-		} else if (typeof c === "function") {
-			const a = c({ opacityValue: "1", opacityVariable: "" })
-			if (typeof a === "object") {
-				for (const k in a) {
-					if (k === "DEFAULT") {
-						names.push(prop)
-						continue
-					}
-					names.push(`${prop}-${k}`)
-				}
-			} else if (typeof a === "string" || typeof a === "number") {
-				names.push(`${prop}`)
-			}
-		}
-	}
-	return names
+			})
+		}),
+	)
 }
 
 export function getOpacity(

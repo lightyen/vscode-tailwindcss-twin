@@ -79,6 +79,10 @@ export function isMatchColor(
 	opacities: Set<string> | null,
 	arbitraryValue: (value: string) => boolean,
 ) {
+	if (colors.has(value)) {
+		return true
+	}
+
 	const [color, opacity] = split(value)
 	return isColor(color) && isOpacity(opacity)
 
