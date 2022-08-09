@@ -4,7 +4,7 @@
 
 ### Main Features
 
-- Base on tailwindcss v3.1.4
+- Base on tailwindcss v3
 - Support all the syntaxes of **arbitrary values**, ex: `name-[*]`, `name-[*]/[opacity]`, `name-value/[opacity]`, `name-[*]:`, `[name: *]`, `[*]:`
 - Deprecate the **short css** feature
 - Deprecate all of the **opacity** corePlugins, prefer to use the opacity modifier, see: https://tailwindcss.com/docs/text-color#changing-the-opacity
@@ -13,8 +13,8 @@
 
 ### Breaking Changes
 
-- Change diagnostic settings
-- Change color decoration design
+- Change the diagnostic settings
+- Change the color decoration design
 - Remove `space` character from triggerCharacters
 
 ### Others

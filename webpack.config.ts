@@ -5,7 +5,7 @@ import ESLintPlugin from "eslint-webpack-plugin"
 import ForkTsCheckerPlugin from "fork-ts-checker-webpack-plugin"
 import path from "path"
 import TerserPlugin from "terser-webpack-plugin"
-import { TsPathsResolvePlugin } from "ts-paths-resolve-plugin"
+import TsPathsResolvePlugin from "ts-paths-resolve-plugin"
 import type { Compiler, Configuration } from "webpack"
 import { DefinePlugin, ExternalsPlugin } from "webpack"
 
