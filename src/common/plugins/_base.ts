@@ -42,11 +42,13 @@ export function flattenColorPalette(colors: Tailwind.Palette | null | undefined)
 			if (typeof values !== "object") {
 				return [{ [`${color}`]: values }]
 			}
-			return Object.entries(flattenColorPalette(values)).map(([keyword, colorValue]) => {
-				return {
-					[color + (keyword === "DEFAULT" ? "" : `-${keyword}`)]: colorValue,
-				}
-			})
+			return Object.entries(flattenColorPalette(values as Tailwind.Palette | null | undefined)).map(
+				([keyword, colorValue]) => {
+					return {
+						[color + (keyword === "DEFAULT" ? "" : `-${keyword}`)]: colorValue,
+					}
+				},
+			)
 		}),
 	)
 }
