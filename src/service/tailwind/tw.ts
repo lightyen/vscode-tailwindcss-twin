@@ -5,6 +5,7 @@ import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
 import { generateRules } from "tailwindcss/lib/lib/generateRules"
 import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
 import escapeClassName from "tailwindcss/lib/util/escapeClassName"
+import { escapeRegexp } from "~/common"
 import {
 	isColorFunction,
 	isColorHexValue,
@@ -245,7 +246,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		if (items.length <= 0) return ""
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
 		const rules: Array<AtRule | Rule> = []
-		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		const replace = (str: string) => {
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+		}
 
 		root.each(node => {
 			switch (node.type) {
@@ -294,7 +297,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		})
 		if (items.length <= 0) return ""
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		const replace = (str: string) => {
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+		}
 		const scopes: string[] = []
 		root.each(node => {
 			switch (node.type) {
@@ -424,7 +429,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				decl.value = toPixelUnit(decl.value, rootFontSize)
 			})
 		}
-		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		const replace = (str: string) => {
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+		}
 		root.walkRules(rule => {
 			rule.selector = replace(rule.selector)
 		})
@@ -582,7 +589,9 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			}
 		})
 
-		const replace = (str: string) => str.replaceAll("." + escape(classname), "&")
+		const replace = (str: string) => {
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+		}
 		const scopes: string[] = []
 		root.each(node => {
 			switch (node.type) {
