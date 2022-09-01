@@ -311,53 +311,33 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 
 	source.forEachChild(node => {
 		if (ts.isImportDeclaration(node)) {
-			const token = find(source, node, ts.isStringLiteral)
-			if (token?.text === twinLabel) {
+			const { moduleSpecifier } = node
+			if (ts.isStringLiteral(moduleSpecifier) && moduleSpecifier.text === twinLabel) {
 				jsxProp = true
 				const clause = find(source, node, ts.isImportClause)
 				if (clause) {
-					clause.forEachChild(node => {
-						if (ts.isIdentifier(node)) {
-							const identifier = node.getText(source)
-							if (!twTemplate.has(identifier)) {
-								twTemplate.add(identifier)
-							}
-						}
-					})
+					const { name, namedBindings } = clause
+					if (name) {
+						const localName = name.text
+						twTemplate.add(localName)
+					}
 
-					const namedImports = find(source, clause, ts.isNamedImports)
-					if (namedImports) {
-						namedImports.forEachChild(node => {
-							if (ts.isImportSpecifier(node)) {
-								if (node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinTheme) {
-									const count = node.getChildCount(source)
-									if (count === 1) {
-										const identifier = node.getFirstToken(source)?.getText(source)
-										if (identifier && !themeTemplate.has(identifier)) {
-											themeTemplate.add(identifier)
-										}
-									} else if (count === 3) {
-										const identifier = node.getLastToken(source)?.getText(source)
-										if (identifier && !themeTemplate.has(identifier)) {
-											themeTemplate.add(identifier)
-										}
-									}
-								} else if (
-									node.getFirstToken(source)?.getText(source) === ExtractedTokenKind.TwinScreen
-								) {
-									const count = node.getChildCount(source)
-									if (count === 1) {
-										const identifier = node.getFirstToken(source)?.getText(source)
-										if (identifier && !screenTemplate.has(identifier)) {
-											screenTemplate.add(identifier)
-										}
-									} else if (count === 3) {
-										const identifier = node.getLastToken(source)?.getText(source)
-										if (identifier && !screenTemplate.has(identifier)) {
-											screenTemplate.add(identifier)
-										}
-									}
-								}
+					if (namedBindings && namedBindings.kind === ts.SyntaxKind.NamedImports) {
+						namedBindings.elements.forEach(node => {
+							const localName = node.name?.text
+							if (!localName) return
+
+							const importedName = node.propertyName?.text ?? localName
+							switch (importedName) {
+								case "theme":
+									themeTemplate.add(localName)
+									break
+								case "screen":
+									screenTemplate.add(localName)
+									break
+								case "default":
+									twTemplate.add(localName)
+									break
 							}
 						})
 					}
@@ -365,7 +345,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 			}
 		}
 	})
-	return { jsxProp, twTemplate, themeTemplate, screenTemplate }
+	return { jsxProp, twTemplate, themeTemplate, screenTemplate } as const
 }
 
 export function findToken(source: ts.SourceFile, position: number, jsxPropChecking = true): ExtractedToken | undefined {
