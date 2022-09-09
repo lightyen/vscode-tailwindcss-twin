@@ -1,10 +1,12 @@
 {
   "name": "twin",
   "scopeName": "source.twin",
-  "patterns": [{ "include": "#line-comment" }, { "include": "#block-comment" }, { "include": "#expression" }],
+  "patterns": [{ "include": "#expression" }],
   "repository": {
     "expression": {
       "patterns": [
+        { "include": "#line-comment" },
+        { "include": "#block-comment" },
         { "include": "#arbitrary-variant-or-property" },
         { "include": "#variant" },
         { "include": "#short-css" },
