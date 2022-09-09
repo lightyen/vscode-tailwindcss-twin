@@ -14,58 +14,10 @@ function transfromToken(
 	result: { kind: ExtractedTokenKind; token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral },
 	source: ts.SourceFile,
 ): ExtractedToken {
-	const text = result.token.getText(source)
+	const value = result.token.text
 	const start = result.token.getStart(source) + 1
-	let end = result.token.getEnd()
-	const value = ts.isNoSubstitutionTemplateLiteral(result.token) ? result.token.rawText ?? "" : result.token.text
-	if (/['"`]$/.test(text)) {
-		end -= 1
-		return { kind: result.kind, start, end, value }
-	} else {
-		const m = text.match(/[ \r\t\n]/)
-		if (m?.index != undefined) {
-			end = start + m.index
-			return { kind: result.kind, start, end, value: value.slice(0, m.index) }
-		}
-		return { kind: result.kind, start, end, value }
-	}
-}
-
-function find<T>(
-	source: ts.SourceFile,
-	node: ts.Node,
-	cb: (node: T) => node is T,
-	position: number | undefined = undefined,
-): T | undefined {
-	if (typeof position == "number") {
-		if (position < node.getStart(source) || position >= node.getEnd()) {
-			return undefined
-		}
-	}
-	if (cb(node as unknown as T)) {
-		return node as unknown as T
-	}
-	return ts.forEachChild(node, child => find(source, child, cb, position))
-}
-
-function getJsxPropFirstStringLiteral(node: ts.JsxAttribute, source: ts.SourceFile): ts.StringLiteral | undefined {
-	if (node.getChildCount(source) < 3) {
-		return undefined
-	}
-	const target = node.getChildAt(2, source)
-	let token: ts.StringLiteral | undefined
-	if (ts.isStringLiteral(target)) {
-		token = target
-	} else if (ts.isJsxExpression(target)) {
-		for (let i = 0; i < target.getChildCount(source); i++) {
-			const t = target.getChildAt(i, source)
-			if (ts.isStringLiteral(t)) {
-				token = t
-				break
-			}
-		}
-	}
-	return token
+	const end = result.token.getEnd()
+	return { kind: result.kind, start, end, value }
 }
 
 function findNode(
@@ -78,121 +30,71 @@ function findNode(
 	if (position < node.getStart(source) || position >= node.getEnd()) {
 		return undefined
 	}
+
 	if (ts.isJsxAttribute(node)) {
-		const first = node.getFirstToken(source)
-		if (!first) {
-			return undefined
-		}
-		const id = first.getText(source)
-		if (features.jsxProp && id === "tw") {
-			const token = getJsxPropFirstStringLiteral(node, source)
-			if (!token) {
-				return undefined
+		const attrName = node.name.text
+		if (features.jsxProp && node.initializer) {
+			if (attrName === "tw") {
+				let token: ts.StringLiteral | undefined
+				if (ts.isStringLiteral(node.initializer)) {
+					token = node.initializer
+				} else if (ts.isJsxExpression(node.initializer)) {
+					const { expression } = node.initializer
+					if (expression && ts.isStringLiteral(expression)) {
+						token = expression
+					}
+				}
+				if (token && position >= token.getStart(source) + 1 && !greaterThenEnd(token)) {
+					return { token, kind: "tw" }
+				}
+			} else if (attrName === "cs") {
+				let token: ts.StringLiteral | undefined
+				if (ts.isStringLiteral(node.initializer)) {
+					token = node.initializer
+				} else if (ts.isJsxExpression(node.initializer)) {
+					const { expression } = node.initializer
+					if (expression && ts.isStringLiteral(expression)) {
+						token = expression
+					}
+				}
+				if (token && position >= token.getStart(source) + 1 && !greaterThenEnd(token)) {
+					return { token, kind: "cs" }
+				}
 			}
-			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
-				return undefined
-			}
-			return { token, kind: "tw" }
-		} else if (features.jsxProp && id === "cs") {
-			const token = getJsxPropFirstStringLiteral(node, source)
-			if (!token) {
-				return undefined
-			}
-			if (position < token.getStart(source) + 1 || position >= token.getEnd()) {
-				return undefined
-			}
-			return { token, kind: "cs" }
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
-		const getLiteral = (node: ts.Node) => {
-			const literal = node.getChildAt(1, source)
-			if (ts.isNoSubstitutionTemplateLiteral(literal)) {
-				return literal
+		const { tag, template } = node
+		if (ts.isNoSubstitutionTemplateLiteral(template)) {
+			let id: ts.Identifier | undefined
+			let e = tag
+			while (ts.isCallExpression(e) || ts.isPropertyAccessExpression(e)) {
+				e = e.expression
 			}
-			return undefined
-		}
-
-		const first = node.getFirstToken(source)
-		if (!first) {
-			return undefined
-		}
-		const id = first.getText(source)
-		if (features.twTemplate.has(id)) {
-			const token = getLiteral(node)
-			if (token) {
-				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
-					return undefined
-				}
-				return { token, kind: "tw" }
-			} else {
-				return undefined
+			if (ts.isIdentifier(e)) {
+				id = e
 			}
-		} else if (features.themeTemplate.has(id)) {
-			const token = getLiteral(node)
-			if (token) {
-				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
-					return undefined
-				}
-				return { token, kind: "theme" }
-			} else {
-				return undefined
-			}
-		} else if (features.screenTemplate.has(id)) {
-			const token = getLiteral(node)
-			if (token) {
-				if (position < token.getStart(source) + 1 || greaterThenEnd(node)) {
-					return undefined
-				}
-				return { token, kind: "screen" }
-			} else {
-				return undefined
-			}
-		} else {
-			const expr = find(source, node, ts.isTemplateExpression)
-			if (!expr) {
-				return undefined
-			}
-		}
-	} else if (ts.isCallExpression(node)) {
-		if (position < node.getStart(source) + 1 || greaterThenEnd(node)) {
-			return undefined
-		}
-
-		const first = node.getChildAt(0, source)
-		if (first && ts.isIdentifier(first)) {
-			if (features.themeTemplate.has(first.getText(source))) {
-				const token = ts.forEachChild(node, c => {
-					if (ts.isStringLiteral(c)) {
-						return c
+			if (id) {
+				if (features.twTemplate.has(id.text)) {
+					if (position < template.getStart(source) + 1 || greaterThenEnd(template)) {
+						return undefined
 					}
-					return undefined
-				})
-				if (!token) {
-					return undefined
+					return { token: template, kind: "tw" }
 				}
-				if (position < node.getStart(source) + 1 || greaterThenEnd(node)) {
-					return undefined
-				}
-				return { token, kind: "theme" }
-			}
-
-			if (features.screenTemplate.has(first.getText(source))) {
-				const token = ts.forEachChild(node, c => {
-					if (ts.isStringLiteral(c)) {
-						return c
+				if (features.screenTemplate.has(id.text)) {
+					if (position < template.getStart(source) + 1 || greaterThenEnd(template)) {
+						return undefined
 					}
-					return undefined
-				})
-				if (!token) {
-					return undefined
+					return { token: template, kind: "screen" }
+				} else if (features.themeTemplate.has(id.text)) {
+					if (position < template.getStart(source) + 1 || greaterThenEnd(template)) {
+						return undefined
+					}
+					return { token: template, kind: "theme" }
 				}
-				if (position < node.getStart(source) + 1 || position >= node.getEnd()) {
-					return undefined
-				}
-				return { token, kind: "screen" }
 			}
 		}
 	}
+
 	return ts.forEachChild(node, child => findNode(source, child, position, features, includeEnd))
 
 	function greaterThenEnd(node: ts.Node): boolean {
@@ -200,111 +102,68 @@ function findNode(
 	}
 }
 
-function notEmpty<T>(value: T | null | undefined): value is T {
-	return value != undefined
-}
-
 function findAllNode(
 	source: ts.SourceFile,
 	node: ts.Node,
 	features: Features,
-): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: ExtractedTokenKind }> | undefined {
+): Array<{ token: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral; kind: ExtractedTokenKind }> {
 	if (ts.isJsxAttribute(node)) {
-		const first = node.getFirstToken(source)
-		if (!first) {
-			return undefined
-		}
-
-		const id = first.getText(source)
-		if (features.jsxProp && id === "tw") {
-			const token = getJsxPropFirstStringLiteral(node, source)
-			if (!token) {
-				return undefined
+		const attrName = node.name.text
+		if (features.jsxProp && node.initializer) {
+			if (attrName === "tw") {
+				let token: ts.StringLiteral | undefined
+				if (ts.isStringLiteral(node.initializer)) {
+					token = node.initializer
+				} else if (ts.isJsxExpression(node.initializer)) {
+					const { expression } = node.initializer
+					if (expression && ts.isStringLiteral(expression)) {
+						token = expression
+					}
+				}
+				if (token) {
+					return [{ token, kind: "tw" }]
+				}
+			} else if (attrName === "cs") {
+				let token: ts.StringLiteral | undefined
+				if (ts.isStringLiteral(node.initializer)) {
+					token = node.initializer
+				} else if (ts.isJsxExpression(node.initializer)) {
+					const { expression } = node.initializer
+					if (expression && ts.isStringLiteral(expression)) {
+						token = expression
+					}
+				}
+				if (token) {
+					return [{ token, kind: "cs" }]
+				}
 			}
-			return [{ token, kind: "tw" }]
-		} else if (features.jsxProp && id === "cs") {
-			const token = getJsxPropFirstStringLiteral(node, source)
-			if (!token) {
-				return undefined
-			}
-			return [{ token, kind: "cs" }]
 		}
 	} else if (ts.isTaggedTemplateExpression(node)) {
-		const getLiteral = (node: ts.Node) => {
-			const literal = node.getChildAt(1, source)
-			if (ts.isNoSubstitutionTemplateLiteral(literal)) {
-				return literal
+		const { tag, template } = node
+		if (ts.isNoSubstitutionTemplateLiteral(template)) {
+			let id: ts.Identifier | undefined
+			let e = tag
+			while (ts.isCallExpression(e) || ts.isPropertyAccessExpression(e)) {
+				e = e.expression
 			}
-			return undefined
-		}
-
-		const first = node.getFirstToken(source)
-		if (!first) {
-			return undefined
-		}
-
-		const id = first.getText(source)
-		if (features.twTemplate.has(id)) {
-			const literal = getLiteral(node)
-			if (literal) {
-				return [{ token: literal, kind: "tw" }]
-			} else {
-				return undefined
+			if (ts.isIdentifier(e)) {
+				id = e
 			}
-		} else if (features.themeTemplate.has(id)) {
-			const literal = getLiteral(node)
-			if (literal) {
-				return [{ token: literal, kind: "theme" }]
-			} else {
-				return undefined
-			}
-		} else if (features.screenTemplate.has(id)) {
-			const literal = getLiteral(node)
-			if (literal) {
-				return [{ token: literal, kind: "screen" }]
-			} else {
-				return undefined
-			}
-		} else {
-			const expr = find(source, node, ts.isTemplateExpression)
-			if (!expr) {
-				return undefined
-			}
-		}
-	} else if (ts.isCallExpression(node)) {
-		const first = node.getChildAt(0, source)
-		if (first && ts.isIdentifier(first)) {
-			if (features.themeTemplate.has(first.getText(source))) {
-				const token = ts.forEachChild(node, c => {
-					if (ts.isStringLiteral(c)) {
-						return c
-					}
-					return undefined
-				})
-				if (!token) {
-					return undefined
+			if (id) {
+				if (features.twTemplate.has(id.text)) {
+					return [{ token: template, kind: "tw" }]
+				} else if (features.screenTemplate.has(id.text)) {
+					return [{ token: template, kind: "screen" }]
+				} else if (features.themeTemplate.has(id.text)) {
+					return [{ token: template, kind: "theme" }]
 				}
-				return [{ token, kind: "theme" }]
-			}
-
-			if (features.screenTemplate.has(first.getText(source))) {
-				const token = ts.forEachChild(node, c => {
-					if (ts.isStringLiteral(c)) {
-						return c
-					}
-					return undefined
-				})
-				if (!token) {
-					return undefined
-				}
-				return [{ token, kind: "screen" }]
 			}
 		}
 	}
+
 	return node
 		.getChildren(source)
 		.map(c => findAllNode(source, c, features))
-		.filter(notEmpty)
 		.flat()
 }
 
@@ -319,7 +178,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 			const { moduleSpecifier } = node
 			if (ts.isStringLiteral(moduleSpecifier) && moduleSpecifier.text === twinLabel) {
 				jsxProp = true
-				const clause = find(source, node, ts.isImportClause)
+				const clause = node.importClause
 				if (clause) {
 					const { name, namedBindings } = clause
 					if (name) {
@@ -350,6 +209,7 @@ function checkImportTwin(source: ts.SourceFile, jsxPropChecking = true): Feature
 			}
 		}
 	})
+
 	return { jsxProp, twTemplate, themeTemplate, screenTemplate } as const
 }
 
@@ -369,7 +229,7 @@ export function findToken(
 
 export function findAllToken(source: ts.SourceFile, jsxPropChecking = true): ExtractedToken[] {
 	const features = checkImportTwin(source, jsxPropChecking)
-	return findAllNode(source, source, features)?.map(node => transfromToken(node, source)) ?? []
+	return findAllNode(source, source, features)?.map(node => transfromToken(node, source))
 }
 
 const typescriptExtractor: Extractor = {
