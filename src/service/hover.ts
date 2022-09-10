@@ -151,7 +151,7 @@ export default async function hover(
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const code = state.tw.renderArbitraryVariant(value, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(code, "scss")
+					if (code) codes.appendCodeblock(beautify(code), "scss")
 
 					if (!header.value && !codes.value) return undefined
 					return {
@@ -179,7 +179,7 @@ export default async function hover(
 
 					const code = state.tw.renderSimpleVariant(value, tabSize)
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(code, "scss")
+					if (code) codes.appendCodeblock(beautify(code), "scss")
 
 					if (!header.value && !codes.value) return undefined
 
@@ -228,7 +228,7 @@ export default async function hover(
 						tabSize,
 					})
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(code, "scss")
+					if (code) codes.appendCodeblock(beautify(code), "scss")
 					if (!header.value && !codes.value) return undefined
 
 					return {
@@ -267,6 +267,8 @@ export default async function hover(
 			indent_char: " ",
 			indent_size: tabSize,
 			selector_separator_newline: false,
+			space_around_combinator: true,
+			space_around_selector_separator: true,
 		})
 	}
 }
