@@ -1,7 +1,7 @@
 {
   "name": "source.template.twin",
   "scopeName": "source.template.twin",
-  "injectionSelector": "L:source -comment -string",
+  "injectionSelector": "L:source -comment",
   "patterns": [
     {
       "begin": "\\s*(tw)(?:(?:(?:\\.[\\w$]+)*|(\\([^\\)]*\\))))*(`)",
