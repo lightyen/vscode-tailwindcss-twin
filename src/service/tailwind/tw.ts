@@ -247,7 +247,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
 		const rules: Array<AtRule | Rule> = []
 		const replace = (str: string) => {
-			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
 
 		root.each(node => {
@@ -298,7 +298,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		if (items.length <= 0) return ""
 		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
 		const replace = (str: string) => {
-			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
 		const scopes: string[] = []
 		root.each(node => {
@@ -430,7 +430,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			})
 		}
 		const replace = (str: string) => {
-			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
 		root.walkRules(rule => {
 			rule.selector = replace(rule.selector)
@@ -590,7 +590,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		})
 
 		const replace = (str: string) => {
-			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?!-)\\b`, "g"), "&")
+			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
 		const scopes: string[] = []
 		root.each(node => {
