@@ -13,7 +13,6 @@ specifiers:
   '@types/webpack-env': 1.17.0
   '@typescript-eslint/eslint-plugin': 5.33.0
   '@typescript-eslint/parser': 5.33.0
-  '@typescript-eslint/typescript-estree': 5.33.0
   '@yarnpkg/pnp': 4.0.0-rc.14
   autoprefixer: 10.4.8
   chokidar: 3.5.3
@@ -67,7 +66,6 @@ devDependencies:
   '@types/webpack-env': 1.17.0
   '@typescript-eslint/eslint-plugin': 5.33.0_njno5y7ry2l2lcmiu4tywxkwnq
   '@typescript-eslint/parser': 5.33.0_qugx7qdu5zevzvxaiqyxfiwquq
-  '@typescript-eslint/typescript-estree': 5.33.0_typescript@4.7.4
   '@yarnpkg/pnp': 4.0.0-rc.14
   autoprefixer: 10.4.8_postcss@8.4.16
   chokidar: 3.5.3
@@ -91,7 +89,7 @@ devDependencies:
   source-map-support: 0.5.21
   swc-loader: 0.2.3_6wdxcpipfcfve442zkxb56pm3a
   tailwind-types: 3.2.0_postcss@8.4.16
-  tailwindcss: 3.1.8
+  tailwindcss: 3.1.8_postcss@8.4.16
   terser-webpack-plugin: 5.3.3_kmc3mgv5322xnu7k4yu5oh7yii
   ts-paths-resolve-plugin: 5.8.0_xnp4kzegbjokq62cajex2ovgkm
   typescript: 4.7.4
@@ -4904,10 +4902,12 @@ packages:
       postcss: 8.4.16
     dev: true
 
-  /tailwindcss/3.1.8:
+  /tailwindcss/3.1.8_postcss@8.4.16:
     resolution: {integrity: sha512-YSneUCZSFDYMwk+TGq8qYFdCA3yfBRdBlS7txSq0LUmzyeqRe3a8fBQzbz9M3WS/iFT4BNf/nmw9mEzrnSaC0g==}
     engines: {node: '>=12.13.0'}
     hasBin: true
+    peerDependencies:
+      postcss: ^8.0.9
     dependencies:
       arg: 5.0.2
       chokidar: 3.5.3
