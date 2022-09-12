@@ -196,7 +196,7 @@ export default async function hover(
 					if (pluginName) {
 						const desc = getDescription(pluginName)
 						if (typeof desc === "string") {
-							header.appendMarkdown(desc ? desc + "\n" : "twin.marco" + "\n")
+							header.appendMarkdown(desc ? desc + "\n" : "twin.macro" + "\n")
 						}
 
 						const links = getReferenceLinks(pluginName)
