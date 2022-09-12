@@ -267,7 +267,7 @@ export default async function hover(
 			indent_char: " ",
 			indent_size: tabSize,
 			selector_separator_newline: false,
-			space_around_combinator: true,
+			space_around_combinator: false,
 			space_around_selector_separator: true,
 		})
 	}
