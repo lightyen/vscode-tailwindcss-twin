@@ -1,4 +1,5 @@
-import { css_beautify } from "js-beautify"
+import postcss from "prettier/parser-postcss"
+import prettier from "prettier/standalone"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 import type { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "~/common/extractors/types"
@@ -263,12 +264,11 @@ export default async function hover(
 	}
 
 	function beautify(code: string) {
-		return css_beautify(code, {
-			indent_char: " ",
-			indent_size: tabSize,
-			selector_separator_newline: false,
-			space_around_combinator: false,
-			space_around_selector_separator: true,
+		return prettier.format(code, {
+			parser: "scss",
+			plugins: [postcss],
+			useTabs: false,
+			tabWidth: tabSize,
 		})
 	}
 }
