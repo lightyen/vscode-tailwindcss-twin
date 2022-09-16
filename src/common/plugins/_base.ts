@@ -13,7 +13,14 @@ export function hasDefault(obj: unknown): boolean {
 }
 
 export function isCorePluginEnable(context: Context, key: keyof Tailwind.CorePluginFeatures): boolean {
-	return context.config.corePlugins.some(c => c === key)
+	const { corePlugins } = context.config
+	if (Array.isArray(corePlugins)) {
+		return corePlugins.some(c => c === key)
+	}
+	if (typeof corePlugins === "object" && corePlugins !== null && corePlugins[key] === false) {
+		return false
+	}
+	return true
 }
 
 export function isField(context: unknown, value: string): boolean {
@@ -28,13 +35,13 @@ export function getPalette(
 	key: ("colors" | "fill" | "stroke" | `${string}Color${string}`) & keyof Tailwind.CorePluginFeatures,
 ): string[] | null {
 	if (!isCorePluginEnable(context, key)) return null
-	const palette = context.config.theme[key]
+	const palette = context.config.theme[key] as Tailwind.Palette
 	const colorNames = Object.keys(flattenColorPalette(palette))
 	return colorNames
 }
 
 export function flattenColorPalette(colors: Tailwind.Palette | null | undefined): {
-	[color: string]: Tailwind.Value | Tailwind.ColorValueFunc | undefined
+	[color: string]: Exclude<Tailwind.ColorValue, Tailwind.CustomPalette>
 } {
 	return Object.assign(
 		{},
@@ -57,5 +64,5 @@ export function getOpacity(
 	context: Context,
 	key: ("opacity" | `${string}Opacity`) & keyof Tailwind.CorePluginFeatures = "opacity",
 ): string[] | null {
-	return context.config.corePlugins.some(c => c === key) ? Object.keys(context.config.theme[key]) : null
+	return isCorePluginEnable(context, key) ? Object.keys(context.config.theme[key]) : null
 }

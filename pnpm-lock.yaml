@@ -33,7 +33,7 @@ specifiers:
   prettier: 2.7.1
   source-map-support: 0.5.21
   swc-loader: 0.2.3
-  tailwind-types: 3.2.0
+  tailwind-types: 3.3.3
   tailwindcss: 3.1.8
   terser-webpack-plugin: 5.3.3
   ts-paths-resolve-plugin: 5.8.0
@@ -84,7 +84,7 @@ devDependencies:
   prettier: 2.7.1
   source-map-support: 0.5.21
   swc-loader: 0.2.3_6wdxcpipfcfve442zkxb56pm3a
-  tailwind-types: 3.2.0_postcss@8.4.16
+  tailwind-types: 3.3.3_postcss@8.4.16
   tailwindcss: 3.1.8_postcss@8.4.16
   terser-webpack-plugin: 5.3.3_kmc3mgv5322xnu7k4yu5oh7yii
   ts-paths-resolve-plugin: 5.8.0_xnp4kzegbjokq62cajex2ovgkm
@@ -4802,8 +4802,8 @@ packages:
       webpack: 5.74.0_hfepjgr2ysv7whzczze5ejihpa
     dev: true
 
-  /tailwind-types/3.2.0_postcss@8.4.16:
-    resolution: {integrity: sha512-GuTe5XaN6if415Uv2Ej8Gb7nCLfbcEnu7i43i1UU1Z0ZW+CDWUg2rXE7aM+8B7YEInzijEvOiLliVkqz4ZAEeA==}
+  /tailwind-types/3.3.3_postcss@8.4.16:
+    resolution: {integrity: sha512-8yvb/vRuVFqPvFqn160eyJiKOXbIX8hIjclY1saxUKG7/FSt1H+W+KPAoFiAbjwl7IXEkn2K1ckeGgsqGkyobg==}
     peerDependencies:
       postcss: ^8.4.16
     dependencies:

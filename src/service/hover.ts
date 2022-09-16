@@ -1,11 +1,8 @@
-import postcss from "prettier/parser-postcss"
-import prettier from "prettier/standalone"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 import type { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "~/common/extractors/types"
 import { defaultLogger as console } from "~/common/logger"
 import * as parser from "~/common/parser"
-import { removeComment } from "~/common/parser"
 import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { ServiceOptions } from "~/shared"
 import { getDescription, getReferenceLinks } from "./referenceLink"
@@ -105,8 +102,15 @@ export default async function hover(
 						}
 					}
 
+					state.tw.renderArbitraryProperty(prop, value, {
+						important: selection.important,
+						rootFontSize: options.rootFontSize,
+						colorHint: options.hoverColorHint,
+						tabSize,
+					})
+
 					const code = state.tw.renderClassname({
-						classname: `[${prop}: ${value}]`.replace(/_/g, "\\_").replace(/ /g, "_"),
+						classname: `[${prop}: ${value}]`.replace(/(?!\\)_/g, "\\_").replace(/[ ]/g, "_"),
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
@@ -127,20 +131,13 @@ export default async function hover(
 
 				if (selection.target.type === parser.NodeType.ArbitrarySelector) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
+					const code = state.tw.renderArbitrarySelector(
+						`[${value}]${state.separator}`,
+						state.separator,
+						tabSize,
+					)
 					const codes = new vscode.MarkdownString()
-					let code = removeComment(selection.value)
-
-					code = beautify(code)
-
-					if (!code) {
-						return {
-							range,
-							contents: [header, codes],
-						}
-					}
-
-					code += ` {\n${" ".repeat(tabSize)}/* ... */\n}`
-					codes.appendCodeblock(code, "scss")
+					if (code) codes.appendCodeblock(code, "scss")
 
 					return {
 						range,
@@ -152,7 +149,7 @@ export default async function hover(
 					const header = new vscode.MarkdownString("**arbitrary variant**")
 					const code = state.tw.renderArbitraryVariant(value, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(beautify(code), "scss")
+					if (code) codes.appendCodeblock(code, "scss")
 
 					if (!header.value && !codes.value) return undefined
 					return {
@@ -180,7 +177,7 @@ export default async function hover(
 
 					const code = state.tw.renderSimpleVariant(value, tabSize)
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(beautify(code), "scss")
+					if (code) codes.appendCodeblock(code, "scss")
 
 					if (!header.value && !codes.value) return undefined
 
@@ -229,7 +226,7 @@ export default async function hover(
 						tabSize,
 					})
 					const codes = new vscode.MarkdownString()
-					if (code) codes.appendCodeblock(beautify(code), "scss")
+					if (code) codes.appendCodeblock(code, "scss")
 					if (!header.value && !codes.value) return undefined
 
 					return {
@@ -261,15 +258,6 @@ export default async function hover(
 		}
 
 		return undefined
-	}
-
-	function beautify(code: string) {
-		return prettier.format(code, {
-			parser: "scss",
-			plugins: [postcss],
-			useTabs: false,
-			tabWidth: tabSize,
-		})
 	}
 }
 

@@ -1,6 +1,8 @@
 import * as culori from "culori"
-import type { AtRule, Rule } from "postcss"
+import type { AtRule, Declaration, Root, Rule } from "postcss"
 import postcss from "postcss"
+import cssPrettier from "prettier/parser-postcss"
+import prettier from "prettier/standalone"
 import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
 import { generateRules } from "tailwindcss/lib/lib/generateRules"
 import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
@@ -16,8 +18,28 @@ import {
 } from "~/common/color"
 import { defaultLogger as console } from "~/common/logger"
 import * as parser from "~/common/parser"
+import { removeComments } from "~/common/parser"
 import { createGetPluginByName } from "~/common/plugins"
 import { ColorProps, ColorProps_Background, ColorProps_Border, ColorProps_Foreground } from "./data"
+
+function beautify(root: Root, tabWidth = 4) {
+	try {
+		const result = postcss().process(format(root.toString()), { from: undefined })
+		return result.root
+	} catch (error) {
+		console.error(error)
+		return root
+	}
+
+	function format(code: string) {
+		return prettier.format(code, {
+			parser: "scss",
+			plugins: [cssPrettier],
+			useTabs: false,
+			tabWidth,
+		})
+	}
+}
 
 export type ColorDesc = {
 	canRender?: boolean
@@ -132,8 +154,10 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		isVariant,
 		renderSimpleVariant,
 		renderArbitraryVariant,
+		renderArbitrarySelector,
 		renderArbitraryVariantScopes,
 		renderClassname,
+		renderArbitraryProperty,
 		renderDecls,
 		escape,
 		getPlugin(classname: string) {
@@ -156,24 +180,19 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		return escapeClassName(className)
 	}
 
-	function comment(tabSize: number, node: Rule) {
-		const raws = node.raws as { indent: string }
-		raws.indent = "".padStart(tabSize)
-		node.nodes = []
-		node.append(postcss.comment({ text: "..." }))
-	}
-
-	function replaceSelectorAndComment(tabSize: number, node: AtRule | Rule, replace: (str: string) => string): void {
-		if (node.type === "rule") {
-			node.selector = replace(node.selector)
-			comment(tabSize, node)
+	function replaceSelectorAndComment(tabSize: number, node: AtRule | Rule, replace?: (str: string) => string): void {
+		if ((node.type === "rule" || node.type === "atrule") && node.nodes.every(n => n.type === "decl")) {
+			if (replace && node.type === "rule") {
+				node.selector = replace(node.selector)
+			}
+			const raws = node.raws
+			raws.indent = "".padStart(tabSize)
+			node.prepend(postcss.comment({ text: "..." }))
 			return
 		}
 		node.each(node => {
 			switch (node.type) {
 				case "atrule":
-					replaceSelectorAndComment(tabSize, node, replace)
-					break
 				case "rule":
 					replaceSelectorAndComment(tabSize, node, replace)
 					break
@@ -187,23 +206,16 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			return ""
 		}
 
-		const re = new RegExp(
-			("." + escape(variant + config.separator) + "☕").replace(/[/\\^$+?.()|[\]{}]/g, "\\$&"),
-			"g",
-		)
-		const replace = (str: string) => str.replace(re, "&")
-		const container = postcss.root().append(postcss.rule({ selector: ".☕" }))
-		const rules: Array<AtRule | Rule> = []
+		const rules: Array<AtRule | Rule | Declaration> = []
 
 		for (const [, fn] of meta) {
-			let node: AtRule | Rule | undefined
+			let node: AtRule | Rule | Declaration | undefined
 			fn({
-				container,
+				container: postcss.root({ nodes: [postcss.rule({ selector: ".demo" })] }),
 				separator: config.separator,
 				wrap(atrule) {
-					if (!node) node = postcss.rule({ selector: "&" })
 					const at = atrule.clone()
-					at.append(node)
+					if (!at.nodes) at.nodes = []
 					node = at
 				},
 				format(selector) {
@@ -212,28 +224,30 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 				},
 			})
 			if (node) {
-				replaceSelectorAndComment(tabSize, node, replace)
 				rules.push(node)
 			}
 		}
 
-		if (rules.length === 0) {
-			container.each(node => {
+		let root = postcss.root({ nodes: rules })
+		root = beautify(root)
+		decorate(root)
+
+		return root.toString()
+
+		function decorate(root: Root) {
+			root.each(node => {
 				switch (node.type) {
 					case "atrule":
 					case "rule":
-						replaceSelectorAndComment(tabSize, node, replace)
-						rules.push(node)
+						replaceSelectorAndComment(tabSize, node)
 						break
 				}
 			})
 		}
-
-		return rules.map(r => r.toString()).join("\n")
 	}
 
 	function renderArbitraryVariant(variant: string, separator: string, tabSize: number): ScssText {
-		const classname = variant + separator + "[color:red]"
+		const classname = variant + separator + "[top:☕]"
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1
@@ -244,23 +258,86 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 			}
 		})
 		if (items.length <= 0) return ""
-		const root = postcss.root({ nodes: items.map(([, rule]) => rule) })
-		const rules: Array<AtRule | Rule> = []
+		let root = postcss.root({ nodes: items.map(([, rule]) => rule) })
 		const replace = (str: string) => {
 			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
 
-		root.each(node => {
-			switch (node.type) {
-				case "atrule":
-				case "rule":
-					replaceSelectorAndComment(tabSize, node, replace)
-					rules.push(node)
-					break
-			}
+		root.walkDecls(decl => {
+			if (decl.value === "☕") decl.remove()
 		})
 
-		return rules.map(r => r.toString()).join("\n")
+		root = beautify(root)
+		decorate(root)
+
+		return root.toString()
+
+		function decorate(root: Root) {
+			root.each(node => {
+				switch (node.type) {
+					case "atrule":
+					case "rule":
+						replaceSelectorAndComment(tabSize, node, replace)
+						break
+				}
+			})
+		}
+	}
+
+	function renderArbitrarySelector(variant: string, separator: string, tabSize: number): ScssText {
+		variant = removeComments(variant, false, separator)
+		variant = variant.slice(1, -separator.length - 1)
+		let root = postcss().process(`${variant} {}`, { from: undefined }).root
+
+		root = beautify(root)
+		decorate(root)
+
+		return root.toString()
+
+		function decorate(root: Root) {
+			root.each(node => {
+				switch (node.type) {
+					case "atrule":
+					case "rule":
+						replaceSelectorAndComment(tabSize, node)
+						break
+				}
+			})
+		}
+	}
+
+	function renderArbitraryProperty(
+		prop: string,
+		value: string,
+		{
+			important = false,
+			rootFontSize = 0,
+			tabSize = 4,
+			colorHint = "none",
+		}: {
+			important?: boolean
+			rootFontSize?: number
+			tabSize?: number
+			colorHint?: "none" | "hex" | "rgb" | "hsl"
+		},
+	): ScssText {
+		let root = postcss().process(`& { ${prop}: ${value} }`, { from: undefined }).root
+
+		root = beautify(root)
+		decorate(root)
+
+		return root.toString()
+
+		function decorate(root: Root) {
+			if (important || rootFontSize) {
+				root.walkDecls(decl => {
+					decl.value = parser.resolveThemeFunc(config, decl.value)
+					decl.important = important
+					if (colorHint && colorHint !== "none") decl.value = extendColorValue(decl.value, colorHint)
+					decl.value = toPixelUnit(decl.value, rootFontSize)
+				})
+			}
+		}
 	}
 
 	function getScope(node: AtRule | Rule, replace: (str: string) => string): string {
@@ -285,7 +362,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	}
 
 	function renderArbitraryVariantScopes(variant: string, separator: string): string {
-		const classname = variant + separator + "[color:red]"
+		const classname = variant + separator + "[top:☕]"
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1
@@ -300,6 +377,11 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 		const replace = (str: string) => {
 			return str.replace(new RegExp(`[.]${escapeRegexp(escape(classname))}(?=[^\\w-]|$)`, "g"), "&")
 		}
+
+		root.walkDecls(decl => {
+			if (decl.value === "☕") decl.remove()
+		})
+
 		const scopes: string[] = []
 		root.each(node => {
 			switch (node.type) {

@@ -46,70 +46,84 @@ export function getVariant(
 	}
 }
 
-/** NOTE: respect quoted string */
-export function removeComment(text: string): string {
-	let comment = 0
-	let string = 0
-	const arr: string[] = []
-	const start = 0
-	const end = text.length
+export function removeComments(
+	source: string,
+	keepSpaces = false,
+	separator = ":",
+	[start = 0, end = source.length] = [],
+): string {
+	const regexp = /(")|(')|(\[)|(\/\/[^\r\n]*(?:[^\r\n]|$))|((?:\/\*).*?(?:\*\/|$))/gs
+	let match: RegExpExecArray | null
+	regexp.lastIndex = start
+	source = source.slice(0, end)
+	let strings: 1 | 2 | undefined
 
-	let base = start
-	let i = start
-	for (; i < end; i++) {
-		const char = text.charCodeAt(i)
-		let __comment = comment
+	let buffer = ""
+	while ((match = regexp.exec(source))) {
+		const [, doubleQuote, singleQuote, bracket, lineComment, blockComment] = match
 
-		if (comment === 0) {
-			if (string === 0) {
-				if (char === 47 && text.charCodeAt(i + 1) === 47) {
-					__comment = 1
-				} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
-					__comment = 2
+		let hasComment = false
+		if (doubleQuote) {
+			if (!strings) {
+				strings = 1
+			} else {
+				strings = undefined
+			}
+		} else if (singleQuote) {
+			if (!strings) {
+				strings = 2
+			} else {
+				strings = undefined
+			}
+		} else if (bracket) {
+			const rb = findRightBracket({
+				text: source,
+				start: regexp.lastIndex - 1,
+				brackets: [91, 93],
+				end,
+				comments: false,
+			})
+
+			// TODO: Remove comments in arbitrary selectors only.
+			if (rb) {
+				let match = true
+				for (let i = 0; i < separator.length; i++) {
+					if (separator.charCodeAt(i) !== source.charCodeAt(rb + 1 + i)) {
+						match = false
+						break
+					}
+				}
+				if (match && source[regexp.lastIndex - 2] !== "-") {
+					buffer += source.slice(start, regexp.lastIndex)
+					buffer += removeComments(source, keepSpaces, separator, [regexp.lastIndex, rb])
+					start = rb
 				}
 			}
-		} else if (comment === 1 && char === 10) {
-			__comment = 0
-		} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
-			__comment = 0
+
+			regexp.lastIndex = rb ? rb + 1 : end
+		} else if (!strings && (lineComment || blockComment)) {
+			hasComment = true
 		}
 
-		if (string === 0) {
-			if (comment === 0) {
-				if (char === 34) {
-					string = 1
-				} else if (char === 39) {
-					string = 2
+		let data = source.slice(start, regexp.lastIndex)
+		if (hasComment) {
+			data = data.replace(lineComment || blockComment, match => {
+				if (keepSpaces) {
+					return "".padStart(match.length)
 				}
-			}
-		} else if (string === 1 && char === 34) {
-			string = 0
-		} else if (string === 2 && char === 39) {
-			string = 0
+				return ""
+			})
 		}
 
-		if (comment === 0 && __comment > 0) {
-			if (base < i) {
-				arr.push(text.slice(base, i))
-				base = i
-			}
-			if (__comment === 2) i += 1
-		} else if (comment > 0 && __comment === 0) {
-			base = i
-			if (comment === 2) {
-				i += 1
-				base += 2
-			}
-		}
-
-		comment = __comment
+		buffer += data
+		start = regexp.lastIndex
 	}
 
-	if (comment === 0 && base < i) {
-		arr.push(text.slice(base, i))
+	if (start < end) {
+		buffer += source.slice(start, end)
 	}
 
-	return arr.join("").trim()
+	return buffer
 }
 
 /** Try to find right bracket from left bracket, return `undefind` if not found. */
@@ -118,11 +132,13 @@ export function findRightBracket({
 	start = 0,
 	end = text.length,
 	brackets = [40, 41],
+	comments = true,
 }: {
 	text: string
 	start?: number
 	end?: number
 	brackets?: [number, number]
+	comments?: boolean
 }): number | undefined {
 	let stack = 0
 	const [lbrac, rbrac] = brackets
@@ -160,19 +176,21 @@ export function findRightBracket({
 			}
 		}
 
-		if (url < 3 && comment === 0) {
-			if (string === 0) {
-				if (char === 47 && text.charCodeAt(i + 1) === 47) {
-					comment = 1
-				} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
-					comment = 2
+		if (comments) {
+			if (url < 3 && comment === 0) {
+				if (string === 0) {
+					if (char === 47 && text.charCodeAt(i + 1) === 47) {
+						comment = 1
+					} else if (char === 47 && text.charCodeAt(i + 1) === 42) {
+						comment = 2
+					}
 				}
+			} else if (comment === 1 && char === 10) {
+				comment = 0
+			} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
+				comment = 0
+				i += 1
 			}
-		} else if (comment === 1 && char === 10) {
-			comment = 0
-		} else if (comment === 2 && char === 42 && text.charCodeAt(i + 1) === 47) {
-			comment = 0
-			i += 1
 		}
 
 		if (string === 0) {
