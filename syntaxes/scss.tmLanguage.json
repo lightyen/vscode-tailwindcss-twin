@@ -521,7 +521,7 @@
               "name": "punctuation.definition.keyword.scss"
             }
           },
-          "end": "\\s*(?={|\\])",
+          "end": "\\s*(?={|}|\\])",
           "name": "meta.at-rule.media.scss",
           "patterns": [
             {
