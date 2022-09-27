@@ -3,6 +3,7 @@ import { getEntryDescription } from "vscode-css-languageservice/lib/esm/language
 import type { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "~/common/extractors/types"
 import { defaultLogger as console } from "~/common/logger"
 import * as parser from "~/common/parser"
+import { removeComments } from "~/common/parser"
 import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { ServiceOptions } from "~/shared"
 import { getDescription, getReferenceLinks } from "./referenceLink"
@@ -131,11 +132,13 @@ export default async function hover(
 
 				if (selection.target.type === parser.NodeType.ArbitrarySelector) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
-					const code = state.tw.renderArbitrarySelector(
-						`[${value}]${state.separator}`,
-						state.separator,
-						tabSize,
-					)
+					const normalized = removeComments(value, false, state.separator)
+						.trim()
+						.replace(/\s{2,}/g, " ")
+						.replace(/(?!\\)_/g, "\\_")
+						.replace(/[ ]/g, "_")
+
+					const code = state.tw.renderArbitraryVariant(`[${normalized}]`, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
