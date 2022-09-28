@@ -1,3 +1,4 @@
+import { normalizeSelector } from "twobj/parser"
 import vscode from "vscode"
 import { getEntryDescription } from "vscode-css-languageservice/lib/esm/languageFacts/entry"
 import type { ExtractedToken, ExtractedTokenKind, TextDocument, Token } from "~/common/extractors/types"
@@ -8,6 +9,19 @@ import { cssDataManager } from "~/common/vscode-css-languageservice"
 import type { ServiceOptions } from "~/shared"
 import { getDescription, getReferenceLinks } from "./referenceLink"
 import type { TailwindLoader } from "./tailwind"
+
+function unescapeUnderscore(value: string): string {
+	return value.replace(/(\\_)|(_)/g, (match, p1, p2) => {
+		if (p1) {
+			return p1
+		}
+		return " "
+	})
+}
+
+function escapeUnderscore(value: string): string {
+	return value.replace(/[ ]/g, "_")
+}
 
 export default async function hover(
 	result: ExtractedToken | undefined,
@@ -66,12 +80,13 @@ export default async function hover(
 					}
 
 					const code = state.tw.renderClassname({
-						classname: `[${prop}: ${value}]`.replace(/ /g, "_"),
+						classname: escapeUnderscore(unescapeUnderscore(`[${prop}:${value}]`)),
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
 					})
+
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -103,20 +118,14 @@ export default async function hover(
 						}
 					}
 
-					state.tw.renderArbitraryProperty(prop, value, {
+					const code = state.tw.renderClassname({
+						classname: escapeUnderscore(unescapeUnderscore(`[${prop}:${value}]`)),
 						important: selection.important,
 						rootFontSize: options.rootFontSize,
 						colorHint: options.hoverColorHint,
 						tabSize,
 					})
 
-					const code = state.tw.renderClassname({
-						classname: `[${prop}: ${value}]`.replace(/(?!\\)_/g, "\\_").replace(/[ ]/g, "_"),
-						important: selection.important,
-						rootFontSize: options.rootFontSize,
-						colorHint: options.hoverColorHint,
-						tabSize,
-					})
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -132,13 +141,11 @@ export default async function hover(
 
 				if (selection.target.type === parser.NodeType.ArbitrarySelector) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
-					const normalized = removeComments(value, false, state.separator)
-						.trim()
-						.replace(/\s{2,}/g, " ")
-						.replace(/(?!\\)_/g, "\\_")
-						.replace(/[ ]/g, "_")
+					const normalized = escapeUnderscore(
+						normalizeSelector(unescapeUnderscore(removeComments(value, false, state.separator))),
+					)
 
-					const code = state.tw.renderArbitraryVariant(`[${normalized}]`, state.separator, tabSize)
+					const code = state.tw.renderArbitraryVariant(normalized, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -150,7 +157,8 @@ export default async function hover(
 
 				if (selection.target.type === parser.NodeType.ArbitraryVariant) {
 					const header = new vscode.MarkdownString("**arbitrary variant**")
-					const code = state.tw.renderArbitraryVariant(value, state.separator, tabSize)
+					const normalized = escapeUnderscore(unescapeUnderscore(value))
+					const code = state.tw.renderArbitraryVariant(normalized, state.separator, tabSize)
 					const codes = new vscode.MarkdownString()
 					if (code) codes.appendCodeblock(code, "scss")
 
@@ -212,7 +220,7 @@ export default async function hover(
 					const { prefix, expr, e } = selection.target
 					let classname = `${prefix.value}`
 					if (expr) {
-						classname += `[${expr.value.trim().replace(/_/g, "\\_").replace(/ /g, "_")}]`
+						classname += `[${escapeUnderscore(unescapeUnderscore(expr.value.trim()))}]`
 					}
 					if (e) {
 						if (e.type === parser.NodeType.WithOpacity) {

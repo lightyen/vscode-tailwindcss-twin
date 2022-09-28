@@ -201,7 +201,9 @@ function validateTwin({
 				const ans = checkShortCss(item.target, document, offset, diagnosticOptions.emptyChecking)
 				if (!ans.some(item => item.severity === vscode.DiagnosticSeverity.Error)) {
 					ans.push({
-						message: `Short css is now deprecated, replace it with '[${item.target.prefix.value}: ${item.target.expr.value}]'.`,
+						message: `Short css is now deprecated, replace it with '[${parser.toKebab(
+							item.target.prefix.value,
+						)}: ${item.target.expr.value}]'.`,
 						severity: vscode.DiagnosticSeverity.Hint,
 						range: new vscode.Range(
 							document.positionAt(offset + item.target.range[0]),

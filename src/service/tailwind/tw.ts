@@ -7,6 +7,7 @@ import expandApplyAtRules from "tailwindcss/lib/lib/expandApplyAtRules"
 import { generateRules } from "tailwindcss/lib/lib/generateRules"
 import { createContext } from "tailwindcss/lib/lib/setupContextUtils"
 import escapeClassName from "tailwindcss/lib/util/escapeClassName"
+import { normalizeSelector } from "twobj/parser"
 import { escapeRegexp } from "~/common"
 import {
 	isColorFunction,
@@ -209,18 +210,56 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	}
 
 	function tidy(node: Root): void {
+		let root = postcss.rule({ selector: "&" })
+
 		node.each(node => {
 			switch (node.type) {
 				case "atrule":
+					_tidy(node)
+					break
 				case "rule":
 					_tidy(node)
+					if (node.selector === "&") {
+						root = node
+					}
 					break
 			}
 		})
 
+		node.each(node => {
+			switch (node.type) {
+				case "rule":
+					node.remove()
+					if (node.selector === "&") {
+						node.append(...node.nodes)
+					} else {
+						root.append(node)
+					}
+					break
+				default:
+					node.remove()
+					root.append(node)
+					break
+			}
+		})
+
+		if (root.nodes.length === 1) {
+			if (root.nodes[0].type === "rule" || root.nodes[0].type === "atrule") {
+				node.nodes = root.nodes
+				return
+			}
+		} else if (root.nodes.every(n => n.type === "rule")) {
+			node.nodes = root.nodes
+			return
+		}
+
+		node.nodes = [root]
 		return
 
 		function _tidy(node: AtRule | Rule) {
+			if (node.type === "rule") {
+				node.selector = normalizeSelector(node.selector)
+			}
 			if (node.type === "rule" && node.nodes.every(n => n.type === "decl")) {
 				if (node.parent && node.parent.type === "atrule" && node.selector.trim() === "&") {
 					const parent = node.parent
@@ -305,7 +344,7 @@ export function createTwContext(config: Tailwind.ResolvedConfigJS) {
 	}
 
 	function renderArbitraryVariant(variant: string, separator: string, tabSize: number): ScssText {
-		const classname = variant + separator + "[top:☕]"
+		const classname = `[${variant}]${separator}[top:☕]`
 		const items = generateRules([classname], context).sort(([a], [b]) => {
 			if (a < b) {
 				return -1

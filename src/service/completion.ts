@@ -342,8 +342,6 @@ const variantCompletion: CompletionFeature = (
 
 	const [a, b] = target.range
 	const nextCharacter = text.charCodeAt(position)
-	const userVariants = new Set(variants)
-	items = items.filter(item => !userVariants.has(item.label.slice(0, -state.separator.length)))
 	const transfrom = (callback: (item: ICompletionItem) => void) => {
 		for (const item of items) callback(item)
 	}
