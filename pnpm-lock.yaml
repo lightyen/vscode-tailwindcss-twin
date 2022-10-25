@@ -34,7 +34,7 @@ specifiers:
   source-map-support: 0.5.21
   swc-loader: 0.2.3
   tailwind-types: 3.4.4
-  tailwindcss: 0.0.0-insiders.52ab315
+  tailwindcss: 3.1.8
   terser-webpack-plugin: 5.3.3
   ts-paths-resolve-plugin: 5.8.0
   twobj: ^2.2.3
@@ -86,7 +86,7 @@ devDependencies:
   source-map-support: 0.5.21
   swc-loader: 0.2.3_6wdxcpipfcfve442zkxb56pm3a
   tailwind-types: 3.4.4_postcss@8.4.16
-  tailwindcss: 0.0.0-insiders.52ab315_postcss@8.4.16
+  tailwindcss: 3.1.8_postcss@8.4.16
   terser-webpack-plugin: 5.3.3_kmc3mgv5322xnu7k4yu5oh7yii
   ts-paths-resolve-plugin: 5.8.0_xnp4kzegbjokq62cajex2ovgkm
   twobj: 2.2.3
@@ -1590,12 +1590,6 @@ packages:
     hasBin: true
     dev: true
 
-  /acorn/8.7.1:
-    resolution: {integrity: sha512-Xx54uLJQZ19lKygFXOWsscKUbsBZW0CPykPhVQdhIeIwrbPmJzqeASDInc8nKBnp/JT6igTs82qPXz069H8I/A==}
-    engines: {node: '>=0.4.0'}
-    hasBin: true
-    dev: true
-
   /acorn/8.8.0:
     resolution: {integrity: sha512-QOxyigPVrpZ2GXT+PFyZTl6TtOFc5egxHIP9IlQ+RbupQuX4RkT/Bee4/kQuC02Xkzg84JcT7oLYtDIQxp+v7w==}
     engines: {node: '>=0.4.0'}
@@ -3024,7 +3018,7 @@ packages:
     dependencies:
       array-union: 2.1.0
       dir-glob: 3.0.1
-      fast-glob: 3.2.11
+      fast-glob: 3.2.12
       ignore: 5.2.0
       merge2: 1.4.1
       slash: 3.0.0
@@ -3035,7 +3029,7 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dependencies:
       dir-glob: 3.0.1
-      fast-glob: 3.2.11
+      fast-glob: 3.2.12
       ignore: 5.2.0
       merge2: 1.4.1
       slash: 4.0.0
@@ -4824,8 +4818,8 @@ packages:
       postcss: 8.4.16
     dev: true
 
-  /tailwindcss/0.0.0-insiders.52ab315_postcss@8.4.16:
-    resolution: {integrity: sha512-CB+Wk4Zmevw2sokX/075SUcqhjd4HYyFYbov6dHh/Cj7VczYXH/U108EtgaSFVBTuXnpbZJUPBoa8uGyKI24Uw==}
+  /tailwindcss/3.1.8_postcss@8.4.16:
+    resolution: {integrity: sha512-YSneUCZSFDYMwk+TGq8qYFdCA3yfBRdBlS7txSq0LUmzyeqRe3a8fBQzbz9M3WS/iFT4BNf/nmw9mEzrnSaC0g==}
     engines: {node: '>=12.13.0'}
     hasBin: true
     peerDependencies:
@@ -4922,7 +4916,7 @@ packages:
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.2
-      acorn: 8.7.1
+      acorn: 8.8.0
       commander: 2.20.3
       source-map-support: 0.5.21
     dev: true
